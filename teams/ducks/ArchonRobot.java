@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
 public class ArchonRobot extends BaseRobot{
@@ -8,9 +9,9 @@ public class ArchonRobot extends BaseRobot{
 		super(myRC);
 	}
 
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
+	public void run() throws GameActionException{
+		System.out.println("ducks");
+		rc.setDirection(currDir.rotateLeft());
 	}
 
 }
