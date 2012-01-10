@@ -192,18 +192,34 @@ class MovementController {
 			ax = moves[moveindex][0];
 			ay = moves[moveindex][1];
 		}
+		if (ax-sx+1<=2 && ax-sx+1>=0 && ay-sy+1<=2 && ay-sy>=0)
+		{
+			int dir = getDirTowards(sx, sy, ax, ay);
+			if (map[sx+d[dir][0]][sy+d[dir][1]]==0)
+			{
+				if (rc.canMove(mdirs[dir]))
+				{
+					if (rc.getDirection() == mdirs[dir])
+						rc.moveForward();
+					else rc.setDirection(mdirs[dir]);
+					return true;
+				}
+			}
+			prepared = false;
+			return false;
+		}
 		int[] dirs = getDirsTowardsFree(sx, sy, ax, ay);
 		for (int x=0; x<dirs.length; x++)
 		{
 			if (map[sx+d[dirs[x]][0]][sy+d[dirs[x]][1]]==0)
 			{
-				if (rc.getDirection() == mdirs[dirs[x]])
+				if (rc.canMove(mdirs[dirs[x]]))
 				{
-					if (rc.canMove(mdirs[dirs[x]]))
+					if (rc.getDirection() == mdirs[dirs[x]])
 						rc.moveForward();
-						
-				} else rc.setDirection(mdirs[dirs[x]]);
-				return true;
+					else rc.setDirection(mdirs[dirs[x]]);
+					return true;
+				}
 			}
 		}
 		prepared = false;
@@ -273,7 +289,7 @@ public void bugCW(int sx, int sy, int tx, int ty) {
 					moves[totalmoves][0] = tx;
 					moves[totalmoves][1] = ty;
 					totalmoves++;
-					System.out.println("total waypoints:"+(totalmoves));
+//					System.out.println("total waypoints:"+(totalmoves));
 					moveindex = 0;
 					return;
 				}
@@ -326,7 +342,7 @@ public void bugCW(int sx, int sy, int tx, int ty) {
 		moves[totalmoves][0] = tx;
 		moves[totalmoves][1] = ty;
 		totalmoves++;
-		System.out.println("total waypoints:"+(totalmoves));
+//		System.out.println("total waypoints:"+(totalmoves));
 		moveindex = 0;
 		return;
 	}
@@ -587,10 +603,27 @@ class Archon implements Runnable {
 		nodes[nodesize++] = pn.getLocation();
 		MapLocation[] neighbors = pn.neighbors();
 		addNewLocs(neighbors);
+		
+		MapLocation cur = rc.getLocation();
+		
+		int b1,b2;
+		int k1,k2,k3;
+		TerrainTile tt;
+		b1 = Clock.getBytecodeNum();
+		k1 = mc.map[60+1][60+3];
+		b2 = Clock.getBytecodeNum();
+		System.out.println((b2-b1)+" bytecode to access 2d array");
+		
+		b1 = Clock.getBytecodeNum();
+		tt = rc.senseTerrainTile(new MapLocation(cur.x+1,cur.y+3));
+		b2 = Clock.getBytecodeNum();
+		System.out.println((b2-b1)+" bytecode to sense terrain tile");
+		rc.resign();
 	}
 	
 	void addNewLocs(MapLocation[] locs)
 	{
+		int bytecode = Clock.getBytecodeNum();
 		boolean add = false;
 		for (int x=0; x<locs.length; x++)
 		{
@@ -608,6 +641,8 @@ class Archon implements Runnable {
 				nodes[nodesize++] = m;
 		}
 		System.out.println("added, now has "+nodesize+" nodes");
+		bytecode = Clock.getBytecodeNum()-bytecode;
+		rc.setIndicatorString(2, "adding new loc used "+bytecode);
 	}
 	
 	boolean[] reached = new boolean[GameConstants.MAX_POWER_NODES+2];
@@ -623,6 +658,14 @@ class Archon implements Runnable {
 		{
 			try {
 				rc.yield();
+				rc.setIndicatorString(2, "no add");
+				
+				if (nodes[nodeindex]==null) //reset
+				{
+					nodeindex = 0;
+					nodesize = 1;
+					nodes[0] = rc.sensePowerCore().getLocation();
+				}
 				
 				MapLocation cur = rc.getLocation();
 				if (cur.isAdjacentTo(nodes[nodeindex]))
@@ -656,12 +699,25 @@ class Archon implements Runnable {
 						{
 							System.out.println("spawning "+nodes[nodeindex]);
 							rc.spawn(RobotType.TOWER);
-							PowerNode pn = (PowerNode)rc.senseObjectAtLocation(nodes[nodeindex], RobotLevel.POWER_NODE);
-							MapLocation[] neighbors = pn.neighbors();
-							addNewLocs(neighbors);
+//							PowerNode pn = (PowerNode)rc.senseObjectAtLocation(nodes[nodeindex], RobotLevel.POWER_NODE);
+//							MapLocation[] neighbors = pn.neighbors();
+//							addNewLocs(neighbors);
 						}
 					}
+					PowerNode pn = (PowerNode)rc.senseObjectAtLocation(nodes[nodeindex], RobotLevel.POWER_NODE);
+					MapLocation[] neighbors = pn.neighbors();
+					addNewLocs(neighbors);
 					nodeindex++;
+				} else if (rc.canSenseSquare(nodes[nodeindex]))
+				{
+					GameObject go = rc.senseObjectAtLocation(nodes[nodeindex], RobotLevel.ON_GROUND);
+					if (go!=null)
+					{
+						PowerNode pn = (PowerNode)rc.senseObjectAtLocation(nodes[nodeindex], RobotLevel.POWER_NODE);
+						MapLocation[] neighbors = pn.neighbors();
+						addNewLocs(neighbors);
+						nodeindex++;
+					}
 				}
 				
 				if (nodeindex<nodesize && !rc.isMovementActive())
