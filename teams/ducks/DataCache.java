@@ -16,6 +16,10 @@ public class DataCache {
 			new GameObject[Direction.values().length];
 	int adjacentGameObjectsTime = -1;
 
+	boolean[] isAdjacentTerrainTileCached;
+	TerrainTile[] adjacentTerrainTiles =
+			new TerrainTile[Direction.values().length];
+	int adjacentTerrainTilesTime = -1;
 	
 	public DataCache(RobotController myRC) {
 		this.rc = myRC;
@@ -64,6 +68,24 @@ public class DataCache {
 			}
 		} else {
 			return null;
+		}
+	}
+	
+	public TerrainTile getAdjacentTerrainTile(
+			Direction d) throws GameActionException {
+		int currRoundNum = Clock.getRoundNum();
+		if (currRoundNum > adjacentTerrainTilesTime) {
+			isAdjacentTerrainTileCached =
+					new boolean[Direction.values().length];
+			adjacentTerrainTilesTime = currRoundNum;
+		}
+		if (isAdjacentTerrainTileCached[d.ordinal()]) {
+			return adjacentTerrainTiles[d.ordinal()];
+		} else {
+			TerrainTile tt = this.rc.senseTerrainTile(this.rc.getLocation().add(d));
+			this.adjacentTerrainTiles[d.ordinal()] = tt;
+			isAdjacentTerrainTileCached[d.ordinal()] = true;
+			return tt;
 		}
 	}
 	
