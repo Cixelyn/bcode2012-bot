@@ -11,15 +11,12 @@ public class Scout extends Unit{
 
 	public void run() throws GameActionException {
 		// attack command
-		MapLocation enemyLoc = null;
+		RobotInfo nearbyEnemyInfo = null;
 		if (!myRC.isAttackActive()) {
-			RobotInfo nearbyEnemyInfo = this.util.senseNearbyEnemy();
-			if (nearbyEnemyInfo != null) {
-				enemyLoc = nearbyEnemyInfo.location;
-			}
+			nearbyEnemyInfo = this.util.senseClosestEnemy();
 		}
 		// heal if enemies nearby
-		if (enemyLoc != null) {
+		if (nearbyEnemyInfo != null) {
 			double p = Math.random();
 			if (p < Constants.REGENERATE_PROBABILITY) {
 				this.myRC.regenerate();

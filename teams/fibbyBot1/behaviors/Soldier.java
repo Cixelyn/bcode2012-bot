@@ -12,17 +12,17 @@ public class Soldier extends Unit{
 		// set rally
 		this.setRally();
 		// attack command
-		MapLocation enemyLoc = null;
+		RobotInfo nearbyEnemyInfo = null;
 		if (!myRC.isAttackActive()) {
-			RobotInfo nearbyEnemyInfo = this.util.senseNearbyEnemy();
-			if (nearbyEnemyInfo != null) {
-				enemyLoc = nearbyEnemyInfo.location;
+			nearbyEnemyInfo = this.util.senseEnemyArchonInRange();
+			if (nearbyEnemyInfo == null) {
+				nearbyEnemyInfo = this.util.senseClosestEnemy();
 			}
 		}
 		// movement commands
 		if (!myRC.isMovementActive()) {
-			if (enemyLoc != null) {
-				this.micro(enemyLoc);
+			if (nearbyEnemyInfo != null) {
+				this.micro(nearbyEnemyInfo.location);
 			} else {
 				this.util.navigate(this.target);
 			}

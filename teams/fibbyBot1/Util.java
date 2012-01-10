@@ -62,30 +62,78 @@ public class Util {
 		}
 	}
 	
-	public RobotInfo senseNearbyEnemy() throws GameActionException {
+	public RobotInfo senseEnemyArchonInRange() throws GameActionException {
+		int closestDistance = 9999;
+		RobotInfo closestRobotInfo = null;
 		Robot[] nearbyRobots = this.myRC.senseNearbyGameObjects(Robot.class);
-		RobotInfo[] nearbyRobotInfos = new RobotInfo[nearbyRobots.length];
-		if (this.myRC.getType() != RobotType.ARCHON) {
-			// get an enemy in attack range
-			for (int i = 0; i < nearbyRobots.length; i++) {
-				Robot r = nearbyRobots[i];
-				if (r.getTeam() != this.myRC.getTeam()) {
-					RobotInfo rInfo = this.myRC.senseRobotInfo(r);
-					nearbyRobotInfos[i] = rInfo;
-					if (this.myRC.canAttackSquare(rInfo.location)) {
-						this.myRC.attackSquare(rInfo.location, r.getRobotLevel());
-						return rInfo;
+		// get closest archon in attack range
+		for (Robot r : nearbyRobots) {
+			if (r.getTeam() != this.myRC.getTeam()) {
+				RobotInfo rInfo = this.myRC.senseRobotInfo(r);
+				if (rInfo.type == RobotType.ARCHON &&
+						this.myRC.canAttackSquare(rInfo.location)) {
+					int distance =
+							this.myRC.getLocation().distanceSquaredTo(rInfo.location);
+					if (distance < closestDistance) {
+						closestDistance = distance;
+						closestRobotInfo = rInfo;
 					}
 				}
 			}
 		}
-		// no enemies in attack range, get one in sensor range
+		if (closestRobotInfo != null) {
+			this.myRC.attackSquare(
+					closestRobotInfo.location, closestRobotInfo.robot.getRobotLevel());
+		}
+		return closestRobotInfo;
+	}
+	
+	public RobotInfo senseClosestEnemy() throws GameActionException {
+		int closestDistance = 9999;
+		RobotInfo closestRobotInfo = null;
+		Robot[] nearbyRobots = this.myRC.senseNearbyGameObjects(Robot.class);
+		RobotInfo[] nearbyRobotInfos = new RobotInfo[nearbyRobots.length];
+		// get closest enemy in attack range
+		for (int i = 0; i < nearbyRobots.length; i++) {
+			Robot r = nearbyRobots[i];
+			if (r.getTeam() != this.myRC.getTeam()) {
+				RobotInfo rInfo = this.myRC.senseRobotInfo(r);
+				nearbyRobotInfos[i] = rInfo;
+				if (this.myRC.getType() != RobotType.ARCHON &&
+						rInfo.type != RobotType.TOWER &&
+						this.myRC.canAttackSquare(rInfo.location)) {
+					int distance =
+							this.myRC.getLocation().distanceSquaredTo(rInfo.location);
+					if (distance < closestDistance) {
+						closestDistance = distance;
+						closestRobotInfo = rInfo;
+					}
+				}
+			}
+		}
+		if (closestRobotInfo != null) {
+			if (this.myRC.getType() != RobotType.ARCHON) {
+				this.myRC.attackSquare(
+						closestRobotInfo.location, closestRobotInfo.robot.getRobotLevel());
+			}
+			return closestRobotInfo;
+		}
+		// no enemies in attack range, get closest one in sensor range
 		for (RobotInfo rInfo : nearbyRobotInfos) {
 			if (rInfo == null) {
 				continue;
-			} else if (rInfo.team != this.myRC.getTeam()) {
-				return rInfo;
+			} else if (rInfo.team != this.myRC.getTeam() &&
+					rInfo.type != RobotType.TOWER) {
+				int distance =
+						this.myRC.getLocation().distanceSquaredTo(rInfo.location);
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closestRobotInfo = rInfo;
+				}
 			}
+		}
+		if (closestRobotInfo != null) {
+			return closestRobotInfo;
 		}
 		return null;
 	}
