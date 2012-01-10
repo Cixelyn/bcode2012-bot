@@ -54,7 +54,7 @@ public abstract class BaseRobot {
 			
 			currRound = Clock.getRoundNum();
 			
-			
+			this.rc.setIndicatorString(0, "" + this.myType + " - " + this.currState);
 			try{
 				run();
 			} catch (Exception e) {
