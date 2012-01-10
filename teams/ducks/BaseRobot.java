@@ -5,6 +5,8 @@ import battlecode.common.*;
 public abstract class BaseRobot {
 	
 	final RobotController rc;
+	final DataCache dc;
+	
 	
 	// Robot Stats
 	final RobotType myType;
@@ -16,23 +18,27 @@ public abstract class BaseRobot {
 	public double currFlux;
 	public MapLocation currLoc, currLocInFront, currLocInBack;
 	public Direction currDir;
-	
+
+	public int spawnRound;
+	public int currRound;
 	
 	
 	public BaseRobot(RobotController myRC) {
 		this.rc = myRC;
+		this.dc = new DataCache(rc);
 		
 		myType = this.rc.getType();
 		myMaxEnergon = this.myType.maxEnergon;
 		myMaxFlux = this.myType.maxFlux;
 		
+		spawnRound = Clock.getRoundNum();
+		
 	}
 	
-	public abstract void run();
+	public abstract void run() throws GameActionException;
 	
 	public void loop() {
 		while(true) {
-			
 		
 			currEnergon = rc.getEnergon();
 			currFlux = rc.getFlux();
@@ -42,6 +48,8 @@ public abstract class BaseRobot {
 			currLocInFront = currLoc.add(currDir);
 			currLocInBack = currLoc.add(currDir.opposite());
 			
+			currRound = Clock.getRoundNum();
+			
 			
 			try{
 				run();
@@ -49,6 +57,7 @@ public abstract class BaseRobot {
 				e.printStackTrace();
 			}
 			
+			rc.yield();
 			
 		}
 	}
