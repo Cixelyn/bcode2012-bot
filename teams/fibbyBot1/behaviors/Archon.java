@@ -19,7 +19,7 @@ public class Archon extends Unit{
 		// TODO(jven): implement me
 		// set and broadcast rally
 		this.setRally();
-		RobotInfo nearbyEnemyInfo = this.util.senseNearbyEnemy();
+		RobotInfo nearbyEnemyInfo = this.util.senseClosestEnemy();
 		if (nearbyEnemyInfo != null) {
 			this.target = nearbyEnemyInfo.location;
 			this.targetPriority += 1;
@@ -42,12 +42,30 @@ public class Archon extends Unit{
 				if (this.util.spawn(this.spawnType)) {
 					setSpawnType();
 				}
+			} else if (nearbyEnemyInfo != null) {
+				this.avoid(nearbyEnemyInfo);
 			} else {
 				this.util.navigate(this.target);
 			}
 		}
 		this.myRC.setIndicatorString(0, "Target: " + this.target);
 		this.myRC.setIndicatorString(1, "Priority: " + this.targetPriority);
+	}
+	
+	public void avoid(RobotInfo rInfo) throws GameActionException {
+		Direction dir = this.myRC.getLocation().directionTo(rInfo.location);
+		if (this.myRC.getDirection() != dir) {
+			this.myRC.setDirection(dir);
+		} else if (this.myRC.getLocation().distanceSquaredTo(rInfo.location) <=
+				Math.max(10, rInfo.type.sensorRadiusSquared)) {
+			if (this.myRC.canMove(dir.opposite())) {
+				this.myRC.moveBackward();
+			}
+		} else {
+			if (this.myRC.canMove(dir)) {
+				this.myRC.moveForward();
+			}
+		}
 	}
 	
 	public void setSpawnType() {
