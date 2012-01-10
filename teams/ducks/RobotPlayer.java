@@ -18,8 +18,13 @@ public class RobotPlayer {
 				case SCOUT:
 					r = new ScoutRobot(myRC);
 					break;
+				case DISRUPTER:
+					r = new DisrupterRobot(myRC);
+					break;
+				case SCORCHER:
+					r = new ScorcherRobot(myRC);
+					break;
 				default:
-					System.out.println("Dicks");
 					break;
 				}
 			} catch (Exception e) {

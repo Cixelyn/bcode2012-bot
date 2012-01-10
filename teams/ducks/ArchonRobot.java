@@ -3,7 +3,9 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameObject;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
@@ -11,6 +13,9 @@ import battlecode.common.TerrainTile;
 public class ArchonRobot extends BaseRobot {
 	
 	RobotType unitToSpawn;
+	// TODO(jven): put me in constants
+	final double MIN_ARCHON_FLUX = 0.2;
+	final double MIN_UNIT_FLUX = 20;
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
@@ -44,8 +49,10 @@ public class ArchonRobot extends BaseRobot {
 				this.rc.setDirection(this.currDir.rotateRight());
 			}
 		}
+		// distribute flux
+		this.distributeFlux();
 		// if we have enough flux, spawn unit
-		if (this.currFlux > this.unitToSpawn.spawnCost + 20) {
+		if (this.currFlux > this.unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
 			this.currState = RobotState.SPAWN_UNIT;
 		}
 	}
@@ -88,6 +95,58 @@ public class ArchonRobot extends BaseRobot {
 			}
 		}
 		this.rc.setIndicatorString(2, "AHHH");
+	}
+	
+	private void distributeFlux() throws GameActionException {
+		// check all directions around you, ground and air
+		for (Direction d : Direction.values()) {
+			if (d == Direction.OMNI || d == Direction.NONE) {
+				continue;
+			}
+			for (RobotLevel level : RobotLevel.values()) {
+				if (level == RobotLevel.POWER_NODE) {
+					continue;
+				}
+				if (this.currFlux < MIN_ARCHON_FLUX) {
+					break;
+				}
+				GameObject obj = this.dc.getAdjacentGameObject(
+						d, RobotLevel.ON_GROUND);
+				if (obj instanceof Robot && obj.getTeam() == this.myTeam) {
+					// TODO(jven): data cache this?
+					RobotInfo rInfo = this.rc.senseRobotInfo((Robot)obj);
+					if (rInfo.flux < MIN_UNIT_FLUX) {
+						double fluxToTransfer = Math.min(
+								MIN_UNIT_FLUX - rInfo.flux, currFlux - MIN_ARCHON_FLUX);
+						if (fluxToTransfer > 0) {
+							this.rc.transferFlux(
+									rInfo.location,
+									rInfo.robot.getRobotLevel(),
+									fluxToTransfer);
+						}
+						this.currFlux -= fluxToTransfer;
+					}
+				}
+			}
+		}
+		// check above you
+		GameObject obj = this.dc.getAdjacentGameObject(
+				Direction.OMNI, RobotLevel.IN_AIR);
+		if (obj instanceof Robot && obj.getTeam() == this.myTeam) {
+			// TODO(jven): data cache this?
+			RobotInfo rInfo = this.rc.senseRobotInfo((Robot)obj);
+			if (rInfo.flux < MIN_UNIT_FLUX) {
+				double fluxToTransfer = Math.min(
+						MIN_UNIT_FLUX - rInfo.flux, currFlux - MIN_ARCHON_FLUX);
+				if (fluxToTransfer > 0) {
+					this.rc.transferFlux(
+							rInfo.location,
+							rInfo.robot.getRobotLevel(),
+							fluxToTransfer);
+				}
+				this.currFlux -= fluxToTransfer;
+			}
+		}
 	}
 	
 	private RobotType getSpawnType() {
