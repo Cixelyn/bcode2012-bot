@@ -21,6 +21,9 @@ public class DataCache {
 			new TerrainTile[Direction.values().length];
 	int adjacentTerrainTilesTime = -1;
 	
+	Robot[] nearbyRobots;
+	int nearbyRobotsTime = -1;
+	
 	public DataCache(RobotController myRC) {
 		this.rc = myRC;
 	}
@@ -87,6 +90,18 @@ public class DataCache {
 			isAdjacentTerrainTileCached[d.ordinal()] = true;
 			return tt;
 		}
+	}
+	
+	public Robot[] getNearbyRobots() {
+		int currRoundNum = Clock.getRoundNum();
+		if (currRoundNum > nearbyRobotsTime) {
+			nearbyRobots = null;
+			nearbyRobotsTime = currRoundNum;
+		}
+		if (nearbyRobots == null) {
+			nearbyRobots = this.rc.senseNearbyGameObjects(Robot.class);
+		}
+		return nearbyRobots;
 	}
 	
 }
