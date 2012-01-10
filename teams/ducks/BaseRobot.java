@@ -10,6 +10,7 @@ public abstract class BaseRobot {
 	
 	// Robot Stats
 	final RobotType myType;
+	final Team myTeam;
 	final double myMaxEnergon;
 	final double myMaxFlux;
 
@@ -30,6 +31,7 @@ public abstract class BaseRobot {
 		this.dc = new DataCache(rc);
 		
 		myType = this.rc.getType();
+		myTeam = this.rc.getTeam();
 		myMaxEnergon = this.myType.maxEnergon;
 		myMaxFlux = this.myType.maxFlux;
 		

@@ -3,9 +3,9 @@ package ducks;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
-public class ScoutRobot extends BaseRobot {
+public class ScorcherRobot extends BaseRobot {
 
-	public ScoutRobot(RobotController myRC) {
+	public ScorcherRobot(RobotController myRC) {
 		super(myRC);
 		this.currState = RobotState.DIZZY;
 	}
