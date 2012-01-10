@@ -55,8 +55,7 @@ public class ArchonRobot extends BaseRobot {
 			return;
 		}
 		// see if i can make the unit in front of me
-		// TODO(jven): get terrain tile from data cache
-		TerrainTile tt = this.rc.senseTerrainTile(this.currLocInFront);
+		TerrainTile tt = this.dc.getAdjacentTerrainTile(this.currDir);
 		if (tt != TerrainTile.OFF_MAP &&
 				!(this.unitToSpawn.level == RobotLevel.ON_GROUND &&
 				tt == TerrainTile.VOID)) {
@@ -75,7 +74,7 @@ public class ArchonRobot extends BaseRobot {
 			if (d == Direction.OMNI || d == Direction.NONE){
 				continue;
 			}
-			tt = this.rc.senseTerrainTile(this.currLoc.add(d));
+			tt = this.dc.getAdjacentTerrainTile(d);
 			if (tt == TerrainTile.OFF_MAP || (
 					this.unitToSpawn.level == RobotLevel.ON_GROUND &&
 					tt == TerrainTile.VOID)) {
