@@ -1,5 +1,6 @@
 package ducks;
 
 public enum RobotState {
-	DUCKS,
+	EXPLORE,
+	SPAWN_UNIT
 }

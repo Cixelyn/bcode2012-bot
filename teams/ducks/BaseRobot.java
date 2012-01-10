@@ -22,6 +22,8 @@ public abstract class BaseRobot {
 	public int spawnRound;
 	public int currRound;
 	
+	public RobotState currState;
+	
 	
 	public BaseRobot(RobotController myRC) {
 		this.rc = myRC;
