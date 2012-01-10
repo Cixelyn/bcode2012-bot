@@ -4,5 +4,6 @@ public enum RobotState {
 	EXPLORE,
 	SPAWN_UNIT,
 	DIZZY,
-	FOLLOW
+	FOLLOW,
+	ATTACK
 }

@@ -1,33 +1,45 @@
 package ducks;
 
 import battlecode.common.GameActionException;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
 
 public class ScorcherRobot extends BaseRobot {
 
 	public ScorcherRobot(RobotController myRC) {
 		super(myRC);
-		this.currState = RobotState.DIZZY;
+		currState = RobotState.ATTACK;
 	}
 
 	@Override
 	public void run() throws GameActionException {
-		switch (this.currState) {
-			case DIZZY:
-				this.dizzy();
+		switch (currState) {
+			case ATTACK:
+				attack();
 				break;
 			default:
-				this.rc.setIndicatorString(2, "RobotState." + this.currState +
+				rc.setIndicatorString(2, "RobotState." + this.currState +
 						" not implemented.");
 				break;
 		}
 	}
 	
-	private void dizzy() throws GameActionException {
-		if (this.rc.isMovementActive()) {
+	private void attack() throws GameActionException {
+		if (rc.isAttackActive()) {
 			return;
 		}
-		this.rc.setDirection(this.currDir.rotateLeft().rotateLeft().rotateLeft());
+		boolean shouldAttack = false;
+		for (Robot r : dc.getNearbyRobots()) {
+			if (r.getTeam() != myTeam) {
+				shouldAttack = true;
+			} else {
+				// ally unit in range, don't attack
+				return;
+			}
+		}
+		if (shouldAttack) {
+			rc.attackSquare(null, null);
+		}
 	}
 
 }
