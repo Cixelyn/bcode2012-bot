@@ -20,7 +20,7 @@ public abstract class BaseRobot {
 	public MapLocation currLoc, currLocInFront, currLocInBack;
 	public Direction currDir;
 
-	public int spawnRound;
+	public final int spawnRound;
 	public int currRound;
 	
 	public RobotState currState;
