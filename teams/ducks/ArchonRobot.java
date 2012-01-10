@@ -107,8 +107,7 @@ public class ArchonRobot extends BaseRobot {
 				if (this.currFlux < MIN_ARCHON_FLUX) {
 					break;
 				}
-				GameObject obj = this.dc.getAdjacentGameObject(
-						d, RobotLevel.ON_GROUND);
+				GameObject obj = this.dc.getAdjacentGameObject(d, level);
 				if (obj instanceof Robot && obj.getTeam() == this.myTeam) {
 					// TODO(jven): data cache this?
 					RobotInfo rInfo = this.rc.senseRobotInfo((Robot)obj);
@@ -147,7 +146,7 @@ public class ArchonRobot extends BaseRobot {
 	}
 	
 	private RobotType getSpawnType() {
-		double p = (Math.random() * this.currRound);
+		double p = (Math.random() * this.currRound * this.rc.getRobot().getID());
 		p = p - (int)p;
 		if (p < 0.3) {
 			return RobotType.SOLDIER;
