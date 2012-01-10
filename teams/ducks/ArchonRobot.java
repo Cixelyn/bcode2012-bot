@@ -24,8 +24,6 @@ public class ArchonRobot extends BaseRobot {
 	}
 
 	public void run() throws GameActionException{
-		this.rc.setIndicatorString(0, "" + this.currState);
-		this.rc.setIndicatorString(1, "I want to spawn a " + this.unitToSpawn);
 		switch (this.currState) {
 			case EXPLORE:
 				this.explore();
@@ -94,7 +92,6 @@ public class ArchonRobot extends BaseRobot {
 				return;
 			}
 		}
-		this.rc.setIndicatorString(2, "AHHH");
 	}
 	
 	private void distributeFlux() throws GameActionException {
