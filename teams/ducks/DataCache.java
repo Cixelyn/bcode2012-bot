@@ -7,6 +7,14 @@ public class DataCache {
 	RobotController rc;
 	MapLocation[] alliedArchons;
 	int alliedArchonsTime = -1;
+	
+	boolean[] isAdjacentGameObjectGroundCached;
+	boolean[] isAdjacentGameObjectAirCached;
+	GameObject[] adjacentGameObjectsGround =
+			new GameObject[Direction.values().length];
+	GameObject[] adjacentGameObjectsAir =
+			new GameObject[Direction.values().length];
+	int adjacentGameObjectsTime = -1;
 
 	
 	public DataCache(RobotController myRC) {
@@ -24,5 +32,39 @@ public class DataCache {
 		
 	}
 	
+	public GameObject getAdjacentGameObject(
+			Direction d, RobotLevel level) throws GameActionException {
+		int currRoundNum = Clock.getRoundNum();
+		if (currRoundNum > adjacentGameObjectsTime) {
+			isAdjacentGameObjectGroundCached =
+					new boolean[Direction.values().length];
+			isAdjacentGameObjectAirCached =
+					new boolean[Direction.values().length];
+			adjacentGameObjectsTime = currRoundNum;
+		}
+		if (level == RobotLevel.ON_GROUND) {
+			if (isAdjacentGameObjectGroundCached[d.ordinal()]) {
+				return adjacentGameObjectsGround[d.ordinal()];
+			} else {
+				GameObject obj = this.rc.senseObjectAtLocation(
+						this.rc.getLocation().add(d), level);
+				adjacentGameObjectsGround[d.ordinal()] = obj;
+				isAdjacentGameObjectGroundCached[d.ordinal()] = true;
+				return obj;
+			}
+		} else if (level == RobotLevel.IN_AIR){
+			if (isAdjacentGameObjectAirCached[d.ordinal()]) {
+				return adjacentGameObjectsAir[d.ordinal()];
+			} else {
+				GameObject obj = this.rc.senseObjectAtLocation(
+						this.rc.getLocation().add(d), level);
+				adjacentGameObjectsAir[d.ordinal()] = obj;
+				isAdjacentGameObjectAirCached[d.ordinal()] = true;
+				return obj;
+			}
+		} else {
+			return null;
+		}
+	}
 	
 }
