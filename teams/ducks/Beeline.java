@@ -6,11 +6,13 @@ import battlecode.common.MapLocation;
 
 public class Beeline extends Navigation {
 	
-	private final int minDistance;
+	private final int targetDistance;
+	private final boolean moveBackwards;
 
-	public Beeline(BaseRobot myBR, int distance) {
+	public Beeline(BaseRobot myBR, int targetDistance, boolean moveBackwards) {
 		super(myBR);
-		minDistance = distance;
+		this.targetDistance = targetDistance;
+		this.moveBackwards = moveBackwards;
 	}
 	
 	public void navigateTo(MapLocation target) throws GameActionException {
@@ -24,8 +26,8 @@ public class Beeline extends Navigation {
 		}
 		if (br.currDir != dir) {
 			rc.setDirection(dir);
-		} else if (distance < minDistance) {
-			if (rc.canMove(br.currDir.opposite())) {
+		} else if (distance < targetDistance) {
+			if (moveBackwards && rc.canMove(br.currDir.opposite())) {
 				rc.moveBackward();
 			}
 		} else {
