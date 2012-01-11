@@ -44,9 +44,6 @@ public abstract class BaseRobot {
 	
 	public void loop() {
 		while(true) {
-			
-			// print out state of robot
-			rc.setIndicatorString(0, "" + myType + " - " + currState);
 	
 			// Useful Statistics
 			currEnergon = rc.getEnergon();
@@ -59,9 +56,14 @@ public abstract class BaseRobot {
 			
 			currRound = Clock.getRoundNum();
 			
+			// show state of robot
+			rc.setIndicatorString(0, "" + myType + " - " + currState);
+			// show location of robot
+			rc.setIndicatorString(1, "Location: " + currLoc);
+			
 			// Main Radio Receive Call
 			try {
-				io.receive();
+				//io.receive();
 			} catch(Exception e) {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());

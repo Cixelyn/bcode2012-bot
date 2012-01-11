@@ -1,26 +1,53 @@
 package ducks;
 
 import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
+import battlecode.common.Message;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 
 public class SoldierRobot extends BaseRobot {
+	
+	private BlindBug bugNav;
+	private Beeline beeNav;
+	private MapLocation target;
+	private int targetPriority = -1;
 
 	public SoldierRobot(RobotController myRC) {
 		super(myRC);
-		nv = new Beeline(this, myType.attackRadiusMaxSquared);
-		currState = RobotState.DIZZY;
-		io.setAddresses(new String[]{"#s"});
+		bugNav = new BlindBug(this);
+		beeNav = new Beeline(this, myType.attackRadiusMaxSquared);
+		nv = bugNav;
+		currState = RobotState.RUSH;
+		io.setAddresses(new String[] {"#x"});
 	}
 
 	@Override
 	public void run() throws GameActionException {
+		// show target
+		rc.setIndicatorString(
+				2, "Target: " + target + ", priority " + targetPriority);
+		// TODO(jven): use processMessage
+		for (Message m : rc.getAllMessages()) {
+			if (m.strings != null && m.strings.length == 1 &&
+					m.strings[0] == "sup" && m.ints != null && m.ints.length == 2 &&
+					m.ints[1] > targetPriority) {
+				target = m.locations[0];
+				targetPriority = m.ints[1];
+			}
+		}
+		// power down if not enough flux
+		if (currFlux < Constants.POWER_DOWN_FLUX) {
+			return;
+		}
 		switch (currState) {
-			case DIZZY:
-				dizzy();
+			case RUSH:
+				nv = bugNav;
+				rush();
 				break;
 			case MICRO:
+				nv = beeNav;
 				micro();
 				break;
 			default:
@@ -30,22 +57,23 @@ public class SoldierRobot extends BaseRobot {
 	
 	@Override
 	public void processMessage(char msgType, StringBuilder sb) {
-		
-		System.out.println(sb.toString());
-		System.out.println(msgType);
-		
 		switch(msgType) {
-		case '0':
-			rc.setIndicatorString(2, Radio.decodeMapLoc(sb).toString());
-			break;
-		default:
-			super.processMessage(msgType, sb);
+			case 'r':
+				// TODO(jven): get these from message
+				MapLocation msgTarget = null;
+				int msgTargetPriority = -1;
+				if (msgTargetPriority > targetPriority) {
+					target = msgTarget;
+					targetPriority = msgTargetPriority;
+				}
+				break;
+			default:
+				super.processMessage(msgType, sb);
 		}
-		
 	}
 	
-	private void dizzy() throws GameActionException {
-		// if enemy in range, micro... spin otherwise
+	private void rush() throws GameActionException {
+		// see if enemy is in range
 		boolean enemySighted = false;
 		for (Robot r : dc.getNearbyRobots()) {
 			// TODO(jven): consider towers not adjacent to one of ours
@@ -54,10 +82,12 @@ public class SoldierRobot extends BaseRobot {
 				break;
 			}
 		}
+		// if enemy in range, micro... rush otherwise
 		if (enemySighted) {
 			currState = RobotState.MICRO;
-		} else if (!rc.isMovementActive()) {
-			rc.setDirection(currDir.rotateLeft().rotateLeft().rotateLeft());
+		} else if (target != null) {
+			// TODO(jven): ensure this is non-null elsewhere?
+			nv.navigateTo(target);
 		}
 	}
 	
@@ -77,7 +107,7 @@ public class SoldierRobot extends BaseRobot {
 		}
 		// change state and return if no enemy in sight
 		if (closestEnemy == null) {
-			currState = RobotState.DIZZY;
+			currState = RobotState.RUSH;
 			return;
 		}
 		// shoot if possible

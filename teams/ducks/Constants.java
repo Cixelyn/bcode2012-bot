@@ -27,7 +27,7 @@ public final class Constants {
 	// to regen.
 	public static final int MIN_DAMAGED_UNITS_TO_REGEN = 1;
 	// Archons try to stay at this range from enemy units.
-	public static final int ARCHON_SAFETY_RANGE = 25;
+	public static final int ARCHON_SAFETY_RANGE = 32;
 	// Secret keys for use in messaging system, one for each team.
 	public static final int[] RADIO_TEAM_KEYS = new int[] {5555, 1729};
 }
