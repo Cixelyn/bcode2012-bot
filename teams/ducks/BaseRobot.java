@@ -6,6 +6,7 @@ public abstract class BaseRobot {
 	
 	final RobotController rc;
 	final DataCache dc;
+	final Radio io;
 	
 	
 	// Robot Stats
@@ -13,6 +14,7 @@ public abstract class BaseRobot {
 	final Team myTeam;
 	final double myMaxEnergon;
 	final double myMaxFlux;
+	final Team myTeam;
 
 	
 	public double currEnergon;
@@ -37,11 +39,13 @@ public abstract class BaseRobot {
 	public BaseRobot(RobotController myRC) {
 		this.rc = myRC;
 		this.dc = new DataCache(this);
+		this.io = new Radio(this);
 		
 		myType = this.rc.getType();
 		myTeam = this.rc.getTeam();
 		myMaxEnergon = this.myType.maxEnergon;
 		myMaxFlux = this.myType.maxFlux;
+		myTeam = this.rc.getTeam();
 		
 		spawnRound = Clock.getRoundNum();
 		
@@ -51,7 +55,8 @@ public abstract class BaseRobot {
 	
 	public void loop() {
 		while(true) {
-		
+	
+			// Useful Statistics
 			currEnergon = rc.getEnergon();
 			currFlux = rc.getFlux();
 			currLoc = rc.getLocation();
@@ -63,20 +68,41 @@ public abstract class BaseRobot {
 			currRound = Clock.getRoundNum();
 			
 			// power down if not enough flux
-			if (rc.getFlux() <= POWER_DOWN_FLUX) {
-				this.rc.setIndicatorString(0, "POWERING DOWN");
-			} else {
-				this.rc.setIndicatorString(0, "" + this.myType + " - " + this.currState);
+			// Main Radio Receive Call
+			try {
+				io.receive();
+			} catch(Exception e) {
+				e.printStackTrace();
+				rc.addMatchObservation(e.toString());
+			}
+			
+		
+			// Main Run Call
 				try{
 					run();
 				} catch (Exception e) {
 					e.printStackTrace();
+				rc.addMatchObservation(e.toString());
 				}
 			}
 			
+			// Broadcast Queued Messages
+			try {
+				io.sendAll();
+			} catch (Exception e) {
+				e.printStackTrace();
+				rc.addMatchObservation(e.toString());
+			}
+			
+		
+			// End of Turn
 			rc.yield();
 			
 		}
+	}
+
+	public void processMessage(StringBuilder sb) {
+		
 	}
 	
 	public MapLocation bugTarget;
