@@ -13,6 +13,7 @@ public class SoldierRobot extends BaseRobot {
 	public SoldierRobot(RobotController myRC) {
 		super(myRC);
 		this.currState = RobotState.DIZZY;
+		this.io.setAddresses(new String[]{"#s"});
 	}
 
 	@Override
@@ -27,6 +28,22 @@ public class SoldierRobot extends BaseRobot {
 			default:
 				break;
 		}
+	}
+	
+	@Override
+	public void processMessage(char msgType, StringBuilder sb) {
+		
+		System.out.println(sb.toString());
+		System.out.println(msgType);
+		
+		switch(msgType) {
+		case '0':
+			this.rc.setIndicatorString(2, Radio.decodeMapLoc(sb).toString());
+			break;
+		default:
+			super.processMessage(msgType, sb);
+		}
+		
 	}
 	
 	private void dizzy() throws GameActionException {

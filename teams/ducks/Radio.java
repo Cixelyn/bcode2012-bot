@@ -23,9 +23,9 @@ public class Radio {
 
 	/**
 	 * Set the addresses a robot should listen for.
-	 * Addresses are two characters in the form of ^x,
-	 * where the ^ is invariable, and the x can be any
-	 * string which you wishto listen on
+	 * Addresses are two characters in the form of #x,
+	 * where the # is invariable, and the x can be any
+	 * string which you wish to listen on
 	 * @param addrs
 	 */
 	public void setAddresses(String[] addrs) {
@@ -36,7 +36,7 @@ public class Radio {
 	/**
 	 * Queue an integer for broadcasting.
 	 * Headers are an address followed by a message type
-	 * eg: ^xy, where the address to send it to is ^x and the
+	 * eg: #xy, where the address to send it to is ^x and the
 	 * type of the message is y.
 	 * @param header
 	 * @param data
@@ -46,8 +46,8 @@ public class Radio {
 		msgContainer.append((char) data + 0x100);
 	}
 	
-	public int decodeInt(StringBuilder s) {
-		return s.charAt(3) - 0x100;
+	public static int decodeInt(StringBuilder s) {
+		return s.charAt(0) - 0x100;
 	}
 	
 	
@@ -59,14 +59,14 @@ public class Radio {
 	 */
 	public void sendMapLoc(String header, MapLocation loc) {
 		msgContainer.append(header);
-		msgContainer.append((char) loc.x);
-		msgContainer.append((char) loc.y);
+		msgContainer.append((char) (loc.x + 0x100));
+		msgContainer.append((char) (loc.y + 0x100));
 	}
 	
-	public MapLocation decodeMapLoc(StringBuilder s) {
+	public static MapLocation decodeMapLoc(StringBuilder s) {
 		return new MapLocation(
-			s.charAt(3) - 0x100,
-			s.charAt(4) - 0x100
+			s.charAt(0) - 0x100,
+			s.charAt(1) - 0x100
 		);
 	}
 	
@@ -81,11 +81,11 @@ public class Radio {
 		msgContainer.append(header);
 		
 		for (MapLocation l : locs) {
-			msgContainer.append((char) l.x + 0x100);
-			msgContainer.append((char) l.y + 0x100);
+			msgContainer.append((char)( l.x + 0x100));
+			msgContainer.append((char)( l.y + 0x100));
 		}
 		
-		msgContainer.append("#");
+		msgContainer.append("!");
 	}
 	
 	
@@ -93,15 +93,15 @@ public class Radio {
 	public static MapLocation[] decodeMapLocs(StringBuilder s) {
 		
 		// calc number of locations
-		int end = s.indexOf("#");
+		int end = s.indexOf("!");
 		
 		int num = (end-3)/2;
 		MapLocation[] locs = new MapLocation[num];
 	
 		for (int i=0; i < num; i++) {
 			locs[i] = new MapLocation(
-					s.charAt(i*2+3) - 0x100,
-					s.charAt(i*2+4) - 0x100
+					s.charAt(i*2) - 0x100,
+					s.charAt(i*2) - 0x100
 					);
 		}
 		return locs;
@@ -161,11 +161,12 @@ public class Radio {
 			StringBuilder sb = new StringBuilder();
 			for (Message m: br.rc.getAllMessages()) {
 				
+				
 				// validity check
 				if(m.ints == null || m.ints.length != 2 ) continue;
 				if(m.strings == null || m.strings.length != 1 ) continue;
 				if(m.locations != null) continue;
-			
+				
 				// team check
 				if(m.ints[0] != teamkey) continue;
 				
@@ -181,8 +182,10 @@ public class Radio {
 			int i=0;
 			for(String addr: listenAddrs) {
 			    while((i = sb.indexOf(addr, i)) != -1) {
-			        br.processMessage(new StringBuilder(
-			        	sb.substring(i + addr.length())));
+			        br.processMessage(
+			        	sb.charAt(i+addr.length()),
+			        	new StringBuilder(sb.substring(i + addr.length() + 1))
+			        );
 			        i++;
 			    }	
 			}

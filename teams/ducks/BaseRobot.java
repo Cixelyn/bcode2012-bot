@@ -98,9 +98,7 @@ public abstract class BaseRobot {
 		}
 	}
 
-	public void processMessage(StringBuilder sb) {
-		
-	}
+	public void processMessage(char msgType, StringBuilder sb) {}
 	
 	public MapLocation bugTarget;
 	public MapLocation bugStart;
