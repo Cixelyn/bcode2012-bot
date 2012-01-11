@@ -660,7 +660,7 @@ class Archon implements Runnable {
 				rc.yield();
 				rc.setIndicatorString(2, "no add");
 				
-				if (nodes[nodeindex]==null) //reset
+				if (nodes[nodeindex]==null || nodeindex==nodesize) //reset
 				{
 					nodeindex = 0;
 					nodesize = 1;
