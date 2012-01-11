@@ -6,6 +6,7 @@ import battlecode.common.GameConstants;
 import battlecode.common.GameObject;
 import battlecode.common.MapLocation;
 import battlecode.common.Message;
+import battlecode.common.PowerNode;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
@@ -29,7 +30,7 @@ public class ArchonRobot extends BaseRobot {
 		nv = bugNav;
 		currState = RobotState.RUSH;
 		unitToSpawn = getSpawnType();
-		bearing = Direction.EAST;
+		bearing = Constants.INITIAL_BEARING;
 		timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		io.setAddresses(new String[] {"#x"});
 	}
@@ -92,6 +93,10 @@ public class ArchonRobot extends BaseRobot {
 		// scan for enemies
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {
+				RobotInfo rInfo = rc.senseRobotInfo(r);
+				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
+					continue;
+				}
 				currState = RobotState.CHASE;
 				return;
 			}
@@ -132,8 +137,10 @@ public class ArchonRobot extends BaseRobot {
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {
 				RobotInfo rInfo = rc.senseRobotInfo(r);
+				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
+					continue;
+				}
 				int distance = currLoc.distanceSquaredTo(rInfo.location);
-				// TODO(jven): towers?
 				if (distance < closestDistance) {
 					closestEnemy = rInfo;
 					closestDistance = distance;
@@ -337,5 +344,23 @@ public class ArchonRobot extends BaseRobot {
 		} else {
 			return RobotType.SCOUT;
 		}
+	}
+	
+	private boolean isTowerTargetable(
+			RobotInfo tower) throws GameActionException {
+		// don't shoot at enemy towers not connected to one of ours
+		PowerNode pn = (PowerNode)rc.senseObjectAtLocation(
+				tower.location, RobotLevel.POWER_NODE);
+		if (pn == null) {
+			return false;
+		}
+		for (PowerNode myPN : dc.getAlliedPowerNodes()) {
+			for (MapLocation loc : pn.neighbors()) {
+				if (myPN.getLocation() == loc) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

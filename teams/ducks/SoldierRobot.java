@@ -1,11 +1,15 @@
 package ducks;
 
 import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Message;
+import battlecode.common.PowerNode;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
+import battlecode.common.RobotType;
 
 public class SoldierRobot extends BaseRobot {
 	
@@ -19,6 +23,8 @@ public class SoldierRobot extends BaseRobot {
 		bugNav = new BlindBug(this);
 		beeNav = new Beeline(this, myType.attackRadiusMaxSquared);
 		nv = bugNav;
+		target = myRC.getLocation().add(Constants.INITIAL_BEARING,
+				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH);
 		currState = RobotState.RUSH;
 		io.setAddresses(new String[] {"#x"});
 	}
@@ -73,22 +79,19 @@ public class SoldierRobot extends BaseRobot {
 	}
 	
 	private void rush() throws GameActionException {
-		// see if enemy is in range
-		boolean enemySighted = false;
+		// if enemy is in range, micro
 		for (Robot r : dc.getNearbyRobots()) {
-			// TODO(jven): consider towers not adjacent to one of ours
 			if (r.getTeam() != myTeam) {
-				enemySighted = true;
-				break;
+				RobotInfo rInfo = rc.senseRobotInfo(r);
+				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
+					continue;
+				}
+				currState = RobotState.MICRO;
+				return;
 			}
 		}
-		// if enemy in range, micro... rush otherwise
-		if (enemySighted) {
-			currState = RobotState.MICRO;
-		} else if (target != null) {
-			// TODO(jven): ensure this is non-null elsewhere?
-			nv.navigateTo(target);
-		}
+		// otherwise, rush
+		nv.navigateTo(target);
 	}
 	
 	private void micro() throws GameActionException {
@@ -96,8 +99,10 @@ public class SoldierRobot extends BaseRobot {
 		RobotInfo closestEnemy = null;
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {
-				// TODO(jven): don't shoot at towers not adjacent to one of ours
 				RobotInfo rInfo = rc.senseRobotInfo(r);
+				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
+					continue;
+				}
 				int distance = currLoc.distanceSquaredTo(rInfo.location);
 				if (distance < closestDistance) {
 					closestDistance = distance;
@@ -119,4 +124,21 @@ public class SoldierRobot extends BaseRobot {
 		nv.navigateTo(closestEnemy.location);
 	}
 
+	private boolean isTowerTargetable(
+			RobotInfo tower) throws GameActionException {
+		// don't shoot at enemy towers not connected to one of ours
+		PowerNode pn = (PowerNode)rc.senseObjectAtLocation(
+				tower.location, RobotLevel.POWER_NODE);
+		if (pn == null) {
+			return false;
+		}
+		for (PowerNode myPN : dc.getAlliedPowerNodes()) {
+			for (MapLocation loc : pn.neighbors()) {
+				if (myPN.getLocation() == loc) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }
