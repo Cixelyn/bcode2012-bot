@@ -11,7 +11,6 @@ public abstract class BaseRobot {
 	
 	// Robot Stats
 	final RobotType myType;
-	final Team myTeam;
 	final double myMaxEnergon;
 	final double myMaxFlux;
 	final Team myTeam;
@@ -45,7 +44,6 @@ public abstract class BaseRobot {
 		myTeam = this.rc.getTeam();
 		myMaxEnergon = this.myType.maxEnergon;
 		myMaxFlux = this.myType.maxFlux;
-		myTeam = this.rc.getTeam();
 		
 		spawnRound = Clock.getRoundNum();
 		
@@ -67,7 +65,6 @@ public abstract class BaseRobot {
 			
 			currRound = Clock.getRoundNum();
 			
-			// power down if not enough flux
 			// Main Radio Receive Call
 			try {
 				io.receive();
@@ -78,13 +75,13 @@ public abstract class BaseRobot {
 			
 		
 			// Main Run Call
-				try{
-					run();
-				} catch (Exception e) {
-					e.printStackTrace();
+			try{
+				run();
+			} catch (Exception e) {
+				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
-				}
 			}
+				
 			
 			// Broadcast Queued Messages
 			try {
