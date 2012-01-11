@@ -17,8 +17,6 @@ import battlecode.common.TerrainTile;
 public class ArchonRobot extends BaseRobot {
 	
 	RobotType unitToSpawn;
-	
-	int timeUntilBroadcast = BROADCAST_FREQUENCY;
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
@@ -69,7 +67,8 @@ public class ArchonRobot extends BaseRobot {
 		if (adjacentPowerCore != null) {
 			currState = RobotState.BUILD_TOWER;
 			return;
-		} else if (this.currFlux > this.unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
+		} else if (
+				this.currFlux > this.unitToSpawn.spawnCost + Constants.MIN_UNIT_FLUX) {
 			// make units if we have enough flux
 			this.currState = RobotState.SPAWN_UNIT;
 		}
@@ -104,7 +103,7 @@ public class ArchonRobot extends BaseRobot {
 	
 	private void spawnUnit() throws GameActionException {
 		// check if we have enough flux
-		if (currFlux < unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
+		if (currFlux < unitToSpawn.spawnCost + Constants.MIN_UNIT_FLUX) {
 			currState = RobotState.EXPLORE;
 			return;
 		}
@@ -211,16 +210,17 @@ public class ArchonRobot extends BaseRobot {
 				if (d == Direction.OMNI && level == RobotLevel.IN_AIR) {
 					continue;
 				}
-				if (this.currFlux < MIN_ARCHON_FLUX) {
+				if (this.currFlux < Constants.MIN_ARCHON_FLUX) {
 					break;
 				}
 				GameObject obj = this.dc.getAdjacentGameObject(d, level);
 				if (obj instanceof Robot && obj.getTeam() == this.myTeam) {
 					// TODO(jven): data cache this?
 					RobotInfo rInfo = this.rc.senseRobotInfo((Robot)obj);
-					if (rInfo.flux < MIN_UNIT_FLUX) {
+					if (rInfo.flux < Constants.MIN_UNIT_FLUX) {
 						double fluxToTransfer = Math.min(
-								MIN_UNIT_FLUX - rInfo.flux, currFlux - MIN_ARCHON_FLUX);
+								Constants.MIN_UNIT_FLUX - rInfo.flux,
+								currFlux - Constants.MIN_ARCHON_FLUX);
 						if (fluxToTransfer > 0) {
 							this.rc.transferFlux(
 									rInfo.location,
@@ -237,14 +237,10 @@ public class ArchonRobot extends BaseRobot {
 	private RobotType getSpawnType() {
 		double p = (Math.random() * this.currRound * this.rc.getRobot().getID());
 		p = p - (int)p;
-		if (p < 0.3) {
+		if (p < 0.7) {
 			return RobotType.SOLDIER;
-		} else if (p < 0.6) {
-			return RobotType.SCOUT;
-		} else if (p < 0.8) {
-			return RobotType.DISRUPTER;
 		} else {
-			return RobotType.SCORCHER;
+			return RobotType.SCOUT;
 		}
 	}
 	

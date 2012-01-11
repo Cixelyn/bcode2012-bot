@@ -73,6 +73,6 @@ public class ScoutRobot extends BaseRobot {
 				}
 			}
 		}
-		return damagedUnits >= MIN_DAMAGED_UNITS_TO_REGEN;
+		return damagedUnits >= Constants.MIN_DAMAGED_UNITS_TO_REGEN;
 	}
 }

@@ -25,15 +25,6 @@ public abstract class BaseRobot {
 	
 	public RobotState currState;
 	
-	// TODO(jven): put me in constants
-	final double MIN_ARCHON_FLUX = 0.2;
-	final double MIN_UNIT_FLUX = 20;
-	final double POWER_DOWN_FLUX = 1;
-	final int BROADCAST_FREQUENCY = 5;
-	final int MIN_DAMAGED_UNITS_TO_REGEN = 1;
-	
-	
-	
 	public BaseRobot(RobotController myRC) {
 		this.rc = myRC;
 		this.dc = new DataCache(this);
@@ -63,7 +54,7 @@ public abstract class BaseRobot {
 			currRound = Clock.getRoundNum();
 			
 			// power down if not enough flux
-			if (rc.getFlux() <= POWER_DOWN_FLUX) {
+			if (rc.getFlux() <= Constants.POWER_DOWN_FLUX) {
 				this.rc.setIndicatorString(0, "POWERING DOWN");
 			} else {
 				this.rc.setIndicatorString(0, "" + this.myType + " - " + this.currState);
