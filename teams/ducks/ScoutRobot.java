@@ -1,6 +1,5 @@
 package ducks;
 
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
@@ -8,13 +7,11 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 
 public class ScoutRobot extends BaseRobot {
-	
-	public MapLocation target;
 
 	public ScoutRobot(RobotController myRC) {
 		super(myRC);
-		this.currState = RobotState.FOLLOW;
-		this.target = rc.getLocation().add(-20, -50);
+		nv = new Beeline(this, 0);
+		currState = RobotState.FOLLOW;
 	}
 
 	@Override
@@ -45,18 +42,8 @@ public class ScoutRobot extends BaseRobot {
 				closestArchon = archon;
 			}
 		}
-		this.target = closestArchon;
 		// go to target
-		Direction dir = currLoc.directionTo(target);
-		if (dir == Direction.OMNI) {
-			return;
-		} else if (currDir == dir) {
-			if (rc.canMove(currDir)) {
-				rc.moveForward();
-			}
-		} else {
-			rc.setDirection(dir);
-		}
+		nv.navigateTo(closestArchon);
 		// regenerate if necessary
 		if (shouldRegenerate()) {
 			rc.regenerate();
