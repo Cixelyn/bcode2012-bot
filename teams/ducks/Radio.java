@@ -73,6 +73,39 @@ public class Radio {
 	
 
 	/**
+	 * Send a variable-sized array of 16-bit integers.
+	 * Make sure each element in the array is LESS THAN 32000,
+	 * otherwise deserialization will fail
+	 * @param header - "#[addr][type]"
+	 * @param ints - array of 16-bit ints
+	 * @see Radio#sendInt(String, int) sendInt
+	 */
+	public void sendInts(String header, int[] ints) {
+		msgContainer.append(header);
+		for (int i : ints) {
+			msgContainer.append((char)( i + 0x100));
+		}
+		msgContainer.append('!');
+	}
+
+	/**
+	 * Decodes the next 16-bit integer array in the message
+	 * @param msg - the message
+	 * @return deserialized array
+	 */
+	public static int[] decodeInts(StringBuilder msg) {
+		int end = msg.indexOf("!");
+		int[] ints = new int[end];
+		
+		for(int i=0; i < end; i++ ) {
+			ints[i] = msg.charAt(i) - 0x100;
+		}
+		return ints;
+	}
+	
+	
+
+	/**
 	 * Queue a list of integers
 	 * @param header
 	 * @param locs
@@ -86,25 +119,27 @@ public class Radio {
 			msgContainer.append((char)( l.y + 0x100));
 		}
 		
-		msgContainer.append("!");
+		msgContainer.append('!');
 	}
 	
 	
-	
-	public static MapLocation[] decodeMapLocs(StringBuilder s) {
+	/**
+	 * Untested code. Ping Cory if you're trying to use it
+	 * @param msg
+	 * @return
+	 */
+	public static MapLocation[] decodeMapLocs(StringBuilder msg) {
 		
 		// calc number of locations
-		int end = s.indexOf("!");
-		System.out.println(s);
-		System.out.println(end);
+		int end = msg.indexOf("!");
 		
-		int num = (end-3)/2;
+		int num = end/2;
 		MapLocation[] locs = new MapLocation[num];
 	
 		for (int i=0; i < num; i++) {
 			locs[i] = new MapLocation(
-					s.charAt(i*2) - 0x100,
-					s.charAt(i*2) - 0x100
+					msg.charAt(i*2  ) - 0x100,
+					msg.charAt(i*2+1) - 0x100
 					);
 		}
 		return locs;
