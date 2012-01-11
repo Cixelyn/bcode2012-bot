@@ -41,17 +41,13 @@ public class DataCache {
 		this.br = br;
 		this.rc = br.rc;
 	}
-
 	
 	public MapLocation[] getAlliedArchons() {
-		
 		if(br.currRound > alliedArchonsTime) {
 			alliedArchons = rc.senseAlliedArchons();
 			alliedArchonsTime = br.currRound;
 		}
-		
 		return alliedArchons;
-		
 	}
 	
 	public boolean[] getMovableDirections()
