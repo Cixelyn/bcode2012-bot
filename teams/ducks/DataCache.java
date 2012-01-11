@@ -24,6 +24,9 @@ public class DataCache {
 	Robot[] nearbyRobots;
 	int nearbyRobotsTime = -1;
 	
+	MapLocation[] capturablePowerCores;
+	int capturablePowerCoresTime = -1;
+	
 	public DataCache(RobotController myRC) {
 		this.rc = myRC;
 	}
@@ -104,4 +107,15 @@ public class DataCache {
 		return nearbyRobots;
 	}
 	
+	public MapLocation[] getCapturablePowerCores() {
+		int currRoundNum = Clock.getRoundNum();
+		if (currRoundNum > capturablePowerCoresTime) {
+			capturablePowerCores = null;
+			capturablePowerCoresTime = currRoundNum;
+		}
+		if (capturablePowerCores == null) {
+			capturablePowerCores = rc.senseCapturablePowerNodes();
+		}
+		return capturablePowerCores;
+	}
 }

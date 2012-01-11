@@ -80,10 +80,6 @@ public class SoldierRobot extends BaseRobot {
 				if (rc.canMove(currDir.opposite())) {
 					rc.moveBackward();
 				}
-			} else {
-				if (rc.canMove(currDir)) {
-					rc.moveForward();
-				}
 			}
 		}
 	}

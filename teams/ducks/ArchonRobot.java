@@ -32,6 +32,9 @@ public class ArchonRobot extends BaseRobot {
 			case SPAWN_UNIT:
 				spawnUnit();
 				break;
+			case BUILD_TOWER:
+				buildTower();
+				break;
 			default:
 				break;
 		}
@@ -48,28 +51,46 @@ public class ArchonRobot extends BaseRobot {
 		}
 		// distribute flux
 		this.distributeFlux();
-		// if we have enough flux, spawn unit
-		if (this.currFlux > this.unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
+		// check for adjacent towers
+		// TODO(jven): use sensor and nav to towers
+		MapLocation adjacentPowerCore = null;
+		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
+			if (currLoc.distanceSquaredTo(powerCore) <= 2) {
+				adjacentPowerCore = powerCore;
+				break;
+			}
+		}
+		if (adjacentPowerCore != null) {
+			currState = RobotState.BUILD_TOWER;
+			return;
+		} else if (this.currFlux > this.unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
+			// make units if we have enough flux
 			this.currState = RobotState.SPAWN_UNIT;
 		}
 	}
 	
 	private void spawnUnit() throws GameActionException {
-		if (this.rc.isMovementActive()) {
+		// check if we have enough flux
+		if (currFlux < unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
+			currState = RobotState.EXPLORE;
+			return;
+		}
+		// wait if movement is active
+		if (rc.isMovementActive()) {
 			return;
 		}
 		// see if i can make the unit in front of me
-		TerrainTile tt = this.dc.getAdjacentTerrainTile(this.currDir);
+		TerrainTile tt = dc.getAdjacentTerrainTile(currDir);
 		if (tt != TerrainTile.OFF_MAP &&
-				!(this.unitToSpawn.level == RobotLevel.ON_GROUND &&
+				!(unitToSpawn.level == RobotLevel.ON_GROUND &&
 				tt == TerrainTile.VOID)) {
-			GameObject obj = this.dc.getAdjacentGameObject(
-					this.currDir, this.unitToSpawn.level);
+			GameObject obj = dc.getAdjacentGameObject(
+					currDir, unitToSpawn.level);
 			if (obj == null) {
 				// spawn unit, set spawn type
-				this.rc.spawn(this.unitToSpawn);
-				this.unitToSpawn = this.getSpawnType();
-				this.currState = RobotState.EXPLORE;
+				rc.spawn(unitToSpawn);
+				unitToSpawn = getSpawnType();
+				currState = RobotState.EXPLORE;
 				return;
 			}
 		}
@@ -89,6 +110,57 @@ public class ArchonRobot extends BaseRobot {
 			if (obj == null) {
 				this.rc.setDirection(d);
 				return;
+			}
+		}
+	}
+	
+	private void buildTower() throws GameActionException {
+		// make sure an untaken power core is next to me
+		MapLocation adjacentPowerCore = null;
+		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
+			if (currLoc.distanceSquaredTo(powerCore) <= 2) {
+				adjacentPowerCore = powerCore;
+				break;
+			}
+		}
+		if (adjacentPowerCore == null) {
+			currState = RobotState.EXPLORE;
+			return;
+		}
+		// wait until we have enough flux
+		if (currFlux < RobotType.TOWER.spawnCost) {
+			return;
+		}
+		// wait if movement is active
+		if (rc.isMovementActive()) {
+			return;
+		}
+		Direction dir = currLoc.directionTo(adjacentPowerCore);
+		// back up if on top of it
+		if (dir == Direction.OMNI) {
+			if (rc.canMove(currDir.opposite())) {
+				rc.moveBackward();
+			} else {
+				for (Direction d : Direction.values()) {
+					if (d == Direction.OMNI || d == Direction.NONE) {
+						continue;
+					}
+					// TODO(jven): dc
+					if (rc.canMove(d)) {
+						rc.setDirection(d.opposite());
+						break;
+					}
+				}
+			}
+		} else if (currDir != dir) {
+			// turn to power core if necessary, then spawn tower if possible
+			rc.setDirection(dir);
+		} else {
+			GameObject obj = dc.getAdjacentGameObject(
+					currDir, RobotType.TOWER.level);
+			if (obj == null) {
+				rc.spawn(RobotType.TOWER);
+				currState = RobotState.EXPLORE;
 			}
 		}
 	}

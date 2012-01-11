@@ -6,5 +6,6 @@ public enum RobotState {
 	DIZZY,
 	FOLLOW,
 	ATTACK_GROUND,
-	MICRO
+	MICRO,
+	BUILD_TOWER
 }
