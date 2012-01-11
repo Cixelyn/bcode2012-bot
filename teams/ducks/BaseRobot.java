@@ -26,15 +26,6 @@ public abstract class BaseRobot {
 	
 	public RobotState currState;
 	
-	// TODO(jven): put me in constants
-	final double MIN_ARCHON_FLUX = 0.2;
-	final double MIN_UNIT_FLUX = 20;
-	final double POWER_DOWN_FLUX = 1;
-	final int BROADCAST_FREQUENCY = 5;
-	final int MIN_DAMAGED_UNITS_TO_REGEN = 1;
-	
-	
-	
 	public BaseRobot(RobotController myRC) {
 		this.rc = myRC;
 		this.dc = new DataCache(this);
