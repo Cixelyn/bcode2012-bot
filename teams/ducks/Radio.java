@@ -95,6 +95,8 @@ public class Radio {
 		
 		// calc number of locations
 		int end = s.indexOf("!");
+		System.out.println(s);
+		System.out.println(end);
 		
 		int num = (end-3)/2;
 		MapLocation[] locs = new MapLocation[num];
