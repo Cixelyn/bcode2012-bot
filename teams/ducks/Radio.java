@@ -17,7 +17,8 @@ public class Radio {
 	public Radio(BaseRobot br) {
 		this.br = br;
 		listenAddrs = new String[]{};
-		teamkey = br.myTeam == Team.A ? 5555 : 1729;
+		teamkey = (br.myTeam == Team.A ?
+				Constants.RADIO_TEAM_KEYS[0] : Constants.RADIO_TEAM_KEYS[1]);
 		msgContainer = new StringBuilder();
 	}
 
