@@ -21,8 +21,9 @@ public final class Constants {
 	public static final double MIN_UNIT_FLUX = 20;
 	// Units below this amount of flux will not execute their run method.
 	public static final double POWER_DOWN_FLUX = 1;
-	// The frequency with which archons broadcast rally information.
-	public static final int ARCHON_BROADCAST_FREQUENCY = 5;
+	// The frequency with which units broadcast information.
+	public static final int ARCHON_BROADCAST_FREQUENCY = 4;
+	public static final int SOLDIER_BROADCAST_FREQUENCY = 30;
 	// The number of damaged units that a scout must have in range in order
 	// to regen.
 	public static final int MIN_DAMAGED_UNITS_TO_REGEN = 1;
