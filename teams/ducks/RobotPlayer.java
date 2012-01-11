@@ -4,40 +4,43 @@ import battlecode.common.RobotController;
 
 public class RobotPlayer {
 	public static void run(RobotController myRC) {
-		while (true) {
-			BaseRobot r = null;
-			
-			try {
-				switch (myRC.getType()) {
-				case ARCHON:
-					r = new ArchonRobot(myRC);
-					break;
-				case SOLDIER:
-					r = new SoldierRobot(myRC);
-					break;
-				case SCOUT:
-					r = new ScoutRobot(myRC);
-					break;
+		BaseRobot br = null;
+
+		try {
+			switch (myRC.getType()) {
+			case ARCHON:
+				br = new ArchonRobot(myRC);
+				break;
+			case SOLDIER:
+				br = new SoldierRobot(myRC);
+				break;
+			case SCOUT:
+				br = new ScoutRobot(myRC);
+				break;
 				case DISRUPTER:
 					r = new DisrupterRobot(myRC);
 					break;
 				case SCORCHER:
 					r = new ScorcherRobot(myRC);
 					break;
-				default:
-					break;
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
+			default:
+				break;
 			}
-			
+		} catch (Exception e) {
+			System.out.println("Initializtion Failed");
+			e.printStackTrace();
+			br.rc.addMatchObservation(e.toString());
+		}
+
+		//main loop should never terminate
+		while (true) {
 			try {
-				r.loop();
-				
+				br.loop();
 			} catch (Exception e) {
+				System.out.println("Main Loop Terminated Unexpectedly");
 				e.printStackTrace();
+				br.rc.addMatchObservation(e.toString());
 			}
-			
 		}
 
 	}
