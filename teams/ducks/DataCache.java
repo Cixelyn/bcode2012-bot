@@ -4,35 +4,38 @@ import battlecode.common.*;
 
 public class DataCache {
 	
-	BaseRobot br;
-	RobotController rc;
+	private BaseRobot br;
+	private RobotController rc;
 	
-	MapLocation[] alliedArchons;
-	int alliedArchonsTime = -1;
+	private MapLocation[] alliedArchons;
+	private int alliedArchonsTime = -1;
 
-	int moveableDirectionsTime = -1;
-	boolean[] moveableDirections = new boolean[8];
-	int moveableLandTime = -1;
-	boolean[] moveableLand = new boolean[8];
+	private int moveableDirectionsTime = -1;
+	private boolean[] moveableDirections = new boolean[8];
+	private int moveableLandTime = -1;
+	private boolean[] moveableLand = new boolean[8];
 	
-	boolean[] isAdjacentGameObjectGroundCached;
-	boolean[] isAdjacentGameObjectAirCached;
-	GameObject[] adjacentGameObjectsGround =
+	private boolean[] isAdjacentGameObjectGroundCached;
+	private boolean[] isAdjacentGameObjectAirCached;
+	private GameObject[] adjacentGameObjectsGround =
 			new GameObject[Direction.values().length];
-	GameObject[] adjacentGameObjectsAir =
+	private GameObject[] adjacentGameObjectsAir =
 			new GameObject[Direction.values().length];
-	int adjacentGameObjectsTime = -1;
+	private int adjacentGameObjectsTime = -1;
 	
-	boolean[] isAdjacentTerrainTileCached;
-	TerrainTile[] adjacentTerrainTiles =
+	private boolean[] isAdjacentTerrainTileCached;
+	private TerrainTile[] adjacentTerrainTiles =
 			new TerrainTile[Direction.values().length];
-	int adjacentTerrainTilesTime = -1;
+	private int adjacentTerrainTilesTime = -1;
 	
-	Robot[] nearbyRobots;
-	int nearbyRobotsTime = -1;
+	private Robot[] nearbyRobots;
+	private int nearbyRobotsTime = -1;
 	
-	MapLocation[] capturablePowerCores;
-	int capturablePowerCoresTime = -1;
+	private MapLocation[] capturablePowerCores;
+	private int capturablePowerCoresTime = -1;
+	
+	private PowerNode[] alliedPowerNodes;
+	private int alliedPowerNodesTime = -1;
 	
 	public DataCache(BaseRobot br) {
 		this.br = br;
@@ -157,5 +160,16 @@ public class DataCache {
 			capturablePowerCores = rc.senseCapturablePowerNodes();
 		}
 		return capturablePowerCores;
+	}
+	
+	public PowerNode[] getAlliedPowerNodes() {
+		if (br.currRound > alliedPowerNodesTime) {
+			alliedPowerNodes = null;
+			alliedPowerNodesTime = br.currRound;
+		}
+		if (alliedPowerNodes == null) {
+			alliedPowerNodes = rc.senseAlliedPowerNodes();
+		}
+		return alliedPowerNodes;
 	}
 }

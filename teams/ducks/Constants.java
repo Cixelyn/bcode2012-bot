@@ -30,4 +30,6 @@ public final class Constants {
 	public static final int ARCHON_SAFETY_RANGE = 32;
 	// Secret keys for use in messaging system, one for each team.
 	public static final int[] RADIO_TEAM_KEYS = new int[] {5555, 1729};
+	// Initial bearing for all robots
+	public static final Direction INITIAL_BEARING = Direction.EAST;
 }
