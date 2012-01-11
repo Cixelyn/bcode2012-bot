@@ -36,7 +36,7 @@ public class ScoutRobot extends BaseRobot {
 		}
 		// get closest archon
 		int closestDistance = (
-				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH);
+				GameConstants.MAP_MAX_HEIGHT * GameConstants.MAP_MAX_WIDTH);
 		MapLocation closestArchon = currLoc;
 		for (MapLocation archon : dc.getAlliedArchons()) {
 			int distance = currLoc.distanceSquaredTo(archon);
