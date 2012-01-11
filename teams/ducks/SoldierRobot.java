@@ -15,14 +15,16 @@ public class SoldierRobot extends BaseRobot {
 	
 	private BlindBug bugNav;
 	private Beeline beeNav;
+	private int timeUntilBroadcast;
 	private MapLocation target;
 	private int targetPriority = -1;
 
 	public SoldierRobot(RobotController myRC) {
 		super(myRC);
 		bugNav = new BlindBug(this);
-		beeNav = new Beeline(this, myType.attackRadiusMaxSquared);
+		beeNav = new Beeline(this, myType.attackRadiusMaxSquared, false);
 		nv = bugNav;
+		timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
 		target = myRC.getLocation().add(Constants.INITIAL_BEARING,
 				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH);
 		currState = RobotState.RUSH;
@@ -31,16 +33,22 @@ public class SoldierRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		// show target
-		rc.setIndicatorString(
-				2, "Target: " + target + ", priority " + targetPriority);
 		// TODO(jven): use processMessage
 		for (Message m : rc.getAllMessages()) {
-			if (m.strings != null && m.strings.length == 1 &&
-					m.strings[0] == "sup" && m.ints != null && m.ints.length == 2 &&
-					m.ints[1] > targetPriority) {
-				target = m.locations[0];
-				targetPriority = m.ints[1];
+			if (m.strings != null && m.strings.length == 1) {
+				if (m.strings[0] == "archon") {
+					if (m.ints[1] > targetPriority) {
+						target = m.locations[0];
+						targetPriority = m.ints[1];
+					}
+					for (int i = 2; i < m.ints.length; i++) {
+						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
+					}
+				} else if (m.strings[0] == "soldier") {
+					for (int i = 0; i < m.ints.length; i++) {
+						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
+					}
+				}
 			}
 		}
 		// power down if not enough flux
@@ -92,14 +100,25 @@ public class SoldierRobot extends BaseRobot {
 		}
 		// otherwise, rush
 		nv.navigateTo(target);
+		// broadcast message if necessary
+		if (--timeUntilBroadcast <= 0) {
+			sendSoldierMessage();
+			timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
+		}
 	}
 	
 	private void micro() throws GameActionException {
 		int closestDistance = Integer.MAX_VALUE;
 		RobotInfo closestEnemy = null;
+		// TODO(jven): prioritize archons?
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {
 				RobotInfo rInfo = rc.senseRobotInfo(r);
+				// don't overkill
+				if (rInfo.energon <= 0) {
+					continue;
+				}
+				// don't shoot at towers you can't hurt
 				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
 					continue;
 				}
@@ -119,9 +138,22 @@ public class SoldierRobot extends BaseRobot {
 		if (!rc.isAttackActive() && rc.canAttackSquare(closestEnemy.location)) {
 			rc.attackSquare(
 					closestEnemy.location, closestEnemy.robot.getRobotLevel());
+			if (closestEnemy.type == RobotType.ARCHON &&
+					closestEnemy.energon <= myType.attackPower) {
+				enemyArchonInfo.reportEnemyArchonKill(closestEnemy.robot.getID());
+			}
 		}
 		// dance if possible
 		nv.navigateTo(closestEnemy.location);
+	}
+	
+	private void sendSoldierMessage() throws GameActionException {
+		String header = "#xs";
+		//io.sendInt(header, numEnemyArchons);
+		Message m = new Message();
+		m.ints = enemyArchonInfo.getDeadEnemyArchonIDs();
+		m.strings = new String[] {"soldier"};
+		rc.broadcast(m);
 	}
 
 	private boolean isTowerTargetable(

@@ -26,7 +26,7 @@ public class ArchonRobot extends BaseRobot {
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
 		bugNav = new BlindBug(this);
-		beeNav = new Beeline(this, Constants.ARCHON_SAFETY_RANGE);
+		beeNav = new Beeline(this, Constants.ARCHON_SAFETY_RANGE, true);
 		nv = bugNav;
 		currState = RobotState.RUSH;
 		unitToSpawn = getSpawnType();
@@ -39,16 +39,22 @@ public class ArchonRobot extends BaseRobot {
 	public void run() throws GameActionException {
 		// TODO(jven): use processMessage
 		for (Message m : rc.getAllMessages()) {
-			if (m.strings != null && m.strings.length == 1 &&
-					m.strings[0] == "sup" && m.ints != null && m.ints.length == 2 &&
-					m.ints[1] > targetPriority) {
-				bearing = Direction.values()[m.ints[0]];
-				targetPriority = m.ints[1];
+			if (m.strings != null && m.strings.length == 1) {
+				if (m.strings[0] == "archon") {
+					if (m.ints[1] > targetPriority) {
+						bearing = Direction.values()[m.ints[0]];
+						targetPriority = m.ints[1];
+					}
+					for (int i = 2; i < m.ints.length; i++) {
+						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
+					}
+				} else if (m.strings[0] == "soldier") {
+					for (int i = 0; i < m.ints.length; i++) {
+						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
+					}
+				}
 			}
 		}
-		// show bearing
-		rc.setIndicatorString(
-				2, "Bearing: " + bearing + ", priority " + targetPriority);
 		switch (currState) {
 			case RUSH:
 				nv = bugNav;
@@ -119,7 +125,7 @@ public class ArchonRobot extends BaseRobot {
 		nv.navigateTo(target);
 		// broadcast target if necessary
 		if (--timeUntilBroadcast <= 0) {
-			sendRally(target);
+			sendArchonMessage(target);
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
 		// distribute flux
@@ -155,7 +161,7 @@ public class ArchonRobot extends BaseRobot {
 		// broadcast target if necessary, with increased priority
 		targetPriority++;
 		if (--timeUntilBroadcast <= 0) {
-			sendRally(closestEnemy.location);
+			sendArchonMessage(closestEnemy.location);
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
 		// wait if movement is active
@@ -189,7 +195,6 @@ public class ArchonRobot extends BaseRobot {
 			}
 		} else {
 			// TODO(jven): handle case where no open power cores left
-			rc.setIndicatorString(2, "???");
 		}
 	}
 	
@@ -323,19 +328,6 @@ public class ArchonRobot extends BaseRobot {
 		}
 	}
 	
-	private void sendRally(MapLocation target) throws GameActionException {
-		String header = "#xr";
-		int bearingOrdinal = bearing.ordinal();
-		//io.sendInt(header, bearingOrdinal);
-		//io.sendMapLoc(header, target);
-		//io.sendInt(header, targetPriority);
-		Message m = new Message();
-		m.ints = new int[] {bearingOrdinal, targetPriority};
-		m.locations = new MapLocation[] {target};
-		m.strings = new String[] {"sup"};
-		rc.broadcast(m);
-	}
-	
 	private RobotType getSpawnType() {
 		double p = (Math.random() * currRound * rc.getRobot().getID());
 		p = p - (int)p;
@@ -344,6 +336,27 @@ public class ArchonRobot extends BaseRobot {
 		} else {
 			return RobotType.SCOUT;
 		}
+	}
+	
+	private void sendArchonMessage(
+			MapLocation target) throws GameActionException {
+		String header = "#xa";
+		int bearingOrdinal = bearing.ordinal();
+		//io.sendInt(header, bearingOrdinal);
+		//io.sendMapLoc(header, target);
+		//io.sendInt(header, targetPriority);
+		//io.sendInt(header, numEnemyArchons);
+		Message m = new Message();
+		int[] deadEnemyArchonIDs = enemyArchonInfo.getDeadEnemyArchonIDs();
+		m.ints = new int[2 + deadEnemyArchonIDs.length];
+		m.ints[0] = bearingOrdinal;
+		m.ints[1] = targetPriority;
+		for (int i = 0; i < deadEnemyArchonIDs.length; i++) {
+			m.ints[i + 2] = deadEnemyArchonIDs[i];
+		}
+		m.locations = new MapLocation[] {target};
+		m.strings = new String[] {"archon"};
+		rc.broadcast(m);
 	}
 	
 	private boolean isTowerTargetable(

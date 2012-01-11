@@ -11,13 +11,11 @@ public abstract class BaseRobot {
 	
 	// Robot Stats
 	final RobotType myType;
-	final double myMaxEnergon;
-	final double myMaxFlux;
+	final double myMaxEnergon, myMaxFlux;
 	final Team myTeam;
 
 	
-	public double currEnergon;
-	public double currFlux;
+	public double currEnergon, currFlux;
 	public MapLocation currLoc, currLocInFront, currLocInBack;
 	public Direction currDir;
 
@@ -26,18 +24,21 @@ public abstract class BaseRobot {
 	
 	public RobotState currState;
 	
+	public EnemyArchonInfo enemyArchonInfo;
+	
 	public BaseRobot(RobotController myRC) {
-		this.rc = myRC;
-		this.dc = new DataCache(this);
-		this.io = new Radio(this);
+		rc = myRC;
+		dc = new DataCache(this);
+		io = new Radio(this);
 		
-		myType = this.rc.getType();
-		myTeam = this.rc.getTeam();
-		myMaxEnergon = this.myType.maxEnergon;
-		myMaxFlux = this.myType.maxFlux;
+		myType = rc.getType();
+		myTeam = rc.getTeam();
+		myMaxEnergon = myType.maxEnergon;
+		myMaxFlux = myType.maxFlux;
 		
 		spawnRound = Clock.getRoundNum();
 		
+		enemyArchonInfo = new EnemyArchonInfo();
 	}
 	
 	public abstract void run() throws GameActionException;
@@ -60,6 +61,9 @@ public abstract class BaseRobot {
 			rc.setIndicatorString(0, "" + myType + " - " + currState);
 			// show location of robot
 			rc.setIndicatorString(1, "Location: " + currLoc);
+			// show number of enemy archons
+			rc.setIndicatorString(2, "Number of enemy archons: " +
+					enemyArchonInfo.getNumEnemyArchons());
 			
 			// Main Radio Receive Call
 			try {
@@ -95,6 +99,4 @@ public abstract class BaseRobot {
 	}
 
 	public void processMessage(char msgType, StringBuilder sb) {}
-	
-
 }
