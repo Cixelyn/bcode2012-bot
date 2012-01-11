@@ -33,4 +33,6 @@ public final class Constants {
 	public static final int[] RADIO_TEAM_KEYS = new int[] {5555, 1729};
 	// Initial bearing for all robots
 	public static final Direction INITIAL_BEARING = Direction.EAST;
+	// The maximum distance units should be from the closest archon
+	public static final int MAX_SWARM_RADIUS = 16;
 }
