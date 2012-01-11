@@ -53,10 +53,7 @@ public abstract class BaseRobot {
 			
 			currRound = Clock.getRoundNum();
 			
-			// power down if not enough flux
-			if (rc.getFlux() <= Constants.POWER_DOWN_FLUX) {
-				this.rc.setIndicatorString(0, "POWERING DOWN");
-			} else {
+			if (currFlux >= Constants.POWER_DOWN_FLUX) {		
 				this.rc.setIndicatorString(0, "" + this.myType + " - " + this.currState);
 				try{
 					run();
