@@ -50,6 +50,26 @@ public class Radio {
 		return s.charAt(3) - 0x100;
 	}
 	
+	
+
+	/**
+	 * Sends a single map location to a unit
+	 * @param header
+	 * @param loc
+	 */
+	public void sendMapLoc(String header, MapLocation loc) {
+		msgContainer.append(header);
+		msgContainer.append((char) loc.x);
+		msgContainer.append((char) loc.y);
+	}
+	
+	public MapLocation decodeMapLoc(StringBuilder s) {
+		return new MapLocation(
+			s.charAt(3) - 0x100,
+			s.charAt(4) - 0x100
+		);
+	}
+	
 
 	/**
 	 * Queue a list of integers
@@ -67,6 +87,7 @@ public class Radio {
 		
 		msgContainer.append("#");
 	}
+	
 	
 	
 	public static MapLocation[] decodeMapLocs(StringBuilder s) {
