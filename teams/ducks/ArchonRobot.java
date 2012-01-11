@@ -3,6 +3,8 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameObject;
+import battlecode.common.MapLocation;
+import battlecode.common.Message;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
@@ -16,6 +18,9 @@ public class ArchonRobot extends BaseRobot {
 	// TODO(jven): put me in constants
 	final double MIN_ARCHON_FLUX = 0.2;
 	final double MIN_UNIT_FLUX = 20;
+	final int BROADCAST_FREQUENCY = 5;
+	
+	int timeUntilBroadcast = BROADCAST_FREQUENCY;
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
