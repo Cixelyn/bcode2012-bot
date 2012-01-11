@@ -17,12 +17,12 @@ public class RobotPlayer {
 			case SCOUT:
 				br = new ScoutRobot(myRC);
 				break;
-				case DISRUPTER:
-					r = new DisrupterRobot(myRC);
-					break;
-				case SCORCHER:
-					r = new ScorcherRobot(myRC);
-					break;
+			case DISRUPTER:
+				br = new DisrupterRobot(myRC);
+				break;
+			case SCORCHER:
+				br = new ScorcherRobot(myRC);
+				break;
 			default:
 				break;
 			}
