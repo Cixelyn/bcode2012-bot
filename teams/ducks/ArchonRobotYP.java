@@ -17,6 +17,7 @@ public class ArchonRobotYP extends BaseRobot {
 
 	public ArchonRobotYP(RobotController myRC) {
 		super(myRC);
+		nv = new BlindBug(this);
 	}
 
 	public void run() throws GameActionException {
@@ -101,15 +102,17 @@ public class ArchonRobotYP extends BaseRobot {
 		if (nodeindex<nodesize && !rc.isMovementActive())
 		{
 
-			rc.setIndicatorString(2, "target "+nodes[nodeindex]);
-			rc.setIndicatorString(0, "round "+currRound+" a"+5);
+			// TODO(jven): i made your bug vars private in BlindBug, move these
+			// indicator strings there if you still need them
+			//rc.setIndicatorString(2, "target "+nodes[nodeindex]);
+			//rc.setIndicatorString(0, "round "+currRound+" a"+5);
 			int bytecode = Clock.getBytecodeNum();
-			rc.setIndicatorString(1, "before move "+bytecode+" cur "+currLoc);
-			rc.setIndicatorString(1, "start:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs);
-			blindBug(nodes[nodeindex]);
+			//rc.setIndicatorString(1, "before move "+bytecode+" cur "+currLoc);
+			//rc.setIndicatorString(1, "start:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs);
+			nv.navigateTo(nodes[nodeindex]);
 			bytecode = Clock.getBytecodeNum()-bytecode;
 //			rc.setIndicatorString(1, "move used "+bytecode);
-			rc.setIndicatorString(0, "end:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs+" move used "+bytecode);
+			//rc.setIndicatorString(0, "end:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs+" move used "+bytecode);
 		}
 //		rc.setIndicatorString(0, "round "+currRound+" a"+6);
 		
