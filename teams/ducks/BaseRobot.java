@@ -67,7 +67,7 @@ public abstract class BaseRobot {
 			
 			// Main Radio Receive Call
 			try {
-				//io.receive();
+				io.receive();
 			} catch(Exception e) {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());

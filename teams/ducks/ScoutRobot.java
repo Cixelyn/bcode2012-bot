@@ -1,9 +1,7 @@
 package ducks;
 
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
-import battlecode.common.Message;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
@@ -14,24 +12,11 @@ public class ScoutRobot extends BaseRobot {
 		super(myRC);
 		nv = new Beeline(this, 0, false);
 		currState = RobotState.FOLLOW;
+		io.setAddresses(new String[] {"#x"});
 	}
 
 	@Override
 	public void run() throws GameActionException {
-		// TODO(jven): use processMessage
-		for (Message m : rc.getAllMessages()) {
-			if (m.strings != null && m.strings.length == 1) {
-				if (m.strings[0] == "archon") {
-					for (int i = 2; i < m.ints.length; i++) {
-						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
-					}
-				} else if (m.strings[0] == "soldier") {
-					for (int i = 0; i < m.ints.length; i++) {
-						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
-					}
-				}
-			}
-		}
 		// power down if not enough flux
 		if (currFlux < Constants.POWER_DOWN_FLUX) {
 			return;
@@ -42,6 +27,19 @@ public class ScoutRobot extends BaseRobot {
 				break;
 			default:
 				break;
+		}
+	}
+	
+	@Override
+	public void processMessage(char msgType, StringBuilder sb) {
+		switch(msgType) {
+			case 'd':
+				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				for (int id : deadEnemyArchonIDs) {
+					enemyArchonInfo.reportEnemyArchonKill(id);
+				}
+			default:
+				super.processMessage(msgType, sb);
 		}
 	}
 	

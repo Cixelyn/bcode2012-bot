@@ -3,7 +3,6 @@ package ducks;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
-import battlecode.common.Message;
 import battlecode.common.PowerNode;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
@@ -28,29 +27,11 @@ public class SoldierRobot extends BaseRobot {
 		target = myRC.getLocation().add(Constants.INITIAL_BEARING,
 				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH);
 		currState = RobotState.RUSH;
-		io.setAddresses(new String[] {"#x"});
+		io.setAddresses(new String[] {"#x", "#s"});
 	}
 
 	@Override
 	public void run() throws GameActionException {
-		// TODO(jven): use processMessage
-		for (Message m : rc.getAllMessages()) {
-			if (m.strings != null && m.strings.length == 1) {
-				if (m.strings[0] == "archon") {
-					if (m.ints[1] > targetPriority) {
-						target = m.locations[0];
-						targetPriority = m.ints[1];
-					}
-					for (int i = 2; i < m.ints.length; i++) {
-						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
-					}
-				} else if (m.strings[0] == "soldier") {
-					for (int i = 0; i < m.ints.length; i++) {
-						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
-					}
-				}
-			}
-		}
 		// power down if not enough flux
 		if (currFlux < Constants.POWER_DOWN_FLUX) {
 			return;
@@ -73,14 +54,19 @@ public class SoldierRobot extends BaseRobot {
 	public void processMessage(char msgType, StringBuilder sb) {
 		switch(msgType) {
 			case 'r':
-				// TODO(jven): get these from message
-				MapLocation msgTarget = null;
-				int msgTargetPriority = -1;
+				int[] msgInts = Radio.decodeInts(sb);
+				int msgTargetPriority = msgInts[0];
+				MapLocation msgTarget = new MapLocation(msgInts[1], msgInts[2]);
 				if (msgTargetPriority > targetPriority) {
 					target = msgTarget;
 					targetPriority = msgTargetPriority;
 				}
 				break;
+			case 'd':
+				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				for (int id : deadEnemyArchonIDs) {
+					enemyArchonInfo.reportEnemyArchonKill(id);
+				}
 			default:
 				super.processMessage(msgType, sb);
 		}
@@ -148,12 +134,7 @@ public class SoldierRobot extends BaseRobot {
 	}
 	
 	private void sendSoldierMessage() throws GameActionException {
-		String header = "#xs";
-		//io.sendInt(header, numEnemyArchons);
-		Message m = new Message();
-		m.ints = enemyArchonInfo.getDeadEnemyArchonIDs();
-		m.strings = new String[] {"soldier"};
-		rc.broadcast(m);
+		io.sendInts("#xd", enemyArchonInfo.getDeadEnemyArchonIDs());
 	}
 
 	private boolean isTowerTargetable(
