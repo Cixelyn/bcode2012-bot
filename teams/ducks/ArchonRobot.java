@@ -22,15 +22,18 @@ public class ArchonRobot extends BaseRobot {
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
-		this.currState = RobotState.EXPLORE;
+		this.currState = RobotState.GOTO_POWER_CORE;
 		this.unitToSpawn = this.getSpawnType();
 	}
 
 	public void run() throws GameActionException {
-//		runYPBUGCODE(); if (true) return;
+		// runYPBUGCODE(); if (true) return;
 		switch (this.currState) {
 			case EXPLORE:
 				explore();
+				break;
+			case GOTO_POWER_CORE:
+				gotoPowerCore();
 				break;
 			case SPAWN_UNIT:
 				spawnUnit();
@@ -69,6 +72,33 @@ public class ArchonRobot extends BaseRobot {
 		} else if (this.currFlux > this.unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
 			// make units if we have enough flux
 			this.currState = RobotState.SPAWN_UNIT;
+		}
+	}
+	
+	private void gotoPowerCore() throws GameActionException {
+		// wait if movement is active
+		if (rc.isMovementActive()) {
+			return;
+		}
+		// get closest capturable power core
+		int closestDistance = (
+				GameConstants.MAP_MAX_HEIGHT * GameConstants.MAP_MAX_WIDTH);
+		MapLocation closestPowerCore = null;
+		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
+			int distance = currLoc.distanceSquaredTo(powerCore);
+			if (distance < closestDistance) {
+				closestPowerCore = powerCore;
+				closestDistance = distance;
+			}
+		}
+		if (closestPowerCore != null) {
+			if (closestDistance > 2) {
+				blindBug(closestPowerCore);
+			} else {
+				currState = RobotState.BUILD_TOWER;
+			}
+		} else {
+			rc.setIndicatorString(2, "???");
 		}
 	}
 	
@@ -127,7 +157,7 @@ public class ArchonRobot extends BaseRobot {
 			}
 		}
 		if (adjacentPowerCore == null) {
-			currState = RobotState.EXPLORE;
+			currState = RobotState.GOTO_POWER_CORE;
 			return;
 		}
 		// wait until we have enough flux
@@ -163,7 +193,7 @@ public class ArchonRobot extends BaseRobot {
 					currDir, RobotType.TOWER.level);
 			if (obj == null) {
 				rc.spawn(RobotType.TOWER);
-				currState = RobotState.EXPLORE;
+				currState = RobotState.GOTO_POWER_CORE;
 			}
 		}
 	}
