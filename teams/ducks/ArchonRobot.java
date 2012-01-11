@@ -19,9 +19,10 @@ public class ArchonRobot extends BaseRobot {
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
-		this.currState = RobotState.RUSH;
-		this.unitToSpawn = this.getSpawnType();
-		this.bearing = Direction.EAST;
+		nv = new BlindBug(this);
+		currState = RobotState.RUSH;
+		unitToSpawn = this.getSpawnType();
+		bearing = Direction.EAST;
 	}
 
 	public void run() throws GameActionException {
@@ -55,10 +56,8 @@ public class ArchonRobot extends BaseRobot {
 			}
 		}
 		// move towards bearing if possible
-		if (!rc.isMovementActive()) {
-			blindBug(currLoc.add(bearing,
+		nv.navigateTo(currLoc.add(bearing,
 					GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH));
-		}
 		// reset bearing if necessary
 		int range;
 		if (bearing.isDiagonal()) {
@@ -135,7 +134,7 @@ public class ArchonRobot extends BaseRobot {
 		}
 		if (closestPowerCore != null) {
 			if (closestDistance > 2) {
-				blindBug(closestPowerCore);
+				nv.navigateTo(closestPowerCore);
 			} else {
 				currState = RobotState.BUILD_TOWER;
 			}
