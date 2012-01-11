@@ -23,7 +23,7 @@ public class ArchonRobot extends BaseRobot {
 		this.unitToSpawn = this.getSpawnType();
 	}
 
-	public void run() throws GameActionException{
+	public void run() throws GameActionException {
 		switch (this.currState) {
 			case EXPLORE:
 				this.explore();
@@ -32,8 +32,6 @@ public class ArchonRobot extends BaseRobot {
 				this.spawnUnit();
 				break;
 			default:
-				this.rc.setIndicatorString(2, "RobotState." + this.currState +
-						" not implemented.");
 				break;
 		}
 	}
@@ -97,11 +95,14 @@ public class ArchonRobot extends BaseRobot {
 	private void distributeFlux() throws GameActionException {
 		// check all directions around you, ground and air
 		for (Direction d : Direction.values()) {
-			if (d == Direction.OMNI || d == Direction.NONE) {
+			if (d == Direction.NONE) {
 				continue;
 			}
 			for (RobotLevel level : RobotLevel.values()) {
 				if (level == RobotLevel.POWER_NODE) {
+					continue;
+				}
+				if (d == Direction.OMNI && level == RobotLevel.IN_AIR) {
 					continue;
 				}
 				if (this.currFlux < MIN_ARCHON_FLUX) {
@@ -123,24 +124,6 @@ public class ArchonRobot extends BaseRobot {
 						this.currFlux -= fluxToTransfer;
 					}
 				}
-			}
-		}
-		// check above you
-		GameObject obj = this.dc.getAdjacentGameObject(
-				Direction.OMNI, RobotLevel.IN_AIR);
-		if (obj instanceof Robot && obj.getTeam() == this.myTeam) {
-			// TODO(jven): data cache this?
-			RobotInfo rInfo = this.rc.senseRobotInfo((Robot)obj);
-			if (rInfo.flux < MIN_UNIT_FLUX) {
-				double fluxToTransfer = Math.min(
-						MIN_UNIT_FLUX - rInfo.flux, currFlux - MIN_ARCHON_FLUX);
-				if (fluxToTransfer > 0) {
-					this.rc.transferFlux(
-							rInfo.location,
-							rInfo.robot.getRobotLevel(),
-							fluxToTransfer);
-				}
-				this.currFlux -= fluxToTransfer;
 			}
 		}
 	}

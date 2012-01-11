@@ -18,8 +18,6 @@ public class ScorcherRobot extends BaseRobot {
 				attack();
 				break;
 			default:
-				rc.setIndicatorString(2, "RobotState." + this.currState +
-						" not implemented.");
 				break;
 		}
 	}

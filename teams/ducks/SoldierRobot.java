@@ -17,8 +17,6 @@ public class SoldierRobot extends BaseRobot {
 				this.dizzy();
 				break;
 			default:
-				this.rc.setIndicatorString(2, "RobotState." + this.currState +
-						" not implemented.");
 				break;
 		}
 	}

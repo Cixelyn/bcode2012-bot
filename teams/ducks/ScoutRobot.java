@@ -22,8 +22,6 @@ public class ScoutRobot extends BaseRobot {
 				follow();
 				break;
 			default:
-				rc.setIndicatorString(2, "RobotState." + currState +
-						" not implemented.");
 				break;
 		}
 	}
