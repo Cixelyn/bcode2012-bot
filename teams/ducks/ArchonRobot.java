@@ -156,6 +156,8 @@ public class ArchonRobot extends BaseRobot {
 		}
 		// try to stay at safe range
 		nv.navigateTo(closestEnemy.location);
+		// distribute flux
+		this.distributeFlux();
 	}
 	
 	private void gotoPowerCore() throws GameActionException {
@@ -182,6 +184,8 @@ public class ArchonRobot extends BaseRobot {
 		} else {
 			// TODO(jven): handle case where no open power cores left
 		}
+		// distribute flux
+		this.distributeFlux();
 	}
 	
 	private void spawnUnit() throws GameActionException {

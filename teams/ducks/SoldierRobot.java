@@ -84,8 +84,21 @@ public class SoldierRobot extends BaseRobot {
 				return;
 			}
 		}
-		// otherwise, rush
-		nv.navigateTo(target);
+		// if closest archon is too far, regroup to it, otherwise go to target
+		int closestDistance = Integer.MAX_VALUE;
+		MapLocation closestArchon = currLoc;
+		for (MapLocation archon : dc.getAlliedArchons()) {
+			int distance = currLoc.distanceSquaredTo(archon);
+			if (distance < closestDistance) {
+				closestDistance = distance;
+				closestArchon = archon;
+			}
+		}
+		if (closestDistance > Constants.MAX_SWARM_RADIUS) {
+			nv.navigateTo(closestArchon);
+		} else {
+			nv.navigateTo(target);
+		}
 		// broadcast message if necessary
 		if (--timeUntilBroadcast <= 0) {
 			sendSoldierMessage();
