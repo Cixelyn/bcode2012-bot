@@ -47,8 +47,7 @@ public class SoldierRobot extends BaseRobot {
 	}
 	
 	private void micro() throws GameActionException {
-		int closestDistance = (
-				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH);
+		int closestDistance = Integer.MAX_VALUE;
 		RobotInfo closestEnemy = null;
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {

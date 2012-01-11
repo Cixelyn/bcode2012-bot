@@ -1,11 +1,13 @@
 package ducks;
 
 public enum RobotState {
-	EXPLORE,
-	SPAWN_UNIT,
+	ATTACK_GROUND,
+	BUILD_TOWER,
+	CHASE,
 	DIZZY,
 	FOLLOW,
-	ATTACK_GROUND,
+	GOTO_POWER_CORE,
 	MICRO,
-	BUILD_TOWER
+	RUSH,
+	SPAWN_UNIT
 }
