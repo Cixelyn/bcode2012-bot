@@ -2,9 +2,7 @@ package ducks;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
-import battlecode.common.Message;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
@@ -21,6 +19,9 @@ public class ScoutRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
+		if (currFlux < Constants.POWER_DOWN_FLUX) {
+			return;
+		}
 		switch (currState) {
 			case FOLLOW:
 				follow();
@@ -63,6 +64,7 @@ public class ScoutRobot extends BaseRobot {
 	}
 	
 	private boolean shouldRegenerate() throws GameActionException {
+		// check if there are enough damaged units
 		int damagedUnits = 0;
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() == myTeam) {
