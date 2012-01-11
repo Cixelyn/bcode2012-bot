@@ -8,21 +8,21 @@ public class ScorcherRobot extends BaseRobot {
 
 	public ScorcherRobot(RobotController myRC) {
 		super(myRC);
-		currState = RobotState.ATTACK;
+		currState = RobotState.ATTACK_GROUND;
 	}
 
 	@Override
 	public void run() throws GameActionException {
 		switch (currState) {
-			case ATTACK:
-				attack();
+			case ATTACK_GROUND:
+				attackGround();
 				break;
 			default:
 				break;
 		}
 	}
 	
-	private void attack() throws GameActionException {
+	private void attackGround() throws GameActionException {
 		if (rc.isAttackActive()) {
 			return;
 		}

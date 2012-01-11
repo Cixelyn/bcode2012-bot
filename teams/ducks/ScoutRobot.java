@@ -13,8 +13,6 @@ public class ScoutRobot extends BaseRobot {
 	
 	public MapLocation target;
 
-	final int MIN_DAMAGED_UNITS_TO_REGEN = 1;
-
 	public ScoutRobot(RobotController myRC) {
 		super(myRC);
 		this.currState = RobotState.FOLLOW;

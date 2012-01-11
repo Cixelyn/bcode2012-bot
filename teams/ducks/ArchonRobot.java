@@ -15,10 +15,6 @@ import battlecode.common.TerrainTile;
 public class ArchonRobot extends BaseRobot {
 	
 	RobotType unitToSpawn;
-	// TODO(jven): put me in constants
-	final double MIN_ARCHON_FLUX = 0.2;
-	final double MIN_UNIT_FLUX = 20;
-	final int BROADCAST_FREQUENCY = 5;
 	
 	int timeUntilBroadcast = BROADCAST_FREQUENCY;
 
@@ -31,10 +27,10 @@ public class ArchonRobot extends BaseRobot {
 	public void run() throws GameActionException {
 		switch (this.currState) {
 			case EXPLORE:
-				this.explore();
+				explore();
 				break;
 			case SPAWN_UNIT:
-				this.spawnUnit();
+				spawnUnit();
 				break;
 			default:
 				break;

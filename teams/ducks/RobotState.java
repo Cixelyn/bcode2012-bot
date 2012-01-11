@@ -5,5 +5,6 @@ public enum RobotState {
 	SPAWN_UNIT,
 	DIZZY,
 	FOLLOW,
-	ATTACK
+	ATTACK_GROUND,
+	MICRO
 }
