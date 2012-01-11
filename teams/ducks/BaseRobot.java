@@ -53,6 +53,9 @@ public abstract class BaseRobot {
 	
 	public void loop() {
 		while(true) {
+			
+			// print out state of robot
+			rc.setIndicatorString(0, "" + myType + " - " + currState);
 	
 			// Useful Statistics
 			currEnergon = rc.getEnergon();
