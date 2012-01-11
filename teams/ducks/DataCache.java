@@ -5,6 +5,8 @@ import battlecode.common.*;
 public class DataCache {
 	
 	BaseRobot br;
+	RobotController rc;
+	
 	MapLocation[] alliedArchons;
 	int alliedArchonsTime = -1;
 
@@ -34,13 +36,14 @@ public class DataCache {
 	
 	public DataCache(BaseRobot br) {
 		this.br = br;
+		this.rc = br.rc;
 	}
 
 	
 	public MapLocation[] getAlliedArchons() {
 		
 		if(br.currRound > alliedArchonsTime) {
-			alliedArchons = br.rc.senseAlliedArchons();
+			alliedArchons = rc.senseAlliedArchons();
 			alliedArchonsTime = br.currRound;
 		}
 		
@@ -52,14 +55,14 @@ public class DataCache {
 	{
 		if (br.currRound > moveableDirectionsTime)
 		{
-			moveableDirections[0] = br.rc.canMove(Direction.NORTH);
-			moveableDirections[1] = br.rc.canMove(Direction.NORTH_EAST);
-			moveableDirections[2] = br.rc.canMove(Direction.EAST);
-			moveableDirections[3] = br.rc.canMove(Direction.SOUTH_EAST);
-			moveableDirections[4] = br.rc.canMove(Direction.SOUTH);
-			moveableDirections[5] = br.rc.canMove(Direction.SOUTH_WEST);
-			moveableDirections[6] = br.rc.canMove(Direction.WEST);
-			moveableDirections[7] = br.rc.canMove(Direction.NORTH_WEST);
+			moveableDirections[0] = rc.canMove(Direction.NORTH);
+			moveableDirections[1] = rc.canMove(Direction.NORTH_EAST);
+			moveableDirections[2] = rc.canMove(Direction.EAST);
+			moveableDirections[3] = rc.canMove(Direction.SOUTH_EAST);
+			moveableDirections[4] = rc.canMove(Direction.SOUTH);
+			moveableDirections[5] = rc.canMove(Direction.SOUTH_WEST);
+			moveableDirections[6] = rc.canMove(Direction.WEST);
+			moveableDirections[7] = rc.canMove(Direction.NORTH_WEST);
 			moveableDirectionsTime = br.currRound;
 		}
 		return moveableDirections;
@@ -69,14 +72,14 @@ public class DataCache {
 	{
 		if (br.currRound > moveableLandTime)
 		{
-			moveableLand[0] = br.rc.senseTerrainTile(br.currLoc.add(Direction.NORTH))==TerrainTile.LAND;
-			moveableLand[1] = br.rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_EAST))==TerrainTile.LAND;
-			moveableLand[2] = br.rc.senseTerrainTile(br.currLoc.add(Direction.EAST))==TerrainTile.LAND;
-			moveableLand[3] = br.rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_EAST))==TerrainTile.LAND;
-			moveableLand[4] = br.rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH))==TerrainTile.LAND;
-			moveableLand[5] = br.rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_WEST))==TerrainTile.LAND;
-			moveableLand[6] = br.rc.senseTerrainTile(br.currLoc.add(Direction.WEST))==TerrainTile.LAND;
-			moveableLand[7] = br.rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_WEST))==TerrainTile.LAND;
+			moveableLand[0] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH))==TerrainTile.LAND;
+			moveableLand[1] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_EAST))==TerrainTile.LAND;
+			moveableLand[2] = rc.senseTerrainTile(br.currLoc.add(Direction.EAST))==TerrainTile.LAND;
+			moveableLand[3] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_EAST))==TerrainTile.LAND;
+			moveableLand[4] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH))==TerrainTile.LAND;
+			moveableLand[5] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_WEST))==TerrainTile.LAND;
+			moveableLand[6] = rc.senseTerrainTile(br.currLoc.add(Direction.WEST))==TerrainTile.LAND;
+			moveableLand[7] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_WEST))==TerrainTile.LAND;
 			moveableLandTime = br.currRound;
 		}
 		return moveableLand;
@@ -85,20 +88,19 @@ public class DataCache {
 	
 	public GameObject getAdjacentGameObject(
 			Direction d, RobotLevel level) throws GameActionException {
-		int currRoundNum = Clock.getRoundNum();
-		if (currRoundNum > adjacentGameObjectsTime) {
+		if (br.currRound > adjacentGameObjectsTime) {
 			isAdjacentGameObjectGroundCached =
 					new boolean[Direction.values().length];
 			isAdjacentGameObjectAirCached =
 					new boolean[Direction.values().length];
-			adjacentGameObjectsTime = currRoundNum;
+			adjacentGameObjectsTime = br.currRound;
 		}
 		if (level == RobotLevel.ON_GROUND) {
 			if (isAdjacentGameObjectGroundCached[d.ordinal()]) {
 				return adjacentGameObjectsGround[d.ordinal()];
 			} else {
-				GameObject obj = br.rc.senseObjectAtLocation(
-						br.rc.getLocation().add(d), level);
+				GameObject obj = rc.senseObjectAtLocation(
+						rc.getLocation().add(d), level);
 				adjacentGameObjectsGround[d.ordinal()] = obj;
 				isAdjacentGameObjectGroundCached[d.ordinal()] = true;
 				return obj;
@@ -107,8 +109,8 @@ public class DataCache {
 			if (isAdjacentGameObjectAirCached[d.ordinal()]) {
 				return adjacentGameObjectsAir[d.ordinal()];
 			} else {
-				GameObject obj = br.rc.senseObjectAtLocation(
-						br.rc.getLocation().add(d), level);
+				GameObject obj = rc.senseObjectAtLocation(
+						rc.getLocation().add(d), level);
 				adjacentGameObjectsAir[d.ordinal()] = obj;
 				isAdjacentGameObjectAirCached[d.ordinal()] = true;
 				return obj;
@@ -120,16 +122,15 @@ public class DataCache {
 	
 	public TerrainTile getAdjacentTerrainTile(
 			Direction d) throws GameActionException {
-		int currRoundNum = Clock.getRoundNum();
-		if (currRoundNum > adjacentTerrainTilesTime) {
+		if (br.currRound > adjacentTerrainTilesTime) {
 			isAdjacentTerrainTileCached =
 					new boolean[Direction.values().length];
-			adjacentTerrainTilesTime = currRoundNum;
+			adjacentTerrainTilesTime = br.currRound;
 		}
 		if (isAdjacentTerrainTileCached[d.ordinal()]) {
 			return adjacentTerrainTiles[d.ordinal()];
 		} else {
-			TerrainTile tt = br.rc.senseTerrainTile(br.rc.getLocation().add(d));
+			TerrainTile tt = rc.senseTerrainTile(rc.getLocation().add(d));
 			this.adjacentTerrainTiles[d.ordinal()] = tt;
 			isAdjacentTerrainTileCached[d.ordinal()] = true;
 			return tt;
@@ -137,25 +138,23 @@ public class DataCache {
 	}
 	
 	public Robot[] getNearbyRobots() {
-		int currRoundNum = Clock.getRoundNum();
-		if (currRoundNum > nearbyRobotsTime) {
+		if (br.currRound > nearbyRobotsTime) {
 			nearbyRobots = null;
-			nearbyRobotsTime = currRoundNum;
+			nearbyRobotsTime = br.currRound;
 		}
 		if (nearbyRobots == null) {
-			nearbyRobots = br.rc.senseNearbyGameObjects(Robot.class);
+			nearbyRobots = rc.senseNearbyGameObjects(Robot.class);
 		}
 		return nearbyRobots;
 	}
 	
 	public MapLocation[] getCapturablePowerCores() {
-		int currRoundNum = Clock.getRoundNum();
-		if (currRoundNum > capturablePowerCoresTime) {
+		if (br.currRound > capturablePowerCoresTime) {
 			capturablePowerCores = null;
-			capturablePowerCoresTime = currRoundNum;
+			capturablePowerCoresTime = br.currRound;
 		}
 		if (capturablePowerCores == null) {
-			capturablePowerCores = br.rc.senseCapturablePowerNodes();
+			capturablePowerCores = rc.senseCapturablePowerNodes();
 		}
 		return capturablePowerCores;
 	}
