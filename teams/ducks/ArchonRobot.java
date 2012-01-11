@@ -28,6 +28,9 @@ public class ArchonRobot extends BaseRobot {
 
 	public void run() throws GameActionException {
 		// runYPBUGCODE(); if (true) return;
+		
+		this.io.sendMapLoc("#s0", this.currLoc);
+		
 		switch (this.currState) {
 			case RUSH:
 				rush();
