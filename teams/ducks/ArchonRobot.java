@@ -5,7 +5,6 @@ import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.GameObject;
 import battlecode.common.MapLocation;
-import battlecode.common.Message;
 import battlecode.common.PowerNode;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
@@ -32,29 +31,11 @@ public class ArchonRobot extends BaseRobot {
 		unitToSpawn = getSpawnType();
 		bearing = Constants.INITIAL_BEARING;
 		timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
-		io.setAddresses(new String[] {"#x"});
+		io.setAddresses(new String[] {"#x", "#a"});
 	}
 
 	@Override
 	public void run() throws GameActionException {
-		// TODO(jven): use processMessage
-		for (Message m : rc.getAllMessages()) {
-			if (m.strings != null && m.strings.length == 1) {
-				if (m.strings[0] == "archon") {
-					if (m.ints[1] > targetPriority) {
-						bearing = Direction.values()[m.ints[0]];
-						targetPriority = m.ints[1];
-					}
-					for (int i = 2; i < m.ints.length; i++) {
-						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
-					}
-				} else if (m.strings[0] == "soldier") {
-					for (int i = 0; i < m.ints.length; i++) {
-						enemyArchonInfo.reportEnemyArchonKill(m.ints[i]);
-					}
-				}
-			}
-		}
 		switch (currState) {
 			case RUSH:
 				nv = bugNav;
@@ -82,14 +63,19 @@ public class ArchonRobot extends BaseRobot {
 	public void processMessage(char msgType, StringBuilder sb) {
 		switch(msgType) {
 			case 'r':
-				// get these from message
-				int msgBearingOrdinal = -1;
-				int msgTargetPriority = -1;
+				int[] msgInts = Radio.decodeInts(sb);
+				int msgTargetPriority = msgInts[0];
+				int msgBearingOrdinal = msgInts[1];
 				if (msgTargetPriority > targetPriority) {
 					bearing = Direction.values()[msgBearingOrdinal];
 					targetPriority = msgTargetPriority;
 				}
 				break;
+			case 'd':
+				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				for (int id : deadEnemyArchonIDs) {
+					enemyArchonInfo.reportEnemyArchonKill(id);
+				}
 			default:
 				super.processMessage(msgType, sb);
 		}
@@ -340,23 +326,8 @@ public class ArchonRobot extends BaseRobot {
 	
 	private void sendArchonMessage(
 			MapLocation target) throws GameActionException {
-		String header = "#xa";
-		int bearingOrdinal = bearing.ordinal();
-		//io.sendInt(header, bearingOrdinal);
-		//io.sendMapLoc(header, target);
-		//io.sendInt(header, targetPriority);
-		//io.sendInt(header, numEnemyArchons);
-		Message m = new Message();
-		int[] deadEnemyArchonIDs = enemyArchonInfo.getDeadEnemyArchonIDs();
-		m.ints = new int[2 + deadEnemyArchonIDs.length];
-		m.ints[0] = bearingOrdinal;
-		m.ints[1] = targetPriority;
-		for (int i = 0; i < deadEnemyArchonIDs.length; i++) {
-			m.ints[i + 2] = deadEnemyArchonIDs[i];
-		}
-		m.locations = new MapLocation[] {target};
-		m.strings = new String[] {"archon"};
-		rc.broadcast(m);
+		io.sendInts("#sr", new int[] {targetPriority, target.x, target.y});
+		io.sendInts("#ar", new int[] {targetPriority, bearing.ordinal()});
 	}
 	
 	private boolean isTowerTargetable(
