@@ -16,21 +16,27 @@ public class ArchonRobot extends BaseRobot {
 	
 	Direction bearing;
 	RobotType unitToSpawn;
+	BlindBug bugNav;
+	Beeline beeNav;
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
-		nv = new BlindBug(this);
+		bugNav = new BlindBug(this);
+		beeNav = new Beeline(this, Constants.ARCHON_SAFETY_RANGE);
+		nv = bugNav;
 		currState = RobotState.RUSH;
-		unitToSpawn = this.getSpawnType();
+		unitToSpawn = getSpawnType();
 		bearing = Direction.EAST;
 	}
 
 	public void run() throws GameActionException {
-		switch (this.currState) {
+		switch (currState) {
 			case RUSH:
+				nv = bugNav;
 				rush();
 				break;
 			case CHASE:
+				nv = beeNav;
 				chase();
 				break;
 			case GOTO_POWER_CORE:
@@ -102,19 +108,7 @@ public class ArchonRobot extends BaseRobot {
 			return;
 		}
 		// try to stay at safe range
-		Direction dir = currLoc.directionTo(closestEnemy.location);
-		int distance = currLoc.distanceSquaredTo(closestEnemy.location);
-		if (currDir != dir) {
-			rc.setDirection(dir);
-		} else if (distance < Constants.ARCHON_SAFETY_RANGE) {
-			if (rc.canMove(dir.opposite())) {
-				rc.moveBackward();
-			}
-		} else {
-			if (rc.canMove(dir)) {
-				rc.moveForward();
-			}
-		}
+		nv.navigateTo(closestEnemy.location);
 	}
 	
 	private void gotoPowerCore() throws GameActionException {
@@ -173,16 +167,16 @@ public class ArchonRobot extends BaseRobot {
 			if (d == Direction.OMNI || d == Direction.NONE){
 				continue;
 			}
-			tt = this.dc.getAdjacentTerrainTile(d);
+			tt = dc.getAdjacentTerrainTile(d);
 			if (tt == TerrainTile.OFF_MAP || (
-					this.unitToSpawn.level == RobotLevel.ON_GROUND &&
+					unitToSpawn.level == RobotLevel.ON_GROUND &&
 					tt == TerrainTile.VOID)) {
 				continue;
 			}
-			GameObject obj = this.dc.getAdjacentGameObject(
-					d, this.unitToSpawn.level);
+			GameObject obj = dc.getAdjacentGameObject(
+					d, unitToSpawn.level);
 			if (obj == null) {
-				this.rc.setDirection(d);
+				rc.setDirection(d);
 				return;
 			}
 		}
@@ -255,21 +249,19 @@ public class ArchonRobot extends BaseRobot {
 				if (this.currFlux < Constants.MIN_ARCHON_FLUX) {
 					break;
 				}
-				GameObject obj = this.dc.getAdjacentGameObject(d, level);
-				if (obj instanceof Robot && obj.getTeam() == this.myTeam) {
+				GameObject obj = dc.getAdjacentGameObject(d, level);
+				if (obj instanceof Robot && obj.getTeam() == myTeam) {
 					// TODO(jven): data cache this?
-					RobotInfo rInfo = this.rc.senseRobotInfo((Robot)obj);
+					RobotInfo rInfo = rc.senseRobotInfo((Robot)obj);
 					if (rInfo.flux < Constants.MIN_UNIT_FLUX) {
 						double fluxToTransfer = Math.min(
 								Constants.MIN_UNIT_FLUX - rInfo.flux,
 								currFlux - Constants.MIN_ARCHON_FLUX);
 						if (fluxToTransfer > 0) {
-							this.rc.transferFlux(
-									rInfo.location,
-									rInfo.robot.getRobotLevel(),
-									fluxToTransfer);
+							rc.transferFlux(
+									rInfo.location, rInfo.robot.getRobotLevel(), fluxToTransfer);
 						}
-						this.currFlux -= fluxToTransfer;
+						currFlux -= fluxToTransfer;
 					}
 				}
 			}

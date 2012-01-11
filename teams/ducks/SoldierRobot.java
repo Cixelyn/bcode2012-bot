@@ -1,9 +1,6 @@
 package ducks;
 
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
-import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
@@ -12,13 +9,14 @@ public class SoldierRobot extends BaseRobot {
 
 	public SoldierRobot(RobotController myRC) {
 		super(myRC);
-		this.currState = RobotState.DIZZY;
-		this.io.setAddresses(new String[]{"#s"});
+		nv = new Beeline(this, myType.attackRadiusMaxSquared);
+		currState = RobotState.DIZZY;
+		io.setAddresses(new String[]{"#s"});
 	}
 
 	@Override
 	public void run() throws GameActionException {
-		switch (this.currState) {
+		switch (currState) {
 			case DIZZY:
 				dizzy();
 				break;
@@ -38,7 +36,7 @@ public class SoldierRobot extends BaseRobot {
 		
 		switch(msgType) {
 		case '0':
-			this.rc.setIndicatorString(2, Radio.decodeMapLoc(sb).toString());
+			rc.setIndicatorString(2, Radio.decodeMapLoc(sb).toString());
 			break;
 		default:
 			super.processMessage(msgType, sb);
@@ -88,16 +86,7 @@ public class SoldierRobot extends BaseRobot {
 					closestEnemy.location, closestEnemy.robot.getRobotLevel());
 		}
 		// dance if possible
-		if (!rc.isMovementActive()) {
-			Direction dir = currLoc.directionTo(closestEnemy.location);
-			if (currDir != dir) {
-				rc.setDirection(currDir);
-			} else if (closestDistance <= rc.getType().attackRadiusMaxSquared) {
-				if (rc.canMove(currDir.opposite())) {
-					rc.moveBackward();
-				}
-			}
-		}
+		nv.navigateTo(closestEnemy.location);
 	}
 
 }
