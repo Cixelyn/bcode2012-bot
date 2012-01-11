@@ -16,21 +16,27 @@ import battlecode.common.TerrainTile;
 
 public class ArchonRobot extends BaseRobot {
 	
+	Direction bearing;
 	RobotType unitToSpawn;
-	
-	int timeUntilBroadcast = BROADCAST_FREQUENCY;
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
-		this.currState = RobotState.EXPLORE;
+		this.currState = RobotState.RUSH;
 		this.unitToSpawn = this.getSpawnType();
+		this.bearing = Direction.EAST;
 	}
 
 	public void run() throws GameActionException {
-//		runYPBUGCODE(); if (true) return;
+		// runYPBUGCODE(); if (true) return;
 		switch (this.currState) {
-			case EXPLORE:
-				explore();
+			case RUSH:
+				rush();
+				break;
+			case CHASE:
+				chase();
+				break;
+			case GOTO_POWER_CORE:
+				gotoPowerCore();
 				break;
 			case SPAWN_UNIT:
 				spawnUnit();
@@ -43,39 +49,108 @@ public class ArchonRobot extends BaseRobot {
 		}
 	}
 	
-	private void explore() throws GameActionException {
-		// move around
-		if (!this.rc.isMovementActive()) {
-			if (this.rc.canMove(this.currDir)) {
-				this.rc.moveForward();
-			} else {
-				this.rc.setDirection(this.currDir.rotateRight());
+	private void rush() throws GameActionException {
+		// scan for enemies
+		for (Robot r : dc.getNearbyRobots()) {
+			if (r.getTeam() != myTeam) {
+				currState = RobotState.CHASE;
+				return;
 			}
+		}
+		// move towards bearing if possible
+		if (!rc.isMovementActive()) {
+			blindBug(currLoc.add(bearing,
+					GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH));
+		}
+		// reset bearing if necessary
+		int range;
+		if (bearing.isDiagonal()) {
+			range = 4;
+		} else {
+			range = 6;
+		}
+		if (rc.senseTerrainTile(currLoc.add(bearing, range)) ==
+				TerrainTile.OFF_MAP) {
+			bearing = bearing.rotateRight().rotateRight().rotateRight();
 		}
 		// distribute flux
 		this.distributeFlux();
-		// check for adjacent towers
-		// TODO(jven): use sensor and nav to towers
-		MapLocation adjacentPowerCore = null;
-		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
-			if (currLoc.distanceSquaredTo(powerCore) <= 2) {
-				adjacentPowerCore = powerCore;
-				break;
+		// make units
+		if (this.currFlux > this.unitToSpawn.spawnCost + Constants.MIN_UNIT_FLUX) {
+			this.currState = RobotState.SPAWN_UNIT;
+		}
+	}
+	
+	public void chase() throws GameActionException {
+		// get closest enemy
+		int closestDistance = Integer.MAX_VALUE;
+		RobotInfo closestEnemy = null;
+		for (Robot r : dc.getNearbyRobots()) {
+			if (r.getTeam() != myTeam) {
+				RobotInfo rInfo = rc.senseRobotInfo(r);
+				int distance = currLoc.distanceSquaredTo(rInfo.location);
+				// TODO(jven): towers?
+				if (distance < closestDistance) {
+					closestEnemy = rInfo;
+					closestDistance = distance;
+				}
 			}
 		}
-		if (adjacentPowerCore != null) {
-			currState = RobotState.BUILD_TOWER;
+		// go back to rushing if no enemies in range
+		if (closestEnemy == null) {
+			currState = RobotState.RUSH;
 			return;
-		} else if (this.currFlux > this.unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
-			// make units if we have enough flux
-			this.currState = RobotState.SPAWN_UNIT;
+		}
+		// wait if movement is active
+		if (rc.isMovementActive()) {
+			return;
+		}
+		// try to stay at safe range
+		Direction dir = currLoc.directionTo(closestEnemy.location);
+		int distance = currLoc.distanceSquaredTo(closestEnemy.location);
+		if (currDir != dir) {
+			rc.setDirection(dir);
+		} else if (distance < Constants.ARCHON_SAFETY_RANGE) {
+			if (rc.canMove(dir.opposite())) {
+				rc.moveBackward();
+			}
+		} else {
+			if (rc.canMove(dir)) {
+				rc.moveForward();
+			}
+		}
+	}
+	
+	private void gotoPowerCore() throws GameActionException {
+		// wait if movement is active
+		if (rc.isMovementActive()) {
+			return;
+		}
+		// get closest capturable power core
+		int closestDistance = Integer.MAX_VALUE;
+		MapLocation closestPowerCore = null;
+		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
+			int distance = currLoc.distanceSquaredTo(powerCore);
+			if (distance < closestDistance) {
+				closestPowerCore = powerCore;
+				closestDistance = distance;
+			}
+		}
+		if (closestPowerCore != null) {
+			if (closestDistance > 2) {
+				blindBug(closestPowerCore);
+			} else {
+				currState = RobotState.BUILD_TOWER;
+			}
+		} else {
+			rc.setIndicatorString(2, "???");
 		}
 	}
 	
 	private void spawnUnit() throws GameActionException {
 		// check if we have enough flux
-		if (currFlux < unitToSpawn.spawnCost + MIN_UNIT_FLUX) {
-			currState = RobotState.EXPLORE;
+		if (currFlux < unitToSpawn.spawnCost + Constants.MIN_UNIT_FLUX) {
+			currState = RobotState.RUSH;
 			return;
 		}
 		// wait if movement is active
@@ -93,7 +168,7 @@ public class ArchonRobot extends BaseRobot {
 				// spawn unit, set spawn type
 				rc.spawn(unitToSpawn);
 				unitToSpawn = getSpawnType();
-				currState = RobotState.EXPLORE;
+				currState = RobotState.RUSH;
 				return;
 			}
 		}
@@ -127,7 +202,7 @@ public class ArchonRobot extends BaseRobot {
 			}
 		}
 		if (adjacentPowerCore == null) {
-			currState = RobotState.EXPLORE;
+			currState = RobotState.GOTO_POWER_CORE;
 			return;
 		}
 		// wait until we have enough flux
@@ -163,7 +238,7 @@ public class ArchonRobot extends BaseRobot {
 					currDir, RobotType.TOWER.level);
 			if (obj == null) {
 				rc.spawn(RobotType.TOWER);
-				currState = RobotState.EXPLORE;
+				currState = RobotState.GOTO_POWER_CORE;
 			}
 		}
 	}
@@ -181,16 +256,17 @@ public class ArchonRobot extends BaseRobot {
 				if (d == Direction.OMNI && level == RobotLevel.IN_AIR) {
 					continue;
 				}
-				if (this.currFlux < MIN_ARCHON_FLUX) {
+				if (this.currFlux < Constants.MIN_ARCHON_FLUX) {
 					break;
 				}
 				GameObject obj = this.dc.getAdjacentGameObject(d, level);
 				if (obj instanceof Robot && obj.getTeam() == this.myTeam) {
 					// TODO(jven): data cache this?
 					RobotInfo rInfo = this.rc.senseRobotInfo((Robot)obj);
-					if (rInfo.flux < MIN_UNIT_FLUX) {
+					if (rInfo.flux < Constants.MIN_UNIT_FLUX) {
 						double fluxToTransfer = Math.min(
-								MIN_UNIT_FLUX - rInfo.flux, currFlux - MIN_ARCHON_FLUX);
+								Constants.MIN_UNIT_FLUX - rInfo.flux,
+								currFlux - Constants.MIN_ARCHON_FLUX);
 						if (fluxToTransfer > 0) {
 							this.rc.transferFlux(
 									rInfo.location,
@@ -205,16 +281,12 @@ public class ArchonRobot extends BaseRobot {
 	}
 	
 	private RobotType getSpawnType() {
-		double p = (Math.random() * this.currRound * this.rc.getRobot().getID());
+		double p = (Math.random() * currRound * rc.getRobot().getID());
 		p = p - (int)p;
-		if (p < 0.3) {
+		if (p < 0.7) {
 			return RobotType.SOLDIER;
-		} else if (p < 0.6) {
-			return RobotType.SCOUT;
-		} else if (p < 0.8) {
-			return RobotType.DISRUPTER;
 		} else {
-			return RobotType.SCORCHER;
+			return RobotType.SCOUT;
 		}
 	}
 	
