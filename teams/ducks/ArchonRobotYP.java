@@ -18,6 +18,7 @@ public class ArchonRobotYP extends BaseRobot {
 	public ArchonRobotYP(RobotController myRC) {
 		super(myRC);
 		nv = new BlindBug(this);
+		nodes[0] = rc.sensePowerCore().getLocation();
 	}
 
 	public void run() throws GameActionException {
@@ -149,6 +150,6 @@ public class ArchonRobotYP extends BaseRobot {
 		}
 		System.out.println("added, now has "+nodesize+" nodes");
 		bytecode = Clock.getBytecodeNum()-bytecode;
-		rc.setIndicatorString(2, "adding new loc used "+bytecode);
+		rc.setIndicatorString(2, "adding new loc used "+bytecode+" next "+nodes[nodesize-1]);
 	}
 }
