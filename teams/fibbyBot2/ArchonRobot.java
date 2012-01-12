@@ -15,6 +15,8 @@ import battlecode.common.TerrainTile;
 
 public class ArchonRobot extends BaseRobot {
 	
+	private boolean shouldTower;
+	
 	private Direction bearing;
 	private Direction splitDirection;
 	
@@ -27,6 +29,7 @@ public class ArchonRobot extends BaseRobot {
 		super(myRC);
 		nv = new BlindBug(this);
 		currState = RobotState.INITIALIZE;
+		shouldTower = true;
 		numUnitsSpawned = 0;
 		unitToSpawn = getSpawnType();
 		timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
@@ -51,6 +54,12 @@ public class ArchonRobot extends BaseRobot {
 			case CHASE:
 				chase();
 				break;
+			case GOTO_POWER_CORE:
+				gotoPowerCore();
+				break;
+			case BUILD_TOWER:
+				buildTower();
+				break;
 			default:
 				break;
 		}
@@ -59,7 +68,18 @@ public class ArchonRobot extends BaseRobot {
 	@Override
 	public void processMessage(char msgType, StringBuilder sb) {
 		switch(msgType) {
+			case 'i':
+				if (Radio.decodeInt(sb) < rc.getRobot().getID()) {
+					shouldTower = false;
+				}
 			case 'r':
+				if (currState == RobotState.SPAWN_UNIT) {
+					if (shouldTower) {
+						currState = RobotState.GOTO_POWER_CORE;
+					} else {
+						currState = RobotState.RUSH;
+					}
+				}
 				int[] msgInts = Radio.decodeInts(sb);
 				int msgTargetPriority = msgInts[0];
 				int msgBearingOrdinal = msgInts[1];
@@ -178,7 +198,11 @@ public class ArchonRobot extends BaseRobot {
 		numUnitsSpawned++;
 		// if we made enough units, rush
 		if (numUnitsSpawned >= Constants.SOLDIERS_PER_ARCHON) {
-			currState = RobotState.RUSH;
+			if (shouldTower) {
+				currState = RobotState.GOTO_POWER_CORE;
+			} else {
+				currState = RobotState.RUSH;
+			}
 			return;
 		}
 	}
@@ -224,7 +248,7 @@ public class ArchonRobot extends BaseRobot {
 		}
 		// broadcast target if necessary
 		if (--timeUntilBroadcast <= 0) {
-			sendArchonMessage(target);
+			sendRallyMessage(target);
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
 		// distribute flux
@@ -248,15 +272,19 @@ public class ArchonRobot extends BaseRobot {
 				}
 			}
 		}
-		// go back to rushing if no enemies in range
+		// change state if no enemies in range
 		if (closestEnemy == null) {
-			currState = RobotState.RUSH;
+			if (shouldTower) {
+				currState = RobotState.GOTO_POWER_CORE;
+			} else {
+				currState = RobotState.RUSH;
+			}
 			return;
 		}
 		// broadcast target if necessary, with increased priority
 		targetPriority++;
 		if (--timeUntilBroadcast <= 0) {
-			sendArchonMessage(closestEnemy.location);
+			sendRallyMessage(closestEnemy.location);
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
 		// try to stay at safe range
@@ -279,6 +307,100 @@ public class ArchonRobot extends BaseRobot {
 		}
 		// distribute flux
 		this.distributeFlux();
+	}
+	
+	private void gotoPowerCore() throws GameActionException {
+		// wait if movement is active
+		if (rc.isMovementActive()) {
+			return;
+		}
+		// get closest capturable power core
+		int closestDistance = Integer.MAX_VALUE;
+		MapLocation closestPowerCore = null;
+		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
+			int distance = currLoc.distanceSquaredTo(powerCore);
+			if (distance < closestDistance) {
+				closestPowerCore = powerCore;
+				closestDistance = distance;
+			}
+		}
+		if (closestPowerCore != null) {
+			if (rc.canSenseSquare(closestPowerCore)) {
+				GameObject go = rc.senseObjectAtLocation(
+						closestPowerCore, RobotLevel.ON_GROUND);
+				if (go != null && go.getTeam() != myTeam) {
+					currState = RobotState.CHASE;
+					return;
+				}
+			}
+			if (closestDistance > 2) {
+				Direction d = nv.navigateTo(closestPowerCore);
+				if (currDir != d.opposite()) {
+					rc.setDirection(d.opposite());
+				} else {
+					if (rc.canMove(currDir.opposite())) {
+						rc.moveBackward();
+					}
+				}
+			} else {
+				currState = RobotState.BUILD_TOWER;
+			}
+		} else {
+			// TODO(jven): handle case where no open power cores left
+		}
+		// distribute flux
+		this.distributeFlux();
+	}
+	
+	private void buildTower() throws GameActionException {
+		// make sure an untaken power core is next to me
+		MapLocation adjacentPowerCore = null;
+		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
+			if (currLoc.isAdjacentTo(powerCore)) {
+				adjacentPowerCore = powerCore;
+				break;
+			}
+		}
+		if (adjacentPowerCore == null) {
+			currState = RobotState.GOTO_POWER_CORE;
+			return;
+		}
+		// wait until we have enough flux
+		if (currFlux < RobotType.TOWER.spawnCost) {
+			return;
+		}
+		// wait if movement is active
+		if (rc.isMovementActive()) {
+			return;
+		}
+		Direction dir = currLoc.directionTo(adjacentPowerCore);
+		// back up if on top of it
+		if (dir == Direction.OMNI) {
+			if (rc.canMove(currDir.opposite())) {
+				rc.moveBackward();
+			} else {
+				for (Direction d : Direction.values()) {
+					if (d == Direction.OMNI || d == Direction.NONE) {
+						continue;
+					}
+					// TODO(jven): dc
+					if (rc.canMove(d)) {
+						rc.setDirection(d.opposite());
+						break;
+					}
+				}
+			}
+		} else if (currDir != dir) {
+			// turn to power core if necessary, then spawn tower if possible
+			rc.setDirection(dir);
+		} else {
+			GameObject obj = dc.getAdjacentGameObject(
+					currDir, RobotType.TOWER.level);
+			if (obj == null) {
+				rc.spawn(RobotType.TOWER);
+				currState = RobotState.GOTO_POWER_CORE;
+			}
+		}
 	}
 
 	private void distributeFlux() throws GameActionException {
@@ -328,7 +450,11 @@ public class ArchonRobot extends BaseRobot {
 		}
 	}
 	
-	private void sendArchonMessage(
+	private void sendID() {
+		io.sendInt("#ai", rc.getRobot().getID());
+	}
+	
+	private void sendRallyMessage(
 			MapLocation target) throws GameActionException {
 		io.sendInts("#sr", new int[] {targetPriority, target.x, target.y});
 		io.sendInts("#ar", new int[] {targetPriority, bearing.ordinal()});
