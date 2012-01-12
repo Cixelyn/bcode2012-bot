@@ -15,6 +15,7 @@ public abstract class BaseRobot {
 	final RobotType myType;
 	final double myMaxEnergon, myMaxFlux;
 	final Team myTeam;
+	final int myID;
 
 	
 	public double currEnergon, currFlux;
@@ -33,6 +34,7 @@ public abstract class BaseRobot {
 		
 		myType = rc.getType();
 		myTeam = rc.getTeam();
+		myID = rc.getRobot().getID();
 		myMaxEnergon = myType.maxEnergon;
 		myMaxFlux = myType.maxFlux;
 		
