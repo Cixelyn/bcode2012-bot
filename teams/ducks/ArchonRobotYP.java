@@ -108,7 +108,7 @@ public class ArchonRobotYP extends BaseRobot {
 			//rc.setIndicatorString(0, "round "+currRound+" a"+5);
 			int bytecode = Clock.getBytecodeNum();
 			//rc.setIndicatorString(1, "before move "+bytecode+" cur "+currLoc);
-			//rc.setIndicatorString(1, "start:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs);
+//			rc.setIndicatorString(1, "start:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs);
 			
 			Direction d = nv.navigateTo(nodes[nodeindex]);
 			if (currDir == d)
@@ -118,7 +118,7 @@ public class ArchonRobotYP extends BaseRobot {
 			
 			bytecode = Clock.getBytecodeNum()-bytecode;
 //			rc.setIndicatorString(1, "move used "+bytecode);
-			//rc.setIndicatorString(0, "end:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs+" move used "+bytecode);
+//			rc.setIndicatorString(0, "end:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs+" move used "+bytecode);
 		}
 //		rc.setIndicatorString(0, "round "+currRound+" a"+6);
 		
