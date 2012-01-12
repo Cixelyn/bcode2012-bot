@@ -9,7 +9,7 @@ public class RobotPlayer {
     	isWall = new boolean[100][100];
     	sensed = new boolean[100][100];
 		for(int a=0; a<100; a++) for(int b=0; b<100; b++) {
-			isWall[a][b] = true;
+			isWall[a][b] = false;
 			sensed[a][b] = false;
 		}
 		RobotType myType = myRC.getType();
