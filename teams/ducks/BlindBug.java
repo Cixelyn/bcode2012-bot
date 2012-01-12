@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -45,9 +46,14 @@ public class BlindBug extends Navigation {
 		}
 		
 		boolean[] moveableland = br.dc.getMovableLand();
-		
+		int x=0;
 		while (true)
 		{
+			if (rc.getRobot().getID()==48 && Clock.getRoundNum()>3928)
+			{
+//				int x=0; 
+				x=x+1;
+			}
 			if (bugGing)
 			{
 				boolean stopbugging = false;
@@ -61,9 +67,12 @@ public class BlindBug extends Navigation {
 							{
 								stopbugging = true;
 							}
-						} else if (br.currLoc.y>=bugTarget.y)
+						} else if (br.currLoc.y<bugStart.y)
 						{
-							stopbugging = true;
+							if (br.currLoc.y>=bugTarget.y)
+							{
+								stopbugging = true;
+							}
 						}
 					}
 				} else if (bugTarget.y == bugStart.y)
@@ -76,9 +85,12 @@ public class BlindBug extends Navigation {
 							{
 								stopbugging = true;
 							}
-						} else if (br.currLoc.x>=bugTarget.x)
+						} else if (br.currLoc.x<bugStart.x)
 						{
-							stopbugging = true;
+							if (br.currLoc.x>=bugTarget.x)
+							{
+								stopbugging = true;
+							}
 						}
 					}
 				} else
