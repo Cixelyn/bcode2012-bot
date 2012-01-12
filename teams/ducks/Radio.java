@@ -44,7 +44,7 @@ public class Radio {
 	 */
 	public void sendInt(String header, int data) {
 		msgContainer.append(header);
-		msgContainer.append((char) data + 0x100);
+		msgContainer.append((char) (data + 0x100));
 	}
 	
 	public static int decodeInt(StringBuilder s) {
