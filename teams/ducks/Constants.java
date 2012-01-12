@@ -18,7 +18,7 @@ public final class Constants {
 	// Archons must have this amount of flux in order to distribute.
 	public static final double MIN_ARCHON_FLUX = 0.2;
 	// Archons try to maintain this amount of flux on other units.
-	public static final double MIN_UNIT_FLUX = 20;
+	public static final double MIN_UNIT_FLUX = 30;
 	// Units below this amount of flux will not execute their run method.
 	public static final double POWER_DOWN_FLUX = 1;
 	// The frequency with which units broadcast information.
@@ -34,7 +34,7 @@ public final class Constants {
 	// Initial bearing for all robots
 	public static final Direction INITIAL_BEARING = Direction.EAST;
 	// The maximum distance units should be from the closest archon
-	public static final int MAX_SWARM_RADIUS = 16;
+	public static final int MAX_SWARM_RADIUS = 9;
 	// The number of rounds after which to start taking towers
 	public static final int CIRCLE_MAP_ROUNDS = 2000;
 	public static final int TOWER_ROUNDS = 4000;
