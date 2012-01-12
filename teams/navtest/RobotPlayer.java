@@ -497,7 +497,8 @@ public void bugCCW(int sx, int sy, int tx, int ty) {
 			else return 5;
 		}
 	}
-	
+
+	@SuppressWarnings("unused")
 	static private final int[][] DIRSTOWARDS = new int[][]{
 		{5},
 		{1},
@@ -607,7 +608,9 @@ class Archon implements Runnable {
 		MapLocation cur = rc.getLocation();
 		
 		int b1,b2;
+		@SuppressWarnings("unused")
 		int k1,k2,k3;
+		@SuppressWarnings("unused")
 		TerrainTile tt;
 		b1 = Clock.getBytecodeNum();
 		k1 = mc.map[60+1][60+3];

@@ -45,12 +45,8 @@ public class BlindBug extends Navigation {
 		}
 		
 		boolean[] moveableland = br.dc.getMovableLand();
-		int x = 0;
 		while (true)
 		{
-			if (x++ > 100) {
-				System.out.println(x);
-			}
 			if (bugGing)
 			{
 				boolean stopbugging = false;
