@@ -71,14 +71,16 @@ public class DataCache {
 	{
 		if (br.currRound > moveableLandTime)
 		{
-			moveableLand[0] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH))==TerrainTile.LAND;
-			moveableLand[1] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_EAST))==TerrainTile.LAND;
-			moveableLand[2] = rc.senseTerrainTile(br.currLoc.add(Direction.EAST))==TerrainTile.LAND;
-			moveableLand[3] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_EAST))==TerrainTile.LAND;
-			moveableLand[4] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH))==TerrainTile.LAND;
-			moveableLand[5] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_WEST))==TerrainTile.LAND;
-			moveableLand[6] = rc.senseTerrainTile(br.currLoc.add(Direction.WEST))==TerrainTile.LAND;
-			moveableLand[7] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_WEST))==TerrainTile.LAND;
+			TerrainTile tt;
+			tt = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH));
+			moveableLand[0] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH))!=TerrainTile.VOID;
+			moveableLand[1] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_EAST))!=TerrainTile.VOID;
+			moveableLand[2] = rc.senseTerrainTile(br.currLoc.add(Direction.EAST))!=TerrainTile.VOID;
+			moveableLand[3] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_EAST))!=TerrainTile.VOID;
+			moveableLand[4] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH))!=TerrainTile.VOID;
+			moveableLand[5] = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_WEST))!=TerrainTile.VOID;
+			moveableLand[6] = rc.senseTerrainTile(br.currLoc.add(Direction.WEST))!=TerrainTile.VOID;
+			moveableLand[7] = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_WEST))!=TerrainTile.VOID;
 			moveableLandTime = br.currRound;
 		}
 		return moveableLand;

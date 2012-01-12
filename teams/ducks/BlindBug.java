@@ -54,9 +54,14 @@ public class BlindBug extends Navigation {
 		rc.setIndicatorString(1, "start:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+br.currLoc+" obs:"+bugObs+" bugging:"+bugGing);
 		rc.setIndicatorString(2, "rstart:"+bugRoundStart+" stopthreshold:"+bugStopThreshold);
 		
+		int x=0;
 		boolean[] moveableland = br.dc.getMovableLand();
 		while (true)
 		{
+			if (x++>50)
+			{
+				x++;
+			}
 			if (bugGing)
 			{
 				boolean stopbugging = false;
