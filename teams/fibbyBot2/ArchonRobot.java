@@ -352,6 +352,8 @@ public class ArchonRobot extends BaseRobot {
 				} else {
 					if (rc.canMove(currDir.opposite())) {
 						rc.moveBackward();
+					} else {
+						sendBackOffMessage();
 					}
 				}
 			} else {
