@@ -82,6 +82,11 @@ public class ArchonRobot extends BaseRobot {
 	}
 	
 	private void rush() throws GameActionException {
+		// after a certain number of time, start taking towers
+		if (currRound > Constants.TOWER_ROUNDS) {
+			currState = RobotState.GOTO_POWER_CORE;
+			return;
+		}
 		// scan for enemies
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {
@@ -102,7 +107,15 @@ public class ArchonRobot extends BaseRobot {
 		}
 		if (rc.senseTerrainTile(currLoc.add(bearing, range)) ==
 				TerrainTile.OFF_MAP) {
-			bearing = bearing.rotateRight().rotateRight().rotateRight();
+			if (currRound < Constants.CIRCLE_MAP_ROUNDS) {
+				bearing = bearing.rotateRight().rotateRight().rotateRight();
+			} else {
+				if (bearing.isDiagonal()) {
+					bearing = bearing.rotateRight();
+				} else {
+					bearing = bearing.rotateRight().rotateRight();
+				}
+			}
 			targetPriority++;
 		}
 		// move towards bearing if possible
@@ -343,8 +356,11 @@ public class ArchonRobot extends BaseRobot {
 			return false;
 		}
 		for (PowerNode myPN : dc.getAlliedPowerNodes()) {
+			if (!rc.senseConnected(myPN)) {
+				continue;
+			}
 			for (MapLocation loc : pn.neighbors()) {
-				if (myPN.getLocation() == loc) {
+				if (myPN.getLocation().equals(loc)) {
 					return true;
 				}
 			}

@@ -159,8 +159,11 @@ public class SoldierRobot extends BaseRobot {
 			return false;
 		}
 		for (PowerNode myPN : dc.getAlliedPowerNodes()) {
+			if (!rc.senseConnected(myPN)) {
+				continue;
+			}
 			for (MapLocation loc : pn.neighbors()) {
-				if (myPN.getLocation() == loc) {
+				if (myPN.getLocation().equals(loc)) {
 					return true;
 				}
 			}
