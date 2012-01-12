@@ -113,6 +113,9 @@ public class SoldierRobot extends BaseRobot {
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {
 				RobotInfo rInfo = rc.senseRobotInfo(r);
+				if (rInfo.energon <= 0) {
+					//continue;
+				}
 				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
 					continue;
 				}
@@ -163,7 +166,7 @@ public class SoldierRobot extends BaseRobot {
 				RobotInfo rInfo = rc.senseRobotInfo(r);
 				// don't overkill
 				if (rInfo.energon <= 0) {
-					continue;
+					//continue;
 				}
 				// don't shoot at towers you can't hurt
 				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
@@ -213,17 +216,25 @@ public class SoldierRobot extends BaseRobot {
 	private void backOff() throws GameActionException {
 		if (!rc.isMovementActive()) {
 			Direction dir = currLoc.directionTo(backOffLoc).opposite();
-			if (!rc.canMove(dir)) {
-				dir = dir.rotateLeft();
-			}
-			if (!rc.canMove(dir)) {
-				dir = dir.rotateRight().rotateRight();
-			}
-			if (currDir != dir.opposite()) {
-				rc.setDirection(dir.opposite());
-			} else {
-				if (rc.canMove(currDir.opposite())) {
-					rc.moveBackward();
+			Direction[] backOffDirs = new Direction[] {
+					dir,
+					dir.rotateLeft(),
+					dir.rotateRight(),
+					dir.rotateLeft().rotateLeft(),
+					dir.rotateRight().rotateRight(),
+					dir.rotateLeft().rotateLeft().rotateLeft(),
+					dir.rotateRight().rotateRight().rotateRight()
+			};
+			for (Direction d : backOffDirs) {
+				if (rc.canMove(d)) {
+					if (currDir != d.opposite()) {
+						rc.setDirection(d.opposite());
+					} else {
+						if (rc.canMove(currDir.opposite())) {
+							rc.moveBackward();
+						}
+					}
+					break;
 				}
 			}
 		}

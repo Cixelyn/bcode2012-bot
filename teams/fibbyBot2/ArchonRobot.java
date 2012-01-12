@@ -215,6 +215,9 @@ public class ArchonRobot extends BaseRobot {
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {
 				RobotInfo rInfo = rc.senseRobotInfo(r);
+				if (rInfo.energon <= 0) {
+					continue;
+				}
 				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
 					continue;
 				}
@@ -268,6 +271,9 @@ public class ArchonRobot extends BaseRobot {
 		for (Robot r : dc.getNearbyRobots()) {
 			if (r.getTeam() != myTeam) {
 				RobotInfo rInfo = rc.senseRobotInfo(r);
+				if (rInfo.energon <= 0) {
+					continue;
+				}
 				if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
 					continue;
 				}
@@ -346,6 +352,8 @@ public class ArchonRobot extends BaseRobot {
 				} else {
 					if (rc.canMove(currDir.opposite())) {
 						rc.moveBackward();
+					} else {
+						sendBackOffMessage();
 					}
 				}
 			} else {
