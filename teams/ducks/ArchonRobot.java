@@ -17,16 +17,12 @@ public class ArchonRobot extends BaseRobot {
 	
 	private Direction bearing;
 	private RobotType unitToSpawn;
-	private BlindBug bugNav;
-	private Beeline beeNav;
 	private int timeUntilBroadcast;
 	private int targetPriority;
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
-		bugNav = new BlindBug(this);
-		beeNav = new Beeline(this, Constants.ARCHON_SAFETY_RANGE, true);
-		nv = bugNav;
+		nv = new BlindBug(this);
 		currState = RobotState.RUSH;
 		unitToSpawn = getSpawnType();
 		bearing = Constants.INITIAL_BEARING;
@@ -38,11 +34,9 @@ public class ArchonRobot extends BaseRobot {
 	public void run() throws GameActionException {
 		switch (currState) {
 			case RUSH:
-				nv = bugNav;
 				rush();
 				break;
 			case CHASE:
-				nv = beeNav;
 				chase();
 				break;
 			case GOTO_POWER_CORE:
@@ -121,7 +115,18 @@ public class ArchonRobot extends BaseRobot {
 		// move towards bearing if possible
 		MapLocation target = currLoc.add(bearing,
 				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH);
-		nv.navigateTo(target);
+		if (!rc.isMovementActive()) {
+			Direction dir = nv.navigateTo(target);
+			if (dir != Direction.OMNI && dir != Direction.NONE) {
+				if (currDir != dir.opposite()) {
+					rc.setDirection(dir.opposite());
+				} else {
+					if (rc.canMove(currDir.opposite())) {
+						rc.moveBackward();
+					}
+				}
+			}
+		}
 		// broadcast target if necessary
 		if (--timeUntilBroadcast <= 0) {
 			sendArchonMessage(target);
@@ -163,12 +168,24 @@ public class ArchonRobot extends BaseRobot {
 			sendArchonMessage(closestEnemy.location);
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
-		// wait if movement is active
-		if (rc.isMovementActive()) {
-			return;
-		}
 		// try to stay at safe range
-		nv.navigateTo(closestEnemy.location);
+		if (!rc.isMovementActive()) {
+			Direction dir = currLoc.directionTo(closestEnemy.location);
+			int distance = currLoc.distanceSquaredTo(closestEnemy.location);
+			if (dir != Direction.OMNI) {
+				if (currDir != dir) {
+					rc.setDirection(dir);
+				} else if (distance < Constants.ARCHON_SAFETY_RANGE) {
+					if (rc.canMove(currDir.opposite())) {
+						rc.moveBackward();
+					}
+				} else {
+					if (rc.canMove(currDir)){
+						rc.moveForward();
+					}
+				}
+			}
+		}
 		// distribute flux
 		this.distributeFlux();
 	}

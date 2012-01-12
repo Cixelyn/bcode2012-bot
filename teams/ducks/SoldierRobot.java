@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
@@ -12,17 +13,13 @@ import battlecode.common.RobotType;
 
 public class SoldierRobot extends BaseRobot {
 	
-	private BlindBug bugNav;
-	private Beeline beeNav;
 	private int timeUntilBroadcast;
 	private MapLocation target;
 	private int targetPriority = -1;
 
 	public SoldierRobot(RobotController myRC) {
 		super(myRC);
-		bugNav = new BlindBug(this);
-		beeNav = new Beeline(this, myType.attackRadiusMaxSquared, false);
-		nv = bugNav;
+		nv = new BlindBug(this);
 		timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
 		target = myRC.getLocation().add(Constants.INITIAL_BEARING,
 				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH);
@@ -38,11 +35,9 @@ public class SoldierRobot extends BaseRobot {
 		}
 		switch (currState) {
 			case RUSH:
-				nv = bugNav;
 				rush();
 				break;
 			case MICRO:
-				nv = beeNav;
 				micro();
 				break;
 			default:
@@ -84,20 +79,32 @@ public class SoldierRobot extends BaseRobot {
 				return;
 			}
 		}
-		// if closest archon is too far, regroup to it, otherwise go to target
-		int closestDistance = Integer.MAX_VALUE;
-		MapLocation closestArchon = currLoc;
-		for (MapLocation archon : dc.getAlliedArchons()) {
-			int distance = currLoc.distanceSquaredTo(archon);
-			if (distance < closestDistance) {
-				closestDistance = distance;
-				closestArchon = archon;
+		if (!rc.isMovementActive()) {
+			// if closest archon is too far, regroup to it, otherwise go to target
+			int closestDistance = Integer.MAX_VALUE;
+			MapLocation closestArchon = currLoc;
+			for (MapLocation archon : dc.getAlliedArchons()) {
+				int distance = currLoc.distanceSquaredTo(archon);
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closestArchon = archon;
+				}
 			}
-		}
-		if (closestDistance > Constants.MAX_SWARM_RADIUS) {
-			nv.navigateTo(closestArchon);
-		} else {
-			nv.navigateTo(target);
+			Direction dir;
+			if (closestDistance > Constants.MAX_SWARM_RADIUS) {
+				dir = nv.navigateTo(closestArchon);
+			} else {
+				dir = nv.navigateTo(target);
+			}
+			if (dir != Direction.OMNI && dir != Direction.NONE) {
+				if (currDir != dir) {
+					rc.setDirection(dir);
+				} else {
+					if (rc.canMove(currDir)) {
+						rc.moveForward();
+					}
+				}
+			}
 		}
 		// broadcast message if necessary
 		if (--timeUntilBroadcast <= 0) {
@@ -142,8 +149,20 @@ public class SoldierRobot extends BaseRobot {
 				enemyArchonInfo.reportEnemyArchonKill(closestEnemy.robot.getID());
 			}
 		}
-		// dance if possible
-		nv.navigateTo(closestEnemy.location);
+		// charrrrge
+		if (rc.isMovementActive()) {
+			return;
+		}
+		Direction dir = currLoc.directionTo(closestEnemy.location);
+		if (dir != Direction.OMNI) {
+			if (currDir != dir) {
+				rc.setDirection(dir);
+			} else {
+				if (rc.canMove(currDir)){
+					rc.moveForward();
+				}
+			}
+		}
 	}
 	
 	private void sendSoldierMessage() throws GameActionException {

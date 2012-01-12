@@ -1,6 +1,5 @@
 package ducks;
 
-import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -46,8 +45,12 @@ public class BlindBug extends Navigation {
 		}
 		
 		boolean[] moveableland = br.dc.getMovableLand();
+		int x = 0;
 		while (true)
 		{
+			if (x++ > 100) {
+				System.out.println(x);
+			}
 			if (bugGing)
 			{
 				boolean stopbugging = false;
