@@ -24,7 +24,7 @@ public final class Constants {
 	/** The number of damaged units that a scout must have in range in order to regen. */
 	public static final int MIN_DAMAGED_UNITS_TO_REGEN = 1;
 	/** Archons try to stay at this range from enemy units. */
-	public static final int ARCHON_SAFETY_RANGE = 32;
+	public static final int ARCHON_SAFETY_RANGE = 25;
 	/** Secret keys for use in messaging system, one for each team. */
 	public static final int[] RADIO_TEAM_KEYS = new int[] {5555, 1729};
 	

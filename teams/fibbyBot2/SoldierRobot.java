@@ -133,7 +133,7 @@ public class SoldierRobot extends BaseRobot {
 		}
 		// broadcast message if necessary
 		if (--timeUntilBroadcast <= 0) {
-			sendSoldierMessage();
+			sendDeadEnemyArchonIDs();
 			timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
 		}
 	}
@@ -194,7 +194,7 @@ public class SoldierRobot extends BaseRobot {
 		}
 	}
 	
-	private void sendSoldierMessage() throws GameActionException {
+	private void sendDeadEnemyArchonIDs() throws GameActionException {
 		io.sendInts("#xd", enemyArchonInfo.getDeadEnemyArchonIDs());
 	}
 
