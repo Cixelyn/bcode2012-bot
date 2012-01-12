@@ -58,9 +58,10 @@ public class BlindBug extends Navigation {
 		boolean[] moveableland = br.dc.getMovableLand();
 		while (true)
 		{
-			if (x++>50)
+			if (x++>3)
 			{
 				x++;
+				return br.currDir.opposite();
 			}
 			if (bugGing)
 			{
