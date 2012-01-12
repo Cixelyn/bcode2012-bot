@@ -35,4 +35,7 @@ public final class Constants {
 	public static final Direction INITIAL_BEARING = Direction.EAST;
 	// The maximum distance units should be from the closest archon
 	public static final int MAX_SWARM_RADIUS = 16;
+	// The number of rounds after which to start taking towers
+	public static final int CIRCLE_MAP_ROUNDS = 2000;
+	public static final int TOWER_ROUNDS = 4000;
 }
