@@ -46,8 +46,9 @@ public class MapCache {
 	 */
 	public void senseAllTiles() {
 		MapLocation myLoc = baseRobot.currLoc;
-		int myX = myLoc.x;
-		int myY = myLoc.y;
+		int myX = worldToCacheX(myLoc.x);
+		int myY = worldToCacheY(myLoc.y);
+		System.out.println(myX+" "+myY);
 		for(int dx=-senseDist; dx<=senseDist; dx++) for(int dy=-senseDist; dy<=senseDist; dy++) {
 			if(sensed[myX+dx][myY+dy]) continue;
 			MapLocation loc = myLoc.add(dx, dy);
@@ -75,10 +76,10 @@ public class MapCache {
 		return cacheX+powerCoreWorldX-POWER_CORE_POSITION;
 	}
 	public int worldToCacheY(int worldY) {
-		return worldY-powerCoreWorldX+POWER_CORE_POSITION;
+		return worldY-powerCoreWorldY+POWER_CORE_POSITION;
 	}
 	public int cacheToWorldY(int cacheY) {
-		return cacheY+powerCoreWorldX-POWER_CORE_POSITION;
+		return cacheY+powerCoreWorldY-POWER_CORE_POSITION;
 	}
 	
 }
