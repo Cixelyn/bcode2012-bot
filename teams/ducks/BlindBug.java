@@ -21,10 +21,10 @@ public class BlindBug extends Navigation {
 		super(myBR);
 	}
 	
-	public void navigateTo(MapLocation target) throws GameActionException
+	public Direction navigateTo(MapLocation target) throws GameActionException
 	{
 		if (rc.isMovementActive()) {
-			return;
+			return Direction.NONE;
 		}
 		
 		if (!target.equals(bugTarget))
@@ -35,18 +35,14 @@ public class BlindBug extends Navigation {
 			bugRoundStart = 0;
 		}
 		
-		if (br.currLoc.equals(target)) return;
+		if (br.currLoc.equals(target)) return Direction.NONE;
 		
 		Direction toTarget = br.currLoc.directionTo(target);
 		boolean[] moveable = br.dc.getMovableDirections();
 		
 		if (br.currLoc.isAdjacentTo(target))
 		{
-			if (br.currDir.equals(toTarget))
-				if (moveable[toTarget.ordinal()])
-					rc.moveForward();
-			else rc.setDirection(toTarget);
-			return;
+			return toTarget;
 		}
 		
 		boolean[] moveableland = br.dc.getMovableLand();
@@ -220,13 +216,13 @@ public class BlindBug extends Navigation {
 						while (!moveable[dir]) dir = (dir+7)%8;
 						if (br.currDir.equals(Constants.directions[dir]))
 						{
-							rc.moveForward();
+//							rc.moveForward();
 							bugObs = br.currLoc.add(br.currDir).directionTo(br.currLoc.add(br.currDir.rotateRight()));
-							return;
+							return Constants.directions[dir];
 						} else
 						{
-							rc.setDirection(Constants.directions[dir]);
-							return;
+//							rc.setDirection(Constants.directions[dir]);
+							return Constants.directions[dir];
 						}
 					} else
 					{
@@ -236,32 +232,32 @@ public class BlindBug extends Navigation {
 						while (!moveable[dir]) dir = (dir+1)%8;
 						if (br.currDir.equals(Constants.directions[dir]))
 						{
-							rc.moveForward();
+//							rc.moveForward();
 							bugObs = br.currLoc.add(br.currDir).directionTo(br.currLoc.add(br.currDir.rotateLeft()));
-							return;
+							return Constants.directions[dir];
 						} else
 						{
-							rc.setDirection(Constants.directions[dir]);
-							return;
+//							rc.setDirection(Constants.directions[dir]);
+							return Constants.directions[dir];
 						}
 					}
-				} else return;
+				} else return Direction.NONE;
 			} else //if (!bugGing)
 			{
 				if (br.currDir == toTarget)
 				{
 					if (moveable[toTarget.ordinal()])
 					{
-						rc.moveForward();
-						return;
+//						rc.moveForward();
+						return toTarget;
 					} else if (moveableland[toTarget.rotateLeft().ordinal()])
 					{
-						rc.setDirection(toTarget.rotateLeft());
-						return;
+//						rc.setDirection(toTarget.rotateLeft());
+						return toTarget.rotateLeft();
 					} else if (moveableland[toTarget.rotateRight().ordinal()])
 					{
-						rc.setDirection(toTarget.rotateRight());
-						return;
+//						rc.setDirection(toTarget.rotateRight());
+						return toTarget.rotateRight();
 					} else
 					{
 						bugGing = true;
@@ -275,16 +271,16 @@ public class BlindBug extends Navigation {
 				{
 					if (moveable[br.currDir.ordinal()])
 					{
-						rc.moveForward();
-						return;
+//						rc.moveForward();
+						return br.currDir;
 					} else if (moveableland[toTarget.ordinal()])
 					{
-						rc.setDirection(toTarget);
-						return;
+//						rc.setDirection(toTarget);
+						return toTarget;
 					} else if (moveableland[toTarget.rotateRight().ordinal()])
 					{
-						rc.setDirection(toTarget.rotateRight());
-						return;
+//						rc.setDirection(toTarget.rotateRight());
+						return toTarget.rotateRight();
 					} else
 					{
 						bugGing = true;
@@ -298,16 +294,16 @@ public class BlindBug extends Navigation {
 				{
 					if (moveable[br.currDir.ordinal()])
 					{
-						rc.moveForward();
-						return;
+//						rc.moveForward();
+						return br.currDir;
 					} else if (moveableland[toTarget.ordinal()])
 					{
-						rc.setDirection(toTarget);
-						return;
+//						rc.setDirection(toTarget);
+						return toTarget;
 					} else if (moveableland[toTarget.rotateLeft().ordinal()])
 					{
-						rc.setDirection(toTarget.rotateLeft());
-						return;
+//						rc.setDirection(toTarget.rotateLeft());
+						return toTarget.rotateLeft();
 					} else
 					{
 						bugGing = true;
@@ -321,16 +317,16 @@ public class BlindBug extends Navigation {
 				{
 					if (moveableland[toTarget.ordinal()])
 					{
-						rc.setDirection(toTarget);
-						return;
+//						rc.setDirection(toTarget);
+						return toTarget;
 					} else if (moveableland[toTarget.rotateLeft().ordinal()])
 					{
-						rc.setDirection(toTarget.rotateLeft());
-						return;
+//						rc.setDirection(toTarget.rotateLeft());
+						return toTarget.rotateLeft();
 					} else if (moveableland[toTarget.rotateRight().ordinal()])
 					{
-						rc.setDirection(toTarget.rotateRight());
-						return;
+//						rc.setDirection(toTarget.rotateRight());
+						return toTarget.rotateRight();
 					} else
 					{
 						bugGing = true;

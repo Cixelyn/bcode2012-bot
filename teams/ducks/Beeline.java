@@ -15,25 +15,29 @@ public class Beeline extends Navigation {
 		this.moveBackwards = moveBackwards;
 	}
 	
-	public void navigateTo(MapLocation target) throws GameActionException {
+	public Direction navigateTo(MapLocation target) throws GameActionException {
 		if (rc.isMovementActive()) {
-			return;
+			return Direction.NONE;
 		}
 		Direction dir = br.currLoc.directionTo(target);
 		int distance = br.currLoc.distanceSquaredTo(target);
 		if (dir == Direction.OMNI) {
-			return;
+			return Direction.OMNI;
 		}
 		if (br.currDir != dir) {
-			rc.setDirection(dir);
+//			rc.setDirection(dir);
+			return dir;
 		} else if (distance < targetDistance) {
 			if (moveBackwards && rc.canMove(br.currDir.opposite())) {
-				rc.moveBackward();
+//				rc.moveBackward();
+				return br.currDir.opposite();
 			}
 		} else {
 			if (rc.canMove(br.currDir)){
-				rc.moveForward();
+//				rc.moveForward();
+				return br.currDir;
 			}
 		}
+		return Direction.NONE;
 	}
 }
