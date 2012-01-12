@@ -12,6 +12,7 @@ public class BlindBug extends Navigation {
 	private double bugSlope;
 	private boolean bugGing;
 	private boolean bugCW;
+	private boolean bugFlipped;
 	private Direction bugObs;
 	private int bugRoundStart;
 	private int bugStopThreshold;
@@ -37,6 +38,7 @@ public class BlindBug extends Navigation {
 			bugRoundStart = 0;
 			bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
 			bugDist = 9999;
+			bugFlipped = false;
 		}
 		
 		if (br.currLoc.equals(target)) return Direction.NONE;
@@ -65,184 +67,194 @@ public class BlindBug extends Navigation {
 			}
 			if (bugGing)
 			{
-				boolean stopbugging = false;
-				if (br.currRound-bugRoundStart > bugStopThreshold)
+				if (!bugFlipped)
 				{
-					stopbugging = true;
-					bugCW = !bugCW;
-					bugRoundStart = br.currRound;
-					bugStopThreshold = bugStopThreshold*2;
-					continue;
-				} else if (bugTarget.x == bugStart.x)
-				{
-					if (br.currLoc.x == bugStart.x)
-					{
-						if (br.currLoc.y>bugStart.y)
-						{
-							if (br.currLoc.y<=bugTarget.y)
-							{
-								stopbugging = true;
-							}
-						} else if (br.currLoc.y<bugStart.y)
-						{
-							if (br.currLoc.y>=bugTarget.y)
-							{
-								stopbugging = true;
-							}
-						}
-					}
-				} else if (bugTarget.y == bugStart.y)
-				{
-					if (br.currLoc.y == bugStart.y)
-					{
-						if (br.currLoc.x>bugStart.x)
-						{
-							if (br.currLoc.x<=bugTarget.x)
-							{
-								stopbugging = true;
-							}
-						} else if (br.currLoc.x<bugStart.x)
-						{
-							if (br.currLoc.x>=bugTarget.x)
-							{
-								stopbugging = true;
-							}
-						}
-					}
-				} else
-				{
-					if (bugSlope>0)
-					{
-						if (bugSlope>1)
-						{
-							if (bugTarget.y>bugStart.y)
-							{
-								if (br.currLoc.y>bugStart.y)
-								{
-									double approxX = (br.currLoc.y-bugStart.y)/bugSlope+bugStart.x;
-									int a = (int)approxX;
-									if (br.currLoc.x == a || br.currLoc.x == a+1)
-									{
-										stopbugging = true;
-									} 
-								}
-							} else
-							{
-								if (br.currLoc.y<bugStart.y)
-								{
-									double approxX = (br.currLoc.y-bugStart.y)/bugSlope+bugStart.x;
-									int a = (int)approxX;
-									if (br.currLoc.x == a || br.currLoc.x == a+1)
-									{
-										stopbugging = true;
-									} 
-								}
-							}
-						} else //bugSlope<1
-						{
-							if (bugTarget.x>bugStart.x)
-							{
-								if (br.currLoc.x>bugStart.x)
-								{
-									double approxY = bugSlope*(br.currLoc.x-bugStart.x)+bugStart.y;
-									int a = (int)approxY;
-									if (br.currLoc.y == a || br.currLoc.y == a+1)
-									{
-										stopbugging = true;
-									} 
-								}
-							} else
-							{
-								if (br.currLoc.x<bugStart.x)
-								{
-									double approxY = bugSlope*(br.currLoc.x-bugStart.x)+bugStart.y;
-									int a = (int)approxY;
-									if (br.currLoc.y == a || br.currLoc.y == a+1)
-									{
-										stopbugging = true;
-									} 
-								}
-							}
-						}
-					} else // bugSlope<0
-					{
-						if (bugSlope>-1)
-						{
-							if (bugTarget.x>bugStart.x)
-							{
-								if (br.currLoc.x>bugStart.x)
-								{
-									double approxY = bugSlope*(br.currLoc.x-bugStart.x)+bugStart.y;
-									int a = (int)approxY;
-									if (br.currLoc.y == a || br.currLoc.y == a+1)
-									{
-										stopbugging = true;
-									} 
-								}
-							} else
-							{
-								if (br.currLoc.x<bugStart.x)
-								{
-									double approxY = bugSlope*(br.currLoc.x-bugStart.x)+bugStart.y;
-									int a = (int)approxY;
-									if (br.currLoc.y == a || br.currLoc.y == a+1)
-									{
-										stopbugging = true;
-									} 
-								}
-							}
-						} else //bugSlope<-1
-						{
-							if (bugTarget.y>bugStart.y)
-							{
-								if (br.currLoc.y>bugStart.y)
-								{
-									double approxX = (br.currLoc.y-bugStart.y)/bugSlope+bugStart.x;
-									int a = (int)approxX;
-									if (br.currLoc.x == a || br.currLoc.x == a+1)
-									{
-										stopbugging = true;
-									} 
-								}
-							} else
-							{
-								if (br.currLoc.y<bugStart.y)
-								{
-									double approxX = (br.currLoc.y-bugStart.y)/bugSlope+bugStart.x;
-									int a = (int)approxX;
-									if (br.currLoc.x == a || br.currLoc.x == a+1)
-									{
-										stopbugging = true;
-									} 
-								}
-							}
-						}
-					}
-				}
-				if (!stopbugging )
-				{
-					if (moveableland[toTarget.ordinal()])
-					{
-						int dist = br.currLoc.distanceSquaredTo(bugTarget);
-						if (dist<bugDist)
-						{
-							bugDist = dist;
-							stopbugging = true;
-						}
-					} else if (rc.senseTerrainTile(br.currLoc.add(bugObs))==TerrainTile.OFF_MAP)
+					boolean stopbugging = false;
+					if (br.currRound-bugRoundStart > bugStopThreshold)
 					{
 						stopbugging = true;
+						bugCW = !bugCW;
+						bugRoundStart = br.currRound;
+						bugStopThreshold = bugStopThreshold*2;
+						continue;
+					} else if (bugTarget.x == bugStart.x)
+					{
+						if (br.currLoc.x == bugStart.x)
+						{
+							if (br.currLoc.y>bugStart.y)
+							{
+								if (br.currLoc.y<=bugTarget.y)
+								{
+									stopbugging = true;
+								}
+							} else if (br.currLoc.y<bugStart.y)
+							{
+								if (br.currLoc.y>=bugTarget.y)
+								{
+									stopbugging = true;
+								}
+							}
+						}
+					} else if (bugTarget.y == bugStart.y)
+					{
+						if (br.currLoc.y == bugStart.y)
+						{
+							if (br.currLoc.x>bugStart.x)
+							{
+								if (br.currLoc.x<=bugTarget.x)
+								{
+									stopbugging = true;
+								}
+							} else if (br.currLoc.x<bugStart.x)
+							{
+								if (br.currLoc.x>=bugTarget.x)
+								{
+									stopbugging = true;
+								}
+							}
+						}
+					} else
+					{
+						if (bugSlope>0)
+						{
+							if (bugSlope>1)
+							{
+								if (bugTarget.y>bugStart.y)
+								{
+									if (br.currLoc.y>bugStart.y)
+									{
+										double approxX = (br.currLoc.y-bugStart.y)/bugSlope+bugStart.x;
+										int a = (int)approxX;
+										if (br.currLoc.x == a || br.currLoc.x == a+1)
+										{
+											stopbugging = true;
+										} 
+									}
+								} else
+								{
+									if (br.currLoc.y<bugStart.y)
+									{
+										double approxX = (br.currLoc.y-bugStart.y)/bugSlope+bugStart.x;
+										int a = (int)approxX;
+										if (br.currLoc.x == a || br.currLoc.x == a+1)
+										{
+											stopbugging = true;
+										} 
+									}
+								}
+							} else //bugSlope<1
+							{
+								if (bugTarget.x>bugStart.x)
+								{
+									if (br.currLoc.x>bugStart.x)
+									{
+										double approxY = bugSlope*(br.currLoc.x-bugStart.x)+bugStart.y;
+										int a = (int)approxY;
+										if (br.currLoc.y == a || br.currLoc.y == a+1)
+										{
+											stopbugging = true;
+										} 
+									}
+								} else
+								{
+									if (br.currLoc.x<bugStart.x)
+									{
+										double approxY = bugSlope*(br.currLoc.x-bugStart.x)+bugStart.y;
+										int a = (int)approxY;
+										if (br.currLoc.y == a || br.currLoc.y == a+1)
+										{
+											stopbugging = true;
+										} 
+									}
+								}
+							}
+						} else // bugSlope<0
+						{
+							if (bugSlope>-1)
+							{
+								if (bugTarget.x>bugStart.x)
+								{
+									if (br.currLoc.x>bugStart.x)
+									{
+										double approxY = bugSlope*(br.currLoc.x-bugStart.x)+bugStart.y;
+										int a = (int)approxY;
+										if (br.currLoc.y == a || br.currLoc.y == a+1)
+										{
+											stopbugging = true;
+										} 
+									}
+								} else
+								{
+									if (br.currLoc.x<bugStart.x)
+									{
+										double approxY = bugSlope*(br.currLoc.x-bugStart.x)+bugStart.y;
+										int a = (int)approxY;
+										if (br.currLoc.y == a || br.currLoc.y == a+1)
+										{
+											stopbugging = true;
+										} 
+									}
+								}
+							} else //bugSlope<-1
+							{
+								if (bugTarget.y>bugStart.y)
+								{
+									if (br.currLoc.y>bugStart.y)
+									{
+										double approxX = (br.currLoc.y-bugStart.y)/bugSlope+bugStart.x;
+										int a = (int)approxX;
+										if (br.currLoc.x == a || br.currLoc.x == a+1)
+										{
+											stopbugging = true;
+										} 
+									}
+								} else
+								{
+									if (br.currLoc.y<bugStart.y)
+									{
+										double approxX = (br.currLoc.y-bugStart.y)/bugSlope+bugStart.x;
+										int a = (int)approxX;
+										if (br.currLoc.x == a || br.currLoc.x == a+1)
+										{
+											stopbugging = true;
+										} 
+									}
+								}
+							}
+						}
 					}
-					
+					if (!stopbugging )
+					{
+						if (moveableland[toTarget.ordinal()])
+						{
+							int dist = br.currLoc.distanceSquaredTo(bugTarget);
+							if (dist<bugDist)
+							{
+								bugDist = dist;
+								stopbugging = true;
+							}
+						} else if (rc.senseTerrainTile(br.currLoc.add(bugObs))==TerrainTile.OFF_MAP)
+						{
+							bugCW = !bugCW;
+							bugRoundStart = br.currRound;
+							bugStopThreshold = 99999;
+							bugFlipped = true;
+							continue;
+						}
+						
+					}
+					if (stopbugging || moveable[bugObs.ordinal()])
+					{
+						bugGing = false;
+						bugCW = !bugCW;
+						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
+						bugFlipped = true;
+						continue;
+					}
 				}
-				if (stopbugging || moveable[bugObs.ordinal()])
-				{
-					bugGing = false;
-					bugCW = !bugCW;
-					bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
-					continue;
-				} else if (	moveable[0] || moveable[1] || moveable[2] || moveable[3] || 
-							moveable[4] || moveable[5] || moveable[6] || moveable[7])
+				
+				if (	moveable[0] || moveable[1] || moveable[2] || moveable[3] || 
+						moveable[4] || moveable[5] || moveable[6] || moveable[7])
 				{
 					if (bugCW)
 					{
@@ -303,6 +315,7 @@ public class BlindBug extends Navigation {
 						
 						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
 						bugDist = br.currLoc.distanceSquaredTo(bugTarget);
+						bugFlipped = false;
 						
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
@@ -330,6 +343,7 @@ public class BlindBug extends Navigation {
 						
 						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
 						bugDist = br.currLoc.distanceSquaredTo(bugTarget);
+						bugFlipped = false;
 						
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
@@ -357,6 +371,7 @@ public class BlindBug extends Navigation {
 						
 						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
 						bugDist = br.currLoc.distanceSquaredTo(bugTarget);
+						bugFlipped = false;
 						
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
@@ -384,6 +399,7 @@ public class BlindBug extends Navigation {
 						
 						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
 						bugDist = br.currLoc.distanceSquaredTo(bugTarget);
+						bugFlipped = false;
 						
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
