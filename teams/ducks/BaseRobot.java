@@ -6,6 +6,8 @@ public abstract class BaseRobot {
 	
 	final RobotController rc;
 	final DataCache dc;
+	final MapCache mc;
+	final Navigator nav;
 	final Radio io;
 	Navigation nv;
 	
@@ -29,6 +31,8 @@ public abstract class BaseRobot {
 	public BaseRobot(RobotController myRC) {
 		rc = myRC;
 		dc = new DataCache(this);
+		mc = new MapCache(this);
+		nav = new Navigator(this);
 		io = new Radio(this);
 		
 		myType = rc.getType();
