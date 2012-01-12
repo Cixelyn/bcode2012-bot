@@ -72,6 +72,7 @@ public class ArchonRobot extends BaseRobot {
 				if (Radio.decodeInt(sb) < rc.getRobot().getID()) {
 					shouldTower = false;
 				}
+				break;
 			case 'r':
 				if (currState == RobotState.SPAWN_UNIT) {
 					if (shouldTower) {
@@ -99,6 +100,8 @@ public class ArchonRobot extends BaseRobot {
 	}
 	
 	private void initialize() throws GameActionException {
+		// determine who goes to tower
+		sendID();
 		// set initial bearing
 		PowerNode main = rc.sensePowerCore();
 		bearing = main.getLocation().directionTo(main.neighbors()[0]);
@@ -242,6 +245,9 @@ public class ArchonRobot extends BaseRobot {
 				} else {
 					if (rc.canMove(currDir.opposite())) {
 						rc.moveBackward();
+					} else {
+						// tell people to step away
+						sendBackOffMessage();
 					}
 				}
 			}
@@ -399,6 +405,9 @@ public class ArchonRobot extends BaseRobot {
 			if (obj == null) {
 				rc.spawn(RobotType.TOWER);
 				currState = RobotState.GOTO_POWER_CORE;
+			} else {
+				// tell people to step off
+				sendBackOffMessage();
 			}
 		}
 	}
@@ -452,6 +461,10 @@ public class ArchonRobot extends BaseRobot {
 	
 	private void sendID() {
 		io.sendInt("#ai", rc.getRobot().getID());
+	}
+	
+	private void sendBackOffMessage() throws GameActionException {
+		io.sendMapLoc("#xb", currLoc);
 	}
 	
 	private void sendRallyMessage(

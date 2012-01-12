@@ -2,6 +2,7 @@ package fibbyBot2;
 
 public enum RobotState {
 	ATTACK_GROUND,
+	BACK_OFF,
 	BUILD_TOWER,
 	CHASE,
 	DIZZY,
