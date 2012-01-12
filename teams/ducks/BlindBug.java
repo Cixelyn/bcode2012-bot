@@ -13,8 +13,10 @@ public class BlindBug extends Navigation {
 	private boolean bugCW;
 	private Direction bugObs;
 	private int bugRoundStart;
+	private int bugStopThreshold;
+	private int bugDist;
 	
-	private static final int BUG_ROUNDS_BEFORE_STOPPING = 300;
+	private static final int BUG_ROUNDS_BEFORE_STOPPING_INITIAL = 100;
 	
 	public BlindBug(BaseRobot myBR) {
 		super(myBR);
@@ -32,17 +34,24 @@ public class BlindBug extends Navigation {
 			bugStart = null;
 			bugGing = false;
 			bugRoundStart = 0;
+			bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
+			bugDist = 9999;
 		}
 		
 		if (br.currLoc.equals(target)) return Direction.NONE;
 		
 		Direction toTarget = br.currLoc.directionTo(target);
-		boolean[] moveable = br.dc.getMovableDirections();
 		
 		if (br.currLoc.isAdjacentTo(target))
 		{
 			return toTarget;
 		}
+		
+		boolean[] moveable = br.dc.getMovableDirections();
+		
+
+		rc.setIndicatorString(1, "start:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+br.currLoc+" obs:"+bugObs+" bugging:"+bugGing);
+		rc.setIndicatorString(2, "rstart:"+bugRoundStart+" stopthreshold:"+bugStopThreshold);
 		
 		boolean[] moveableland = br.dc.getMovableLand();
 		while (true)
@@ -50,9 +59,13 @@ public class BlindBug extends Navigation {
 			if (bugGing)
 			{
 				boolean stopbugging = false;
-				if (br.currRound-bugRoundStart > BUG_ROUNDS_BEFORE_STOPPING)
+				if (br.currRound-bugRoundStart > bugStopThreshold)
 				{
 					stopbugging = true;
+					bugCW = !bugCW;
+					bugRoundStart = br.currRound;
+					bugStopThreshold = bugStopThreshold*2;
+					continue;
 				} else if (bugTarget.x == bugStart.x)
 				{
 					if (br.currLoc.x == bugStart.x)
@@ -199,10 +212,20 @@ public class BlindBug extends Navigation {
 						}
 					}
 				}
+				if (!stopbugging && moveableland[toTarget.ordinal()])
+				{
+					int dist = br.currLoc.distanceSquaredTo(bugTarget);
+					if (dist<bugDist)
+					{
+						bugDist = dist;
+						stopbugging = true;
+					}
+				}
 				if (stopbugging || moveable[bugObs.ordinal()])
 				{
 					bugGing = false;
 					bugCW = !bugCW;
+					bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
 					continue;
 				} else if (	moveable[0] || moveable[1] || moveable[2] || moveable[3] || 
 							moveable[4] || moveable[5] || moveable[6] || moveable[7])
@@ -263,6 +286,10 @@ public class BlindBug extends Navigation {
 						bugObs = toTarget;
 						bugStart = br.currLoc;
 						bugRoundStart = br.currRound;
+						
+						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
+						bugDist = br.currLoc.distanceSquaredTo(bugTarget);
+						
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
 					}
@@ -286,6 +313,10 @@ public class BlindBug extends Navigation {
 						bugObs = toTarget;
 						bugStart = br.currLoc;
 						bugRoundStart = br.currRound;
+						
+						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
+						bugDist = br.currLoc.distanceSquaredTo(bugTarget);
+						
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
 					}
@@ -309,6 +340,10 @@ public class BlindBug extends Navigation {
 						bugObs = toTarget;
 						bugStart = br.currLoc;
 						bugRoundStart = br.currRound;
+						
+						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
+						bugDist = br.currLoc.distanceSquaredTo(bugTarget);
+						
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
 					}
@@ -332,6 +367,10 @@ public class BlindBug extends Navigation {
 						bugObs = toTarget;
 						bugStart = br.currLoc;
 						bugRoundStart = br.currRound;
+						
+						bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
+						bugDist = br.currLoc.distanceSquaredTo(bugTarget);
+						
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
 					}
