@@ -77,7 +77,8 @@ public class ArchonRobot extends BaseRobot {
 	
 	private void rush() throws GameActionException {
 		// after a certain number of time, start taking towers
-		if (currRound > Constants.TOWER_ROUNDS) {
+		if (currRound > Constants.TOWER_ROUNDS || 
+				enemyArchonInfo.getNumEnemyArchons() < 4) {
 			currState = RobotState.GOTO_POWER_CORE;
 			return;
 		}
@@ -206,8 +207,24 @@ public class ArchonRobot extends BaseRobot {
 			}
 		}
 		if (closestPowerCore != null) {
+			
+			if (rc.canSenseSquare(closestPowerCore))
+			{
+				GameObject go = rc.senseObjectAtLocation(closestPowerCore, RobotLevel.ON_GROUND);
+				if (go!=null && go.getTeam()!=myTeam)
+				{
+					currState = RobotState.CHASE;
+					return;
+				}
+			}
+			
 			if (closestDistance > 2) {
-				nv.navigateTo(closestPowerCore);
+				
+				Direction d = nv.navigateTo(closestPowerCore);
+				if (currDir==d) rc.moveForward();
+				else if (currDir.opposite()==d) rc.moveBackward();
+				else rc.setDirection(d);
+				
 			} else {
 				currState = RobotState.BUILD_TOWER;
 			}
@@ -266,7 +283,7 @@ public class ArchonRobot extends BaseRobot {
 		// make sure an untaken power core is next to me
 		MapLocation adjacentPowerCore = null;
 		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
-			if (currLoc.distanceSquaredTo(powerCore) <= 2) {
+			if (currLoc.isAdjacentTo(powerCore)) {
 				adjacentPowerCore = powerCore;
 				break;
 			}
@@ -333,6 +350,7 @@ public class ArchonRobot extends BaseRobot {
 				if (obj instanceof Robot && obj.getTeam() == myTeam) {
 					// TODO(jven): data cache this?
 					RobotInfo rInfo = rc.senseRobotInfo((Robot)obj);
+					if (rInfo.type==RobotType.TOWER) continue;
 					if (rInfo.flux < Constants.MIN_UNIT_FLUX) {
 						double fluxToTransfer = Math.min(
 								Constants.MIN_UNIT_FLUX - rInfo.flux,

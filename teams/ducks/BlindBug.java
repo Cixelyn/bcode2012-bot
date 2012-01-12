@@ -3,6 +3,7 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.TerrainTile;
 
 public class BlindBug extends Navigation {
 
@@ -16,7 +17,7 @@ public class BlindBug extends Navigation {
 	private int bugStopThreshold;
 	private int bugDist;
 	
-	private static final int BUG_ROUNDS_BEFORE_STOPPING_INITIAL = 100;
+	private static final int BUG_ROUNDS_BEFORE_STOPPING_INITIAL = 3000;
 	
 	public BlindBug(BaseRobot myBR) {
 		super(myBR);
@@ -212,14 +213,21 @@ public class BlindBug extends Navigation {
 						}
 					}
 				}
-				if (!stopbugging && moveableland[toTarget.ordinal()])
+				if (!stopbugging )
 				{
-					int dist = br.currLoc.distanceSquaredTo(bugTarget);
-					if (dist<bugDist)
+					if (moveableland[toTarget.ordinal()])
 					{
-						bugDist = dist;
+						int dist = br.currLoc.distanceSquaredTo(bugTarget);
+						if (dist<bugDist)
+						{
+							bugDist = dist;
+							stopbugging = true;
+						}
+					} else if (rc.senseTerrainTile(br.currLoc.add(bugObs))==TerrainTile.OFF_MAP)
+					{
 						stopbugging = true;
 					}
+					
 				}
 				if (stopbugging || moveable[bugObs.ordinal()])
 				{
