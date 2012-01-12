@@ -39,4 +39,7 @@ public final class Constants {
 	public static final int SPLIT_ROUNDS = 50;
 	/** Number of soldiers to make per archon. */
 	public static final int SOLDIERS_PER_ARCHON = 5;
+	
+	/** Maximum distance to respond to back off messages. */
+	public static final int BACK_OFF_DISTANCE = 9;
 }

@@ -60,6 +60,7 @@ public class BlindBug extends Navigation {
 		{
 			if (x++ > 200) {
 				rc.suicide();
+				rc.breakpoint();
 			}
 			if (bugGing)
 			{

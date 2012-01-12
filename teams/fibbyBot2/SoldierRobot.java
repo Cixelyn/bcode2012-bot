@@ -17,6 +17,9 @@ public class SoldierRobot extends BaseRobot {
 	private int timeUntilBroadcast;
 	private MapLocation target;
 	private int targetPriority = -1;
+	
+	private RobotState previousState;
+	private MapLocation backOffLoc;
 
 	public SoldierRobot(RobotController myRC) {
 		super(myRC);
@@ -45,6 +48,9 @@ public class SoldierRobot extends BaseRobot {
 			case MICRO:
 				micro();
 				break;
+			case BACK_OFF:
+				backOff();
+				break;
 			default:
 				break;
 		}
@@ -53,6 +59,16 @@ public class SoldierRobot extends BaseRobot {
 	@Override
 	public void processMessage(char msgType, StringBuilder sb) {
 		switch(msgType) {
+			case 'b':
+				if (currState != RobotState.BACK_OFF) {
+					backOffLoc = Radio.decodeMapLoc(sb);
+					if (currLoc.distanceSquaredTo(backOffLoc) <
+							Constants.BACK_OFF_DISTANCE) {
+						previousState = currState;
+						currState = RobotState.BACK_OFF;
+					}
+				}
+				break;
 			case 'r':
 				shouldPowerSave = false;
 				int[] msgInts = Radio.decodeInts(sb);
@@ -192,6 +208,26 @@ public class SoldierRobot extends BaseRobot {
 				}
 			}
 		}
+	}
+	
+	private void backOff() throws GameActionException {
+		if (!rc.isMovementActive()) {
+			Direction dir = currLoc.directionTo(backOffLoc).opposite();
+			if (!rc.canMove(dir)) {
+				dir = dir.rotateLeft();
+			}
+			if (!rc.canMove(dir)) {
+				dir = dir.rotateRight().rotateRight();
+			}
+			if (currDir != dir.opposite()) {
+				rc.setDirection(dir.opposite());
+			} else {
+				if (rc.canMove(currDir.opposite())) {
+					rc.moveBackward();
+				}
+			}
+		}
+		currState = previousState;
 	}
 	
 	private void sendDeadEnemyArchonIDs() throws GameActionException {
