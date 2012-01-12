@@ -13,6 +13,9 @@ public class BlindBug extends Navigation {
 	private boolean bugGing;
 	private boolean bugCW;
 	private Direction bugObs;
+	private int bugRoundStart;
+	
+	private static final int BUG_ROUNDS_BEFORE_STOPPING = 300;
 	
 	public BlindBug(BaseRobot myBR) {
 		super(myBR);
@@ -29,6 +32,7 @@ public class BlindBug extends Navigation {
 			bugTarget = target;
 			bugStart = null;
 			bugGing = false;
+			bugRoundStart = 0;
 		}
 		
 		if (br.currLoc.equals(target)) return;
@@ -46,18 +50,15 @@ public class BlindBug extends Navigation {
 		}
 		
 		boolean[] moveableland = br.dc.getMovableLand();
-		int x=0;
 		while (true)
 		{
-			if (rc.getRobot().getID()==48 && Clock.getRoundNum()>3928)
-			{
-//				int x=0; 
-				x=x+1;
-			}
 			if (bugGing)
 			{
 				boolean stopbugging = false;
-				if (bugTarget.x == bugStart.x)
+				if (br.currRound-bugRoundStart > BUG_ROUNDS_BEFORE_STOPPING)
+				{
+					stopbugging = true;
+				} else if (bugTarget.x == bugStart.x)
 				{
 					if (br.currLoc.x == bugStart.x)
 					{
@@ -266,6 +267,7 @@ public class BlindBug extends Navigation {
 						bugGing = true;
 						bugObs = toTarget;
 						bugStart = br.currLoc;
+						bugRoundStart = br.currRound;
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
 					}
@@ -288,6 +290,7 @@ public class BlindBug extends Navigation {
 						bugGing = true;
 						bugObs = toTarget;
 						bugStart = br.currLoc;
+						bugRoundStart = br.currRound;
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
 					}
@@ -310,6 +313,7 @@ public class BlindBug extends Navigation {
 						bugGing = true;
 						bugObs = toTarget;
 						bugStart = br.currLoc;
+						bugRoundStart = br.currRound;
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
 					}
@@ -332,6 +336,7 @@ public class BlindBug extends Navigation {
 						bugGing = true;
 						bugObs = toTarget;
 						bugStart = br.currLoc;
+						bugRoundStart = br.currRound;
 						if (bugTarget.x!=bugStart.x)
 							bugSlope = (bugTarget.y-bugStart.y)/(bugTarget.x-bugStart.x);
 					}
