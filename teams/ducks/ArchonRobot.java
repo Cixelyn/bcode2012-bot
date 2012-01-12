@@ -32,6 +32,8 @@ public class ArchonRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
+		mc.senseAllTiles();
+		
 		switch (currState) {
 			case RUSH:
 				rush();
