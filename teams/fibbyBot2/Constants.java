@@ -21,7 +21,8 @@ public final class Constants {
 	public static final int ARCHON_BROADCAST_FREQUENCY = 4;
 	/** Soldier broadcast frequency for dead enemy archon array */
 	public static final int SOLDIER_BROADCAST_FREQUENCY = 30;
-	/** The number of damaged units that a scout must have in range in order to regen. */
+	/** The number of damaged units that a scout must have in range in order
+	 * to regen. */
 	public static final int MIN_DAMAGED_UNITS_TO_REGEN = 1;
 	/** Archons try to stay at this range from enemy units. */
 	public static final int ARCHON_SAFETY_RANGE = 25;
