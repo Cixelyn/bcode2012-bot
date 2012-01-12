@@ -109,7 +109,13 @@ public class ArchonRobotYP extends BaseRobot {
 			int bytecode = Clock.getBytecodeNum();
 			//rc.setIndicatorString(1, "before move "+bytecode+" cur "+currLoc);
 			//rc.setIndicatorString(1, "start:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs);
-			nv.navigateTo(nodes[nodeindex]);
+			
+			Direction d = nv.navigateTo(nodes[nodeindex]);
+			if (currDir == d)
+				rc.moveForward();
+			else
+				rc.setDirection(d);
+			
 			bytecode = Clock.getBytecodeNum()-bytecode;
 //			rc.setIndicatorString(1, "move used "+bytecode);
 			//rc.setIndicatorString(0, "end:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs+" move used "+bytecode);

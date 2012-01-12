@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
@@ -14,6 +15,6 @@ public abstract class Navigation {
 		rc = myBR.rc;
 	}
 	
-	public abstract void navigateTo(
+	public abstract Direction navigateTo(
 			MapLocation destination) throws GameActionException;
 }
