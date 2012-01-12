@@ -115,8 +115,6 @@ public class ArchonRobot extends BaseRobot {
 			return;
 		}
 		boolean keepGoing = false;
-		Direction dir = nv.navigateTo(currLoc.add(splitDirection,
-				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH));
 		// if i'm next to another archon, keep going
 		for (MapLocation archon : dc.getAlliedArchons()) {
 			int distance = currLoc.distanceSquaredTo(archon);
@@ -142,11 +140,13 @@ public class ArchonRobot extends BaseRobot {
 		// if we found a good spot, start building, otherwise keep going
 		if (!keepGoing) {
 			currState = RobotState.SPAWN_UNIT;
-		} else if (currDir != dir.opposite()) {
-			rc.setDirection(dir.opposite());
+		} else if (currDir != splitDirection.opposite()) {
+			rc.setDirection(splitDirection.opposite());
 		} else {
 			if (rc.canMove(currDir.opposite())) {
 				rc.moveBackward();
+			} else {
+				currState = RobotState.SPAWN_UNIT;
 			}
 		}
 	}
