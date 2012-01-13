@@ -9,6 +9,9 @@ public class DataCache {
 	
 	private MapLocation[] alliedArchons;
 	private int alliedArchonsTime = -1;
+	
+	private MapLocation closestArchon;
+	private int closestArchonTime = -1;
 
 	private int moveableDirectionsTime = -1;
 	private boolean[] moveableDirections = new boolean[8];
@@ -48,6 +51,21 @@ public class DataCache {
 			alliedArchonsTime = br.currRound;
 		}
 		return alliedArchons;
+	}
+	
+	public MapLocation getClosestArchon() {
+		if (br.currRound > closestArchonTime) {
+			closestArchon = null;
+			int closestDistance = Integer.MAX_VALUE;
+			for (MapLocation archon : getAlliedArchons()) {
+				int distance = br.currLoc.distanceSquaredTo(archon);
+				if (distance > 0 && distance < closestDistance) {
+					closestArchon = archon;
+					closestDistance = distance;
+				}
+			}
+		}
+		return closestArchon;
 	}
 	
 	public boolean[] getMovableDirections()
