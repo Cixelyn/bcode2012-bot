@@ -47,6 +47,8 @@ public abstract class BaseRobot {
 		nav = new Navigator(this);
 		io = new Radio(this);
 		
+		currLoc = rc.getLocation();
+		
 		spawnRound = Clock.getRoundNum();
 		
 		enemyArchonInfo = new EnemyArchonInfo();
