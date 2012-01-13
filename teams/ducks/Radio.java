@@ -185,8 +185,6 @@ public class Radio {
 			m.ints[0] = teamkey;
 			m.ints[1] = hashMessage(msgContainer);
 			
-			
-			
 			try {
 				br.rc.broadcast(m);
 			} catch (GameActionException e) {
