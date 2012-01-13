@@ -8,9 +8,11 @@ import battlecode.common.Team;
 
 public class Radio {
 
-	String[] listenAddrs;
-	BaseRobot br;
-	int teamkey;
+	private String[] listenAddrs;
+	private BaseRobot br;
+	public int teamkey;
+	
+	private boolean shouldSendWakeup;
 
 	StringBuilder msgContainer;
 
@@ -20,6 +22,7 @@ public class Radio {
 		teamkey = (br.myTeam == Team.A ?
 				Constants.RADIO_TEAM_KEYS[0] : Constants.RADIO_TEAM_KEYS[1]);
 		msgContainer = new StringBuilder();
+		shouldSendWakeup = false;
 	}
 
 	/**
@@ -31,6 +34,15 @@ public class Radio {
 	 */
 	public void setAddresses(String[] addrs) {
 		listenAddrs = addrs;
+	}
+	
+	
+	
+	/**
+	 * Next broadcast will have a wakeup note appended to it
+	 */
+	public void sendWakeupCall() {
+		shouldSendWakeup = true;
 	}
 	
 
@@ -158,11 +170,22 @@ public class Radio {
 			// build message
 			Message m = new Message();
 			m.strings = new String[]{msgContainer.toString()};
-			m.ints = new int[2];
+			
+			
+			// build wakeup call
+			if(shouldSendWakeup) {
+				m.ints = new int[3];
+				m.ints[2] = Clock.getRoundNum();
+				shouldSendWakeup = false;
+			} else {
+				m.ints = new int[2];
+			}
 			
 			// sign message
 			m.ints[0] = teamkey;
 			m.ints[1] = hashMessage(msgContainer);
+			
+			
 			
 			try {
 				br.rc.broadcast(m);
@@ -201,7 +224,8 @@ public class Radio {
 				
 				
 				// validity check
-				if(m.ints == null || m.ints.length != 2 ) continue;
+				if(m.ints == null) continue;
+				if(m.ints.length < 2 || m.ints.length > 3) continue;
 				if(m.strings == null || m.strings.length != 1 ) continue;
 				if(m.locations != null) continue;
 				
