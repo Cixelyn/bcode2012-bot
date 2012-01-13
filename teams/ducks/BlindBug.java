@@ -32,7 +32,7 @@ public class BlindBug extends Navigation {
 	/**
 	 * Bug nav, only using terrain, does not take into account obstacles like other robots
 	 */
-	public Direction navigateToIgnoreBots(MapLocation target) throws GameActionException
+	public Direction navigateToIgnoreBots(MapLocation target)
 	{
 		if (rc.isMovementActive()) {
 			return Direction.NONE;
@@ -263,42 +263,40 @@ public class BlindBug extends Navigation {
 				
 //				if (	moveableland[0] || moveableland[1] || moveableland[2] || moveableland[3] || 
 //						moveableland[4] || moveableland[5] || moveableland[6] || moveableland[7])
-				if (true)
+				
+				if (bugCW)
 				{
-					if (bugCW)
-					{
 //						int dir = toTarget.ordinal();
-						int odir = bugObs.ordinal();
-						int dir = odir;
-						while (!moveableland[dir]) dir = (dir+7)%8;
-						if (br.currDir.equals(Constants.directions[dir]))
-						{
+					int odir = bugObs.ordinal();
+					int dir = odir;
+					while (!moveableland[dir]) dir = (dir+7)%8;
+					if (br.currDir.equals(Constants.directions[dir]))
+					{
 //							rc.moveForward();
-							bugObs = br.currLoc.add(br.currDir).directionTo(br.currLoc.add(br.currDir.rotateRight()));
-							return Constants.directions[dir];
-						} else
-						{
-//							rc.setDirection(Constants.directions[dir]);
-							return Constants.directions[dir];
-						}
+						bugObs = br.currLoc.add(br.currDir).directionTo(br.currLoc.add(br.currDir.rotateRight()));
+						return Constants.directions[dir];
 					} else
 					{
-//						int dir = toTarget.ordinal();
-						int odir = bugObs.ordinal();
-						int dir = odir;
-						while (!moveableland[dir]) dir = (dir+1)%8;
-						if (br.currDir.equals(Constants.directions[dir]))
-						{
-//							rc.moveForward();
-							bugObs = br.currLoc.add(br.currDir).directionTo(br.currLoc.add(br.currDir.rotateLeft()));
-							return Constants.directions[dir];
-						} else
-						{
 //							rc.setDirection(Constants.directions[dir]);
-							return Constants.directions[dir];
-						}
+						return Constants.directions[dir];
 					}
-				} else return Direction.NONE;
+				} else
+				{
+//						int dir = toTarget.ordinal();
+					int odir = bugObs.ordinal();
+					int dir = odir;
+					while (!moveableland[dir]) dir = (dir+1)%8;
+					if (br.currDir.equals(Constants.directions[dir]))
+					{
+//							rc.moveForward();
+						bugObs = br.currLoc.add(br.currDir).directionTo(br.currLoc.add(br.currDir.rotateLeft()));
+						return Constants.directions[dir];
+					} else
+					{
+//							rc.setDirection(Constants.directions[dir]);
+						return Constants.directions[dir];
+					}
+				}
 			} else //if (!bugGing)
 			{
 				if (br.currDir == toTarget)
@@ -421,7 +419,7 @@ public class BlindBug extends Navigation {
 	/**
 	 * bug nav that takes into account other robots
 	 */
-	public Direction navigateToFull(MapLocation target) throws GameActionException
+	public Direction navigateToFull(MapLocation target)
 	{
 		if (rc.isMovementActive()) {
 			return Direction.NONE;
