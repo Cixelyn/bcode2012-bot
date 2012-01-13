@@ -40,6 +40,9 @@ public class DataCache {
 	private PowerNode[] alliedPowerNodes;
 	private int alliedPowerNodesTime = -1;
 	
+	private RobotInfo closestEnemy;
+	private int closestEnemyTime = -1;
+	
 	public DataCache(BaseRobot br) {
 		this.br = br;
 		this.rc = br.rc;
@@ -194,5 +197,53 @@ public class DataCache {
 			alliedPowerNodes = rc.senseAlliedPowerNodes();
 		}
 		return alliedPowerNodes;
+	}
+	
+	public RobotInfo getClosestEnemy() throws GameActionException {
+		if (br.currRound > closestEnemyTime) {
+			int closestDistance = Integer.MAX_VALUE;
+			closestEnemy = null;
+			// TODO(jven): prioritize archons?
+			for (Robot r : getNearbyRobots()) {
+				if (r.getTeam() != br.myTeam) {
+					RobotInfo rInfo = rc.senseRobotInfo(r);
+					// don't overkill
+					if (rInfo.energon <= 0) {
+						continue;
+					}
+					// don't shoot at towers you can't hurt
+					if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
+						continue;
+					}
+					int distance = br.currLoc.distanceSquaredTo(rInfo.location);
+					if (distance < closestDistance) {
+						closestDistance = distance;
+						closestEnemy = rInfo;
+					}
+				}
+			}
+		}
+		return closestEnemy;
+	}
+	
+	private boolean isTowerTargetable(
+			RobotInfo tower) throws GameActionException {
+		// don't shoot at enemy towers not connected to one of ours
+		PowerNode pn = (PowerNode)rc.senseObjectAtLocation(
+				tower.location, RobotLevel.POWER_NODE);
+		if (pn == null) {
+			return false;
+		}
+		for (PowerNode myPN : getAlliedPowerNodes()) {
+			if (!rc.senseConnected(myPN)) {
+				continue;
+			}
+			for (MapLocation loc : pn.neighbors()) {
+				if (myPN.getLocation().equals(loc)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }
