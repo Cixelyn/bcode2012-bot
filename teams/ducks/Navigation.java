@@ -17,4 +17,15 @@ public abstract class Navigation {
 	
 	public abstract Direction navigateTo(
 			MapLocation destination) throws GameActionException;
+
+	public Direction getOutOfCurrentSquare() {
+		boolean[] moveable = br.dc.getMovableDirections();
+		if (moveable[br.currDir.ordinal()]) return br.currDir;
+		else if (moveable[br.currDir.opposite().ordinal()]) return br.currDir.opposite();
+		else 
+			for (int x=0; x<8; x++)
+				if (moveable[x]) return Constants.directions[x];
+		
+		return Direction.NONE;
+	}
 }
