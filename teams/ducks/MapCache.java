@@ -26,6 +26,7 @@ public class MapCache {
 	/** The boundaries of tiles we have confirmed are ground tiles. */
 	int minXGround, maxXGround, minYGround, maxYGround;
 	int senseDist;
+	int roundLastUpdated;
 	public MapCache(BaseRobot baseRobot) {
 		isWall = new boolean[MAP_SIZE][MAP_SIZE];
 		sensed = new boolean[MAP_SIZE][MAP_SIZE];
@@ -39,16 +40,17 @@ public class MapCache {
 		maxYGround = powerCoreWorldY + 1;
 		senseDist = baseRobot.myType==RobotType.ARCHON ? 5 :
 			baseRobot.myType==RobotType.SCOUT ? 4 : 3;
+		roundLastUpdated = -1;
 	}
 	
 	/** Senses most tiles around current location in range. 
 	 * Not quite all tiles, i.e. for archons does not sense tiles <6,0> away. 
 	 */
 	public void senseAllTiles() {
+		boolean updated = false;
 		MapLocation myLoc = baseRobot.currLoc;
 		int myX = worldToCacheX(myLoc.x);
 		int myY = worldToCacheY(myLoc.y);
-		System.out.println(myX+" "+myY);
 		for(int dx=-senseDist; dx<=senseDist; dx++) for(int dy=-senseDist; dy<=senseDist; dy++) {
 			if(sensed[myX+dx][myY+dy]) continue;
 			MapLocation loc = myLoc.add(dx, dy);
@@ -56,7 +58,12 @@ public class MapCache {
 			if(tt!=null) {
 				isWall[myX+dx][myY+dy] = tt!=TerrainTile.LAND;
 				sensed[myX+dx][myY+dy] = true;
+				updated = true;
 			}
+		}
+		
+		if(updated) {
+			roundLastUpdated = baseRobot.currRound;
 		}
 	}
 	/**

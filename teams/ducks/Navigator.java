@@ -8,22 +8,28 @@ public class Navigator {
 	private final MapCache mapCache; 
 	private final TangentBug tangentBug;
 	private final MapLocation zeroLoc;
+	private int roundLastReset;
 	public Navigator(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
 		tangentBug = new TangentBug(this);
 		zeroLoc = new MapLocation(0,0);
+		roundLastReset = -1;
 	}
 	
 	/** Resets the navigator, clearing it of any state. */
 	public void reset() {
 		tangentBug.reset();
+		roundLastReset = baseRobot.currRound;
 	}
 	
 	private Direction dxdyToDirection(int dx, int dy) {
 		return zeroLoc.directionTo(zeroLoc.add(dx, dy));
 	}
 	public Direction navigateTangentBug(MapLocation destination) {
+		if(mapCache.roundLastUpdated > roundLastReset) {
+			reset();
+		}
 		int[] d = tangentBug.computeMove(mapCache.isWall, 
 				mapCache.worldToCacheX(baseRobot.currLoc.x), mapCache.worldToCacheY(baseRobot.currLoc.y), 
 				mapCache.worldToCacheX(destination.x), mapCache.worldToCacheY(destination.y));
