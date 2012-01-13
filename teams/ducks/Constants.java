@@ -45,4 +45,6 @@ public final class Constants {
 	public static final int SOLDIERS_PER_ARCHON = 5;
 	/** Maximum number of rounds to spend splitting. */
 	public static final int MAX_SPLIT_TIME = 40;
+	/** Number of times to turn side to side before giving up. */
+	public static final int WIGGLE_TIMEOUT = 30;
 }

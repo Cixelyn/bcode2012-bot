@@ -2,6 +2,7 @@ package ducks;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
 import battlecode.common.GameObject;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
@@ -13,12 +14,17 @@ import battlecode.common.TerrainTile;
 
 public class ArchonRobotJV extends BaseRobot {
 	
-	private boolean isLeader;
 	private int splitTime;
 	private Direction splitDirection;
+	
 	private int soldiersSpawned;
+	
+	private int rallyPriority;
 	private Direction bearing;
 	private MapLocation explorationTarget;
+	private MapLocation objective;
+	
+	private int timeUntilBroadcast;
 	
 	public ArchonRobotJV(RobotController myRC) {
 		super(myRC);
@@ -52,19 +58,44 @@ public class ArchonRobotJV extends BaseRobot {
 		rc.setIndicatorString(1, "" + bearing);
 	}
 	
+	@Override
+	public void processMessage(char msgType, StringBuilder sb) {
+		int[] msgInts;
+		//MapLocation[] msgLocs;
+		switch(msgType) {
+			case 'r':
+				if (currState == RobotState.SPAWN_SOLDIERS) {
+					currState = RobotState.RUSH;
+				}
+				msgInts = Radio.decodeInts(sb);
+				int msgRallyPriority = msgInts[0];
+				Direction msgBearing = Direction.values()[msgInts[1]];
+				if (msgRallyPriority > rallyPriority) {
+					bearing = msgBearing;
+					explorationTarget = currLoc.add(
+							bearing, GameConstants.MAP_MAX_HEIGHT);
+					rallyPriority = msgRallyPriority;
+				}
+				break;
+			default:
+				super.processMessage(msgType, sb);
+		}
+	}
+	
 	public void initialize() throws GameActionException {
 		// set nav mode
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
-		// determine leader
-		// TODO(jven): check for leader in other states in case leader dies
-		if (currLoc.equals(dc.getAlliedArchons()[0])) {
-			isLeader = true;
-		}
+		// set radio addresses
+			io.setAddresses(new String[] {"#x", "#a"});
 		// set split direction, bearing, target
 		splitDirection = rc.sensePowerCore().getLocation().directionTo(currLoc);
+		rallyPriority = 0;
 		bearing = rc.sensePowerCore().getLocation().directionTo(
 				dc.getCapturablePowerCores()[0]);
-		explorationTarget = currLoc.add(bearing, 100);
+		explorationTarget = currLoc.add(bearing, GameConstants.MAP_MAX_HEIGHT);
+		objective = explorationTarget;
+		// set broadcast time
+		timeUntilBroadcast = 0;
 		// split
 		currState = RobotState.SPLIT;
 		split();
@@ -137,10 +168,10 @@ public class ArchonRobotJV extends BaseRobot {
 			}
 		}
 		if (soldiersSpawned >= Constants.SOLDIERS_PER_ARCHON) {
-			// wake up units
-			wakeUpSoldiers();
+			// rally units
+			sendRally();
 			// change state
-			if (isLeader) {
+			if (amILeader()) {
 				currState = RobotState.GOTO_POWER_CORE;
 			} else {
 				currState = RobotState.RUSH;
@@ -154,30 +185,23 @@ public class ArchonRobotJV extends BaseRobot {
 		// move backwards towards bearing
 		moonwalkTowards(explorationTarget);
 		// reset bearing if necessary
-		int range;
-		if (bearing.isDiagonal()) {
-			range = 4;
-		} else {
-			range = 6;
-		}
-		if (rc.senseTerrainTile(currLoc.add(bearing, range)) ==
-				TerrainTile.OFF_MAP) {
-			bearing = bearing.rotateLeft().rotateLeft();
-			explorationTarget = currLoc.add(bearing, 100);
-		}
+		setBearing();
 		// distribute flux
 		distributeFlux();
 		// chase enemy if in range
 		if (dc.getClosestEnemy() != null) {
 			currState = RobotState.CHASE;
 		}
+		// send rally
+		objective = explorationTarget;
+		sendRally();
 	}
 	
 	public void chase() throws GameActionException {
 		// go back to previous state if no enemy in range
 		RobotInfo closestEnemy = dc.getClosestEnemy();
 		if (closestEnemy == null) {
-			if (isLeader) {
+			if (amILeader()) {
 				currState = RobotState.GOTO_POWER_CORE;
 			} else {
 				currState = RobotState.RUSH;
@@ -188,6 +212,9 @@ public class ArchonRobotJV extends BaseRobot {
 		kite(closestEnemy.location);
 		// distribute flux
 		distributeFlux();
+		// send rally
+		objective = closestEnemy.location;
+		sendRally();
 	}
 	
 	public void gotoPowerCore() throws GameActionException {
@@ -204,6 +231,22 @@ public class ArchonRobotJV extends BaseRobot {
 		distributeFlux();
 	}
 	
+	private void setBearing() throws GameActionException {
+		// if an appropriate off map tile is found, change bearing
+		int range;
+		if (bearing.isDiagonal()) {
+			range = 4;
+		} else {
+			range = 6;
+		}
+		if (rc.senseTerrainTile(currLoc.add(bearing, range)) ==
+				TerrainTile.OFF_MAP) {
+			bearing = bearing.rotateLeft().rotateLeft();
+			explorationTarget = currLoc.add(bearing, GameConstants.MAP_MAX_HEIGHT);
+			rallyPriority++;
+		}
+	}
+	
 	private void moonwalkTowards(MapLocation target) throws GameActionException {
 		// wait if movement is active
 		if (rc.isMovementActive()) {
@@ -214,28 +257,8 @@ public class ArchonRobotJV extends BaseRobot {
 		// move towards target
 		Direction dir = nav.navigateTo(target);
 		if (dir != Direction.OMNI && dir != Direction.NONE) {
-			/*
-			Direction[] wiggleDirs = new Direction[] {
-					dir,
-					dir.rotateLeft(),
-					dir.rotateRight(),
-					dir.rotateLeft().rotateLeft(),
-					dir.rotateRight().rotateRight(),
-					dir.rotateLeft().rotateLeft().rotateLeft(),
-					dir.rotateRight().rotateRight().rotateRight()
-			};
-			for (Direction d : wiggleDirs) {
-				if (rc.canMove(d)) {
-					if (currDir != d.opposite()) {
-						rc.setDirection(d.opposite());
-					} else {
-						rc.moveBackward();
-					}
-					return;
-				}
-			}
-			*/
-			for (int tries = 0; tries < 256; tries++) {
+			// TODO(jven): wiggle code should not be here
+			for (int tries = 0; tries < Constants.WIGGLE_TIMEOUT; tries++) {
 				if (!rc.canMove(dir)) {
 					if (Math.random() < 0.5) {
 						dir = dir.rotateLeft();
@@ -246,12 +269,14 @@ public class ArchonRobotJV extends BaseRobot {
 					break;
 				}
 			}
-			if (rc.canMove(dir)) {
-				if (currDir != dir.opposite()) {
-					rc.setDirection(dir.opposite());
-				} else {
-					rc.moveBackward();
-				}
+			if (!rc.canMove(dir)) {
+				return;
+			}
+			// end wiggle code
+			if (currDir != dir.opposite()) {
+				rc.setDirection(dir.opposite());
+			} else if (rc.canMove(currDir.opposite())) {
+				rc.moveBackward();
 			}
 		}
 	}
@@ -262,20 +287,29 @@ public class ArchonRobotJV extends BaseRobot {
 			return;
 		}
 		// turn in direction of target
-		Direction dir = currLoc.directionTo(target);
-		if (currDir != dir) {
-			rc.setDirection(dir);
-			return;
-		}
-		// stay at distance
-		int distance = currLoc.distanceSquaredTo(target);
-		if (distance < Constants.ARCHON_SAFETY_RANGE) {
-			if (rc.canMove(currDir.opposite())) {
-				rc.moveBackward();
-			}
-		} else {
-			if (rc.canMove(currDir)) {
-				rc.moveForward();
+		Direction[] targetDirs = new Direction[] {
+				currLoc.directionTo(target),
+				currLoc.directionTo(target).rotateLeft(),
+				currLoc.directionTo(target).rotateRight()
+		};
+		for (Direction d : targetDirs) {
+			if (rc.canMove(d.opposite())) {
+				if (currDir != d) {
+					rc.setDirection(d);
+					return;
+				}
+				// stay at distance
+				int distance = currLoc.distanceSquaredTo(target);
+				if (distance < Constants.ARCHON_SAFETY_RANGE) {
+					if (rc.canMove(currDir.opposite())) {
+						rc.moveBackward();
+					}
+				} else {
+					if (rc.canMove(currDir)) {
+						rc.moveForward();
+					}
+				}
+				return;
 			}
 		}
 	}
@@ -349,7 +383,15 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 	}
 	
-	private void wakeUpSoldiers() throws GameActionException {
-		io.sendInt("#sw", 0);
+	private boolean amILeader() throws GameActionException {
+		return currLoc.equals(dc.getAlliedArchons()[0]);
+	}
+	
+	private void sendRally() throws GameActionException {
+		if (--timeUntilBroadcast <= 0) {
+			io.sendInts("#sr", new int[] {rallyPriority, objective.x, objective.y});
+			io.sendInts("#ar", new int[] {rallyPriority, bearing.ordinal()});
+			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
+		}
 	}
 }
