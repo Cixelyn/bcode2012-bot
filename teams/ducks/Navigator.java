@@ -15,7 +15,7 @@ public class Navigator {
 	public Navigator(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
-		tangentBug = new TangentBug(this);
+		tangentBug = new TangentBug(mapCache.isWall);
 		blindBug = new BlindBug(baseRobot);
 		zeroLoc = new MapLocation(0,0);
 		mode = NavigationMode.RANDOM;
@@ -68,9 +68,11 @@ public class Navigator {
 		if(mapCache.roundLastUpdated > roundLastReset) {
 			reset();
 		}
-		int[] d = tangentBug.computeMove(mapCache.isWall, 
-				mapCache.worldToCacheX(baseRobot.currLoc.x), mapCache.worldToCacheY(baseRobot.currLoc.y), 
-				mapCache.worldToCacheX(destination.x), mapCache.worldToCacheY(destination.y));
+		tangentBug.setTarget(mapCache.worldToCacheX(destination.x), 
+				mapCache.worldToCacheY(destination.y));
+		int[] d = tangentBug.computeMove(
+				mapCache.worldToCacheX(baseRobot.currLoc.x), 
+				mapCache.worldToCacheY(baseRobot.currLoc.y));
 		return dxdyToDirection(d[0], d[1]);
 	}
 	private Direction navigateCompletelyRandomly() {

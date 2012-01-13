@@ -40,6 +40,7 @@ public class ArchonRobotHT extends BaseRobot{
 				rc.setIndicatorString(2, dir.toString());
 				if(dir==Direction.OMNI) dir = Direction.NORTH;
 			}
+			if(dir==Direction.NONE || dir==Direction.OMNI) dir = Direction.NORTH;
 			for(int i=0; i<30 && !rc.canMove(dir); i++) {
 				if(Math.random()<0.5)
 					dir = dir.rotateLeft();
