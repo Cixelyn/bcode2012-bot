@@ -24,10 +24,15 @@ public class BlindBug extends Navigation {
 		super(myBR);
 	}
 	
+	@Override
+	public Direction navigateTo(MapLocation destination) throws GameActionException {
+		return navigateToFull(destination);
+	}
+	
 	/**
 	 * Bug nav, only using terrain, does not take into account obstacles like other robots
 	 */
-	public Direction navigateTo(MapLocation target) throws GameActionException
+	public Direction navigateToIgnoreBots(MapLocation target) throws GameActionException
 	{
 		if (rc.isMovementActive()) {
 			return Direction.NONE;
