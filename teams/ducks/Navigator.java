@@ -11,6 +11,7 @@ public class Navigator {
 	private final MapLocation zeroLoc;
 	private int roundLastReset;
 	private NavigationMode mode;
+	private static int[] wiggleDirectionOrder = new int[] {0, 1, -1, 2, -2};
 	public Navigator(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
@@ -36,19 +37,28 @@ public class Navigator {
 		reset();
 	}
 	public Direction navigateTo(MapLocation destination) {
+		Direction dir = Direction.NORTH;
 		if(mode==NavigationMode.RANDOM) {
-			return navigateCompletelyRandomly();
+			dir = navigateCompletelyRandomly();
 		} else if(mode==NavigationMode.BUG) {
-			return navigateBug(destination);
+			dir = navigateBug(destination);
 		} else if(mode==NavigationMode.DIRECTIONAL_BUG) {
-			return navigateDirectionalBug(dxdyToDirection(
+			dir = navigateDirectionalBug(dxdyToDirection(
 					destination.x-baseRobot.currLoc.x, destination.y-baseRobot.currLoc.y));
 		} else if(mode==NavigationMode.TANGENT_BUG) {
-			return navigateTangentBug(destination);
+			dir = navigateTangentBug(destination);
 		} else if(mode==NavigationMode.DSTAR) {
-			return navigateDStar(destination);
+			dir = navigateDStar(destination);
 		} 
-		return null;
+		
+		//WIGGLE! ^_^
+		boolean[] movable = baseRobot.dc.getMovableDirections();
+		int multiplier = ((int)(Math.random()*2))*2-1;
+		int ord = dir.ordinal();
+		for(int ddir : wiggleDirectionOrder) {
+			if(movable[(ord+multiplier*ddir+8)%8]) return dir;
+		}
+		return Direction.NONE;
 	}
 	
 	private Direction dxdyToDirection(int dx, int dy) {
@@ -64,14 +74,12 @@ public class Navigator {
 		return dxdyToDirection(d[0], d[1]);
 	}
 	private Direction navigateCompletelyRandomly() {
-		Direction dir;
-		int tries = 0;
-		do {
-			tries++;
-			if(tries>32) return Direction.NONE;
-			dir = NavigatorUtilities.getRandomDirection();
-		} while(baseRobot.rc.canMove(dir));
-		return dir;
+		for(int tries=0; tries<32; tries++) {
+			Direction dir = NavigatorUtilities.getRandomDirection();
+			if(baseRobot.rc.canMove(dir))
+				return dir;
+		}
+		return Direction.NONE;
 	}
 	private Direction navigateBug(MapLocation destination) {
 		return blindBug.navigateToIgnoreBots(destination);

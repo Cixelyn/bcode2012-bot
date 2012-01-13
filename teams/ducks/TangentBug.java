@@ -10,9 +10,9 @@ public class TangentBug{
 	final Navigator nav;
 	
 	/** Scan this many times every turn to see if there is a wall in our way. */
-	final int INITIAL_SCAN_RANGE = 5;
+	final int INITIAL_SCAN_RANGE = 15;
 	/** Trace down the obstructing wall this many times in one turn. */
-	final int WALL_SCAN_STEPS_PER_TURN = 5;
+	final int WALL_SCAN_STEPS_PER_TURN = 15;
 	/** After guessing which way to trace, go the opposite way with this probability. */
 	final double CHANCE_OF_GOING_SLOW_WAY = 0.2;
 	/** We approximate that it will take an average of this*d squares to navigate a distance of d. */

@@ -3,9 +3,7 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
-import battlecode.common.PowerNode;
 import battlecode.common.RobotController;
-import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
@@ -29,7 +27,7 @@ public class ArchonRobotHT extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
-		if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
+		//if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
 		mc.senseAllTiles();
 		MapLocation target = rc.senseCapturablePowerNodes()[0];
 		
