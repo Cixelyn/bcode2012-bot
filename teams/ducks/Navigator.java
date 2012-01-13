@@ -43,7 +43,7 @@ public class Navigator {
 		return dir;
 	}
 	public Direction navigateBug(MapLocation destination) throws GameActionException {
-		return blindBug.navigateTo(destination);
+		return blindBug.navigateToIgnoreBots(destination);
 	}
 	public Direction navigateDirectionalBug(Direction dir, boolean traceClockwise) {
 		//TODO implement
