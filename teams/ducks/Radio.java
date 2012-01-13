@@ -157,8 +157,6 @@ public class Radio {
 		return locs;
 	}
 	
-	
-	
 
 	public void sendAll() {
 		

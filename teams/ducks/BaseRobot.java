@@ -17,7 +17,6 @@ public abstract class BaseRobot {
 	final Team myTeam;
 	final int myID;
 
-	
 	public double currEnergon, currFlux;
 	public MapLocation currLoc, currLocInFront, currLocInBack;
 	public Direction currDir;
@@ -28,6 +27,11 @@ public abstract class BaseRobot {
 	public RobotState currState;
 	
 	public EnemyArchonInfo enemyArchonInfo;
+	
+	// Internal Statistics
+	int executeStartTime;
+	int executeStartByte;
+	
 	
 	public BaseRobot(RobotController myRC) {
 		rc = myRC;
@@ -52,6 +56,8 @@ public abstract class BaseRobot {
 	
 	public void loop() {
 		while(true) {
+			
+			startClock();
 	
 			// Useful Statistics
 			currEnergon = rc.getEnergon();
@@ -100,10 +106,36 @@ public abstract class BaseRobot {
 			
 		
 			// End of Turn
+			stopClock();
 			rc.yield();
 			
 		}
 	}
-
+	
+	/**
+	 * message handler for all robot types
+	 * @param msgType
+	 * @param sb
+	 */
 	public void processMessage(char msgType, StringBuilder sb) {}
+
+	/**
+	 * @return age of the robot in rounds
+	 */
+	public int getAge() { return spawnRound - currRound; }
+
+	private void startClock() {
+		executeStartTime = Clock.getRoundNum();
+		executeStartByte = Clock.getBytecodeNum();
+	}
+	
+	private void stopClock() {
+        if(executeStartTime!=Clock.getRoundNum()) {
+            int currRound = Clock.getRoundNum();
+            int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
+            System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+        }  
+	}
+	
+	
 }
