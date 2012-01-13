@@ -10,9 +10,21 @@ import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
 	boolean aboutToMove = false;
+	int myArchonID;
 	public ArchonRobotHT(RobotController myRC) {
 		super(myRC);
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
+		
+		// compute archon ID
+		MapLocation[] alliedArchons = this.dc.getAlliedArchons();
+		for(int i=alliedArchons.length; --i>=0; ) {
+			if(alliedArchons[i].equals(this.currLoc)) {
+				myArchonID = i;
+				break;
+			}
+		}
+		
+		
 	}
 	
 	@Override
