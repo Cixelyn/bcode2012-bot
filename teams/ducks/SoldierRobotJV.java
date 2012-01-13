@@ -6,11 +6,14 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 
 public class SoldierRobotJV extends BaseRobot {
 	
 	private int rallyPriority;
 	private MapLocation objective;
+	
+	private int timeUntilBroadcast;
 
 	public SoldierRobotJV(RobotController myRC) {
 		super(myRC);
@@ -58,6 +61,11 @@ public class SoldierRobotJV extends BaseRobot {
 					rallyPriority = msgRallyPriority;
 				}
 				break;
+			case 'd':
+				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				for (int id : deadEnemyArchonIDs) {
+					enemyArchonInfo.reportEnemyArchonKill(id);
+				}
 			default:
 				super.processMessage(msgType, sb);
 		}
@@ -73,6 +81,8 @@ public class SoldierRobotJV extends BaseRobot {
 		objective = currLoc.add(
 				rc.sensePowerCore().getLocation().directionTo(
 				dc.getCapturablePowerCores()[0]), GameConstants.MAP_MAX_HEIGHT);
+		// set broadcast time
+		timeUntilBroadcast = 0;
 		// go to power save mode
 		currState = RobotState.POWER_SAVE;
 		powerSave();
@@ -95,6 +105,8 @@ public class SoldierRobotJV extends BaseRobot {
 		if (dc.getClosestEnemy() != null) {
 			currState = RobotState.CHASE;
 		}
+		// send dead enemy archon IDs
+		sendDeadEnemyArchonIDs();
 	}
 	
 	public void chase() throws GameActionException {
@@ -108,6 +120,8 @@ public class SoldierRobotJV extends BaseRobot {
 		attackClosestEnemy();
 		// charge enemy
 		charge(closestEnemy.location);
+		// send dead enemy archon IDs
+		sendDeadEnemyArchonIDs();
 	}
 	
 	private void attackClosestEnemy() throws GameActionException {
@@ -120,6 +134,10 @@ public class SoldierRobotJV extends BaseRobot {
 		if (closestEnemy != null && rc.canAttackSquare(closestEnemy.location)) {
 			rc.attackSquare(
 					closestEnemy.location, closestEnemy.robot.getRobotLevel());
+			if (closestEnemy.type == RobotType.ARCHON &&
+					closestEnemy.energon <= myType.attackPower) {
+				enemyArchonInfo.reportEnemyArchonKill(closestEnemy.robot.getID());
+			}
 		}
 	}
 	
@@ -130,7 +148,8 @@ public class SoldierRobotJV extends BaseRobot {
 		}
 		// step towards closest archon if too far away
 		MapLocation closestArchon = dc.getClosestArchon();
-		if (currLoc.distanceSquaredTo(closestArchon) < Constants.MAX_SWARM_RADIUS) {
+		if (closestArchon != null &&
+				currLoc.distanceSquaredTo(closestArchon) > Constants.MAX_SWARM_RADIUS) {
 			target = closestArchon;
 		}
 		// sense tiles
@@ -167,6 +186,7 @@ public class SoldierRobotJV extends BaseRobot {
 		if (rc.isMovementActive()) {
 			return;
 		}
+		/*
 		// turn in direction of target
 		Direction[] targetDirs = new Direction[] {
 				currLoc.directionTo(target),
@@ -181,6 +201,20 @@ public class SoldierRobotJV extends BaseRobot {
 				}
 				return;
 			}
+		}
+		*/
+		Direction dir = currLoc.directionTo(target);
+		if (currDir != dir) {
+			rc.setDirection(dir);
+		} else if (rc.canMove(dir)) {
+			rc.moveForward();
+		}
+	}
+	
+	private void sendDeadEnemyArchonIDs() throws GameActionException {
+		if (--timeUntilBroadcast <= 0) {
+			io.sendInts("#xd", enemyArchonInfo.getDeadEnemyArchonIDs());
+			timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
 		}
 	}
 }
