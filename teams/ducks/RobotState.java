@@ -1,0 +1,16 @@
+package ducks;
+
+public enum RobotState {
+	ATTACK_GROUND,
+	BUILD_TOWER,
+	CHASE,
+	DIZZY,
+	FOLLOW,
+	GOTO_POWER_CORE,
+	INITIALIZE,
+	MICRO,
+	RUSH,
+	SPAWN_SOLDIERS,
+	SPAWN_UNIT,
+	SPLIT
+}
