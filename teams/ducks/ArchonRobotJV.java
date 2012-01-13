@@ -77,6 +77,11 @@ public class ArchonRobotJV extends BaseRobot {
 					rallyPriority = msgRallyPriority;
 				}
 				break;
+			case 'd':
+				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				for (int id : deadEnemyArchonIDs) {
+					enemyArchonInfo.reportEnemyArchonKill(id);
+				}
 			default:
 				super.processMessage(msgType, sb);
 		}
@@ -171,7 +176,7 @@ public class ArchonRobotJV extends BaseRobot {
 			// rally units
 			sendRally();
 			// change state
-			if (amILeader()) {
+			if (shouldTower()) {
 				currState = RobotState.GOTO_POWER_CORE;
 			} else {
 				currState = RobotState.RUSH;
@@ -182,8 +187,13 @@ public class ArchonRobotJV extends BaseRobot {
 	}
 	
 	public void rush() throws GameActionException {
+		// make soldier if enough flux
+		if (currFlux > RobotType.SOLDIER.spawnCost) {
+			currState = RobotState.SPAWN_SOLDIERS;
+			return;
+		}
 		// move backwards towards bearing
-		moonwalkTowards(explorationTarget);
+		moonwalkTowards(objective);
 		// reset bearing if necessary
 		setBearing();
 		// distribute flux
@@ -201,7 +211,7 @@ public class ArchonRobotJV extends BaseRobot {
 		// go back to previous state if no enemy in range
 		RobotInfo closestEnemy = dc.getClosestEnemy();
 		if (closestEnemy == null) {
-			if (amILeader()) {
+			if (shouldTower()) {
 				currState = RobotState.GOTO_POWER_CORE;
 			} else {
 				currState = RobotState.RUSH;
@@ -213,13 +223,14 @@ public class ArchonRobotJV extends BaseRobot {
 		// distribute flux
 		distributeFlux();
 		// send rally
+		rallyPriority++;
 		objective = closestEnemy.location;
 		sendRally();
 	}
 	
 	public void gotoPowerCore() throws GameActionException {
-		// get a power core
-		MapLocation powerCore = dc.getCapturablePowerCores()[0];
+		// get closest capturable power core
+		MapLocation powerCore = dc.getClosestCapturablePowerCore();
 		// move backwards towards power core if far away
 		if (currLoc.distanceSquaredTo(powerCore) > 2) {
 			moonwalkTowards(powerCore);
@@ -229,6 +240,9 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 		// distribute flux
 		distributeFlux();
+		// send rally
+		objective = powerCore;
+		sendRally();
 	}
 	
 	private void setBearing() throws GameActionException {
@@ -373,9 +387,14 @@ public class ArchonRobotJV extends BaseRobot {
 								Constants.MIN_UNIT_FLUX_RATIO * rInfo.type.maxFlux - rInfo.flux,
 								currFlux - Constants.MIN_ARCHON_FLUX);
 						if (fluxToTransfer > 0) {
-							rc.transferFlux(
-									rInfo.location, rInfo.robot.getRobotLevel(), fluxToTransfer);
-							currFlux -= fluxToTransfer;
+							// if we throw an exception, our info is stale, so abort
+							try {
+								rc.transferFlux(
+										rInfo.location, rInfo.robot.getRobotLevel(), fluxToTransfer);
+								currFlux -= fluxToTransfer;
+							} catch (GameActionException e) {
+								return;
+							}
 						}
 					}
 				}
@@ -383,8 +402,15 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 	}
 	
-	private boolean amILeader() throws GameActionException {
-		return currLoc.equals(dc.getAlliedArchons()[0]);
+	private boolean shouldTower() throws GameActionException {
+		int numAlliedArchons = dc.getAlliedArchons().length;
+		int numEnemyArchons = enemyArchonInfo.getNumEnemyArchons();
+		for (int idx = 0; idx < numAlliedArchons; idx++) {
+			if (currLoc.equals(dc.getAlliedArchons()[idx])) {
+				return idx >= numEnemyArchons;
+			}
+		}
+		return false;
 	}
 	
 	private void sendRally() throws GameActionException {

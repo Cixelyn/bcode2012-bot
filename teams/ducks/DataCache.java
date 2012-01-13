@@ -43,6 +43,9 @@ public class DataCache {
 	private RobotInfo closestEnemy;
 	private int closestEnemyTime = -1;
 	
+	private MapLocation closestCapturablePowerCore;
+	private int closestCapturablePowerCoreTime = -1;
+	
 	public DataCache(BaseRobot br) {
 		this.br = br;
 		this.rc = br.rc;
@@ -222,8 +225,26 @@ public class DataCache {
 					}
 				}
 			}
+			closestEnemyTime = br.currRound;
 		}
 		return closestEnemy;
+	}
+	
+	public MapLocation getClosestCapturablePowerCore()
+			throws GameActionException {
+		if (br.currRound > closestCapturablePowerCoreTime) {
+			int closestDistance = Integer.MAX_VALUE;
+			closestCapturablePowerCore = null;
+			for (MapLocation capturablePowerCore : getCapturablePowerCores()) {
+				int distance = br.currLoc.distanceSquaredTo(capturablePowerCore);
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closestCapturablePowerCore = capturablePowerCore;
+				}
+			}
+			closestCapturablePowerCoreTime = br.currRound;
+		}
+		return closestCapturablePowerCore;
 	}
 	
 	private boolean isTowerTargetable(
