@@ -12,6 +12,7 @@ public class ArchonRobotHT extends BaseRobot{
 	boolean aboutToMove = false;
 	public ArchonRobotHT(RobotController myRC) {
 		super(myRC);
+		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 	}
 	
 	@Override
@@ -25,7 +26,7 @@ public class ArchonRobotHT extends BaseRobot{
 			if(aboutToMove) {
 				dir = currDir;
 			} else {
-				dir = nav.navigateTangentBug(target);
+				dir = nav.navigateTo(target);
 				rc.setIndicatorString(2, dir.toString());
 				if(dir==Direction.OMNI) dir = Direction.NORTH;
 			}
