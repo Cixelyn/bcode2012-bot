@@ -14,6 +14,8 @@ public final class Constants {
 	public static final double MIN_ARCHON_FLUX = 0.2;
 	/** Archons try to maintain this amount of flux on other units. */
 	public static final double MIN_UNIT_FLUX = 30;
+	/** Archons try to maintain this ratio of max flux on other units. */
+	public static final double MIN_UNIT_FLUX_RATIO = 0.75;
 	/** Units below this amount of flux will not execute their run method. */
 	public static final double POWER_DOWN_FLUX = 1;
 	
@@ -36,4 +38,11 @@ public final class Constants {
 	public static final int CIRCLE_MAP_ROUNDS = 2000;
 	/** Don't build towers until after this round */
 	public static final int TOWER_ROUNDS = 4000;
+	
+	/** Minimum distance for archons to be from each other at initial split. */
+	public static final int SPLIT_DISTANCE = 16;
+	/** Number of soldiers each archon makes after initial split. */
+	public static final int SOLDIERS_PER_ARCHON = 5;
+	/** Maximum number of rounds to spend splitting. */
+	public static final int MAX_SPLIT_TIME = 40;
 }
