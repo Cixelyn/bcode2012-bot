@@ -103,7 +103,7 @@ public class SoldierRobot extends BaseRobot {
 			{
 				dir = nv.getOutOfCurrentSquare();
 			} else {
-				dir = nv.navigateTo(target);
+				dir = ((BlindBug) nv).navigateToDirection(currLoc.directionTo(target));
 			}
 			if (dir != null && dir.ordinal()<8) {
 				if (currDir != dir) {
