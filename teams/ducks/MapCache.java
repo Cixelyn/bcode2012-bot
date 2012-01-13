@@ -42,21 +42,19 @@ public class MapCache {
 		maxYGround = powerCoreWorldY + 1;
 		senseDist = baseRobot.myType==RobotType.ARCHON ? 5 :
 			baseRobot.myType==RobotType.SCOUT ? 4 : 3;
-		switch(baseRobot.myType)
-		{
-		case ARCHON: optimizedSensingList = sensorRangeARCHON; break;
-		case SCOUT: optimizedSensingList = sensorRangeSCOUT; break;
-		case DISRUPTER: optimizedSensingList = sensorRangeDISRUPTER; break;
-		case SCORCHER: optimizedSensingList = sensorRangeSCORCHER; break;
-		case SOLDIER: optimizedSensingList = sensorRangeSOLDIER; break;
-		default:
-			optimizedSensingList = new int[0][0][0];
+		roundLastUpdated = -1;
+		switch(baseRobot.myType) {
+			case ARCHON: optimizedSensingList = sensorRangeARCHON; break;
+			case SCOUT: optimizedSensingList = sensorRangeSCOUT; break;
+			case DISRUPTER: optimizedSensingList = sensorRangeDISRUPTER; break;
+			case SCORCHER: optimizedSensingList = sensorRangeSCORCHER; break;
+			case SOLDIER: optimizedSensingList = sensorRangeSOLDIER; break;
+			default:
+				optimizedSensingList = new int[0][0][0];
 		}
 	}
 	
-	/** Senses most 
-		roundLastUpdated = -1;
-tiles around current location in range. 
+	/** Senses most tiles around current location in range. 
 	 * Not quite all tiles, i.e. for archons does not sense tiles <6,0> away. 
 	 */
 	public void senseAllTiles() {
@@ -92,8 +90,7 @@ tiles around current location in range.
 		MapLocation myLoc = baseRobot.currLoc;
 		int x = worldToCacheX(myLoc.x);
 		int y = worldToCacheY(myLoc.y);
-		for (int i=0; i<list.length; i++)
-		{
+		for (int i=0; i<list.length; i++) {
 			int dx = list[i][0];
 			int dy = list[i][1];
 			if(sensed[x+dx][y+dy]) continue;
