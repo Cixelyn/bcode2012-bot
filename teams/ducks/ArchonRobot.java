@@ -19,9 +19,21 @@ public class ArchonRobot extends BaseRobot {
 	private RobotType unitToSpawn;
 	private int timeUntilBroadcast;
 	private int targetPriority;
+	
+	int myArchonID;
 
 	public ArchonRobot(RobotController myRC) {
 		super(myRC);
+		
+		// compute archon ID
+		MapLocation[] alliedArchons = this.dc.getAlliedArchons();
+		for(int i=alliedArchons.length; --i>=0; ) {
+			if(alliedArchons[i].equals(this.currLoc)) {
+				myArchonID = i;
+				break;
+			}
+		}
+		
 		nv = new BlindBug(this);
 		currState = RobotState.RUSH;
 		unitToSpawn = getSpawnType();
