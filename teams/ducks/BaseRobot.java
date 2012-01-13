@@ -47,8 +47,6 @@ public abstract class BaseRobot {
 		nav = new Navigator(this);
 		io = new Radio(this);
 		
-		currLoc = rc.getLocation();
-		
 		spawnRound = Clock.getRoundNum();
 		
 		enemyArchonInfo = new EnemyArchonInfo();
@@ -74,11 +72,6 @@ public abstract class BaseRobot {
 			
 			// show state of robot
 			rc.setIndicatorString(0, "" + myType + " - " + currState);
-			// show location of robot
-			rc.setIndicatorString(1, "Location: " + currLoc);
-			// show number of enemy archons
-			rc.setIndicatorString(2, "Number of enemy archons: " +
-					enemyArchonInfo.getNumEnemyArchons());
 			
 			// Main Radio Receive Call
 			try {
@@ -135,7 +128,7 @@ public abstract class BaseRobot {
         if(executeStartTime!=Clock.getRoundNum()) {
             int currRound = Clock.getRoundNum();
             int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
-            System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+            //System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
         }  
 	}
 	
