@@ -80,9 +80,9 @@ public class SensorRangeChecker {
 		RobotType currType = rc.getType();
 		final int cx = currLoc.x;
 		final int cy = currLoc.y;
-		Direction d = rc.getDirection();
+//		Direction d = rc.getDirection();
 		
-		boolean[][] map = new boolean[256][256];
+//		boolean[][] map = new boolean[256][256];
 		boolean[][] seen = new boolean[256][256];
 		
 		switch (currType)
@@ -119,7 +119,7 @@ public class SensorRangeChecker {
 			break;
 		}
 	}
-	
+/*
 	private static final int[][][] sensorRangeARCHON = new int[][][] { //ARCHON
 		{ //NORTH
 			{-6,0},{-5,-3},{-4,-4},{-3,-5},{-2,-5},{-1,-5},{0,-6},{1,-5},{2,-5},{3,-5},{4,-4},{5,-3},{6,0},
@@ -276,6 +276,6 @@ public class SensorRangeChecker {
 			
 		},
 	};
-
+*/
 }
 
