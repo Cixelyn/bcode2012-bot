@@ -30,6 +30,20 @@ public class BlindBug extends Navigation {
 	}
 	
 	/**
+	 * resets the bug to an unbugging state. Clears target and start and sets appropriate variables
+	 */
+	public void resetBug()
+	{
+		bugTarget = null;
+		bugStart = null;
+		bugGing = false;
+		bugRoundStart = 0;
+		bugStopThreshold = BUG_ROUNDS_BEFORE_STOPPING_INITIAL;
+		bugDist = 9999;
+		bugFlipped = false;
+	}
+	
+	/**
 	 * Bug nav, only using terrain, does not take into account obstacles like other robots
 	 */
 	public Direction navigateToIgnoreBots(MapLocation target)
