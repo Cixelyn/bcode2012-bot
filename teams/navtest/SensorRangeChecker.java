@@ -1,132 +1,125 @@
-package ducks;
+package navtest;
+
+import java.util.ArrayList;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
 import battlecode.common.RobotType;
-import battlecode.common.TerrainTile;
 
-/** This data structure caches the terrain of the world map as sensed by one robot. 
- * It stores a 256x256 boolean array representing the tiles that are walls. 
- * 
- * We set the coordinate (128,128) in the cache to correspond to the location of
- * our team's power core, and linearly shift between cache coordinates and world coordinates
- * using this transformation.
- * 
- * @author Haitao
- */
-public class MapCache {
-	/** True if the tile is a wall, false if the tile is ground or out of bounds. */
-	final boolean[][] isWall;
-	/** True if we have sensed the tile or been told by another robot about the tile. */
-	final boolean[][] sensed;
-	final static int MAP_SIZE = 256;
-	final static int POWER_CORE_POSITION = 128;
-	final BaseRobot baseRobot;
-	final int powerCoreWorldX, powerCoreWorldY;
-	/** The boundaries of tiles we have confirmed are ground tiles. */
-	int minXGround, maxXGround, minYGround, maxYGround;
-	int senseDist;
-	/** optimized sensing list for each unit */
-	private final int[][][] optimizedSensingList;
-	int roundLastUpdated;
-	public MapCache(BaseRobot baseRobot) {
-		isWall = new boolean[MAP_SIZE][MAP_SIZE];
-		sensed = new boolean[MAP_SIZE][MAP_SIZE];
-		this.baseRobot = baseRobot;
-		MapLocation loc = baseRobot.rc.sensePowerCore().getLocation();
-		powerCoreWorldX = loc.x;
-		powerCoreWorldY = loc.y;
-		minXGround = powerCoreWorldX - 1;
-		maxXGround = powerCoreWorldX + 1;
-		minYGround = powerCoreWorldY - 1;
-		maxYGround = powerCoreWorldY + 1;
-		senseDist = baseRobot.myType==RobotType.ARCHON ? 5 :
-			baseRobot.myType==RobotType.SCOUT ? 4 : 3;
-		switch(baseRobot.myType)
+public class SensorRangeChecker {
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		
+		for (RobotType t : RobotType.values())
 		{
-		case ARCHON: optimizedSensingList = sensorRangeARCHON; break;
-		case SCOUT: optimizedSensingList = sensorRangeSCOUT; break;
-		case DISRUPTER: optimizedSensingList = sensorRangeDISRUPTER; break;
-		case SCORCHER: optimizedSensingList = sensorRangeSCORCHER; break;
-		case SOLDIER: optimizedSensingList = sensorRangeSOLDIER; break;
-		default:
-			optimizedSensingList = new int[0][0][0];
+			System.out.println("private static final int[][][] sensorRange"+t.name().toUpperCase()+" = new int[][][] { //"+t.name().toUpperCase());
+			for (int iii=0; iii<8; iii++)
+			{
+				Direction d = Direction.values()[iii];
+				
+				ArrayList<int[]> tosense = new ArrayList<int[]>();
+				int r = (int)(Math.sqrt(t.sensorRadiusSquared))+1;
+				for (int x=-r; x<=r; x++)
+					for (int y=-r; y<=r; y++)
+					{
+						MapLocation loc = new MapLocation(x, y);
+						if (checkCanSense(loc, t, d) && !checkCanSense(loc.add(d), t, d))
+							tosense.add(new int[]{x,y});
+					}
+				System.out.println("\t{ //"+d.name().toUpperCase());
+				System.out.print("\t\t");
+				for (int[] a : tosense)
+				{
+					System.out.print("{"+a[0]+","+a[1]+"},");
+				}
+				System.out.println();
+				System.out.println("\t},");
+			}
+			System.out.println("};");
 		}
+		
 	}
 	
-	/** Senses most 
-		roundLastUpdated = -1;
-tiles around current location in range. 
-	 * Not quite all tiles, i.e. for archons does not sense tiles <6,0> away. 
-	 */
-	public void senseAllTiles() {
-		boolean updated = false;
-		MapLocation myLoc = baseRobot.currLoc;
-		int myX = worldToCacheX(myLoc.x);
-		int myY = worldToCacheY(myLoc.y);
-		for(int dx=-senseDist; dx<=senseDist; dx++) for(int dy=-senseDist; dy<=senseDist; dy++) {
-			if(sensed[myX+dx][myY+dy]) continue;
-			MapLocation loc = myLoc.add(dx, dy);
-			TerrainTile tt = baseRobot.rc.senseTerrainTile(loc);
-			if(tt!=null) {
-				isWall[myX+dx][myY+dy] = tt!=TerrainTile.LAND;
-				sensed[myX+dx][myY+dy] = true;
-				updated = true;
-			}
-		}
-		if(updated) {
-			roundLastUpdated = baseRobot.currRound;
-		}
+	public static boolean checkCanSense(MapLocation loc, RobotType type, Direction dir) {
+		MapLocation myLoc = new MapLocation(0, 0);
+		return myLoc.distanceSquaredTo(loc)<=type.sensorRadiusSquared
+			&& inAngleRange(myLoc,dir,loc,type.sensorCosHalfTheta);
 	}
-	/**
-	 * A more optimized way of sensing tiles.
-	 * Given a direction we just moved in, senses only the tiles that are new.
-	 * Assumes that we have sensed everything we could have in the past. 
-	 * @param lastMoved the direction we just moved in
-	 */
-	public void senseTilesOptimized(Direction lastMoved) {
-		if (lastMoved.ordinal()>7) return;
-		boolean updated = false;
+	
+	private static MapLocation origin = new MapLocation(0, 0);
+	
+	public static boolean inAngleRange(MapLocation sensor, Direction dir, MapLocation target, double cosHalfTheta) {
+        MapLocation dirVec = origin.add(dir);
+        double dx = target.x - sensor.x;
+        double dy = target.y - sensor.y;
+        int a = dirVec.x;
+        int b = dirVec.y;
+        double dotProduct = a * dx + b * dy;
+
+        if (dotProduct < 0) {
+            if (cosHalfTheta > 0)
+                return false;
+        } else if (cosHalfTheta < 0)
+            return true;
+
+        double rhs = cosHalfTheta * cosHalfTheta * (dx * dx + dy * dy) * (a * a + b * b);
+
+        if (dotProduct < 0)
+            return (dotProduct * dotProduct <= rhs + 0.00001d);
+        else
+            return (dotProduct * dotProduct >= rhs - 0.00001d);
+    }
+	
+	public void senseAllTerrainTiles(RobotController rc)
+	{
+		MapLocation currLoc = rc.getLocation();
+		RobotType currType = rc.getType();
+		final int cx = currLoc.x;
+		final int cy = currLoc.y;
+		Direction d = rc.getDirection();
 		
-		final int[][] list = optimizedSensingList[lastMoved.ordinal()];
-		MapLocation myLoc = baseRobot.currLoc;
-		int x = worldToCacheX(myLoc.x);
-		int y = worldToCacheY(myLoc.y);
-		for (int i=0; i<list.length; i++)
+		boolean[][] map = new boolean[256][256];
+		boolean[][] seen = new boolean[256][256];
+		
+		switch (currType)
 		{
-			int dx = list[i][0];
-			int dy = list[i][1];
-			if(sensed[x+dx][y+dy]) continue;
-			MapLocation loc = myLoc.add(dx, dy);
-			TerrainTile tt = baseRobot.rc.senseTerrainTile(loc);
-			if(tt!=null) {
-				isWall[x+dx][y+dy] = tt!=TerrainTile.LAND;
-				sensed[x+dx][y+dy] = true;
-				updated = true;
-			}
+		case ARCHON:
+		{
+			for (int x=-5; x<=5; x++)
+				for (int y=-5; y<=5; y++)
+				{
+					if (!seen[cx+x][cy+y])
+						;
+				}
+		}
+			break;
+		case DISRUPTER:
+		{
 			
 		}
-		
-		if(updated) {
-			roundLastUpdated = baseRobot.currRound;
+			break;
+		case SCORCHER:
+		{
+			
+		}
+			break;
+		case SCOUT:
+		{
+			
+		}
+			break;
+		case SOLDIER:
+		{
+			
+		}
+			break;
 		}
 	}
 	
-	public int worldToCacheX(int worldX) {
-		return worldX-powerCoreWorldX+POWER_CORE_POSITION;
-	}
-	public int cacheToWorldX(int cacheX) {
-		return cacheX+powerCoreWorldX-POWER_CORE_POSITION;
-	}
-	public int worldToCacheY(int worldY) {
-		return worldY-powerCoreWorldY+POWER_CORE_POSITION;
-	}
-	public int cacheToWorldY(int cacheY) {
-		return cacheY+powerCoreWorldY-POWER_CORE_POSITION;
-	}
-	
-	
-//	Magic arrays
 	private static final int[][][] sensorRangeARCHON = new int[][][] { //ARCHON
 		{ //NORTH
 			{-6,0},{-5,-3},{-4,-4},{-3,-5},{-2,-5},{-1,-5},{0,-6},{1,-5},{2,-5},{3,-5},{4,-4},{5,-3},{6,0},
@@ -257,4 +250,32 @@ tiles around current location in range.
 			{-3,-1},{-3,0},{-3,1},{-2,-2},{-2,-1},{-1,-3},{-1,-2},{0,-3},{1,-3},
 		},
 	};
+	private static final int[][][] sensorRangeTOWER = new int[][][] { //TOWER
+		{ //NORTH
+			
+		},
+		{ //NORTH_EAST
+			
+		},
+		{ //EAST
+			
+		},
+		{ //SOUTH_EAST
+			
+		},
+		{ //SOUTH
+			
+		},
+		{ //SOUTH_WEST
+			
+		},
+		{ //WEST
+			
+		},
+		{ //NORTH_WEST
+			
+		},
+	};
+
 }
+

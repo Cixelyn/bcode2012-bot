@@ -1,18 +1,21 @@
 package ducks;
 
 import battlecode.common.Direction;
+import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 
 public class Navigator {
 	private final BaseRobot baseRobot;
 	private final MapCache mapCache; 
 	private final TangentBug tangentBug;
+	private final BlindBug blindBug;
 	private final MapLocation zeroLoc;
 	private int roundLastReset;
 	public Navigator(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
 		tangentBug = new TangentBug(this);
+		blindBug = new BlindBug(baseRobot);
 		zeroLoc = new MapLocation(0,0);
 		roundLastReset = -1;
 	}
@@ -45,9 +48,8 @@ public class Navigator {
 		} while(baseRobot.rc.canMove(dir));
 		return dir;
 	}
-	public Direction navigateBug(MapLocation destination) {
-		//TODO implement
-		return navigateCompletelyRandomly();
+	public Direction navigateBug(MapLocation destination) throws GameActionException {
+		return blindBug.navigateToIgnoreBots(destination);
 	}
 	public Direction navigateDirectionalBug(Direction dir, boolean traceClockwise) {
 		//TODO implement
@@ -57,6 +59,4 @@ public class Navigator {
 		//TODO implement
 		return navigateCompletelyRandomly();
 	}
-	
-	
 }

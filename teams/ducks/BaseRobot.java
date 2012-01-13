@@ -30,15 +30,16 @@ public abstract class BaseRobot {
 	
 	public BaseRobot(RobotController myRC) {
 		rc = myRC;
-		dc = new DataCache(this);
-		mc = new MapCache(this);
-		nav = new Navigator(this);
-		io = new Radio(this);
 		
 		myType = rc.getType();
 		myTeam = rc.getTeam();
 		myMaxEnergon = myType.maxEnergon;
 		myMaxFlux = myType.maxFlux;
+		
+		dc = new DataCache(this);
+		mc = new MapCache(this);
+		nav = new Navigator(this);
+		io = new Radio(this);
 		
 		spawnRound = Clock.getRoundNum();
 		

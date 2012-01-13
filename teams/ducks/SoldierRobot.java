@@ -76,6 +76,7 @@ public class SoldierRobot extends BaseRobot {
 					continue;
 				}
 				currState = RobotState.MICRO;
+				micro();
 				return;
 			}
 		}
@@ -90,13 +91,21 @@ public class SoldierRobot extends BaseRobot {
 					closestArchon = archon;
 				}
 			}
+			
+			
 			Direction dir;
-			if (closestDistance > Constants.MAX_SWARM_RADIUS) {
+			if (closestArchon.distanceSquaredTo(currLoc)<2)
+			{
+				dir = nv.getOutOfCurrentSquare();
+			} else if (closestDistance > Constants.MAX_SWARM_RADIUS) {
 				dir = nv.navigateTo(closestArchon);
+			} else if (rc.senseObjectAtLocation(currLoc, RobotLevel.POWER_NODE)!=null)
+			{
+				dir = nv.getOutOfCurrentSquare();
 			} else {
 				dir = nv.navigateTo(target);
 			}
-			if (dir != Direction.OMNI && dir != Direction.NONE) {
+			if (dir != null && dir.ordinal()<8) {
 				if (currDir != dir) {
 					rc.setDirection(dir);
 				} else {
