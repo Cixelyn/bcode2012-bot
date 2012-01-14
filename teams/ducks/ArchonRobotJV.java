@@ -17,6 +17,7 @@ public class ArchonRobotJV extends BaseRobot {
 	private int splitTime;
 	private Direction splitDirection;
 	
+	private int scorchersSpawned;
 	private int soldiersSpawned;
 	
 	private int rallyPriority;
@@ -40,8 +41,8 @@ public class ArchonRobotJV extends BaseRobot {
 			case SPLIT:
 				split();
 				break;
-			case SPAWN_SCORCHER:
-				spawnScorcher();
+			case SPAWN_SCORCHERS:
+				spawnScorchers();
 				break;
 			case SPAWN_SOLDIERS:
 				spawnSoldiers();
@@ -106,8 +107,8 @@ public class ArchonRobotJV extends BaseRobot {
 		timeUntilBroadcast = 0;
 		// one archon makes a scorcher, everyone else splits
 		if (currLoc.equals(dc.getAlliedArchons()[0])) {
-			currState = RobotState.SPAWN_SCORCHER;
-			spawnScorcher();
+			currState = RobotState.SPAWN_SCORCHERS;
+			spawnScorchers();
 		} else {
 			currState = RobotState.SPLIT;
 			split();
@@ -159,7 +160,7 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 	}
 	
-	public void spawnScorcher() throws GameActionException {
+	public void spawnScorchers() throws GameActionException {
 		// build scorcher in an available direction
 		Direction scorcherDir = currLoc.directionTo(
 				rc.sensePowerCore().getLocation());
@@ -177,10 +178,13 @@ public class ArchonRobotJV extends BaseRobot {
 			// TODO(jven): use data cache
 			if (rc.canMove(d)) {
 				if (spawnUnitInDir(RobotType.SCORCHER, d)) {
-					currState = RobotState.SPAWN_SOLDIERS;
+					scorchersSpawned++;
 				}
 				break;
 			}
+		}
+		if (scorchersSpawned >= Constants.SCORCHERS_PER_ARCHON) {
+			currState = RobotState.SPAWN_SOLDIERS;
 		}
 		// distribute flux
 		distributeFlux();
