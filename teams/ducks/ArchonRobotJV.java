@@ -59,7 +59,6 @@ public class ArchonRobotJV extends BaseRobot {
 			default:
 				break;
 		}
-		rc.setIndicatorString(1, "" + bearing);
 	}
 	
 	@Override
@@ -446,7 +445,7 @@ public class ArchonRobotJV extends BaseRobot {
 					// TODO(jven): data cache this?
 					RobotInfo rInfo = rc.senseRobotInfo((Robot)obj);
 					// don't give flux to towers
-					if (rInfo.type == RobotType.TOWER) {
+					if (rInfo.type == RobotType.TOWER || rInfo.type == RobotType.ARCHON) {
 						continue;
 					}
 					if (rInfo.flux <
