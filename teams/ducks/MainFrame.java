@@ -207,9 +207,10 @@ public class MainFrame extends JFrame{
 	public void step() {
 		int i=0;
 		int[] d = tangentBug.computeMove(px[i], py[i]);
-		tangentBug.clearPreparatoryVariables();
+		if(d!=null) {
 		px[i]+=d[0];
 		py[i]+=d[1];
+		}
 		moveCount++;
 		System.out.println("\n-----------move " + moveCount+"------------");
 		repaint();
