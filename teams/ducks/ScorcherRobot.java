@@ -8,17 +8,34 @@ public class ScorcherRobot extends BaseRobot {
 
 	public ScorcherRobot(RobotController myRC) {
 		super(myRC);
-		currState = RobotState.ATTACK_GROUND;
+		currState = RobotState.INITIALIZE;
 	}
 
 	@Override
 	public void run() throws GameActionException {
 		switch (currState) {
-			case ATTACK_GROUND:
-				attackGround();
+			case INITIALIZE:
+				initialize();
+				break;
+			case POWER_SAVE:
+				powerSave();
 				break;
 			default:
 				break;
+		}
+	}
+	
+	public void initialize() throws GameActionException {
+		currState = RobotState.POWER_SAVE;
+		powerSave();
+	}
+	
+	public void powerSave() throws GameActionException {
+		// attack closest enemy if possible
+		attackGround();
+		// spin
+		if (!rc.isMovementActive()) {
+			rc.setDirection(currDir.rotateLeft().rotateLeft().rotateLeft());
 		}
 	}
 	
