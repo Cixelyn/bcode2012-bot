@@ -265,6 +265,10 @@ public class ArchonRobotJV extends BaseRobot {
 		// send rally
 		objective = powerCore;
 		sendRally();
+		// if enemy is nearby, kite it
+		if (dc.getClosestEnemy() != null) {
+			currState = RobotState.CHASE;
+		}
 	}
 	
 	private void setBearing() throws GameActionException {
