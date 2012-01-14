@@ -15,4 +15,5 @@ public final class UtilityDucks {
 		int diff = (d1.ordinal()-d2.ordinal()+16)%8;
 		return diff==1 || diff==7;
 	}
+
 }
