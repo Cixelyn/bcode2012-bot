@@ -128,7 +128,7 @@ public abstract class BaseRobot {
         if(executeStartTime!=Clock.getRoundNum()) {
             int currRound = Clock.getRoundNum();
             int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
-            //System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+            System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
         }  
 	}
 	

@@ -201,7 +201,9 @@ public class SoldierRobotJV extends BaseRobot {
 		// sense tiles
 		mc.senseAllTiles();
 		// move towards target
-		Direction dir = nav.navigateTo(target);
+		nav.setDestination(target);
+		nav.prepare();
+		Direction dir = nav.navigateToDestination();
 		if (dir != Direction.OMNI && dir != Direction.NONE) {
 			// TODO(jven): wiggle code should not be here
 			for (int tries = 0; tries < Constants.WIGGLE_TIMEOUT; tries++) {
