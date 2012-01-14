@@ -12,6 +12,8 @@ public class Navigator {
 	private int roundLastReset;
 	private NavigationMode mode;
 	private MapLocation destination;
+	private int movesOnSameTarget;
+	private int expectedMovesToReachTarget;
 	private static int[] wiggleDirectionOrder = new int[] {0, 1, -1, 2, -2};
 	public Navigator(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
@@ -25,7 +27,7 @@ public class Navigator {
 	
 	/** Resets the navigator, clearing it of any state. */
 	public void reset() {
-		tangentBug.reset();
+		tangentBug.reset(1, 0);
 		//TODO reset blindbug
 		roundLastReset = baseRobot.currRound;
 	}
@@ -40,7 +42,9 @@ public class Navigator {
 	public void setDestination(MapLocation destination) {
 		if(destination.equals(this.destination)) 
 			return;
-		System.out.println("set new destination: "+mapCache.worldToCacheX(destination.x)+","+mapCache.worldToCacheY(destination.y));
+		movesOnSameTarget = 0;
+		expectedMovesToReachTarget = (int)(Math.sqrt(baseRobot.currLoc.distanceSquaredTo(destination)) *
+				TangentBug.MAP_UGLINESS_WEIGHT);
 		this.destination = destination;
 		tangentBug.setTarget(mapCache.worldToCacheX(destination.x), 
 				mapCache.worldToCacheY(destination.y));
@@ -54,24 +58,35 @@ public class Navigator {
 		} 
 	}
 	public Direction navigateToDestination() {
-		Direction dir = Direction.NORTH;
+		Direction dir = Direction.NONE;
 		if(mode==NavigationMode.RANDOM) {
 			dir = navigateCompletelyRandomly();
 		} else if(mode==NavigationMode.BUG) {
 			dir = navigateBug();
 		} else if(mode==NavigationMode.TANGENT_BUG) {
 			dir = navigateTangentBug();
+			if(movesOnSameTarget % expectedMovesToReachTarget == 0) {
+				int n = movesOnSameTarget / expectedMovesToReachTarget;
+				if(n>=2) {
+					tangentBug.reset(Math.min(6+n, 50), 0.4);
+				}
+				movesOnSameTarget++;
+			}
 		} else if(mode==NavigationMode.DSTAR) {
 			dir = navigateDStar();
 		} 
 		
-		if(dir==Direction.NONE) return Direction.NONE;
+		
+		if(dir==Direction.NONE) return dir;
 		//WIGGLE! ^_^
 		boolean[] movable = baseRobot.dc.getMovableDirections();
 		int multiplier = ((int)(Math.random()*2))*2-1; // 1 or -1 with equal probability
 		int ord = dir.ordinal();
 		for(int ddir : wiggleDirectionOrder) {
-			if(movable[(ord+multiplier*ddir+8)%8]) return dir;
+			if(movable[(ord+multiplier*ddir+8)%8]) {
+				movesOnSameTarget++;
+				return dir;
+			}
 		}
 		return Direction.NONE;
 	}

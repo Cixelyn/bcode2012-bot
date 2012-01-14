@@ -30,6 +30,8 @@ public class ArchonRobotHT extends BaseRobot{
 		if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
 		mc.senseAllTiles();
 		MapLocation target = rc.senseCapturablePowerNodes()[0];
+		rc.setIndicatorString(0, "dxdy: "+(target.x-currLoc.x)+","+(target.y-currLoc.y));
+		rc.setIndicatorString(1, "abouttomove: "+aboutToMove);
 		nav.setDestination(target);
 		nav.prepare();
 		
@@ -37,31 +39,31 @@ public class ArchonRobotHT extends BaseRobot{
 			Direction dir;
 			if(aboutToMove) {
 				dir = currDir;
+				aboutToMove = false;
 			} else {
 				dir = nav.navigateToDestination();
 				rc.setIndicatorString(2, dir.toString());
-				if(dir==Direction.OMNI) dir = Direction.NORTH;
 			}
-			if(dir==Direction.NONE || dir==Direction.OMNI) dir = Direction.NORTH;
-			for(int i=0; i<30 && !rc.canMove(dir); i++) {
-				if(Math.random()<0.5)
-					dir = dir.rotateLeft();
-				else
-					dir = dir.rotateRight();
-			}
-			if(rc.canMove(dir)) {
-				if(dir==currDir) {
-					if(currLocInFront.equals(target)) {
-						if(currFlux>210 && rc.canMove(currDir)) {
-							rc.spawn(RobotType.TOWER);
+			if(!(dir==Direction.NONE || dir==Direction.OMNI)) {
+				for(int i=0; i<30 && !rc.canMove(dir); i++) {
+					if(Math.random()<0.5)
+						dir = dir.rotateLeft();
+					else
+						dir = dir.rotateRight();
+				}
+				if(rc.canMove(dir)) {
+					if(dir==currDir) {
+						if(currLocInFront.equals(target)) {
+							if(currFlux>210 && rc.canMove(currDir)) {
+								rc.spawn(RobotType.TOWER);
+							}
+						} else {
+							rc.moveForward();
 						}
 					} else {
-						rc.moveForward();
-						aboutToMove = false;
+						rc.setDirection(dir);
+						aboutToMove = true;
 					}
-				} else {
-					rc.setDirection(dir);
-					aboutToMove = true;
 				}
 			}
 		
