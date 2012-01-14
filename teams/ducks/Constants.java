@@ -51,4 +51,6 @@ public final class Constants {
 	public static final int WIGGLE_TIMEOUT = 30;
 	/** The maximum distance to respond to back off signals. */
 	public static final int BACK_OFF_DISTANCE = 10;
+	/** The number of archons that should build towers given the number of enemy archons. */
+	public static final int[] NUM_ARCHONS_TO_TOWER = new int[] {2, 2, 2, 1, 1, 0, 0};
 }
