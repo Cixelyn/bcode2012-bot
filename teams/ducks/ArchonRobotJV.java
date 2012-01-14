@@ -477,11 +477,10 @@ public class ArchonRobotJV extends BaseRobot {
 	private boolean shouldTower() throws GameActionException {
 		int numAlliedArchons = dc.getAlliedArchons().length;
 		int numEnemyArchons = enemyArchonInfo.getNumEnemyArchons();
-		int[] numArchonsToTower = new int[] {2, 2, 2, 1, 1, 0, 0};
 		for (int idx = 0; idx < numAlliedArchons; idx++) {
 			if (currLoc.equals(dc.getAlliedArchons()[idx])) {
 				return idx >= GameConstants.NUMBER_OF_ARCHONS -
-						numArchonsToTower[numEnemyArchons];
+						Constants.NUM_ARCHONS_TO_TOWER[numEnemyArchons];
 			}
 		}
 		return false;
