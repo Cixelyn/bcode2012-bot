@@ -46,6 +46,7 @@ public class DataCache {
 	private MapLocation closestCapturablePowerCore;
 	private int closestCapturablePowerCoreTime = -1;
 	
+
 	public DataCache(BaseRobot br) {
 		this.br = br;
 		this.rc = br.rc;
@@ -247,6 +248,7 @@ public class DataCache {
 		return closestCapturablePowerCore;
 	}
 	
+	
 	private boolean isTowerTargetable(
 			RobotInfo tower) throws GameActionException {
 		// don't shoot at enemy towers not connected to one of ours
@@ -267,4 +269,5 @@ public class DataCache {
 		}
 		return false;
 	}
+	
 }
