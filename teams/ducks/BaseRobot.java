@@ -72,6 +72,8 @@ public abstract class BaseRobot {
 			
 			// show state of robot
 			rc.setIndicatorString(0, "" + myType + " - " + currState);
+			rc.setIndicatorString(1,
+					"Enemy archons remaining: " + enemyArchonInfo.getNumEnemyArchons());
 			
 			// Main Radio Receive Call
 			try {
