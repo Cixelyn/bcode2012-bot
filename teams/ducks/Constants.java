@@ -47,4 +47,6 @@ public final class Constants {
 	public static final int MAX_SPLIT_TIME = 40;
 	/** Number of times to turn side to side before giving up. */
 	public static final int WIGGLE_TIMEOUT = 30;
+	/** The maximum distance to respond to back off signals. */
+	public static final int BACK_OFF_DISTANCE = 10;
 }
