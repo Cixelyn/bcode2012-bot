@@ -49,7 +49,7 @@ public class ScorcherRobot extends BaseRobot {
 				shouldAttack = true;
 			} else {
 				// ally unit in range, don't attack
-				return;
+				//return;
 			}
 		}
 		if (shouldAttack) {
