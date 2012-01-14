@@ -14,6 +14,9 @@ public class SoldierRobotJV extends BaseRobot {
 	private MapLocation objective;
 	
 	private int timeUntilBroadcast;
+	
+	private MapLocation backOffLoc;
+	private RobotState prevState;
 
 	public SoldierRobotJV(RobotController myRC) {
 		super(myRC);
@@ -38,6 +41,9 @@ public class SoldierRobotJV extends BaseRobot {
 				break;
 			case CHASE:
 				chase();
+				break;
+			case BACK_OFF:
+				backOff();
 				break;
 			default:
 				break;
@@ -65,6 +71,15 @@ public class SoldierRobotJV extends BaseRobot {
 				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
 				for (int id : deadEnemyArchonIDs) {
 					enemyArchonInfo.reportEnemyArchonKill(id);
+				}
+			case 'b':
+				if (currState != RobotState.BACK_OFF) {
+					backOffLoc = Radio.decodeMapLoc(sb);
+					if (currLoc.distanceSquaredTo(backOffLoc) <
+							Constants.BACK_OFF_DISTANCE) {
+						prevState = currState;
+						currState = RobotState.BACK_OFF;
+					}
 				}
 			default:
 				super.processMessage(msgType, sb);
@@ -122,6 +137,36 @@ public class SoldierRobotJV extends BaseRobot {
 		charge(closestEnemy.location);
 		// send dead enemy archon IDs
 		sendDeadEnemyArchonIDs();
+	}
+	
+	public void backOff() throws GameActionException {
+		// wait if movement is active
+		if (rc.isMovementActive()) {
+			return;
+		}
+		Direction dir = currLoc.directionTo(backOffLoc);
+		Direction[] backOffDirs = new Direction[] {
+				dir,
+				dir.rotateLeft(),
+				dir.rotateRight(),
+				dir.rotateLeft().rotateLeft(),
+				dir.rotateRight().rotateRight(),
+				dir.rotateLeft().rotateLeft().rotateLeft(),
+				dir.rotateRight().rotateRight().rotateRight()
+		};
+		// try to go away
+		for (Direction d : backOffDirs) {
+			if (rc.canMove(d.opposite())) {
+				if (currDir != d) {
+					rc.setDirection(d);
+				} else {
+					rc.moveBackward();
+				}
+				break;
+			}
+		}
+		// go back to previous state
+		currState = prevState;
 	}
 	
 	private void attackClosestEnemy() throws GameActionException {
@@ -186,23 +231,6 @@ public class SoldierRobotJV extends BaseRobot {
 		if (rc.isMovementActive()) {
 			return;
 		}
-		/*
-		// turn in direction of target
-		Direction[] targetDirs = new Direction[] {
-				currLoc.directionTo(target),
-				currLoc.directionTo(target).rotateLeft(),
-				currLoc.directionTo(target).rotateRight()
-		};
-		// move towards target
-		for (Direction d : targetDirs) {
-			if (rc.canMove(d.opposite())) {
-				if (rc.canMove(currDir)) {
-					rc.moveForward();
-				}
-				return;
-			}
-		}
-		*/
 		Direction dir = currLoc.directionTo(target);
 		if (currDir != dir) {
 			rc.setDirection(dir);

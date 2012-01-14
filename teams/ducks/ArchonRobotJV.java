@@ -232,6 +232,7 @@ public class ArchonRobotJV extends BaseRobot {
 		// get closest capturable power core
 		MapLocation powerCore = dc.getClosestCapturablePowerCore();
 		// move backwards towards power core if far away
+		// TODO(jven): move off if on top
 		if (currLoc.distanceSquaredTo(powerCore) > 2) {
 			moonwalkTowards(powerCore);
 		} else {
@@ -343,8 +344,9 @@ public class ArchonRobotJV extends BaseRobot {
 		if (currFlux < type.spawnCost) {
 			return false;
 		}
-		// wait if unit is in the way
+		// wait if unit is in the way, tell him to move
 		if (dc.getAdjacentGameObject(dir, type.level) != null) {
+			sendBackOff();
 			return false;
 		}
 		// spawn unit
@@ -405,9 +407,11 @@ public class ArchonRobotJV extends BaseRobot {
 	private boolean shouldTower() throws GameActionException {
 		int numAlliedArchons = dc.getAlliedArchons().length;
 		int numEnemyArchons = enemyArchonInfo.getNumEnemyArchons();
+		int[] numArchonsToTower = new int[] {2, 2, 2, 1, 1, 0, 0};
 		for (int idx = 0; idx < numAlliedArchons; idx++) {
 			if (currLoc.equals(dc.getAlliedArchons()[idx])) {
-				return idx >= numEnemyArchons;
+				return idx >= GameConstants.NUMBER_OF_ARCHONS -
+						numArchonsToTower[numEnemyArchons];
 			}
 		}
 		return false;
@@ -419,5 +423,9 @@ public class ArchonRobotJV extends BaseRobot {
 			io.sendInts("#ar", new int[] {rallyPriority, bearing.ordinal()});
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
+	}
+	
+	private void sendBackOff() throws GameActionException {
+		io.sendMapLoc("#sb", currLoc);
 	}
 }
