@@ -179,11 +179,15 @@ public class RobotPlayer {
         			}
         			if(!myRC.isMovementActive()) {
         				if(enemies==null) {
-        					Direction dir = myLoc.directionTo(parentArchonLoc);
-        					if(dir!=Direction.NONE && dir!=Direction.OMNI && dir!=myDir) {
-        						myRC.setDirection(dir);
-        					} else if(myRC.canMove(myDir)) {
-        						myRC.moveForward();
+        					if (parentArchonLoc != null) {
+	        					Direction dir = myLoc.directionTo(parentArchonLoc);
+	        					if(dir!=Direction.NONE && dir!=Direction.OMNI && dir!=myDir) {
+	        						myRC.setDirection(dir);
+	        					} else if(myRC.canMove(myDir)) {
+	        						myRC.moveForward();
+	        					}
+        					} else {
+        						
         					}
         				} else {
         					boolean enemyInAttackRadius = false;

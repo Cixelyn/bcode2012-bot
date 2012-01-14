@@ -17,7 +17,6 @@ public class ArchonRobotJV extends BaseRobot {
 	private int splitTime;
 	private Direction splitDirection;
 	
-	private int scorchersSpawned;
 	private int soldiersSpawned;
 	
 	private int rallyPriority;
@@ -41,8 +40,8 @@ public class ArchonRobotJV extends BaseRobot {
 			case SPLIT:
 				split();
 				break;
-			case SPAWN_SCORCHERS:
-				spawnScorchers();
+			case DEFEND:
+				defend();
 				break;
 			case SPAWN_SOLDIERS:
 				spawnSoldiers();
@@ -68,7 +67,11 @@ public class ArchonRobotJV extends BaseRobot {
 		switch(msgType) {
 			case 'r':
 				if (currState == RobotState.SPAWN_SOLDIERS) {
-					currState = RobotState.RUSH;
+					if (shouldDefend()) {
+						currState = RobotState.DEFEND;
+					} else {
+						currState = RobotState.RUSH;
+					}
 				}
 				msgInts = Radio.decodeInts(sb);
 				int msgRallyPriority = msgInts[0];
@@ -104,14 +107,9 @@ public class ArchonRobotJV extends BaseRobot {
 		objective = explorationTarget;
 		// set broadcast time
 		timeUntilBroadcast = 0;
-		// one archon makes a scorcher, everyone else splits
-		if (currLoc.equals(dc.getAlliedArchons()[0])) {
-			currState = RobotState.SPAWN_SCORCHERS;
-			spawnScorchers();
-		} else {
-			currState = RobotState.SPLIT;
-			split();
-		}
+		// split
+		currState = RobotState.SPLIT;
+		split();
 	}
 	
 	public void split() throws GameActionException {
@@ -159,36 +157,6 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 	}
 	
-	public void spawnScorchers() throws GameActionException {
-		// build scorcher in an available direction
-		Direction scorcherDir = currLoc.directionTo(
-				rc.sensePowerCore().getLocation());
-		Direction[] spawnDirs = new Direction[] {
-				scorcherDir,
-				scorcherDir.rotateLeft(),
-				scorcherDir.rotateRight(),
-				scorcherDir.rotateLeft().rotateLeft(),
-				scorcherDir.rotateRight().rotateRight(),
-				scorcherDir.rotateLeft().rotateLeft().rotateLeft(),
-				scorcherDir.rotateRight().rotateRight().rotateRight(),
-				scorcherDir.opposite()
-		};
-		for (Direction d : spawnDirs) {
-			// TODO(jven): use data cache
-			if (rc.canMove(d)) {
-				if (spawnUnitInDir(RobotType.SCORCHER, d)) {
-					scorchersSpawned++;
-				}
-				break;
-			}
-		}
-		if (scorchersSpawned >= Constants.SCORCHERS_PER_ARCHON) {
-			currState = RobotState.SPAWN_SOLDIERS;
-		}
-		// distribute flux
-		distributeFlux();
-	}
-	
 	public void spawnSoldiers() throws GameActionException {
 		// build soldiers in an available direction
 		Direction[] spawnDirs = new Direction[] {
@@ -216,6 +184,8 @@ public class ArchonRobotJV extends BaseRobot {
 			// change state
 			if (shouldTower()) {
 				currState = RobotState.GOTO_POWER_CORE;
+			} else if (shouldDefend()) {
+				currState = RobotState.DEFEND;
 			} else {
 				currState = RobotState.RUSH;
 			}
@@ -224,7 +194,9 @@ public class ArchonRobotJV extends BaseRobot {
 		distributeFlux();
 	}
 	
-	public void rush() throws GameActionException {
+	public void defend() throws GameActionException {
+		// set objective
+		objective = rc.sensePowerCore().getLocation();
 		// make soldier if enough flux
 		if (currFlux > RobotType.SOLDIER.spawnCost) {
 			currState = RobotState.SPAWN_SOLDIERS;
@@ -241,7 +213,28 @@ public class ArchonRobotJV extends BaseRobot {
 			currState = RobotState.CHASE;
 		}
 		// send rally
+		sendRally();
+	}
+	
+	public void rush() throws GameActionException {
+		// set objective
 		objective = explorationTarget;
+		// make soldier if enough flux
+		if (currFlux > RobotType.SOLDIER.spawnCost) {
+			currState = RobotState.SPAWN_SOLDIERS;
+			return;
+		}
+		// move backwards towards bearing
+		moonwalkTowards(objective);
+		// reset bearing if necessary
+		setBearing();
+		// distribute flux
+		distributeFlux();
+		// chase enemy if in range
+		if (dc.getClosestEnemy() != null) {
+			currState = RobotState.CHASE;
+		}
+		// send rally
 		sendRally();
 	}
 	
@@ -251,18 +244,21 @@ public class ArchonRobotJV extends BaseRobot {
 		if (closestEnemy == null) {
 			if (shouldTower()) {
 				currState = RobotState.GOTO_POWER_CORE;
+			} else if (shouldDefend()) {
+				currState = RobotState.DEFEND;
 			} else {
 				currState = RobotState.RUSH;
 			}
 			return;
 		}
+		// set objective
+		rallyPriority++;
+		objective = closestEnemy.location;
 		// kite enemy
 		kite(closestEnemy.location);
 		// distribute flux
 		distributeFlux();
 		// send rally
-		rallyPriority++;
-		objective = closestEnemy.location;
 		sendRally();
 	}
 	
@@ -466,6 +462,15 @@ public class ArchonRobotJV extends BaseRobot {
 					}
 				}
 			}
+		}
+	}
+	
+	private boolean shouldDefend() {
+		try {
+			return (enemyArchonInfo.getNumEnemyArchons() > 0 &&
+					currLoc.equals(dc.getAlliedArchons()[0]));
+		} catch (Exception e) {
+			return false;
 		}
 	}
 	

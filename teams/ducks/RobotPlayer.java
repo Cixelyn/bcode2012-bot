@@ -19,7 +19,8 @@ public class RobotPlayer {
 				br = new SoldierRobotJV(myRC);
 				break;
 			case SCOUT:
-				br = new ScoutRobot(myRC);
+				//br = new ScoutRobot(myRC);
+				br = new ScoutRobotJV(myRC);
 				break;
 			case DISRUPTER:
 				br = new DisrupterRobot(myRC);
