@@ -232,12 +232,31 @@ public class ArchonRobotJV extends BaseRobot {
 		// get closest capturable power core
 		MapLocation powerCore = dc.getClosestCapturablePowerCore();
 		// move backwards towards power core if far away
-		// TODO(jven): move off if on top
-		if (currLoc.distanceSquaredTo(powerCore) > 2) {
+		int distance = currLoc.distanceSquaredTo(powerCore);
+		if (distance > 2) {
 			moonwalkTowards(powerCore);
-		} else {
+		} else if (distance > 0 && distance <= 2) {
 			// build tower if in range
 			spawnUnitInDir(RobotType.TOWER, currLoc.directionTo(powerCore));
+		} else {
+			// i'm on top, get out of the way
+			boolean movedOut = false;
+			for (Direction d : Direction.values()) {
+				if (d == Direction.OMNI || d == Direction.NONE) {
+					continue;
+				}
+				if (rc.canMove(d)) {
+					movedOut = true;
+					if (currDir != d) {
+						rc.setDirection(d);
+					} else {
+						rc.moveForward();
+					}
+				}
+			}
+			if (!movedOut) {
+				sendBackOff();
+			}
 		}
 		// distribute flux
 		distributeFlux();
