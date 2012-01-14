@@ -73,7 +73,8 @@ public class SoldierRobotJV extends BaseRobot {
 					enemyArchonInfo.reportEnemyArchonKill(id);
 				}
 			case 'b':
-				if (currState != RobotState.BACK_OFF) {
+				if (currState != RobotState.BACK_OFF &&
+						currState != RobotState.CHASE) {
 					backOffLoc = Radio.decodeMapLoc(sb);
 					if (currLoc.distanceSquaredTo(backOffLoc) <
 							Constants.BACK_OFF_DISTANCE) {
