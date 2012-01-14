@@ -12,6 +12,7 @@ public enum RobotState {
 	MICRO,
 	POWER_SAVE,
 	RUSH,
+	SPAWN_SCORCHER,
 	SPAWN_SOLDIERS,
 	SPAWN_UNIT,
 	SPLIT
