@@ -68,7 +68,7 @@ public class Navigator {
 			if(movesOnSameTarget % expectedMovesToReachTarget == 0) {
 				int n = movesOnSameTarget / expectedMovesToReachTarget;
 				if(n>=2) {
-					tangentBug.reset(Math.min(6+n, 50), 0.4);
+					tangentBug.reset(Math.min(4*n, 50), 0.4);
 				}
 				movesOnSameTarget++;
 			}
