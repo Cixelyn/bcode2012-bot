@@ -1,7 +1,5 @@
 package ducks;
 
-import ducks.Navigator;
-import ducks.NavigatorUtilities;
 
 
 public class TangentBug{
@@ -11,9 +9,9 @@ public class TangentBug{
 	/** Scan this many times every turn to see if there is a wall in our way. */
 	final static int MLINE_SCAN_STEPS_PER_TURN_TRACING = 3, MLINE_SCAN_STEPS_PER_TURN_NOT_TRACING = 5;
 	/** Trace down the obstructing wall this many times in one turn. */
-	final static int WALL_SCAN_STEPS_PER_TURN = 5;
+	final static int WALL_SCAN_STEPS_PER_TURN = 2;
 	/** Look this many steps in each way to find the tangent in one turn. */
-	final static int FIND_TANGENT_STEPS_PER_TURN = 10;
+	final static int FIND_TANGENT_STEPS_PER_TURN = 4;
 	
 	/** We approximate that it will take an average of this*d squares to navigate a distance of d. */
 	final static double HEURISTIC_WEIGHT_MAP_UGLINESS = 1.5;
@@ -31,22 +29,33 @@ public class TangentBug{
 	
 	// Wall variables - cleared every time we start tracing a new wall
 	final int[][] buffer = new int[BUFFER_LENGTH][2];
-	final int[][] wallCache; // fields are curWallCacheID*BUFFER_LENGTH+x, where x is a buffer position adjacent to the wall
+	final int[][] wallCache; // fields are curWallCacheID*BUFFER_LENGTH for walls, and curWallCacheID*BUFFER_LENGTH+bufferPos for squares on the trace path
 	int leftWallDir = -1;
 	int rightWallDir = -1; 
 	int curWallCacheID = 1;
 	int bufferLeft = BUFFER_START; //buffer side for clockwise tracing
 	int bufferRight = BUFFER_START; //for counterclockwise tracing
-	boolean tracing = false;
+	public boolean tracing = false;
 	int traceDirLastTurn = -1;
 	boolean doneTracingClockwise = false;
 	boolean doneTracingCounterclockwise = false;
 	boolean traceDirLocked = false;
-	int findTangentProgress = 0;
+	int tangentPosLastTurn = -1;
+	boolean directionalBugging = false;
+	int directionalBugDirection = -1;
+	int directionalBugWallDir = -1;
+	int directionalBugStartDotProduct = -1;
+	int minPrepRounds = 1; // The amount of times we have to prepare before we can compute
+	double chanceGoLongWay = 0; // The chance that we pick the longer way to trace around walls
 	
 	// Preparatory variables - cleared every time robot moves
+	int turnsPreparedBeforeMoving = 0;
+	int preparingsx = -1;
+	int preparingsy = -1;
 	boolean startedTracingDuringCurrentPrepCycle = false;
 	boolean hitWallCache = false;
+	int hitWallX = -1;
+	int hitWallY = -1;
 	int hitWallPos = -1;
 	int firstWallHitX = -1;
 	int firstWallHitY = -1;
@@ -59,6 +68,7 @@ public class TangentBug{
 	boolean[] crossedMLine = new boolean[2];
 	int[] lastdDir = new int[2];
 	int[] bestdDir = new int[2];
+	int findTangentProgress = 0;
 	
 	public TangentBug(boolean[][] map) {
 		this.map = map;
@@ -68,9 +78,14 @@ public class TangentBug{
 		reset();
 	}
 	public void reset() {
-		System.out.println("reset");
+		reset(1, 0);
+	}
+	public void reset(int minPrepRounds, double chanceGoLongWay) {
 		tracing = false;
 		curWallCacheID++;
+		clearPreparatoryVariables();
+		this.minPrepRounds = minPrepRounds;
+		this.chanceGoLongWay = chanceGoLongWay;
 	}
 	public void setTarget(int tx, int ty) {
 		if(this.tx==tx && this.ty==ty) return;
@@ -79,8 +94,13 @@ public class TangentBug{
 		this.ty = ty;
 	}
 	public void clearPreparatoryVariables() {
+		preparingsx = -1;
+		preparingsy = -1;
+		turnsPreparedBeforeMoving = 0;
 		startedTracingDuringCurrentPrepCycle = false;
 		hitWallCache = false;
+		hitWallX = -1;
+		hitWallY = -1;
 		hitWallPos = -1;
 		firstWallHitX = -1;
 		firstWallHitY = -1;
@@ -95,10 +115,27 @@ public class TangentBug{
 			bdir[traceDir] = -1;
 			heuristicValue[traceDir] = (traceDirLocked && traceDir!=traceDirLastTurn) ? 1 : 0;
 		}
-		
+		findTangentProgress = 0;
 	}
 	public void prepare(int sx, int sy) {
+		if(!(preparingsx==sx && preparingsy==sy)) {
+			if(preparingsx != -1)
+				clearPreparatoryVariables();
+			preparingsx = sx;
+			preparingsy = sy;
+		}
+		turnsPreparedBeforeMoving++; 
 		if(tracing) {
+			//trace clockwise and cache 
+			for(int n=0; n<WALL_SCAN_STEPS_PER_TURN && !doneTracingClockwise; n++) {
+				traceClockwiseHelper();
+			}
+			
+			//trace counterclockwise and cache 
+			for(int n=0; n<WALL_SCAN_STEPS_PER_TURN && !doneTracingCounterclockwise; n++) {
+				traceCounterclockwiseHelper();
+			}
+			
 			if(!hitWallCache && !startedTracingDuringCurrentPrepCycle) {
 				if(scanx==-1) {
 					scanx = sx;
@@ -108,68 +145,38 @@ public class TangentBug{
 					if(scanx==tx && scany==ty) break;
 					
 					// go towards dest until we hit a wall
-					int dirTowards = NavigatorUtilities.getDirTowards(tx-scanx, ty-scany);
+					int dirTowards = getDirTowards(tx-scanx, ty-scany);
 					scanx += d[dirTowards][0];
 					scany += d[dirTowards][1];
-					if(tracing && !hitWallCache && wallCache[scanx][scany]/BUFFER_LENGTH==curWallCacheID) {
+					if(tracing && !hitWallCache && wallCache[scanx][scany]==curWallCacheID*BUFFER_LENGTH) {
 						// we've hit our wall cache! we're still in trace mode
 						hitWallCache = true;
-						hitWallPos = wallCache[scanx][scany]%BUFFER_LENGTH;
+						hitWallX = scanx;
+						hitWallY = scany;
+						computeHitWallPos(dirTowards);
 					}
 				}
 			}
 			
-			//trace clockwise and cache 
-			for(int n=0; n<WALL_SCAN_STEPS_PER_TURN && !doneTracingClockwise; n++) {
-				traceClockwiseHelper();
-			}
 			
-			//trace counterclockwise and cache 
-			for(int n=0; n<WALL_SCAN_STEPS_PER_TURN && !doneTracingCounterclockwise; n++) {
-				traceCounterclockwiseHelper();
-				
-			}
-			
-			int i;
-			for(i=findTangentProgress; i<findTangentProgress+FIND_TANGENT_STEPS_PER_TURN; i++) {
-				boolean flag = false;
-				for(int traceDir = 0; traceDir<=1; traceDir++) {
-					int pos = ((hitWallPos==-1)?BUFFER_START:hitWallPos) + ((traceDir==0) ? -i : i);
-					if(pos<=bufferLeft || pos>=bufferRight) continue;
-					flag = true;
-					int cx = buffer[pos][0];
-					int cy = buffer[pos][1];
-					if(sx==cx && sy==cy) {
-						continue;
+			if(hitWallCache || startedTracingDuringCurrentPrepCycle) {
+				int i;
+				for(i=findTangentProgress; i<findTangentProgress+FIND_TANGENT_STEPS_PER_TURN; i++) {
+					boolean flag = false;
+					for(int traceDir = 0; traceDir<=1; traceDir++) {
+						if(traceDirLocked && traceDir!=traceDirLastTurn) continue;
+						int pos = (traceDirLocked?tangentPosLastTurn:
+							startedTracingDuringCurrentPrepCycle?BUFFER_START:
+								hitWallPos) + ((traceDir==0) ? -i : i);
+						if(pos<=bufferLeft || pos>=bufferRight) continue;
+						flag = true;
+						
+						findTangentsHelper(pos, traceDir, sx, sy);
 					}
-					if(traceDirLocked && traceDir!=traceDirLastTurn) continue;
-					int dirStoT = (traceDir==0) ? NavigatorUtilities.getDirCounterclockwiseOf(tx-sx, ty-sy) : 
-						NavigatorUtilities.getDirClockwiseOf(tx-sx, ty-sy);
-					int dirStoC = (traceDir==0) ? NavigatorUtilities.getDirClockwiseOf(cx-sx, cy-sy) : 
-						NavigatorUtilities.getDirCounterclockwiseOf(cx-sx, cy-sy);
-					int dDir = (((traceDir==0)?(dirStoT-dirStoC):(dirStoC-dirStoT))+8) % 8;
-					if(lastdDir[traceDir]>8) {
-						crossedMLine[traceDir] = dDir>5;
-					} else {
-						if(dDir-lastdDir[traceDir]>4) crossedMLine[traceDir] = true;
-						if(lastdDir[traceDir]-dDir>4) crossedMLine[traceDir] = false;
-					}
-					System.out.println("  "+pos+" "+buffer[pos][0]+","+buffer[pos][1]+" "+dirStoC+" "+crossedMLine[traceDir]);
-					if(!crossedMLine[traceDir] && dDir>bestdDir[traceDir]) {
-						bestdDir[traceDir] = dDir;
-						bpos[traceDir] = pos;
-						bdir[traceDir] = dirStoC;
-					}
-					if(!traceDirLocked && !crossedMLine[traceDir]) {
-						heuristicValue[traceDir] = Math.max(heuristicValue[traceDir],
-								Math.sqrt((sx-cx)*(sx-cx)+(sy-cy)*(sy-cy))+
-								Math.sqrt((tx-cx)*(tx-cx)+(ty-cy)*(ty-cy))*HEURISTIC_WEIGHT_MAP_UGLINESS);
-					}
-					lastdDir[traceDir] = dDir;
+					if(!flag) { break; }
 				}
-				if(!flag) { i--; break; }
+				findTangentProgress = i;
 			}
-			findTangentProgress = i;
 		} else {
 			if(scanx==-1) {
 				scanx = sx;
@@ -179,7 +186,7 @@ public class TangentBug{
 				if(scanx==tx && scany==ty) break;
 				
 				// go towards dest until we hit a wall
-				int dirTowards = NavigatorUtilities.getDirTowards(tx-scanx, ty-scany);
+				int dirTowards = getDirTowards(tx-scanx, ty-scany);
 				scanx += d[dirTowards][0];
 				scany += d[dirTowards][1];
 				
@@ -195,52 +202,125 @@ public class TangentBug{
 		}
 	}
 	
+	/** Returns a (dx, dy) indicating which way to move. 
+	 * <br/>
+	 * <br/>May return null for various reasons:
+	 * <br/> -have not prepared enough rounds
+	 * <br/> -already at destination
+	 * <br/> -in between switching into or out of trace mode
+	 * <br/> -no directions to move
+	 * <br/> -other random shit?
+	 */
 	public int[] computeMove(int sx, int sy) {
-		if(Math.abs(sx-tx)<=1 && Math.abs(sy-ty)<=1) return new int[] {tx-sx, ty-sy};
+		if(turnsPreparedBeforeMoving < minPrepRounds) 
+			return null;
+		if(sx==tx && sy==ty) 
+			return null;
+		if(Math.abs(sx-tx)<=1 && Math.abs(sy-ty)<=1) {
+			clearPreparatoryVariables();
+			return new int[] {tx-sx, ty-sy};
+		}
 		
-//		 if(tracing) for(int y=0; y<ymax; y++) { for(int x=0; x<xmax; x++) System.out.print((wallCache[x][y]/BUFFER_LENGTH==curWallCacheID)?'#':'.'); System.out.println(); }
+//		 if(tracing) for(int y=0; y<ymax; y++) { for(int x=0; x<xmax; x++) System.out.print((wallCache[x][y]==curWallCacheID*BUFFER_LENGTH)?'#':(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH)?'o':'.'); System.out.println(); }
 //		 if(tracing) for(int i=BUFFER_START-30; i<=BUFFER_START+30; i++) System.out.println("  "+i+" "+buffer[i][0]+","+buffer[i][1]);
 		
 		if(!tracing) {
-			int[] ret = d[NavigatorUtilities.getDirTowards(tx-sx, ty-sy)];
-			return map[sx+ret[0]][sy+ret[1]] ? new int[] {0,0} : ret;
+			int[] ret = d[getDirTowards(tx-sx, ty-sy)];
+			clearPreparatoryVariables();
+			return map[sx+ret[0]][sy+ret[1]] ? null : ret;
 		} else if(!hitWallCache && !startedTracingDuringCurrentPrepCycle) {
-			System.out.println("didn't hit my wall cache");
 			reset();
-			int[] ret = d[NavigatorUtilities.getDirTowards(tx-sx, ty-sy)];
-			return map[sx+ret[0]][sy+ret[1]] ? new int[] {0,0} : ret;
+			int[] ret = d[getDirTowards(tx-sx, ty-sy)];
+			return map[sx+ret[0]][sy+ret[1]] ? null : ret;
 		}
 		
-		System.out.println("tracedirlocked: "+traceDirLocked);
-		System.out.println("hitWallPos: "+hitWallPos);
+//		System.out.println("tracedirlocked: "+traceDirLocked);
+//		System.out.println("hitWallPos: "+hitWallPos);
 		
 		//find better direction by taking smaller heuristic value
 		int bestTraceDir =  heuristicValue[0]<heuristicValue[1]?0:1;
+		if(!traceDirLocked && chanceGoLongWay>0 && Math.random()<chanceGoLongWay) 
+			bestTraceDir = 1 - bestTraceDir;
+		if(!traceDirLocked && bdir[bestTraceDir]==-1 && bdir[1-bestTraceDir]!=-1) 
+			bestTraceDir = 1 - bestTraceDir;
 		traceDirLastTurn = bestTraceDir;
+		tangentPosLastTurn = bpos[bestTraceDir];
 		int finalDir = bdir[bestTraceDir];
 		
-		System.out.println(" currently at: "+sx+","+sy);
-		System.out.println(" finalDir: "+finalDir);
+//		System.out.println(" currently at: "+sx+","+sy);
+//		System.out.println(" last trace dir: "+traceDirLastTurn);
+//		System.out.println(" finalDir: "+finalDir);
+//		System.out.println(" tangent point: "+buffer[bpos[bestTraceDir]][0]+","+buffer[bpos[bestTraceDir]][1]);
 		if(finalDir==-1) {
 			// this happens when there were no valid tangent points found
-			System.out.println("final dir ended up being -1");
 			reset();
-			return new int[] {0,0};
-		} else while(true) {
+			return null;
+		}
+		int x = sx+d[finalDir][0];
+		int y = sy+d[finalDir][1];
+		if(map[x][y] && wallCache[x][y]>curWallCacheID*BUFFER_START) {
+			// our wall cache is out of date due to newly sensed walls
+			reset();
+			return null;
+		}
 			
-			//TODO Replace this hack to get around obstacles with a directional bug system. 
-			// (This will prevent getting stuck in cases where an intermediate wall blocks you from the waypoint.)
-			int x = sx+d[finalDir][0];
-			int y = sy+d[finalDir][1];
-			if(map[x][y]) {
-				finalDir = (finalDir+(traceDirLastTurn==0?1:-1)+8)%8;
-			} else {
-				break;
+		if(!traceDirLocked){
+			while(true) {
+				if(map[x][y]) {
+					finalDir = (finalDir+(traceDirLastTurn==0?1:-1)+8)%8;
+				} else {
+					break;
+				}
+			}
+		} else {
+			if(directionalBugging) {
+				int dFinalDir = ((traceDirLastTurn==0 ? (finalDir - directionalBugDirection) : 
+					(directionalBugDirection - finalDir)) + 7) % 8;
+				if(dFinalDir<4) {
+					directionalBugging = false;
+				}
+			}
+			if(!directionalBugging) {
+				if(map[x][y]) {
+					directionalBugging = true;
+					directionalBugDirection = finalDir;
+					directionalBugStartDotProduct = d[finalDir][0]*sx + d[finalDir][1]*sy;
+					directionalBugWallDir = finalDir;
+				}
+			}
+			if(directionalBugging) {
+				int dot = d[directionalBugDirection][0]*sx + d[directionalBugDirection][1]*sy;
+				x = sx+d[directionalBugDirection][0];
+				y = sy+d[directionalBugDirection][1];
+				if(!map[x][y] && dot > directionalBugStartDotProduct) {
+					directionalBugging = false;
+				} else {
+					for(int wx=-1, wy=-1, ti=0; ti<d.length; ti++) {
+						int i = ((traceDirLastTurn==0?1:-1)*ti + directionalBugWallDir + 8) % 8;
+						x = sx+d[i][0];
+						y = sy+d[i][1];
+						if(map[x][y]) {
+							wx = x; 
+							wy = y;
+						} else {
+							finalDir = i;
+							for(int j=0; j<d.length; j++) {
+								if(x+d[j][0]==wx && y+d[j][1]==wy) {
+									directionalBugWallDir = j;
+									break;
+								}	
+							}
+							break;
+						}
+					}
+				}
 			}
 		}
+//		System.out.println(" directional bugging: "+directionalBugging);
 		
-		if(doneTracingClockwise && doneTracingCounterclockwise) 
+		if(doneTracingClockwise && doneTracingCounterclockwise)
 			traceDirLocked = true;
+		clearPreparatoryVariables();
 		return d[finalDir];
 		
 	}
@@ -250,6 +330,7 @@ public class TangentBug{
 		curWallCacheID++;
 		buffer[BUFFER_START][0] = x;
 		buffer[BUFFER_START][1] = y;
+		wallCache[x][y] = curWallCacheID*BUFFER_LENGTH+BUFFER_START;
 		bufferLeft = BUFFER_START-1;
 		bufferRight = BUFFER_START+1;
 		leftWallDir = dir;
@@ -258,7 +339,12 @@ public class TangentBug{
 		doneTracingClockwise = false;
 		doneTracingCounterclockwise = false;
 		traceDirLocked = false;
-		findTangentProgress = 0;
+		tangentPosLastTurn = -1;
+		directionalBugging = false;
+		directionalBugDirection = -1;
+		directionalBugWallDir = -1;
+		directionalBugStartDotProduct = -1;
+		minPrepRounds = 1;
 	}
 	
 	private void traceClockwiseHelper() {
@@ -293,11 +379,11 @@ public class TangentBug{
 			if(map[x][y]) {
 				wx = x; 
 				wy = y;
-				if(wallCache[wx][wy]/BUFFER_LENGTH!=curWallCacheID)
-					wallCache[wx][wy] = curWallCacheID*BUFFER_LENGTH+bufferLeft+1;
+				wallCache[wx][wy] = curWallCacheID*BUFFER_LENGTH;
 			} else {
 				buffer[bufferLeft][0] = x;
 				buffer[bufferLeft][1] = y;
+				wallCache[x][y] = curWallCacheID*BUFFER_LENGTH+bufferLeft;
 				bufferLeft--;
 				for(int j=0; j<d.length; j++) {
 					if(x+d[j][0]==wx && y+d[j][1]==wy) {
@@ -342,11 +428,11 @@ public class TangentBug{
 			if(map[x][y]) {
 				wx = x; 
 				wy = y;
-				if(wallCache[wx][wy]/BUFFER_LENGTH!=curWallCacheID)
-					wallCache[wx][wy] = curWallCacheID*BUFFER_LENGTH+bufferRight-1;
+				wallCache[wx][wy] = curWallCacheID*BUFFER_LENGTH;
 			} else {
 				buffer[bufferRight][0] = x;
 				buffer[bufferRight][1] = y;
+				wallCache[x][y] = curWallCacheID*BUFFER_LENGTH+bufferRight;
 				bufferRight++;
 				for(int j=0; j<d.length; j++) {
 					if(x+d[j][0]==wx && y+d[j][1]==wy) {
@@ -358,5 +444,113 @@ public class TangentBug{
 			}
 		}
 		
+	}
+	private void computeHitWallPos(int dirHitWallFrom) {
+		int ddirorder[] = new int[] {0,-1,1,-2,2,-3,3,4};
+		for(int ddir: ddirorder) {
+			int dir = (dirHitWallFrom + 4 + ddir) % 8;
+			int x = hitWallX + d[dir][0];
+			int y = hitWallY + d[dir][1];
+			if(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH) {
+				hitWallPos = wallCache[x][y] % BUFFER_LENGTH;
+				return;
+			}
+		}
+	}
+	private void findTangentsHelper(int pos, int traceDir, int sx, int sy) {
+		int cx = buffer[pos][0];
+		int cy = buffer[pos][1];
+		if(sx==cx && sy==cy) {
+			return;
+		}
+		int dirStoT = (traceDir==1) ? getDirCounterclockwiseOf(tx-sx, ty-sy) : 
+			getDirClockwiseOf(tx-sx, ty-sy);
+		int dirStoC = (traceDir==1) ? getDirClockwiseOf(cx-sx, cy-sy) : 
+			getDirCounterclockwiseOf(cx-sx, cy-sy);
+		int dDir = (((traceDir==0)?(dirStoT-dirStoC):(dirStoC-dirStoT))+9) % 8;
+		if(lastdDir[traceDir]>8) {
+			crossedMLine[traceDir] = false; //dDir>5 && !traceDirLocked;
+		} else {
+			if(dDir-lastdDir[traceDir]>4) crossedMLine[traceDir] = true;
+			if(lastdDir[traceDir]-dDir>4) crossedMLine[traceDir] = false;
+		}
+//		System.out.println("  checking tangent: "+pos+" "+buffer[pos][0]+","+buffer[pos][1]+" "+dirStoC+" "+crossedMLine[traceDir]);
+		if(!crossedMLine[traceDir] && dDir>bestdDir[traceDir]) {
+			bestdDir[traceDir] = dDir;
+			bpos[traceDir] = pos;
+			bdir[traceDir] = dirStoC;
+		}
+		if(!traceDirLocked && !crossedMLine[traceDir]) {
+			heuristicValue[traceDir] = Math.max(heuristicValue[traceDir],
+					Math.sqrt((sx-cx)*(sx-cx)+(sy-cy)*(sy-cy))+
+					Math.sqrt((tx-cx)*(tx-cx)+(ty-cy)*(ty-cy))*HEURISTIC_WEIGHT_MAP_UGLINESS);
+		}
+		lastdDir[traceDir] = dDir;
+	}
+	
+	/** Returns the direction that is equivalent to the given dx, dy value, 
+	 * or clockwise of it by as little as possible.
+	 */
+	public static int getDirClockwiseOf(int dx, int dy) {
+		if(dx==0) {
+			if(dy>0) return 5;
+			else return 1;
+		}
+		double slope = ((double)dy)/dx;
+		if(dx>0) {
+			if(slope>=1) return 4;
+			else if(slope>=0) return 3;
+			else if(slope>=-1) return 2;
+			else return 1;
+		} else {
+			if(slope>=1) return 0;
+			else if(slope>=0) return 7;
+			else if(slope>=-1) return 6;
+			else return 5;
+		}
+	}
+	/** Returns the direction that is equivalent to the given dx, dy value, 
+	 * or counterclockwise of it by as little as possible.
+	 */
+	public static int getDirCounterclockwiseOf(int dx, int dy) {
+		if(dx==0) {
+			if(dy>0) return 5;
+			else return 1;
+		}
+		double slope = ((double)dy)/dx;
+		if(dx>0) {
+			if(slope>1) return 5;
+			else if(slope>0) return 4;
+			else if(slope>-1) return 3;
+			else return 2;
+		} else {
+			if(slope>1) return 1;
+			else if(slope>0) return 0;
+			else if(slope>-1) return 7;
+			else return 6; 
+		}
+	}
+	/** Returns the direction that is equivalent to the given dx, dy value, 
+	 * or as close to it as possible.
+	 */
+	public static int getDirTowards(int dx, int dy) {
+		if(dx==0) {
+			if(dy>0) return 5;
+			else return 1;
+		}
+		double slope = ((double)dy)/dx;
+		if(dx>0) {
+			if(slope>2.414) return 5;
+			else if(slope>0.414) return 4;
+			else if(slope>-0.414) return 3;
+			else if(slope>-2.414) return 2;
+			else return 1;
+		} else {
+			if(slope>2.414) return 1;
+			else if(slope>0.414) return 0;
+			else if(slope>-0.414) return 7;
+			else if(slope>-2.414) return 6;
+			else return 5;
+		}
 	}
 }

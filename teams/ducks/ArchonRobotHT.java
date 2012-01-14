@@ -27,16 +27,18 @@ public class ArchonRobotHT extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
-		//if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
+		if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
 		mc.senseAllTiles();
 		MapLocation target = rc.senseCapturablePowerNodes()[0];
+		nav.setDestination(target);
+		nav.prepare();
 		
 		if(!rc.isMovementActive()) {
 			Direction dir;
 			if(aboutToMove) {
 				dir = currDir;
 			} else {
-				dir = nav.navigateTo(target);
+				dir = nav.navigateToDestination();
 				rc.setIndicatorString(2, dir.toString());
 				if(dir==Direction.OMNI) dir = Direction.NORTH;
 			}
@@ -63,6 +65,8 @@ public class ArchonRobotHT extends BaseRobot{
 				}
 			}
 		
+		} else {
+			
 		}
 	}
 }

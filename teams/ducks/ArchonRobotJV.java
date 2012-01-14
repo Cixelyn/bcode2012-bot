@@ -291,7 +291,7 @@ public class ArchonRobotJV extends BaseRobot {
 		// sense tiles
 		mc.senseAllTiles();
 		// move towards target
-		Direction dir = nav.navigateTo(target);
+		Direction dir = null;
 		if (dir != Direction.OMNI && dir != Direction.NONE) {
 			// TODO(jven): wiggle code should not be here
 			for (int tries = 0; tries < Constants.WIGGLE_TIMEOUT; tries++) {
