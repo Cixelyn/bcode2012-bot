@@ -9,12 +9,12 @@ public class TangentBug{
 	/** Scan this many times every turn to see if there is a wall in our way. */
 	final static int MLINE_SCAN_STEPS_PER_TURN_TRACING = 3, MLINE_SCAN_STEPS_PER_TURN_NOT_TRACING = 5;
 	/** Trace down the obstructing wall this many times in one turn. */
-	final static int WALL_SCAN_STEPS_PER_TURN = 2;
+	final static int WALL_SCAN_STEPS_PER_TURN = 3;
 	/** Look this many steps in each way to find the tangent in one turn. */
-	final static int FIND_TANGENT_STEPS_PER_TURN = 4;
+	final static int FIND_TANGENT_STEPS_PER_TURN = 5;
 	
 	/** We approximate that it will take an average of this*d squares to navigate a distance of d. */
-	final static double HEURISTIC_WEIGHT_MAP_UGLINESS = 1.5;
+	public final static double MAP_UGLINESS_WEIGHT = 1.5;
 	
 	final static int BUFFER_START = 4096;
 	final static int BUFFER_LENGTH = BUFFER_START*2;
@@ -26,6 +26,9 @@ public class TangentBug{
 	int tx = -1;
 	int ty = -1;
 	
+	// Target variables - cleared every time we get a new target
+	int minPrepRounds = 1; // The amount of times we have to prepare before we can compute
+	double chanceGoLongWay = 0; // The chance that we pick the longer way to trace around walls
 	
 	// Wall variables - cleared every time we start tracing a new wall
 	final int[][] buffer = new int[BUFFER_LENGTH][2];
@@ -45,8 +48,6 @@ public class TangentBug{
 	int directionalBugDirection = -1;
 	int directionalBugWallDir = -1;
 	int directionalBugStartDotProduct = -1;
-	int minPrepRounds = 1; // The amount of times we have to prepare before we can compute
-	double chanceGoLongWay = 0; // The chance that we pick the longer way to trace around walls
 	
 	// Preparatory variables - cleared every time robot moves
 	int turnsPreparedBeforeMoving = 0;
@@ -78,7 +79,7 @@ public class TangentBug{
 		reset();
 	}
 	public void reset() {
-		reset(1, 0);
+		reset(minPrepRounds, chanceGoLongWay);
 	}
 	public void reset(int minPrepRounds, double chanceGoLongWay) {
 		tracing = false;
@@ -89,7 +90,8 @@ public class TangentBug{
 	}
 	public void setTarget(int tx, int ty) {
 		if(this.tx==tx && this.ty==ty) return;
-		reset();
+		
+		reset(1, 0);
 		this.tx = tx; 
 		this.ty = ty;
 	}
@@ -195,6 +197,7 @@ public class TangentBug{
 					startTraceHelper(scanx - d[dirTowards][0], 
 							scany - d[dirTowards][1], 
 							dirTowards);
+					turnsPreparedBeforeMoving = 0;
 					startedTracingDuringCurrentPrepCycle = true;
 					break;
 				}
@@ -221,7 +224,7 @@ public class TangentBug{
 			return new int[] {tx-sx, ty-sy};
 		}
 		
-//		 if(tracing) for(int y=0; y<ymax; y++) { for(int x=0; x<xmax; x++) System.out.print((wallCache[x][y]==curWallCacheID*BUFFER_LENGTH)?'#':(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH)?'o':'.'); System.out.println(); }
+//		 if(tracing) {StringBuilder sb = new StringBuilder(); for(int y=120; y<130; y++) { for(int x=120; x<130; x++) sb.append((wallCache[x][y]==curWallCacheID*BUFFER_LENGTH)?'#':(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH)?'o':'.'); sb.append("\n"); } System.out.print(sb);}
 //		 if(tracing) for(int i=BUFFER_START-30; i<=BUFFER_START+30; i++) System.out.println("  "+i+" "+buffer[i][0]+","+buffer[i][1]);
 		
 		if(!tracing) {
@@ -258,19 +261,18 @@ public class TangentBug{
 		}
 		int x = sx+d[finalDir][0];
 		int y = sy+d[finalDir][1];
-		if(map[x][y] && wallCache[x][y]>curWallCacheID*BUFFER_START) {
+		if(map[x][y] && wallCache[x][y]>curWallCacheID*BUFFER_LENGTH) {
 			// our wall cache is out of date due to newly sensed walls
 			reset();
 			return null;
 		}
 			
 		if(!traceDirLocked){
-			while(true) {
-				if(map[x][y]) {
-					finalDir = (finalDir+(traceDirLastTurn==0?1:-1)+8)%8;
-				} else {
-					break;
-				}
+			while(map[x][y]) {
+				finalDir = (finalDir+(traceDirLastTurn==0?1:-1)+8)%8;
+				x = sx+d[finalDir][0];
+				y = sy+d[finalDir][1];
+				
 			}
 		} else {
 			if(directionalBugging) {
@@ -344,7 +346,6 @@ public class TangentBug{
 		directionalBugDirection = -1;
 		directionalBugWallDir = -1;
 		directionalBugStartDotProduct = -1;
-		minPrepRounds = 1;
 	}
 	
 	private void traceClockwiseHelper() {
@@ -483,7 +484,7 @@ public class TangentBug{
 		if(!traceDirLocked && !crossedMLine[traceDir]) {
 			heuristicValue[traceDir] = Math.max(heuristicValue[traceDir],
 					Math.sqrt((sx-cx)*(sx-cx)+(sy-cy)*(sy-cy))+
-					Math.sqrt((tx-cx)*(tx-cx)+(ty-cy)*(ty-cy))*HEURISTIC_WEIGHT_MAP_UGLINESS);
+					Math.sqrt((tx-cx)*(tx-cx)+(ty-cy)*(ty-cy))*MAP_UGLINESS_WEIGHT);
 		}
 		lastdDir[traceDir] = dDir;
 	}
