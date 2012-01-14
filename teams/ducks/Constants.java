@@ -43,6 +43,8 @@ public final class Constants {
 	public static final int SPLIT_DISTANCE = 16;
 	/** Number of soldiers each archon makes after initial split. */
 	public static final int SOLDIERS_PER_ARCHON = 5;
+	/** Number of scorchers each archon makes after initial split. */
+	public static final int SCORCHERS_PER_ARCHON = 2;
 	/** Maximum number of rounds to spend splitting. */
 	public static final int MAX_SPLIT_TIME = 40;
 	/** Number of times to turn side to side before giving up. */
