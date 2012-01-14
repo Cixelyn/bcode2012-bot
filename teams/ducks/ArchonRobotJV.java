@@ -161,15 +161,17 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	public void spawnScorcher() throws GameActionException {
 		// build scorcher in an available direction
+		Direction scorcherDir = currLoc.directionTo(
+				rc.sensePowerCore().getLocation());
 		Direction[] spawnDirs = new Direction[] {
-				bearing,
-				bearing.rotateLeft(),
-				bearing.rotateRight(),
-				bearing.rotateLeft().rotateLeft(),
-				bearing.rotateRight().rotateRight(),
-				bearing.rotateLeft().rotateLeft().rotateLeft(),
-				bearing.rotateRight().rotateRight().rotateRight(),
-				bearing.opposite()
+				scorcherDir,
+				scorcherDir.rotateLeft(),
+				scorcherDir.rotateRight(),
+				scorcherDir.rotateLeft().rotateLeft(),
+				scorcherDir.rotateRight().rotateRight(),
+				scorcherDir.rotateLeft().rotateLeft().rotateLeft(),
+				scorcherDir.rotateRight().rotateRight().rotateRight(),
+				scorcherDir.opposite()
 		};
 		for (Direction d : spawnDirs) {
 			// TODO(jven): use data cache
@@ -291,8 +293,8 @@ public class ArchonRobotJV extends BaseRobot {
 				sendBackOff();
 			}
 		}
-		// distribute flux if we're not adjacent to tower
-		if (distance > 2) {
+		// distribute flux if we're not adjacent to tower or if we have too much
+		if (distance > 2 || currFlux == myType.maxFlux) {
 			distributeFlux();
 		}
 		// send rally
