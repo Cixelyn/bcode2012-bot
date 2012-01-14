@@ -258,8 +258,10 @@ public class ArchonRobotJV extends BaseRobot {
 				sendBackOff();
 			}
 		}
-		// distribute flux
-		distributeFlux();
+		// distribute flux if we're not adjacent to tower
+		if (distance > 2) {
+			distributeFlux();
+		}
 		// send rally
 		objective = powerCore;
 		sendRally();
