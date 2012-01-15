@@ -8,6 +8,7 @@ import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
 	boolean aboutToMove = false;
+	Direction lastMoved = null;
 	int myArchonID;
 	public ArchonRobotHT(RobotController myRC) {
 		super(myRC);
@@ -28,7 +29,7 @@ public class ArchonRobotHT extends BaseRobot{
 	@Override
 	public void run() throws GameActionException {
 		//if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
-		mc.senseAllTiles();
+		mc.senseAfterMove(lastMoved);
 		MapLocation target = rc.senseCapturablePowerNodes()[0];
 		rc.setIndicatorString(0, "dxdy: "+(target.x-currLoc.x)+","+(target.y-currLoc.y));
 		rc.setIndicatorString(1, "abouttomove: "+aboutToMove);
@@ -58,6 +59,7 @@ public class ArchonRobotHT extends BaseRobot{
 								rc.spawn(RobotType.TOWER);
 							}
 						} else {
+							lastMoved = currDir;
 							rc.moveForward();
 						}
 					} else {
@@ -67,8 +69,7 @@ public class ArchonRobotHT extends BaseRobot{
 				}
 			}
 		
-		} else {
-			
 		}
+		
 	}
 }

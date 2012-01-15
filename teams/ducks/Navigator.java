@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 
@@ -9,7 +10,6 @@ public class Navigator {
 	private final TangentBug tangentBug;
 	private final BlindBug blindBug;
 	private final MapLocation zeroLoc;
-	private int roundLastReset;
 	private NavigationMode mode;
 	private MapLocation destination;
 	private int movesOnSameTarget;
@@ -22,14 +22,12 @@ public class Navigator {
 		blindBug = new BlindBug(baseRobot);
 		zeroLoc = new MapLocation(0,0);
 		mode = NavigationMode.RANDOM;
-		roundLastReset = -1;
 	}
 	
 	/** Resets the navigator, clearing it of any state. */
 	public void reset() {
 		tangentBug.reset(1, 0);
 		//TODO reset blindbug
-		roundLastReset = baseRobot.currRound;
 	}
 	
 	public NavigationMode getNavigationMode() {
@@ -52,6 +50,15 @@ public class Navigator {
 	}
 	public void prepare() {
 		if(mode==NavigationMode.TANGENT_BUG) {
+			if(mapCache.edgeXMin!=0) tangentBug.edgeXMin = mapCache.edgeXMin;
+			if(mapCache.edgeXMax!=0) tangentBug.edgeXMax = mapCache.edgeXMax;
+			if(mapCache.edgeYMin!=0) tangentBug.edgeYMin = mapCache.edgeYMin;
+			if(mapCache.edgeYMax!=0) tangentBug.edgeYMax = mapCache.edgeYMax;
+
+			if(Clock.getRoundNum()%100==0) {
+				System.out.println(tangentBug.edgeXMin+" "+tangentBug.edgeXMax+" "+tangentBug.edgeYMin+" "+tangentBug.edgeYMax);
+				
+			}
 			tangentBug.prepare(
 					mapCache.worldToCacheX(baseRobot.currLoc.x), 
 					mapCache.worldToCacheY(baseRobot.currLoc.y));
