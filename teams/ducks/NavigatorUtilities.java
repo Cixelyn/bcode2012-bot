@@ -13,5 +13,4 @@ public class NavigatorUtilities {
 	public static Direction getRandomDirection() {
 		return allDirections[(int)(Math.random()*8)];
 	}
-	
 }

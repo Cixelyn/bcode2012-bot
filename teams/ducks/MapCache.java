@@ -23,9 +23,10 @@ public class MapCache {
 	final static int POWER_CORE_POSITION = 128;
 	final BaseRobot baseRobot;
 	final int powerCoreWorldX, powerCoreWorldY;
-	/** The boundaries of tiles we have confirmed are ground tiles. */
-	int minXGround, maxXGround, minYGround, maxYGround;
+	/** The edges of the map, in cache coordinates. */
+	int edgeXMin, edgeXMax, edgeYMin, edgeYMax;
 	int senseDist;
+	int senseRadius;
 	/** optimized sensing list for each unit */
 	private final int[][][] optimizedSensingList;
 	int roundLastUpdated;
@@ -36,12 +37,13 @@ public class MapCache {
 		MapLocation loc = baseRobot.rc.sensePowerCore().getLocation();
 		powerCoreWorldX = loc.x;
 		powerCoreWorldY = loc.y;
-		minXGround = powerCoreWorldX - 1;
-		maxXGround = powerCoreWorldX + 1;
-		minYGround = powerCoreWorldY - 1;
-		maxYGround = powerCoreWorldY + 1;
+		edgeXMin = - 1;
+		edgeXMax = - 1;
+		edgeYMin = - 1;
+		edgeYMax = - 1;
 		senseDist = baseRobot.myType==RobotType.ARCHON ? 5 :
 			baseRobot.myType==RobotType.SCOUT ? 4 : 3;
+		senseRadius = (int)Math.sqrt(baseRobot.myType.sensorRadiusSquared);
 		roundLastUpdated = -1;
 		switch(baseRobot.myType) {
 			case ARCHON: optimizedSensingList = sensorRangeARCHON; break;
@@ -54,8 +56,9 @@ public class MapCache {
 		}
 	}
 	
-	/** Senses most tiles around current location in range. 
+	/** Senses MOST tiles around current location in range. 
 	 * Not quite all tiles, i.e. for archons does not sense tiles <6,0> away. 
+	 * Should be called when a unit (probably only archon or scout) is newly spawned.
 	 */
 	public void senseAllTiles() {
 		boolean updated = false;
@@ -109,15 +112,107 @@ public class MapCache {
 		}
 	}
 	
+	/** Updates the edges of the map that we can sense. 
+	 * Checks all four cardinal directions for edges. 
+	 * Should be called in the beginning of the game. */
+	public void senseAllMapEdges() {
+		MapLocation myLoc = baseRobot.currLoc;
+		if(edgeXMin==-1 && 
+				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, senseRadius))==TerrainTile.OFF_MAP) {
+			int d = senseRadius;
+			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, d-1))==TerrainTile.OFF_MAP) {
+				d--;
+			}
+			edgeXMin = myLoc.x - d;
+		}
+		if(edgeXMax==-1 && 
+				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.EAST, senseRadius))==TerrainTile.OFF_MAP) {
+			int d = senseRadius;
+			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.EAST, d-1))==TerrainTile.OFF_MAP) {
+				d--;
+			}
+			edgeXMax = myLoc.x + d;
+		}
+		if(edgeYMin==-1 && 
+				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.NORTH, senseRadius))==TerrainTile.OFF_MAP) {
+			int d = senseRadius;
+			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.NORTH, d-1))==TerrainTile.OFF_MAP) {
+				d--;
+			}
+			edgeYMin = myLoc.y - d;
+		}
+		if(edgeYMax==-1 && 
+				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.SOUTH, senseRadius))==TerrainTile.OFF_MAP) {
+			int d = senseRadius;
+			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.SOUTH, d-1))==TerrainTile.OFF_MAP) {
+				d--;
+			}
+			edgeYMax = myLoc.y + d;
+		}
+	}
+	/** Updates the edges of the map that we can sense. 
+	 * Only checks for edges in directions that we are moving towards.
+	 *  
+	 * For example, if we just moved NORTH, we only need to check to the north of us for a new wall,
+	 * since a wall could not have appeared in any other direction. */
+	public void senseMapEdges(Direction lastMoved) {
+		MapLocation myLoc = baseRobot.currLoc;
+		if(edgeXMin==-1 && lastMoved.dx==-1 && 
+				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, senseRadius))==TerrainTile.OFF_MAP) {
+			int d = senseRadius;
+			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, d-1))==TerrainTile.OFF_MAP) {
+				d--;
+			}
+			edgeXMin = myLoc.x - d;
+		}
+		if(edgeXMax==-1 && lastMoved.dx==1 && 
+				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.EAST, senseRadius))==TerrainTile.OFF_MAP) {
+			int d = senseRadius;
+			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.EAST, d-1))==TerrainTile.OFF_MAP) {
+				d--;
+			}
+			edgeXMax = myLoc.x + d;
+		}
+		if(edgeYMin==-1 && lastMoved.dy==-1 && 
+				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.NORTH, senseRadius))==TerrainTile.OFF_MAP) {
+			int d = senseRadius;
+			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.NORTH, d-1))==TerrainTile.OFF_MAP) {
+				d--;
+			}
+			edgeYMin = myLoc.y - d;
+		}
+		if(edgeYMax==-1 && lastMoved.dy==1 && 
+				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.SOUTH, senseRadius))==TerrainTile.OFF_MAP) {
+			int d = senseRadius;
+			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.SOUTH, d-1))==TerrainTile.OFF_MAP) {
+				d--;
+			}
+			edgeYMax = myLoc.y + d;
+		}
+	}
+	
+	/** Does this robot know about the terrain of the given map location? */
+	public boolean isSensed(MapLocation loc) {
+		return sensed[worldToCacheX(loc.x)][worldToCacheX(loc.y)];
+	}
+	/** Is the given map location a wall tile? Will return false if the robot does not know. */
+	public boolean isWall(MapLocation loc) {
+		return isWall[worldToCacheX(loc.x)][worldToCacheX(loc.y)];
+	}
+	
+	/** Converts from world x coordinates to cache x coordinates. */
 	public int worldToCacheX(int worldX) {
 		return worldX-powerCoreWorldX+POWER_CORE_POSITION;
 	}
+	/** Converts from world x coordinates to cache y coordinates. */
 	public int cacheToWorldX(int cacheX) {
 		return cacheX+powerCoreWorldX-POWER_CORE_POSITION;
 	}
+	/** Converts from cache x coordinates to world x coordinates. */
 	public int worldToCacheY(int worldY) {
 		return worldY-powerCoreWorldY+POWER_CORE_POSITION;
 	}
+	/** Converts from cache x coordinates to world y coordinates. */
 	public int cacheToWorldY(int cacheY) {
 		return cacheY+powerCoreWorldY-POWER_CORE_POSITION;
 	}
