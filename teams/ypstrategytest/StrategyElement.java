@@ -1,8 +1,9 @@
 package ypstrategytest;
 
-import com.sun.org.apache.xml.internal.utils.StopParseException;
+import java.io.Serializable;
 
-public class StrategyElement  {
+
+public class StrategyElement  implements Serializable {
 	public final StrategyEnum action;
 	public final int priority;
 	public final int startRound;
