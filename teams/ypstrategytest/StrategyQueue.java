@@ -1,6 +1,8 @@
 package ypstrategytest;
 
-public class StrategyQueue {
+import java.io.Serializable;
+
+public class StrategyQueue implements Serializable {
 	StrategyQueueNode head;
 	StrategyQueueNode tail;
 	
@@ -44,7 +46,7 @@ public class StrategyQueue {
 	}
 }
 
-class StrategyQueueNode {
+class StrategyQueueNode implements Serializable {
 	public StrategyQueueNode next;
 	public StrategyElement data;
 	public StrategyQueueNode(StrategyQueueNode next, StrategyElement data) {

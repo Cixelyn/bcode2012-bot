@@ -1,6 +1,8 @@
 package ypstrategytest;
 
-public enum StrategyEnum {
+import java.io.Serializable;
+
+public enum StrategyEnum implements Serializable {
 	DONOTHING,
 	FIGHT,
 	RUN,

@@ -1,7 +1,10 @@
 package ypstrategytest;
 
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -108,6 +111,18 @@ public class TestClass {
 		System.out.println(sheap2.size);
 		System.out.println(sheap3.size);
 		System.out.println(sheap4.size);
+		
+		genStrategyElts();
+		
+		t1 = Clock.getBytecodeNum();
+		StrategyQueue sq2 = (StrategyQueue) Cloner.clone(sq);
+		t2 = Clock.getBytecodeNum();
+		System.out.println("string writer used: "+(t2-t1));
+		
+		t1 = Clock.getBytecodeNum();
+		StrategyQueue sq3 = (StrategyQueue) Cloner.clone(sq);
+		t2 = Clock.getBytecodeNum();
+		System.out.println("string writer used: "+(t2-t1));
 	}
 	
 //	t1 = Clock.getBytecodeNum();
@@ -124,16 +139,61 @@ public class TestClass {
 //		}
 //	}
 
+	
+	static StrategyQueue sq;
+	static StrategyElement[] sa;
+	public static void genStrategyElts()
+	{
+		int bc = Clock.getBytecodeNum();
+		sa = new StrategyElement[] {
+			new StrategyElement(StrategyConstants.values[0], 2, 	0, 		1000),
+			new StrategyElement(StrategyConstants.values[1], 5, 	0, 		500),
+			new StrategyElement(StrategyConstants.values[2], 7, 	300,	650),
+			new StrategyElement(StrategyConstants.values[3], 1, 	450, 	500),
+			new StrategyElement(StrategyConstants.values[4], 4, 	600, 	700),
+			new StrategyElement(StrategyConstants.values[5], 3, 	600, 	1200),
+			new StrategyElement(StrategyConstants.values[6], 9, 	630, 	900),
+			new StrategyElement(StrategyConstants.values[7], 2, 	1000, 	1500),
+			new StrategyElement(StrategyConstants.values[0], 2, 	0, 		1000),
+			new StrategyElement(StrategyConstants.values[1], 5, 	0, 		500),
+			new StrategyElement(StrategyConstants.values[2], 7, 	300,	650),
+			new StrategyElement(StrategyConstants.values[3], 1, 	450, 	500),
+			new StrategyElement(StrategyConstants.values[4], 4, 	600, 	700),
+			new StrategyElement(StrategyConstants.values[5], 3, 	600, 	1200),
+			new StrategyElement(StrategyConstants.values[6], 9, 	630, 	900),
+			new StrategyElement(StrategyConstants.values[7], 2, 	1000, 	1500),
+			new StrategyElement(StrategyConstants.values[4], 4, 	600, 	700),
+			new StrategyElement(StrategyConstants.values[4], 4, 	600, 	700),
+		};
+		System.out.println("gen array: "+(Clock.getBytecodeNum()-bc));
+		bc = Clock.getBytecodeNum();
+		sq = new StrategyQueue(sa);
+		System.out.println("gen queue: "+(Clock.getBytecodeNum()-bc));
+	}
 }
 
-class Test implements Serializable {
+class Test implements Serializable,Externalizable {
 	String a;
 	int[] i;
 	public Test() {
+//		for (int x=0; x<100; x++)
+//			if (x==50) a = null;
+//		System.out.println("constructor called");
+	}
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeObject(a);
+		out.writeObject(i);
 		for (int x=0; x<100; x++)
 			if (x==50) a = null;
-		System.out.println("constructor called");
 	}
+	@Override
+	public void readExternal(ObjectInput in) throws IOException,
+			ClassNotFoundException {
+		a = (String) in.readObject();
+		i = (int[]) in.readObject();
+	}
+	
 //	private void readObject(ObjectInputStream ois)
 //			throws ClassNotFoundException, IOException {
 //		ois.defaultReadObject();
@@ -143,11 +203,24 @@ class Test implements Serializable {
 //		else
 //			a = "abccd";
 //	}
-	public Object readResolve()
-	{
-		for (int x=0; x<100; x++)
-			if (x==50) a = null;
-		a = "test";
-		return this;
-	}
+	
+//	private void writeObject(ObjectOutputStream oos)
+//			throws ClassNotFoundException, IOException {
+//		a = "abcdefg";
+//		if (a.length() > 2)
+//			a = "abc";
+//		else
+//			a = "abccd";
+//		for (int x=0; x<100; x++)
+//			if (x==50) a = null;
+//		oos.defaultWriteObject();
+//	}
+	
+//	public Object readResolve()
+//	{
+//		for (int x=0; x<100; x++)
+//			if (x==50) a = null;
+//		a = "test";
+//		return this;
+//	}
 }
