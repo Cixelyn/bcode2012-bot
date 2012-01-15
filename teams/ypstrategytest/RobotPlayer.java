@@ -14,6 +14,7 @@ public class RobotPlayer {
 	
 	public static void dostuff(RobotController rc) throws Exception
 	{
+		if (!rc.getLocation().equals(rc.senseAlliedArchons()[0])) rc.suicide();
 		int bytecode;
 		
 		genStrategyElts();
@@ -76,7 +77,23 @@ public class RobotPlayer {
 		System.out.println("all pops took: "+(Clock.getBytecodeNum()-bytecode));
 		
 		
+		rc.yield();
+		bytecode = Clock.getBytecodeNum();
+		Strategy s = new FixedStrategyTester();
+		System.out.println("strategy init took: "+(Clock.getBytecodeNum()-bytecode));
 		
+		
+		for (int x=0; x<100; x++)
+		{
+			rc.yield();
+			bytecode = Clock.getBytecodeNum();
+			s.initForRound(x*10);
+			System.out.println("init took: "+(Clock.getBytecodeNum()-bytecode));
+			bytecode = Clock.getBytecodeNum();
+			s.act();
+			System.out.println("act took: "+(Clock.getBytecodeNum()-bytecode));
+			
+		}
 	}
 	
 	public static void genStrategyElts()
@@ -128,6 +145,7 @@ public class RobotPlayer {
 		} catch (Exception e) {
 			System.out.println("caught exception:");
 			e.printStackTrace();
+			rc.resign();
 		}
 	}
 }
