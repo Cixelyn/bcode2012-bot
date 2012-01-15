@@ -27,7 +27,7 @@ public class ArchonRobotHT extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
-		if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
+		//if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
 		mc.senseAllTiles();
 		MapLocation target = rc.senseCapturablePowerNodes()[0];
 		rc.setIndicatorString(0, "dxdy: "+(target.x-currLoc.x)+","+(target.y-currLoc.y));

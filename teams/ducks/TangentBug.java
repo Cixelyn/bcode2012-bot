@@ -11,7 +11,7 @@ public class TangentBug{
 	/** Trace down the obstructing wall this many times in one turn. */
 	final static int WALL_SCAN_STEPS_PER_TURN = 3;
 	/** Look this many steps in each way to find the tangent in one turn. */
-	final static int FIND_TANGENT_STEPS_PER_TURN = 5;
+	final static int FIND_TANGENT_STEPS_PER_TURN = 4;
 	
 	/** We approximate that it will take an average of this*d squares to navigate a distance of d. */
 	public final static double MAP_UGLINESS_WEIGHT = 1.5;
