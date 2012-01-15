@@ -41,7 +41,7 @@ public class Navigator {
 			return;
 		movesOnSameTarget = 0;
 		expectedMovesToReachTarget = (int)(Math.sqrt(baseRobot.currLoc.distanceSquaredTo(destination)) *
-				TangentBug.MAP_UGLINESS_WEIGHT);
+				TangentBug.MAP_UGLINESS_WEIGHT)+1;
 		this.destination = destination;
 		tangentBug.setTarget(mapCache.worldToCacheX(destination.x), 
 				mapCache.worldToCacheY(destination.y));
