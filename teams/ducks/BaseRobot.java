@@ -8,6 +8,7 @@ public abstract class BaseRobot {
 	final DataCache dc;
 	final MapCache mc;
 	final Navigator nav;
+	final Micro mi;
 	final Radio io;
 	Navigation nv;
 	
@@ -45,6 +46,7 @@ public abstract class BaseRobot {
 		dc = new DataCache(this);
 		mc = new MapCache(this);
 		nav = new Navigator(this);
+		mi = new Micro(this);
 		io = new Radio(this);
 		
 		spawnRound = Clock.getRoundNum();

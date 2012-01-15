@@ -25,7 +25,11 @@ public class SoldierRobotJV extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		// power down if not enough flux, or suicide if we won
+		if (objective != null) {
+			rc.setIndicatorString(1, "Distance to objective: " +
+					currLoc.distanceSquaredTo(objective));
+		}
+		// power down if not enough flux, or suicide if all archons are dead
 		if (currFlux < Constants.POWER_DOWN_FLUX) {
 			if (enemyArchonInfo.getNumEnemyArchons() == 0) {
 				rc.suicide();
@@ -45,7 +49,7 @@ public class SoldierRobotJV extends BaseRobot {
 			case CHASE:
 				chase();
 				break;
-			case BACK_OFF:
+			case DEFEND:
 				backOff();
 				break;
 			default:
@@ -67,6 +71,7 @@ public class SoldierRobotJV extends BaseRobot {
 				MapLocation msgObjective = new MapLocation(msgInts[1], msgInts[2]);
 				if (msgRallyPriority > rallyPriority) {
 					objective = msgObjective;
+					mi.setObjective(msgObjective);
 					rallyPriority = msgRallyPriority;
 				}
 				break;
@@ -92,7 +97,7 @@ public class SoldierRobotJV extends BaseRobot {
 	
 	public void initialize() throws GameActionException {
 		// set nav mode
-		nav.setNavigationMode(NavigationMode.BUG);
+		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		// set radio addresses
 		io.setAddresses(new String[] {"#x", "#s"});
 		// set initial objective
@@ -100,6 +105,7 @@ public class SoldierRobotJV extends BaseRobot {
 		objective = currLoc.add(
 				rc.sensePowerCore().getLocation().directionTo(
 				dc.getCapturablePowerCores()[0]), GameConstants.MAP_MAX_HEIGHT);
+		mi.setObjective(objective);
 		// set broadcast time
 		timeUntilBroadcast = 0;
 		// go to power save mode
@@ -108,18 +114,16 @@ public class SoldierRobotJV extends BaseRobot {
 	}
 	
 	public void powerSave() throws GameActionException {
-		// attack closest enemy if possible
-		attackClosestEnemy();
-		// spin
-		if (!rc.isMovementActive()) {
-			rc.setDirection(currDir.rotateLeft().rotateLeft().rotateLeft());
-		}
+		// hold position
+		mi.setHoldPositionMode();
+		mi.attackMove();
 	}
 	
 	public void rush() throws GameActionException {
-		//rc.suicide();
 		// swarm towards objective
-		swarmTowards(objective);
+		mi.setObjective(objective);
+		mi.setSwarmMode(Constants.MAX_SWARM_RADIUS);
+		mi.attackMove();
 		// chase enemy if in range
 		if (dc.getClosestEnemy() != null) {
 			currState = RobotState.CHASE;
@@ -136,115 +140,14 @@ public class SoldierRobotJV extends BaseRobot {
 			return;
 		}
 		// attack closest enemy
-		attackClosestEnemy();
-		// charge enemy
-		charge(closestEnemy.location);
+		mi.setObjective(closestEnemy.location);
+		mi.setChargeMode();
+		mi.attackMove();
 		// send dead enemy archon IDs
 		sendDeadEnemyArchonIDs();
 	}
 	
 	public void backOff() throws GameActionException {
-		// wait if movement is active
-		if (rc.isMovementActive()) {
-			return;
-		}
-		Direction dir = currLoc.directionTo(backOffLoc);
-		Direction[] backOffDirs = new Direction[] {
-				dir,
-				dir.rotateLeft(),
-				dir.rotateRight(),
-				dir.rotateLeft().rotateLeft(),
-				dir.rotateRight().rotateRight(),
-				dir.rotateLeft().rotateLeft().rotateLeft(),
-				dir.rotateRight().rotateRight().rotateRight()
-		};
-		// try to go away
-		for (Direction d : backOffDirs) {
-			if (rc.canMove(d.opposite())) {
-				if (currDir != d) {
-					rc.setDirection(d);
-				} else {
-					rc.moveBackward();
-				}
-				break;
-			}
-		}
-		// go back to previous state
-		currState = prevState;
-	}
-	
-	private void attackClosestEnemy() throws GameActionException {
-		// wait if attack is active
-		if (rc.isAttackActive()) {
-			return;
-		}
-		// see if enemy in range
-		RobotInfo closestEnemy = dc.getClosestEnemy();
-		if (closestEnemy != null && rc.canAttackSquare(closestEnemy.location)) {
-			rc.attackSquare(
-					closestEnemy.location, closestEnemy.robot.getRobotLevel());
-			if (closestEnemy.type == RobotType.ARCHON &&
-					closestEnemy.energon <= myType.attackPower) {
-				enemyArchonInfo.reportEnemyArchonKill(closestEnemy.robot.getID());
-			}
-		}
-	}
-	
-	private void swarmTowards(MapLocation target) throws GameActionException {
-		// wait if movement is active
-		if (rc.isMovementActive()) {
-			return;
-		}
-		// step towards closest archon if too far away
-		MapLocation closestArchon = dc.getClosestArchon();
-		if (closestArchon != null &&
-				currLoc.distanceSquaredTo(closestArchon) > Constants.MAX_SWARM_RADIUS) {
-			target = closestArchon;
-		}
-		// sense tiles
-		mc.senseAllTiles();
-		// move towards target
-		nav.setDestination(target);
-		nav.prepare();
-		Direction dir = nav.navigateToDestination();
-		if (dir != Direction.OMNI && dir != Direction.NONE) {
-			// TODO(jven): wiggle code should not be here
-			for (int tries = 0; tries < Constants.WIGGLE_TIMEOUT; tries++) {
-				if (!rc.canMove(dir)) {
-					if (Math.random() < 0.5) {
-						dir = dir.rotateLeft();
-					} else {
-						dir = dir.rotateRight();
-					}
-				} else {
-					break;
-				}
-			}
-			if (!rc.canMove(dir)) {
-				return;
-			}
-			// end wiggle code
-			if (currDir != dir) {
-				rc.setDirection(dir);
-			} else if (rc.canMove(currDir)) {
-				rc.moveForward();
-			}
-		}
-	}
-	
-	private void charge(MapLocation target) throws GameActionException {
-		// wait if movement is active
-		if (rc.isMovementActive()) {
-			return;
-		}
-		Direction dir = currLoc.directionTo(target);
-		if (dir != Direction.OMNI && dir != Direction.NONE) {
-			if (currDir != dir) {
-				rc.setDirection(dir);
-			} else if (rc.canMove(dir)) {
-				rc.moveForward();
-			}
-		}
 	}
 	
 	private void sendDeadEnemyArchonIDs() throws GameActionException {

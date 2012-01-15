@@ -33,7 +33,7 @@ public final class Constants {
 	/** Initial bearing for all robots */
 	public static final Direction INITIAL_BEARING = Direction.EAST;
 	/** The maximum distance units should be from the closest archon */
-	public static final int MAX_SWARM_RADIUS = 9;
+	public static final int MAX_SWARM_RADIUS = 17;
 	/** The number of rounds after which to start taking towers */
 	public static final int CIRCLE_MAP_ROUNDS = 2000;
 	/** Don't build towers until after this round */
