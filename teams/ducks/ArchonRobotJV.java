@@ -73,7 +73,7 @@ public class ArchonRobotJV extends BaseRobot {
 						currState = RobotState.RUSH;
 					}
 				}
-				msgInts = Radio.decodeInts(sb);
+				msgInts = Radio.decodeShorts(sb);
 				int msgRallyPriority = msgInts[0];
 				Direction msgBearing = Direction.values()[msgInts[1]];
 				if (msgRallyPriority > rallyPriority) {
@@ -84,7 +84,7 @@ public class ArchonRobotJV extends BaseRobot {
 				}
 				break;
 			case 'd':
-				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
 				for (int id : deadEnemyArchonIDs) {
 					enemyArchonInfo.reportEnemyArchonKill(id);
 				}
@@ -510,8 +510,8 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	private void sendRally() throws GameActionException {
 		if (--timeUntilBroadcast <= 0) {
-			io.sendInts("#sr", new int[] {rallyPriority, objective.x, objective.y});
-			io.sendInts("#ar", new int[] {rallyPriority, bearing.ordinal()});
+			io.sendShorts("#sr", new int[] {rallyPriority, objective.x, objective.y});
+			io.sendShorts("#ar", new int[] {rallyPriority, bearing.ordinal()});
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
 	}

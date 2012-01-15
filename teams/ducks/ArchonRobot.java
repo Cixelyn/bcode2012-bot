@@ -71,7 +71,7 @@ public class ArchonRobot extends BaseRobot {
 	public void processMessage(char msgType, StringBuilder sb) {
 		switch(msgType) {
 			case 'r':
-				int[] msgInts = Radio.decodeInts(sb);
+				int[] msgInts = Radio.decodeShorts(sb);
 				int msgTargetPriority = msgInts[0];
 				int msgBearingOrdinal = msgInts[1];
 				if (msgTargetPriority > targetPriority) {
@@ -80,7 +80,7 @@ public class ArchonRobot extends BaseRobot {
 				}
 				break;
 			case 'd':
-				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
 				for (int id : deadEnemyArchonIDs) {
 					enemyArchonInfo.reportEnemyArchonKill(id);
 				}
@@ -392,8 +392,8 @@ public class ArchonRobot extends BaseRobot {
 	
 	private void sendArchonMessage(
 			MapLocation target) throws GameActionException {
-		io.sendInts("#sr", new int[] {targetPriority, target.x, target.y});
-		io.sendInts("#ar", new int[] {targetPriority, bearing.ordinal()});
+		io.sendShorts("#sr", new int[] {targetPriority, target.x, target.y});
+		io.sendShorts("#ar", new int[] {targetPriority, bearing.ordinal()});
 	}
 	
 	private boolean isTowerTargetable(
