@@ -1,7 +1,9 @@
 package ducks;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
+import battlecode.common.PowerNode;
 import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
 
@@ -15,39 +17,46 @@ import battlecode.common.TerrainTile;
  * @author Haitao
  */
 public class MapCache {
+	final static int MAP_SIZE = 256;
+	final static int POWER_CORE_POSITION = 128;
+	
+	final BaseRobot baseRobot;
 	/** True if the tile is a wall, false if the tile is ground or out of bounds. */
 	final boolean[][] isWall;
 	/** True if we have sensed the tile or been told by another robot about the tile. */
 	final boolean[][] sensed;
 	/** Stores the IDs of power nodes the robot has discovered. */
 	final short[][] powerNodeID;
-	final static int MAP_SIZE = 256;
-	final static int POWER_CORE_POSITION = 128;
-	final BaseRobot baseRobot;
+	final PowerNodeGraph powerNodeGraph;
 	final int powerCoreWorldX, powerCoreWorldY;
-	/** The edges of the map, in cache coordinates. */
-	int edgeXMin, edgeXMax, edgeYMin, edgeYMax;
+	/** The edges of the map, in cache coordinates. <br>
+	 * These values are all exclusive, so anything with one of these coordinates is out of bounds.
+	 */
+	public int edgeXMin, edgeXMax, edgeYMin, edgeYMax;
+	/** Just a magic number to optimize the senseAllTiles() function. */
 	int senseDist;
 	int senseRadius;
-	/** optimized sensing list for each unit */
+	/** optimized sensing list of position vectors for each unit */
 	private final int[][][] optimizedSensingList;
-	int roundLastUpdated;
+	/** The game round that we last updated the terrain in the map cache. */
+	int roundTerrainLastUpdated;
 	public MapCache(BaseRobot baseRobot) {
+		this.baseRobot = baseRobot;
 		isWall = new boolean[MAP_SIZE][MAP_SIZE];
 		sensed = new boolean[MAP_SIZE][MAP_SIZE];
 		powerNodeID = new short[MAP_SIZE][MAP_SIZE];
-		this.baseRobot = baseRobot;
 		MapLocation loc = baseRobot.rc.sensePowerCore().getLocation();
 		powerCoreWorldX = loc.x;
 		powerCoreWorldY = loc.y;
-		edgeXMin = - 1;
-		edgeXMax = - 1;
-		edgeYMin = - 1;
-		edgeYMax = - 1;
+		powerNodeGraph = new PowerNodeGraph();
+		edgeXMin = 0;
+		edgeXMax = 0;
+		edgeYMin = 0;
+		edgeYMax = 0;
 		senseDist = baseRobot.myType==RobotType.ARCHON ? 5 :
 			baseRobot.myType==RobotType.SCOUT ? 4 : 3;
 		senseRadius = (int)Math.sqrt(baseRobot.myType.sensorRadiusSquared);
-		roundLastUpdated = -1;
+		roundTerrainLastUpdated = -1;
 		switch(baseRobot.myType) {
 			case ARCHON: optimizedSensingList = sensorRangeARCHON; break;
 			case SCOUT: optimizedSensingList = sensorRangeSCOUT; break;
@@ -57,6 +66,32 @@ public class MapCache {
 			default:
 				optimizedSensingList = new int[0][0][0];
 		}
+	}
+	
+	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
+	public void senseAll() {
+		senseAllTiles();
+		senseAllMapEdges();
+		sensePowerNodes();
+		
+	}
+	
+	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. <br>
+	 * Assumes that we just moved in a direction, and we only want to sense the new information.
+	 */
+	public void senseAfterMove(Direction lastMoved) {
+		if(lastMoved==null || lastMoved==Direction.NONE || lastMoved==Direction.OMNI) {
+			senseAll();
+			return;
+		}
+		senseTilesOptimized(lastMoved);
+		senseMapEdges(lastMoved);
+		sensePowerNodes();
+		
+//		if(Clock.getRoundNum()%100==0) {
+//			System.out.println(edgeXMin+" "+edgeXMax+" "+edgeYMin+" "+edgeYMax);
+//			System.out.println(powerNodeGraph.toString());
+//		}
 	}
 	
 	/** Senses MOST tiles around current location in range. 
@@ -79,7 +114,7 @@ public class MapCache {
 			}
 		}
 		if(updated) {
-			roundLastUpdated = baseRobot.currRound;
+			roundTerrainLastUpdated = baseRobot.currRound;
 		}
 	}
 	/**
@@ -111,7 +146,7 @@ public class MapCache {
 		}
 		
 		if(updated) {
-			roundLastUpdated = baseRobot.currRound;
+			roundTerrainLastUpdated = baseRobot.currRound;
 		}
 	}
 	
@@ -120,37 +155,37 @@ public class MapCache {
 	 * Should be called in the beginning of the game. */
 	public void senseAllMapEdges() {
 		MapLocation myLoc = baseRobot.currLoc;
-		if(edgeXMin==-1 && 
+		if(edgeXMin==0 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
-			edgeXMin = myLoc.x - d;
+			edgeXMin = worldToCacheX(myLoc.x) - d;
 		}
-		if(edgeXMax==-1 && 
+		if(edgeXMax==0 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.EAST, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.EAST, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
-			edgeXMax = myLoc.x + d;
+			edgeXMax = worldToCacheX(myLoc.x) + d;
 		}
-		if(edgeYMin==-1 && 
+		if(edgeYMin==0 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.NORTH, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.NORTH, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
-			edgeYMin = myLoc.y - d;
+			edgeYMin = worldToCacheY(myLoc.y) - d;
 		}
-		if(edgeYMax==-1 && 
+		if(edgeYMax==0 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.SOUTH, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.SOUTH, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
-			edgeYMax = myLoc.y + d;
+			edgeYMax = worldToCacheY(myLoc.y) + d;
 		}
 	}
 	/** Updates the edges of the map that we can sense. 
@@ -160,47 +195,84 @@ public class MapCache {
 	 * since a wall could not have appeared in any other direction. */
 	public void senseMapEdges(Direction lastMoved) {
 		MapLocation myLoc = baseRobot.currLoc;
-		if(edgeXMin==-1 && lastMoved.dx==-1 && 
+		if(edgeXMin==0 && lastMoved.dx==-1 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
-			edgeXMin = myLoc.x - d;
+			edgeXMin = worldToCacheX(myLoc.x) - d;
 		}
-		if(edgeXMax==-1 && lastMoved.dx==1 && 
+		if(edgeXMax==0 && lastMoved.dx==1 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.EAST, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.EAST, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
-			edgeXMax = myLoc.x + d;
+			edgeXMax = worldToCacheX(myLoc.x) + d;
 		}
-		if(edgeYMin==-1 && lastMoved.dy==-1 && 
+		if(edgeYMin==0 && lastMoved.dy==-1 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.NORTH, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.NORTH, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
-			edgeYMin = myLoc.y - d;
+			edgeYMin = worldToCacheY(myLoc.y) - d;
 		}
-		if(edgeYMax==-1 && lastMoved.dy==1 && 
+		if(edgeYMax==0 && lastMoved.dy==1 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.SOUTH, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.SOUTH, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
-			edgeYMax = myLoc.y + d;
+			edgeYMax = worldToCacheY(myLoc.y) + d;
 		}
 	}
 	
+	/** Updates the power node graph with all the power nodes in sensing range and their connections. */
+	public void sensePowerNodes() {
+		for(PowerNode node: baseRobot.rc.senseNearbyGameObjects(PowerNode.class)) {
+			MapLocation nodeLoc = node.getLocation();
+			short id = getPowerNodeID(nodeLoc);
+			if(powerNodeGraph.nodeSensed[id])
+				continue;
+			if(id==0) {
+				powerNodeGraph.nodeCount++;
+				id = powerNodeGraph.nodeCount;
+				powerNodeGraph.nodeLocations[id] = node.getLocation();
+				powerNodeID[worldToCacheX(nodeLoc.x)][worldToCacheY(nodeLoc.y)] = id;
+			}
+			for(MapLocation neighborLoc: node.neighbors()) {
+				short neighborID = getPowerNodeID(neighborLoc);
+				if(powerNodeGraph.nodeSensed[neighborID]) 
+					continue;
+				if(neighborID==0) {
+					powerNodeGraph.nodeCount++;
+					neighborID = powerNodeGraph.nodeCount;
+					powerNodeGraph.nodeLocations[neighborID] = neighborLoc;
+					powerNodeID[worldToCacheX(neighborLoc.x)][worldToCacheY(neighborLoc.y)] = neighborID;
+				}
+				powerNodeGraph.adjacencyList[id][powerNodeGraph.degreeCount[id]++] = neighborID;
+				powerNodeGraph.adjacencyList[neighborID][powerNodeGraph.degreeCount[neighborID]++] = id;
+			}
+			powerNodeGraph.nodeSensed[id] = true;
+		}
+	}
+	
+	
 	/** Does this robot know about the terrain of the given map location? */
 	public boolean isSensed(MapLocation loc) {
-		return sensed[worldToCacheX(loc.x)][worldToCacheX(loc.y)];
+		return sensed[worldToCacheX(loc.x)][worldToCacheY(loc.y)];
 	}
 	/** Is the given map location a wall tile? Will return false if the robot does not know. */
 	public boolean isWall(MapLocation loc) {
-		return isWall[worldToCacheX(loc.x)][worldToCacheX(loc.y)];
+		return isWall[worldToCacheX(loc.x)][worldToCacheY(loc.y)];
+	}
+	/** Gets the unique index of the power node at the given location 
+	 * for PowerNodeGraph to use in its data structure.
+	 */
+	public short getPowerNodeID(MapLocation loc) {
+		return powerNodeID[worldToCacheX(loc.x)][worldToCacheY(loc.y)];
 	}
 	
 	/** Converts from world x coordinates to cache x coordinates. */

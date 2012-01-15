@@ -26,6 +26,9 @@ public class TangentBug{
 	int tx = -1;
 	int ty = -1;
 	
+	// Map edge variables - these need to be updated from the outside
+	public int edgeXMin, edgeXMax, edgeYMin, edgeYMax;
+	
 	// Target variables - cleared every time we get a new target
 	int minPrepRounds = 1; // The amount of times we have to prepare before we can compute
 	double chanceGoLongWay = 0; // The chance that we pick the longer way to trace around walls
@@ -43,6 +46,7 @@ public class TangentBug{
 	boolean doneTracingClockwise = false;
 	boolean doneTracingCounterclockwise = false;
 	boolean traceDirLocked = false;
+	boolean[] hitMapEdge = new boolean[2];
 	int tangentPosLastTurn = -1;
 	boolean directionalBugging = false;
 	int directionalBugDirection = -1;
@@ -75,6 +79,10 @@ public class TangentBug{
 		this.map = map;
 		xmax = map.length;
 		ymax = map[0].length;
+		edgeXMin = -1;
+		edgeXMax = Integer.MAX_VALUE;
+		edgeYMin = -1;
+		edgeYMax = Integer.MAX_VALUE;
 		wallCache = new int[xmax][ymax];
 		reset();
 	}
@@ -184,9 +192,10 @@ public class TangentBug{
 				scanx = sx;
 				scany = sy;
 			}
+			if(scanx==tx && scany==ty) {
+				minPrepRounds = 1;
+			}
 			for(int step=0; step<MLINE_SCAN_STEPS_PER_TURN_NOT_TRACING; step++) {
-				if(scanx==tx && scany==ty) break;
-				
 				// go towards dest until we hit a wall
 				int dirTowards = getDirTowards(tx-scanx, ty-scany);
 				scanx += d[dirTowards][0];
@@ -224,7 +233,7 @@ public class TangentBug{
 			return new int[] {tx-sx, ty-sy};
 		}
 		
-//		 if(tracing) {StringBuilder sb = new StringBuilder(); for(int y=120; y<130; y++) { for(int x=120; x<130; x++) sb.append((wallCache[x][y]==curWallCacheID*BUFFER_LENGTH)?'#':(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH)?'o':'.'); sb.append("\n"); } System.out.print(sb);}
+//		 if(tracing) {StringBuilder sb = new StringBuilder(); for(int y=0; y<ymax; y++) { for(int x=0; x<xmax; x++) sb.append((wallCache[x][y]==curWallCacheID*BUFFER_LENGTH)?'#':(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH)?'o':'.'); sb.append("\n"); } System.out.print(sb);}
 //		 if(tracing) for(int i=BUFFER_START-30; i<=BUFFER_START+30; i++) System.out.println("  "+i+" "+buffer[i][0]+","+buffer[i][1]);
 		
 		if(!tracing) {
@@ -242,9 +251,15 @@ public class TangentBug{
 		
 		//find better direction by taking smaller heuristic value
 		int bestTraceDir =  heuristicValue[0]<heuristicValue[1]?0:1;
-		if(!traceDirLocked && chanceGoLongWay>0 && Math.random()<chanceGoLongWay) 
+		
+		if(hitMapEdge[0] && !hitMapEdge[1]) 
+			bestTraceDir = 1;
+		else if(!hitMapEdge[0] && hitMapEdge[1]) 
+			bestTraceDir = 0;
+		else if(!traceDirLocked && bdir[bestTraceDir]==-1 && bdir[1-bestTraceDir]!=-1) 
 			bestTraceDir = 1 - bestTraceDir;
-		if(!traceDirLocked && bdir[bestTraceDir]==-1 && bdir[1-bestTraceDir]!=-1) 
+		
+		if(!traceDirLocked && chanceGoLongWay>0 && Math.random()<chanceGoLongWay) 
 			bestTraceDir = 1 - bestTraceDir;
 		traceDirLastTurn = bestTraceDir;
 		tangentPosLastTurn = bpos[bestTraceDir];
@@ -320,7 +335,7 @@ public class TangentBug{
 		}
 //		System.out.println(" directional bugging: "+directionalBugging);
 		
-		if(doneTracingClockwise && doneTracingCounterclockwise)
+		if(doneTracingClockwise && doneTracingCounterclockwise || hitMapEdge[0] || hitMapEdge[1])
 			traceDirLocked = true;
 		clearPreparatoryVariables();
 		return d[finalDir];
@@ -346,9 +361,12 @@ public class TangentBug{
 		directionalBugDirection = -1;
 		directionalBugWallDir = -1;
 		directionalBugStartDotProduct = -1;
+		hitMapEdge[0] = false;
+		hitMapEdge[1] = false;
 	}
 	
 	private void traceClockwiseHelper() {
+		if(hitMapEdge[0]) return;
 		if(bufferLeft+1!=BUFFER_START && 
 				buffer[bufferLeft+1][0]==buffer[BUFFER_START][0] && 
 				buffer[bufferLeft+1][1]==buffer[BUFFER_START][1]) {
@@ -380,6 +398,8 @@ public class TangentBug{
 			if(map[x][y]) {
 				wx = x; 
 				wy = y;
+				if(wx<=edgeXMin || wx>=edgeXMax || wy<=edgeYMin || wy>=edgeYMax)
+					hitMapEdge[0] = true;
 				wallCache[wx][wy] = curWallCacheID*BUFFER_LENGTH;
 			} else {
 				buffer[bufferLeft][0] = x;
@@ -398,6 +418,7 @@ public class TangentBug{
 	}
 	
 	private void traceCounterclockwiseHelper() {
+		if(hitMapEdge[1]) return;
 		if(bufferRight-1!=BUFFER_START && 
 				buffer[bufferRight-1][0]==buffer[BUFFER_START][0] && 
 				buffer[bufferRight-1][1]==buffer[BUFFER_START][1]) {
@@ -429,6 +450,8 @@ public class TangentBug{
 			if(map[x][y]) {
 				wx = x; 
 				wy = y;
+				if(wx<=edgeXMin || wx>=edgeXMax || wy<=edgeYMin || wy>=edgeYMax)
+					hitMapEdge[1] = true;
 				wallCache[wx][wy] = curWallCacheID*BUFFER_LENGTH;
 			} else {
 				buffer[bufferRight][0] = x;
