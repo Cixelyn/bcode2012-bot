@@ -20,6 +20,16 @@ public class FixedStrategyTester extends FixedStrategy
 		new StrategyElement(StrategyConstants.values[7], 4, 	750, 	845),
 		new StrategyElement(StrategyConstants.values[8], 3, 	850, 	1200),
 		new StrategyElement(StrategyConstants.values[9], 2, 	1000, 	1500),
+		new StrategyElement(StrategyConstants.values[0], 2, 	1000, 	2000),
+		new StrategyElement(StrategyConstants.values[1], 5, 	1000, 	1500),
+		new StrategyElement(StrategyConstants.values[2], 7, 	1300,	1650),
+		new StrategyElement(StrategyConstants.values[3], 1, 	1450, 	1500),
+		new StrategyElement(StrategyConstants.values[4], 4, 	1600, 	1700),
+		new StrategyElement(StrategyConstants.values[5], 3, 	1600, 	2200),
+		new StrategyElement(StrategyConstants.values[6], 9, 	1630, 	1900),
+		new StrategyElement(StrategyConstants.values[7], 4, 	1750, 	1845),
+		new StrategyElement(StrategyConstants.values[8], 3, 	1850, 	2200),
+		new StrategyElement(StrategyConstants.values[9], 2, 	2000, 	2500),
 	};
 	public FixedStrategyTester() {
 		super(STRATEGY);

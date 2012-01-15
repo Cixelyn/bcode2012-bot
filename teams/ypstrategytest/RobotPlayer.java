@@ -64,7 +64,7 @@ public class RobotPlayer {
 			sh.insert(sa[x]);
 			System.out.println("insert took: "+(Clock.getBytecodeNum()-b));
 		}
-		System.out.println("all inserts took: "+(Clock.getBytecodeNum()-bytecode));
+		System.out.println("all inserts took: "+(Clock.getBytecodeNum()-bytecode-extra));
 		
 		bytecode = Clock.getBytecodeNum();
 		for (int x=0; x<sa.length; x++)
@@ -74,26 +74,34 @@ public class RobotPlayer {
 			System.out.println("poped "+se.priority);
 			System.out.println("pop took: "+(Clock.getBytecodeNum()-b));
 		}
-		System.out.println("all pops took: "+(Clock.getBytecodeNum()-bytecode));
+		System.out.println("all pops took: "+(Clock.getBytecodeNum()-bytecode-extra));
 		
 		
 		rc.yield();
 		bytecode = Clock.getBytecodeNum();
 		Strategy s = new FixedStrategyTester();
-		System.out.println("strategy init took: "+(Clock.getBytecodeNum()-bytecode));
+		System.out.println("strategy init took: "+(Clock.getBytecodeNum()-bytecode-extra));
 		
-		
-		for (int x=0; x<100; x++)
+		int t1,t2,t3;
+		long totalcost = 0;
+		for (int x=0; x<250; x++)
 		{
 			rc.yield();
-			bytecode = Clock.getBytecodeNum();
+			t3 = 0;
+			t1 = Clock.getBytecodeNum();
 			s.initForRound(x*10);
-			System.out.println("init took: "+(Clock.getBytecodeNum()-bytecode));
-			bytecode = Clock.getBytecodeNum();
+			t2 = Clock.getBytecodeNum();
+			t3+=(t2-t1);
+			System.out.println("init took: "+(t2-t1));
+			t1 = Clock.getBytecodeNum();
 			s.act();
-			System.out.println("act took: "+(Clock.getBytecodeNum()-bytecode));
-			
+			t2 = Clock.getBytecodeNum();
+			t3+=(t2-t1);
+			System.out.println("act took: "+(t2-t1));
+			System.out.println("total: "+t3);
+			totalcost += t3;
 		}
+		System.out.println("total bytecode: "+totalcost);
 	}
 	
 	public static void genStrategyElts()

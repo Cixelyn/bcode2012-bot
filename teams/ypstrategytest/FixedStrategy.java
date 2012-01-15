@@ -1,5 +1,7 @@
 package ypstrategytest;
 
+import battlecode.common.Clock;
+
 
 public abstract class FixedStrategy extends Strategy {
 	
@@ -43,42 +45,51 @@ public abstract class FixedStrategy extends Strategy {
 		
 		for (; baseIndex<baseStrategy.length; baseIndex++)
 		{
+			int bytecode = Clock.getBytecodeNum();
 			temp = baseStrategy[baseIndex];
 			if (temp.startRound > round) break;
 			if (temp.endRound < round) break;
-			roundStrategy[roundSize++] = temp;
+			roundStrategyBackup[roundSize++] = temp;
 			if (temp.priority>best.priority)
 			{
 				best = temp;
 				bestindex = roundSize;
 			}
+			System.out.println("process 1 took: "+(Clock.getBytecodeNum()-bytecode-7));
 //			System.out.println("adding strategy "+temp);
 		}
-		System.arraycopy(roundStrategy, 0, roundStrategyBackup, 0, roundSize);
+		int bytecode = Clock.getBytecodeNum();
+		System.arraycopy(roundStrategyBackup, 0, roundStrategy, 0, roundSize);
+		System.out.println("copy took: "+(Clock.getBytecodeNum()-bytecode-7));
 //		System.out.println("total strategies: "+roundSize);
 	}
 	
 	public void cleanUp(int round)
 	{
-		int oldrs = roundSize;
+//		int bytecode = Clock.getBytecodeNum();
+//		final int oldrs = roundSize;
 		StrategyElement temp;
-		StrategyElement[] newround = new StrategyElement[ARRAYLEN];
-		
-		roundSize = 0;
+//		StrategyElement[] newround = new StrategyElement[ARRAYLEN];
+//		System.out.println("cleanup1 took: "+(Clock.getBytecodeNum()-bytecode-7));
+//		roundSize = 0;
 		best = WORST_STRATEGY;
-		for (int x=0; x<oldrs; x++)
+		for (int x=0; x<roundSize; x++)
 		{
 			temp = roundStrategyBackup[x];
-			if (temp==null || temp.endRound < round) continue;
-			if (temp.priority>best.priority)
+			if (temp==null) continue;
+			else if (temp.endRound < round)
+			{
+				roundStrategyBackup[x] = null;
+			} else if (temp.priority<=best.priority)
 			{
 				best = temp;
-				bestindex = roundSize;
+				bestindex = x;
 			}
-			newround[roundSize++] = temp;
-			
+//			System.out.println("cleanuploop took: "+(Clock.getBytecodeNum()-bytecode-7));
 		}
-		roundStrategy = newround;
+//		System.out.println("cleanup entire loop took: "+(Clock.getBytecodeNum()-bytecode-7));
+//		roundStrategy = newround;
+//		System.out.println("cleanup took: "+(Clock.getBytecodeNum()-bytecode-7));
 	}
 	
 	@Override
