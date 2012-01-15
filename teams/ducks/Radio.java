@@ -54,12 +54,12 @@ public class Radio {
 	 * @param header
 	 * @param data
 	 */
-	public void sendInt(String header, int data) {
+	public void sendShort(String header, int data) {
 		msgContainer.append(header);
 		msgContainer.append((char) (data + 0x100));
 	}
 	
-	public static int decodeInt(StringBuilder s) {
+	public static int decodeShort(StringBuilder s) {
 		return s.charAt(0) - 0x100;
 	}
 	
@@ -85,14 +85,14 @@ public class Radio {
 	
 
 	/**
-	 * Send a variable-sized array of 16-bit integers.
+	 * Send a variable-sized array of 15-bit integers.
 	 * Make sure each element in the array is LESS THAN 32000,
 	 * otherwise deserialization will fail
 	 * @param header - "#[addr][type]"
 	 * @param ints - array of 16-bit ints
-	 * @see Radio#sendInt(String, int) sendInt
+	 * @see Radio#sendShort(String, int) sendInt
 	 */
-	public void sendInts(String header, int[] ints) {
+	public void sendShorts(String header, int[] ints) {
 		msgContainer.append(header);
 		for (int i : ints) {
 			msgContainer.append((char)( i + 0x100));
@@ -105,7 +105,7 @@ public class Radio {
 	 * @param msg - the message
 	 * @return deserialized array
 	 */
-	public static int[] decodeInts(StringBuilder msg) {
+	public static int[] decodeShorts(StringBuilder msg) {
 		int end = msg.indexOf("!");
 		int[] ints = new int[end];
 		
@@ -121,7 +121,7 @@ public class Radio {
 	 * Queue a list of integers
 	 * @param header
 	 * @param locs
-	 * @see Radio#sendInt(String, int) sendInt
+	 * @see Radio#sendShort(String, int) sendInt
 	 */
 	public void sendMapLocs(String header, MapLocation[] locs) {
 		msgContainer.append(header);
@@ -249,4 +249,19 @@ public class Radio {
 			}
 		}
 	}
+	
+
+	/**
+	 * Test code to ensure serialization / deserialization works
+	 */
+	public static void main() {
+		
+		
+		
+		
+		
+	}
+	
+	
+	
 }

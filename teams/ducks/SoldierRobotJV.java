@@ -62,7 +62,7 @@ public class SoldierRobotJV extends BaseRobot {
 				if (currState == RobotState.POWER_SAVE) {
 					currState = RobotState.RUSH;
 				}
-				msgInts = Radio.decodeInts(sb);
+				msgInts = Radio.decodeShorts(sb);
 				int msgRallyPriority = msgInts[0];
 				MapLocation msgObjective = new MapLocation(msgInts[1], msgInts[2]);
 				if (msgRallyPriority > rallyPriority) {
@@ -71,7 +71,7 @@ public class SoldierRobotJV extends BaseRobot {
 				}
 				break;
 			case 'd':
-				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
 				for (int id : deadEnemyArchonIDs) {
 					enemyArchonInfo.reportEnemyArchonKill(id);
 				}
@@ -249,7 +249,7 @@ public class SoldierRobotJV extends BaseRobot {
 	
 	private void sendDeadEnemyArchonIDs() throws GameActionException {
 		if (--timeUntilBroadcast <= 0) {
-			io.sendInts("#xd", enemyArchonInfo.getDeadEnemyArchonIDs());
+			io.sendShorts("#xd", enemyArchonInfo.getDeadEnemyArchonIDs());
 			timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
 		}
 	}

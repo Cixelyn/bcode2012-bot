@@ -49,7 +49,7 @@ public class SoldierRobot extends BaseRobot {
 	public void processMessage(char msgType, StringBuilder sb) {
 		switch(msgType) {
 			case 'r':
-				int[] msgInts = Radio.decodeInts(sb);
+				int[] msgInts = Radio.decodeShorts(sb);
 				int msgTargetPriority = msgInts[0];
 				MapLocation msgTarget = new MapLocation(msgInts[1], msgInts[2]);
 				if (msgTargetPriority > targetPriority) {
@@ -58,7 +58,7 @@ public class SoldierRobot extends BaseRobot {
 				}
 				break;
 			case 'd':
-				int[] deadEnemyArchonIDs = Radio.decodeInts(sb);
+				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
 				for (int id : deadEnemyArchonIDs) {
 					enemyArchonInfo.reportEnemyArchonKill(id);
 				}
@@ -175,7 +175,7 @@ public class SoldierRobot extends BaseRobot {
 	}
 	
 	private void sendSoldierMessage() throws GameActionException {
-		io.sendInts("#xd", enemyArchonInfo.getDeadEnemyArchonIDs());
+		io.sendShorts("#xd", enemyArchonInfo.getDeadEnemyArchonIDs());
 	}
 
 	private boolean isTowerTargetable(
