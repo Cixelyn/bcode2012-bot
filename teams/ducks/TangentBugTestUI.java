@@ -14,7 +14,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 
 
-public class MainFrame extends JFrame{
+public class TangentBugTestUI extends JFrame{
 	private static final long serialVersionUID = 346L;
 	
 	public int movesPerSecond = 5;
@@ -29,7 +29,7 @@ public class MainFrame extends JFrame{
 	public boolean running;
 	public int moveCount;
 	TangentBug tangentBug;
-	public MainFrame() {
+	public TangentBugTestUI() {
 		keysHeld = new boolean[65536];
 		px = new int[numAlgos];
 		py = new int[numAlgos];
@@ -217,7 +217,7 @@ public class MainFrame extends JFrame{
 	}
 	
 	public static void main(String args[]) {
-		MainFrame frame = new MainFrame();
+		TangentBugTestUI frame = new TangentBugTestUI();
 		frame.setLocation(100, 30);
 		frame.setVisible(true);
 	}
