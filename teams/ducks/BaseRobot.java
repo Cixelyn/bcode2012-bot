@@ -10,6 +10,7 @@ public abstract class BaseRobot {
 	final Navigator nav;
 	final Micro mi;
 	final Radio io;
+	final SharedExplorationSystem ses;
 	Navigation nv;
 	
 	// Robot Stats
@@ -48,6 +49,7 @@ public abstract class BaseRobot {
 		nav = new Navigator(this);
 		mi = new Micro(this);
 		io = new Radio(this);
+		ses = new SharedExplorationSystem(this);
 		
 		spawnRound = Clock.getRoundNum();
 		
