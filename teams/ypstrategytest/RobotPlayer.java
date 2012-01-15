@@ -15,6 +15,11 @@ public class RobotPlayer {
 	public static void dostuff(RobotController rc) throws Exception
 	{
 		if (!rc.getLocation().equals(rc.senseAlliedArchons()[0])) rc.suicide();
+		
+		
+		TestClass.run();
+		rc.resign();
+		
 		int bytecode;
 		
 		genStrategyElts();
