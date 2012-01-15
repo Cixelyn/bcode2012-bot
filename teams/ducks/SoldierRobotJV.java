@@ -26,8 +26,8 @@ public class SoldierRobotJV extends BaseRobot {
 	@Override
 	public void run() throws GameActionException {
 		if (objective != null) {
-			rc.setIndicatorString(1, "Distance to objective: " +
-					currLoc.distanceSquaredTo(objective));
+			debug.setIndicatorString(1, "Distance to objective: " +
+					currLoc.distanceSquaredTo(objective), "jven");
 		}
 		// power down if not enough flux, or suicide if all archons are dead
 		if (currFlux < Constants.POWER_DOWN_FLUX) {
