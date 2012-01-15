@@ -39,7 +39,7 @@ public class FixedStrategyTester extends FixedStrategy
 	public boolean execute(StrategyEnum strategy)
 	{
 		printStrategy(strategy);
-		return true;
+		return strategy!=StrategyEnum.RUN;
 	}
 	
 	public void printStrategy(StrategyEnum strategy)
