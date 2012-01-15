@@ -10,6 +10,7 @@ public abstract class BaseRobot {
 	final Navigator nav;
 	final Micro mi;
 	final Radio io;
+	final Debug debug;
 	Navigation nv;
 	
 	// Robot Stats
@@ -48,6 +49,7 @@ public abstract class BaseRobot {
 		nav = new Navigator(this);
 		mi = new Micro(this);
 		io = new Radio(this);
+		debug = new Debug(this, "jven");
 		
 		spawnRound = Clock.getRoundNum();
 		
@@ -73,9 +75,12 @@ public abstract class BaseRobot {
 			currRound = Clock.getRoundNum();
 			
 			// show state of robot
-			rc.setIndicatorString(0, "" + myType + " - " + currState);
-			rc.setIndicatorString(1,
-					"Enemy archons remaining: " + enemyArchonInfo.getNumEnemyArchons());
+			debug.setIndicatorString(0,
+					"" + myType + " - " + currState,
+					"jven");
+			debug.setIndicatorString(1,
+					"Enemy archons remaining: " + enemyArchonInfo.getNumEnemyArchons(),
+					"jven");
 			
 			// Main Radio Receive Call
 			try {
@@ -103,6 +108,8 @@ public abstract class BaseRobot {
 				rc.addMatchObservation(e.toString());
 			}
 			
+			// Set indicator strings
+			debug.showIndicatorStrings();
 		
 			// End of Turn
 			stopClock();
