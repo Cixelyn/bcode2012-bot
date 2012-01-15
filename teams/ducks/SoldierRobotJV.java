@@ -238,10 +238,12 @@ public class SoldierRobotJV extends BaseRobot {
 			return;
 		}
 		Direction dir = currLoc.directionTo(target);
-		if (currDir != dir) {
-			rc.setDirection(dir);
-		} else if (rc.canMove(dir)) {
-			rc.moveForward();
+		if (dir != Direction.OMNI && dir != Direction.NONE) {
+			if (currDir != dir) {
+				rc.setDirection(dir);
+			} else if (rc.canMove(dir)) {
+				rc.moveForward();
+			}
 		}
 	}
 	
