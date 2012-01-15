@@ -1,10 +1,10 @@
 package ducks;
 
-import battlecode.common.Clock;
+import java.util.HashSet;
+
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
-import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
 
 /** This data structure caches the terrain of the world map as sensed by one robot. 
@@ -13,18 +13,21 @@ import battlecode.common.TerrainTile;
  * We set the coordinate (128,128) in the cache to correspond to the location of
  * our team's power core, and linearly shift between cache coordinates and world coordinates
  * using this transformation.
- * 
- * @author Haitao
  */
 public class MapCache {
 	final static int MAP_SIZE = 256;
 	final static int POWER_CORE_POSITION = 128;
+	final static int MAP_BLOCK_SIZE = 4;
+	final static int PACKED_MAP_SIZE = 64;
 	
 	final BaseRobot baseRobot;
 	/** True if the tile is a wall, false if the tile is ground or out of bounds. */
 	final boolean[][] isWall;
+	final int[][] packedIsWall;
 	/** True if we have sensed the tile or been told by another robot about the tile. */
 	final boolean[][] sensed;
+	final int[][] packedSensed;
+	final HashSet<Integer> packedDataUpdated;
 	/** Stores the IDs of power nodes the robot has discovered. */
 	final short[][] powerNodeID;
 	final PowerNodeGraph powerNodeGraph;
@@ -34,16 +37,17 @@ public class MapCache {
 	 */
 	public int edgeXMin, edgeXMax, edgeYMin, edgeYMax;
 	/** Just a magic number to optimize the senseAllTiles() function. */
-	int senseDist;
 	int senseRadius;
 	/** optimized sensing list of position vectors for each unit */
 	private final int[][][] optimizedSensingList;
-	/** The game round that we last updated the terrain in the map cache. */
-	int roundTerrainLastUpdated;
 	public MapCache(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		isWall = new boolean[MAP_SIZE][MAP_SIZE];
 		sensed = new boolean[MAP_SIZE][MAP_SIZE];
+		packedIsWall = new int[PACKED_MAP_SIZE][PACKED_MAP_SIZE];
+		packedSensed = new int[PACKED_MAP_SIZE][PACKED_MAP_SIZE];
+		packedDataUpdated = new HashSet<Integer>();
+		//initPackedDataStructures();
 		powerNodeID = new short[MAP_SIZE][MAP_SIZE];
 		MapLocation loc = baseRobot.rc.sensePowerCore().getLocation();
 		powerCoreWorldX = loc.x;
@@ -53,10 +57,7 @@ public class MapCache {
 		edgeXMax = 0;
 		edgeYMin = 0;
 		edgeYMax = 0;
-		senseDist = baseRobot.myType==RobotType.ARCHON ? 5 :
-			baseRobot.myType==RobotType.SCOUT ? 4 : 3;
 		senseRadius = (int)Math.sqrt(baseRobot.myType.sensorRadiusSquared);
-		roundTerrainLastUpdated = -1;
 		switch(baseRobot.myType) {
 			case ARCHON: optimizedSensingList = sensorRangeARCHON; break;
 			case SCOUT: optimizedSensingList = sensorRangeSCOUT; break;
@@ -67,7 +68,30 @@ public class MapCache {
 				optimizedSensingList = new int[0][0][0];
 		}
 	}
+	public void initPackedDataStructures() {
+		//17,47 are optimized magic numbers from (128-60)/4 and (128+60)/4
+		for(int xb=17; xb<47; xb++) for(int yb=17; yb<47; yb++) { 
+			packedIsWall[xb][yb] = xb*(1<<22)+yb*(1<<16);
+		}
+		for(int xb=17; xb<47; xb++)
+		System.arraycopy(packedIsWall[xb], 17, packedSensed[xb], 17, 30);
+	}
 	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("\nSurrounding map data:"); 
+		int myX = worldToCacheX(baseRobot.currLoc.x);
+		int myY = worldToCacheY(baseRobot.currLoc.y);
+		for(int y=myY-10; y<myY+10; y++) { 
+			for(int x=myX-10; x<myX+10; x++) 
+				sb.append((y==myY&&x==myX)?'x':(!sensed[x][y])?'o':(isWall[x][y])?'#':'.'); 
+			sb.append("\n"); 
+		} 
+		sb.append("Edge data: \nx=["+edgeXMin+","+edgeXMax+"] y=["+edgeYMin+","+edgeYMax+"] \n");
+		sb.append("Power node graph:");
+		sb.append(powerNodeGraph.toString());
+		return sb.toString();
+	}
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
 	public void senseAll() {
 		senseAllTiles();
@@ -87,34 +111,32 @@ public class MapCache {
 		senseTilesOptimized(lastMoved);
 		senseMapEdges(lastMoved);
 		sensePowerNodes();
-		
-//		if(Clock.getRoundNum()%100==0) {
-//			System.out.println(edgeXMin+" "+edgeXMax+" "+edgeYMin+" "+edgeYMax);
-//			System.out.println(powerNodeGraph.toString());
-//		}
+//		if(Clock.getRoundNum()%100==5 && Clock.getRoundNum()<=1050)
+//			System.out.println(this);
 	}
 	
-	/** Senses MOST tiles around current location in range. 
-	 * Not quite all tiles, i.e. for archons does not sense tiles <6,0> away. 
+	/** Senses the terrain of all tiles in sensing range of the robot. 
 	 * Should be called when a unit (probably only archon or scout) is newly spawned.
 	 */
 	public void senseAllTiles() {
-		boolean updated = false;
 		MapLocation myLoc = baseRobot.currLoc;
 		int myX = worldToCacheX(myLoc.x);
 		int myY = worldToCacheY(myLoc.y);
-		for(int dx=-senseDist; dx<=senseDist; dx++) for(int dy=-senseDist; dy<=senseDist; dy++) {
-			if(sensed[myX+dx][myY+dy]) continue;
+		for(int dx=-senseRadius; dx<=senseRadius; dx++) for(int dy=-senseRadius; dy<=senseRadius; dy++) {
+			int x = myX+dx;
+			int y = myY+dy;
+			int xblock = myX/MAP_BLOCK_SIZE;
+			int yblock = myY/MAP_BLOCK_SIZE;
+			if(sensed[x][y]) continue;
 			MapLocation loc = myLoc.add(dx, dy);
 			TerrainTile tt = baseRobot.rc.senseTerrainTile(loc);
 			if(tt!=null) {
-				isWall[myX+dx][myY+dy] = tt!=TerrainTile.LAND;
-				sensed[myX+dx][myY+dy] = true;
-				updated = true;
+				boolean b = (tt!=TerrainTile.LAND);
+				isWall[x][y] = b;
+				if(b) packedIsWall[xblock][yblock] |= (1 << x%4*4+y&4);
+				sensed[x][y] = true;
+				packedSensed[xblock][yblock] |= (1 << x%4*4+y&4);
 			}
-		}
-		if(updated) {
-			roundTerrainLastUpdated = baseRobot.currRound;
 		}
 	}
 	/**
@@ -124,29 +146,57 @@ public class MapCache {
 	 * @param lastMoved the direction we just moved in
 	 */
 	public void senseTilesOptimized(Direction lastMoved) {
-		if (lastMoved.ordinal()>7) return;
-		boolean updated = false;
-		
 		final int[][] list = optimizedSensingList[lastMoved.ordinal()];
 		MapLocation myLoc = baseRobot.currLoc;
-		int x = worldToCacheX(myLoc.x);
-		int y = worldToCacheY(myLoc.y);
+		int myX = worldToCacheX(myLoc.x);
+		int myY = worldToCacheY(myLoc.y);
 		for (int i=0; i<list.length; i++) {
 			int dx = list[i][0];
 			int dy = list[i][1];
-			if(sensed[x+dx][y+dy]) continue;
+			int x = myX+dx;
+			int y = myY+dy;
+			int xblock = myX/MAP_BLOCK_SIZE;
+			int yblock = myY/MAP_BLOCK_SIZE;
+			if(sensed[x][y]) continue;
 			MapLocation loc = myLoc.add(dx, dy);
 			TerrainTile tt = baseRobot.rc.senseTerrainTile(loc);
 			if(tt!=null) {
-				isWall[x+dx][y+dy] = tt!=TerrainTile.LAND;
-				sensed[x+dx][y+dy] = true;
-				updated = true;
+				boolean b = (tt!=TerrainTile.LAND);
+				isWall[x][y] = b;
+				if(b) packedIsWall[xblock][yblock] |= (1 << x%4*4+y&4);
+				sensed[x][y] = true;
+				packedSensed[xblock][yblock] |= (1 << x%4*4+y&4);
 			}
 			
 		}
-		
-		if(updated) {
-			roundTerrainLastUpdated = baseRobot.currRound;
+	}
+	
+	/** Combines packed terrain data with existing packed terrain data. */
+	public void integrateTerrainInfo(int packedIsWallInfo, int packedSensedInfo) {
+		int block = (packedIsWallInfo >> 16);
+		int xblock = block / 64;
+		int yblock = block % 64;
+		if(packedSensed[xblock][yblock]!=packedSensedInfo) {
+			packedDataUpdated.add(block);
+			packedIsWall[xblock][yblock] |= packedIsWallInfo;
+			packedSensed[xblock][yblock] |= packedSensedInfo;
+		}
+	}
+	/** Extracts all the packed data in the updated packed fields into the 
+	 * unpacked arrays for terrain data.
+	 */
+	public void extractUpdatedPackedData() {
+		for(int block: packedDataUpdated) {
+			int xblock = block / 64;
+			int yblock = block % 64;
+			int isWallData = packedIsWall[xblock][yblock];
+			int sensedData = packedSensed[xblock][yblock];
+			for(int bit=0; bit<16; bit++) {
+				int x = xblock*MAP_BLOCK_SIZE+bit/4;
+				int y = yblock*MAP_BLOCK_SIZE+bit%4;
+				isWall[x][y] = ((isWallData & (1<<bit)) != 0);
+				sensed[x][y] = ((sensedData & (1<<bit)) != 0);
+			}
 		}
 	}
 	
