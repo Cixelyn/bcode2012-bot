@@ -7,6 +7,7 @@ public abstract class FixedStrategy extends Strategy {
 	StrategyQueue baseQueue;
 	StrategyQueue baseRest;
 	StrategyElement[] roundStrategy;
+	StrategyElement[] roundStrategyBackup;
 //	StrategyElement[] newRoundStrategy;
 	int baseIndex;
 //	int newRoundIndex;
@@ -22,6 +23,7 @@ public abstract class FixedStrategy extends Strategy {
 	public FixedStrategy(StrategyElement[] base) {
 		baseStrategy = base;
 		roundStrategy = new StrategyElement[ARRAYLEN];
+		roundStrategyBackup = new StrategyElement[ARRAYLEN];
 //		newRoundStrategy = new StrategyElement[StrategyConstants.MAX_NEWROUND_STRATEGY_ELEMENTS];
 		baseIndex = 0;
 //		roundIndex = 0;
@@ -45,19 +47,28 @@ public abstract class FixedStrategy extends Strategy {
 			if (temp.startRound > round) break;
 			if (temp.endRound < round) break;
 			roundStrategy[roundSize++] = temp;
+			if (temp.priority>best.priority)
+			{
+				best = temp;
+				bestindex = roundSize;
+			}
+//			System.out.println("adding strategy "+temp);
 		}
+		System.arraycopy(roundStrategy, 0, roundStrategyBackup, 0, roundSize);
+//		System.out.println("total strategies: "+roundSize);
 	}
 	
 	public void cleanUp(int round)
 	{
 		int oldrs = roundSize;
 		StrategyElement temp;
-		StrategyElement[] newround = new StrategyElement[StrategyConstants.MAX_ROUND_STRATEGY_ELEMENTS];
+		StrategyElement[] newround = new StrategyElement[ARRAYLEN];
+		
 		roundSize = 0;
 		best = WORST_STRATEGY;
 		for (int x=0; x<oldrs; x++)
 		{
-			temp = roundStrategy[x];
+			temp = roundStrategyBackup[x];
 			if (temp==null || temp.endRound < round) continue;
 			if (temp.priority>best.priority)
 			{
@@ -65,6 +76,7 @@ public abstract class FixedStrategy extends Strategy {
 				bestindex = roundSize;
 			}
 			newround[roundSize++] = temp;
+			
 		}
 		roundStrategy = newround;
 	}
