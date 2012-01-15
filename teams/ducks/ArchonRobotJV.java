@@ -263,8 +263,8 @@ public class ArchonRobotJV extends BaseRobot {
 	}
 	
 	public void gotoPowerCore() throws GameActionException {
-		// get closest capturable power core
-		MapLocation powerCore = dc.getClosestCapturablePowerCore();
+		// get next power core
+		MapLocation powerCore = getNextPowerCore();
 		// move backwards towards power core if far away
 		int distance = currLoc.distanceSquaredTo(powerCore);
 		if (distance > 2) {
@@ -463,6 +463,28 @@ public class ArchonRobotJV extends BaseRobot {
 				}
 			}
 		}
+	}
+	
+	private MapLocation getNextPowerCore() {
+		try {
+			return dc.getClosestCapturablePowerCore();
+		} catch (GameActionException e) {
+			return null;
+		}
+		/*
+		// get furthest power core from main
+		int furthestDistance = -1;
+		MapLocation furthestPowerCore = null;
+		for (MapLocation powerCore : dc.getCapturablePowerCores()) {
+			int distance = rc.sensePowerCore().getLocation().distanceSquaredTo(
+					powerCore);
+			if (distance > furthestDistance) {
+				furthestPowerCore = powerCore;
+				furthestDistance = distance;
+			}
+		}
+		return furthestPowerCore;
+		*/
 	}
 	
 	private boolean shouldDefend() {
