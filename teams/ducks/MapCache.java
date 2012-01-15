@@ -15,10 +15,10 @@ import battlecode.common.TerrainTile;
  * using this transformation.
  */
 public class MapCache {
-	final static int MAP_SIZE = 256;
-	final static int POWER_CORE_POSITION = 128;
-	final static int MAP_BLOCK_SIZE = 4;
-	final static int PACKED_MAP_SIZE = 64;
+	public final static int MAP_SIZE = 256;
+	public final static int POWER_CORE_POSITION = 128;
+	public final static int MAP_BLOCK_SIZE = 4;
+	public final static int PACKED_MAP_SIZE = 64;
 	
 	final BaseRobot baseRobot;
 	/** True if the tile is a wall, false if the tile is ground or out of bounds. */
@@ -307,6 +307,39 @@ public class MapCache {
 			}
 			powerNodeGraph.nodeSensed[id] = true;
 		}
+	}
+	
+	public void integratePowerNodes(int[] data) {
+		int mask = (1<<15)-1;
+		int nodeX = data[0] >> 15;
+		int nodeY = data[0] & mask;
+		MapLocation nodeLoc = new MapLocation(nodeX, nodeY);
+		short id = baseRobot.mc.getPowerNodeID(nodeLoc);
+		if(powerNodeGraph.nodeSensed[id])
+			return;
+		if(id==0) {
+			powerNodeGraph.nodeCount++;
+			id = powerNodeGraph.nodeCount;
+			powerNodeGraph.nodeLocations[id] = nodeLoc;
+			powerNodeID[worldToCacheX(nodeX)][worldToCacheY(nodeY)] = id;
+		}
+		for(int i=1; i<data.length; i++) {
+			int neighborX = data[i] >> 15;
+			int neighborY = data[i] & mask;
+			MapLocation neighborLoc = new MapLocation(neighborX, neighborY);
+			short neighborID = getPowerNodeID(neighborLoc);
+			if(powerNodeGraph.nodeSensed[neighborID]) 
+				continue;
+			if(neighborID==0) {
+				powerNodeGraph.nodeCount++;
+				neighborID = powerNodeGraph.nodeCount;
+				powerNodeGraph.nodeLocations[neighborID] = neighborLoc;
+				powerNodeID[worldToCacheX(neighborX)][worldToCacheY(neighborY)] = neighborID;
+			}
+			powerNodeGraph.adjacencyList[id][powerNodeGraph.degreeCount[id]++] = neighborID;
+			powerNodeGraph.adjacencyList[neighborID][powerNodeGraph.degreeCount[neighborID]++] = id;
+		}
+		powerNodeGraph.nodeSensed[id] = true;
 	}
 	
 	
