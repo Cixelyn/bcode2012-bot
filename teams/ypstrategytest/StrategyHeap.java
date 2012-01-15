@@ -12,6 +12,13 @@ public class StrategyHeap
 		heap = new StrategyElement[MAX_STRATEGY_HEAP_SIZE];
 	}
 	
+	public StrategyHeap(StrategyHeap other)
+	{
+		size = other.size;
+		heap = new StrategyElement[MAX_STRATEGY_HEAP_SIZE];
+		System.arraycopy(other.heap, 0, heap, 0, size);
+	}
+	
 	public void insert(StrategyElement e)
 	{
 		int n = ++size;
