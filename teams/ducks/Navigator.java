@@ -55,10 +55,6 @@ public class Navigator {
 			if(mapCache.edgeYMin!=0) tangentBug.edgeYMin = mapCache.edgeYMin;
 			if(mapCache.edgeYMax!=0) tangentBug.edgeYMax = mapCache.edgeYMax;
 
-			if(Clock.getRoundNum()%100==0) {
-				System.out.println(tangentBug.edgeXMin+" "+tangentBug.edgeXMax+" "+tangentBug.edgeYMin+" "+tangentBug.edgeYMax);
-				
-			}
 			tangentBug.prepare(
 					mapCache.worldToCacheX(baseRobot.currLoc.x), 
 					mapCache.worldToCacheY(baseRobot.currLoc.y));
