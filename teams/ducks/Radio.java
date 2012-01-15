@@ -1,5 +1,7 @@
 package ducks;
 
+import java.util.Arrays;
+
 import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -15,7 +17,15 @@ public class Radio {
 	private boolean shouldSendWakeup;
 
 	StringBuilder msgContainer;
+	
 
+	public Radio() {
+		System.out.println("WARNING: RADIO NOT BOUND TO BASEROBOT");
+		msgContainer = new StringBuilder();
+	}
+
+	
+	
 	public Radio(BaseRobot br) {
 		this.br = br;
 		listenAddrs = new String[]{};
@@ -47,7 +57,7 @@ public class Radio {
 	
 
 	/**
-	 * Queue an integer for broadcasting.
+	 * Queue a 15-bit unsigned short for broadcasting.
 	 * Headers are an address followed by a message type
 	 * eg: #xy, where the address to send it to is ^x and the
 	 * type of the message is y.
@@ -59,10 +69,14 @@ public class Radio {
 		msgContainer.append((char) (data + 0x100));
 	}
 	
+	/**
+	 * Decodes the next 15-bit unsigned short from the stream
+	 * @param message data stream
+	 * @return short value
+	 */
 	public static int decodeShort(StringBuilder s) {
 		return s.charAt(0) - 0x100;
 	}
-	
 	
 
 	/**
@@ -85,12 +99,12 @@ public class Radio {
 	
 
 	/**
-	 * Send a variable-sized array of 15-bit integers.
+	 * Send a variable-sized array of unsigned 15-bit integers.
 	 * Make sure each element in the array is LESS THAN 32000,
 	 * otherwise deserialization will fail
 	 * @param header - "#[addr][type]"
-	 * @param ints - array of 16-bit ints
-	 * @see Radio#sendShort(String, int) sendInt
+	 * @param ints - array of 15-bit ints
+	 * @see Radio#sendShort(String, int)
 	 */
 	public void sendShorts(String header, int[] ints) {
 		msgContainer.append(header);
@@ -101,7 +115,7 @@ public class Radio {
 	}
 
 	/**
-	 * Decodes the next 16-bit integer array in the message
+	 * Decodes the next 15-bit unsigned integer array in the message
 	 * @param msg - the message
 	 * @return deserialized array
 	 */
@@ -116,9 +130,58 @@ public class Radio {
 	}
 	
 	
+	/**
+	 * Send a variable-sized array of unsigned 30-bit integers.
+	 * Make sure each element in the array is ONLY 30-bits long
+	 * otherwise you'll get raped by wrap-around
+	 * <br/>
+	 * If your number is only 15-bits long, consider sending
+	 * a short instead, as it's much cheaper
+	 * @param header - "#[addr][type]"
+	 * @param ints - array of 31-bit ints
+	 * @see Radio#sendShorts(String, int[])
+	 */
+	public void sendInts(String header, int[] ints) {
+		msgContainer.append(header);
+		for (int i : ints ) {
+			
+			int lo = (i & 0x00007FFF )  + 0x100;
+			int hi = ((i & 0x3FFF8000 )  >> 15) + 0x100;
+			
+			msgContainer.append((char) lo);
+			msgContainer.append((char) hi);
+		}
+		msgContainer.append('!');
+		
+	}
+	
+	/**
+	 * Decodes the next 30-bit integer array from the stream
+	 * @param msg
+	 * @return deserialized array
+	 */
+	public static int[] decodeInts(StringBuilder msg) {
+		
+		int num = msg.indexOf("!") / 2;
+		int[] ints = new int[num];
+		
+		for(int i=0; i < num; i++) {	
+			
+			int lo = (msg.charAt(i*2  )      ) - 0x100;
+			int hi = (msg.charAt(i*2+1) - 0x100) << 15;
+		
+			
+			ints[i] = lo+hi;
+			
+		}
+		
+		return ints;
+	}
+		
+	
 
 	/**
-	 * Queue a list of integers
+	 * Queue a list of MapLocations
 	 * @param header
 	 * @param locs
 	 * @see Radio#sendShort(String, int) sendInt
@@ -143,9 +206,8 @@ public class Radio {
 	public static MapLocation[] decodeMapLocs(StringBuilder msg) {
 		
 		// calc number of locations
-		int end = msg.indexOf("!");
+		int num = msg.indexOf("!") / 2;
 		
-		int num = end/2;
 		MapLocation[] locs = new MapLocation[num];
 	
 		for (int i=0; i < num; i++) {
@@ -254,11 +316,26 @@ public class Radio {
 	/**
 	 * Test code to ensure serialization / deserialization works
 	 */
-	public static void main() {
+	public static void main(String args[]) {
+		Radio io = new Radio();
 		
+		int[] a;
+		a = new int[]{0,10000,20000,30000,40000,500000,1073741823};
 		
+		io.sendShorts("",a);
+		System.out.println((Arrays.toString(Radio.decodeShorts(io.msgContainer))));
+		io.msgContainer = new StringBuilder();
 		
+		io.sendInts("",a);
+		System.out.println((Arrays.toString(Radio.decodeInts(io.msgContainer))));
+		io.msgContainer = new StringBuilder();
 		
+		MapLocation[] locs;
+		locs = new MapLocation[]{new MapLocation(3,20), new MapLocation(200,234), new MapLocation(4,9000)};
+		
+		io.sendMapLocs("", locs);
+		System.out.println((Arrays.toString(Radio.decodeMapLocs(io.msgContainer))));
+		io.msgContainer = new StringBuilder();
 		
 	}
 	
