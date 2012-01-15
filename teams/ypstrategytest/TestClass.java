@@ -79,7 +79,41 @@ public class TestClass {
 		System.out.println(a1.i[0]);
 		System.out.println(a2.i[0]);
 		System.out.println(a3.i[0]);
+		
+		
+		t1 = Clock.getBytecodeNum();
+		StrategyHeap sheap = new StrategyHeap();
+		t2 = Clock.getBytecodeNum();
+		System.out.println("heap init used: "+(t2-t1));
+		
+		t1 = Clock.getBytecodeNum();
+		StrategyHeap sheap2 = (StrategyHeap) Cloner.clone(sheap);
+		t2 = Clock.getBytecodeNum();
+		System.out.println("heap init used: "+(t2-t1));
+		sheap2.size = 1;
+		
+		t1 = Clock.getBytecodeNum();
+		StrategyHeap sheap3 = (StrategyHeap) Cloner.clone(sheap);
+		t2 = Clock.getBytecodeNum();
+		System.out.println("heap init used: "+(t2-t1));
+		sheap3.size = 2;
+		
+		t1 = Clock.getBytecodeNum();
+		StrategyHeap sheap4 = (StrategyHeap) Cloner.clone(sheap);
+		t2 = Clock.getBytecodeNum();
+		System.out.println("heap init used: "+(t2-t1));
+		sheap4.size = 3;
+		
+		System.out.println(sheap.size);
+		System.out.println(sheap2.size);
+		System.out.println(sheap3.size);
+		System.out.println(sheap4.size);
 	}
+	
+//	t1 = Clock.getBytecodeNum();
+//	
+//	t2 = Clock.getBytecodeNum();
+//	System.out.println("string writer used: "+(t2-t1));
 	
 //	public static void main(String[] args) {
 //		Method[] m = ArrayList.class.getMethods();

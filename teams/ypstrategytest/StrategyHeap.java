@@ -1,6 +1,8 @@
 package ypstrategytest;
 
-public class StrategyHeap
+import java.io.Serializable;
+
+public class StrategyHeap implements Serializable
 {
 	public static final int MAX_STRATEGY_HEAP_SIZE = 100;
 	public StrategyElement[] heap;
