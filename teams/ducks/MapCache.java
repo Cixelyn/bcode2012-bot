@@ -19,6 +19,8 @@ public class MapCache {
 	final boolean[][] isWall;
 	/** True if we have sensed the tile or been told by another robot about the tile. */
 	final boolean[][] sensed;
+	/** Stores the IDs of power nodes the robot has discovered. */
+	final short[][] powerNodeID;
 	final static int MAP_SIZE = 256;
 	final static int POWER_CORE_POSITION = 128;
 	final BaseRobot baseRobot;
@@ -33,6 +35,7 @@ public class MapCache {
 	public MapCache(BaseRobot baseRobot) {
 		isWall = new boolean[MAP_SIZE][MAP_SIZE];
 		sensed = new boolean[MAP_SIZE][MAP_SIZE];
+		powerNodeID = new short[MAP_SIZE][MAP_SIZE];
 		this.baseRobot = baseRobot;
 		MapLocation loc = baseRobot.rc.sensePowerCore().getLocation();
 		powerCoreWorldX = loc.x;
