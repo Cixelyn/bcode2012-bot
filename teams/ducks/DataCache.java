@@ -248,7 +248,7 @@ public class DataCache {
 		return closestCapturablePowerCore;
 	}
 	
-	
+	// TODO(jven): this doesn't belong here?
 	private boolean isTowerTargetable(
 			RobotInfo tower) throws GameActionException {
 		// don't shoot at enemy towers not connected to one of ours
