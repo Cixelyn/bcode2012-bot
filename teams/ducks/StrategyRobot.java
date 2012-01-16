@@ -1,5 +1,6 @@
 package ducks;
 
+import ducks.Debug.Owner;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
@@ -16,7 +17,7 @@ public abstract class StrategyRobot extends BaseRobot {
 	public void run() throws GameActionException {
 
 		// show state of robot
-		debug.setIndicatorString(0,"" + myType + " - " + currState, "jven");
+		debug.setIndicatorString(0,"" + myType + " - " + currState, Owner.ALL);
 		
 		gotoState(processTransitions(currState));
 		execute(currState);
