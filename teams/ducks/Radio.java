@@ -71,6 +71,70 @@ public class Radio {
 	public void setAddresses(String[] addrs) {
 		listenAddrs = addrs;
 	}
+
+
+	/**
+	 * Returns whether a robot is already bound
+	 * to a particular address
+	 * @param addr
+	 * @return
+	 */
+	public boolean hasAddress(String addr) {
+		return findAddress(addr)!=-1;
+	}
+	
+	private int findAddress(String addr) {
+		for(int i=listenAddrs.length; --i>=0;) {
+			if(listenAddrs[i] == addr) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+
+	/**
+	 * Adds a particular address to the robot's active ports.
+	 * Internally checks whether the address is already bound or not
+	 * @param addr
+	 * @return whether address was bound or not
+	 */
+	public boolean addAddress(String addr) {
+		if(!hasAddress(addr)) {
+			
+			int oldlen = listenAddrs.length;
+			
+			String[] newAddrs = new String[oldlen + 1];
+			System.arraycopy(listenAddrs, 0, newAddrs, 0, oldlen);
+			newAddrs[oldlen] = addr;
+			listenAddrs = newAddrs;
+			
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	
+	/**
+	 * Removes a robot's binding to an address
+	 * Internally checks whether the address is already bound or not
+	 * @param addr
+	 */
+	public boolean removeAddress(String addr) {
+		int pos=findAddress(addr);
+		if(pos >= 0) {
+			int oldlen = listenAddrs.length;
+			String[] newAddrs = new String[oldlen - 1];
+			System.arraycopy(listenAddrs, 0, newAddrs, 0, pos);
+			System.arraycopy(listenAddrs, pos+1, newAddrs, pos, oldlen - pos -1);
+			listenAddrs = newAddrs;
+			return true;
+			
+		} else {
+			return false;
+		}
+	}
 	
 	
 	
@@ -357,7 +421,20 @@ public class Radio {
 		io.sendMapLocs("", locs);
 		System.out.println((Arrays.toString(Radio.decodeMapLocs(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
-		
+
+		io.setAddresses(new String[]{"#aa", "#bb"});
+		System.out.println((Arrays.toString(io.listenAddrs)));
+		io.addAddress("#cc");
+		io.addAddress("#dd");
+		io.addAddress("#ee");
+		io.addAddress("#dd");
+		System.out.println((Arrays.toString(io.listenAddrs)));
+		io.removeAddress("#bb");
+		io.removeAddress("#ee");
+		io.removeAddress("#ee");
+		io.removeAddress("#aa");
+		io.addAddress("#ff");
+		System.out.println((Arrays.toString(io.listenAddrs)));
 	}
 	
 	
