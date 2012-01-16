@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 
 public class StrategyElement  implements Serializable {
+	private static final long serialVersionUID = 3795294744889692516L;
 	public final StrategyEnum action;
 	public final int priority;
 	public final int startRound;

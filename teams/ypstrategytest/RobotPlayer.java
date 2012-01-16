@@ -36,6 +36,7 @@ public class RobotPlayer {
 		bytecode = Clock.getBytecodeNum();
 		boolean larger = see.priority >= sa[a].priority;
 		System.out.println(" took: "+(Clock.getBytecodeNum()-bytecode-extra));
+		if (larger);
 		
 		bytecode = Clock.getBytecodeNum();
 		int[] priorities = new int[sa.length];
@@ -57,7 +58,7 @@ public class RobotPlayer {
 		bytecode = Clock.getBytecodeNum();
 		StrategyElement[] ses = new StrategyElement[100];
 		System.out.println(" took: "+(Clock.getBytecodeNum()-bytecode-extra));
-		
+		if (ses.length>9);
 		bytecode = Clock.getBytecodeNum();
 		System.arraycopy(priorities, a1, priorities, a2, 1);
 		System.out.println(" took: "+(Clock.getBytecodeNum()-bytecode-extra));

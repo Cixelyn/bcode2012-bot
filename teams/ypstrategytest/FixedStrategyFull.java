@@ -1,6 +1,5 @@
 package ypstrategytest;
 
-import battlecode.common.Clock;
 
 
 public abstract class FixedStrategyFull extends StrategyFull {
