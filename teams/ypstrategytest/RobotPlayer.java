@@ -84,7 +84,7 @@ public class RobotPlayer {
 		
 		rc.yield();
 		bytecode = Clock.getBytecodeNum();
-		Strategy s = new FixedStrategyTester();
+		StrategyFull s = new FixedStrategyFullTester();
 		System.out.println("strategy init took: "+(Clock.getBytecodeNum()-bytecode-extra));
 		
 		int t1,t2,t3;

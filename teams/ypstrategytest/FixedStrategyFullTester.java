@@ -1,9 +1,9 @@
 package ypstrategytest;
 
-public class FixedStrategyTester extends FixedStrategy
+public class FixedStrategyFullTester extends FixedStrategyFull
 {
 
-	public FixedStrategyTester(StrategyElement[] base)
+	public FixedStrategyFullTester(StrategyElement[] base)
 	{
 		super(base);
 	}
@@ -31,7 +31,7 @@ public class FixedStrategyTester extends FixedStrategy
 		new StrategyElement(StrategyConstants.values[8], 3, 	1850, 	2200),
 		new StrategyElement(StrategyConstants.values[9], 2, 	2000, 	2500),
 	};
-	public FixedStrategyTester() {
+	public FixedStrategyFullTester() {
 		super(STRATEGY);
 	}
 
