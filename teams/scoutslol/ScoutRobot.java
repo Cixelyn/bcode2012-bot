@@ -7,7 +7,6 @@ import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
 
 public class ScoutRobot extends BaseRobot {
@@ -222,6 +221,7 @@ public class ScoutRobot extends BaseRobot {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private boolean shouldRegenerate() throws GameActionException {
 		// check if there are enough damaged units
 		int damagedUnits = 0;

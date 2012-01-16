@@ -1,12 +1,9 @@
 package ducksold1;
 
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
 
 public class ScoutRobotJV extends BaseRobot {
 

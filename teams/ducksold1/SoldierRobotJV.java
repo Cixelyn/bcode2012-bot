@@ -1,12 +1,10 @@
 package ducksold1;
 
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
 
 public class SoldierRobotJV extends BaseRobot {
 	
@@ -16,6 +14,8 @@ public class SoldierRobotJV extends BaseRobot {
 	private int timeUntilBroadcast;
 	
 	private MapLocation backOffLoc;
+	
+	@SuppressWarnings("unused")
 	private RobotState prevState;
 
 	public SoldierRobotJV(RobotController myRC) {

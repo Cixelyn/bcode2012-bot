@@ -9,6 +9,7 @@ public class Navigator {
 	private final TangentBug tangentBug;
 	private final BlindBug blindBug;
 	private final MapLocation zeroLoc;
+	@SuppressWarnings("unused")
 	private int roundLastReset;
 	private NavigationMode mode;
 	private MapLocation destination;
