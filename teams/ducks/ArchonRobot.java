@@ -62,19 +62,24 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case BUILD_ARMY:
 		{
-			if (dc.getClosestEnemy()!=null || armySizeBuilt>=armySizeTarget)
-			{
+			if ((dc.getClosestEnemy() != null &&
+					dc.getClosestEnemy().type != RobotType.SCOUT) ||
+					armySizeBuilt >= armySizeTarget) {
 				//TODO wakeup code here? maybe?
-				if (isDefender)
+				if (isDefender) {
 					return RobotState.DEFEND_BASE;
-				else return RobotState.ATTACK_MOVE;
+				} else {
+					return RobotState.ATTACK_MOVE;
+				}
 			}
 		} break;
 		case ATTACK_MOVE:
 		{
 			if (attackMoveDirection!=null)
 			{
-				if (dc.getAlliedArchons().length >= enemyArchonInfo.getNumEnemyArchons()+2)
+				// TODO(jven): shouldn't we be defending our base in case of counter?
+				if (dc.getAlliedArchons().length >=
+						enemyArchonInfo.getNumEnemyArchons() + 2)
 				{
 					return RobotState.POWER_CAP;
 				} else if (enemyPowerNode!=null)
@@ -124,11 +129,11 @@ public class ArchonRobot extends StrategyRobot {
 		{
 			// set micro objective and mode
 			mi.setKiteMode(Constants.SPLIT_DISTANCE);
-			// set flux management mode
-			fm.setBatteryMode();
 		} break;
 		case BUILD_ARMY:
 		{
+			// set flux management mode
+			fm.setBatteryMode();
 			switch (oldstate)
 			{
 			case SPLIT:
@@ -140,15 +145,18 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case ATTACK_MOVE:
 		{
-			
+			// set flux management mode
+			fm.setBatteryMode();
 		} break;
 		case DEFEND_BASE:
 		{
-			
+			// set flux management mode
+			fm.setBatteryMode();
 		} break;
 		case POWER_CAP:
 		{
-			
+			// set flux management mode
+			fm.setBatteryMode();
 		} break;
 		}
 	}
@@ -283,32 +291,37 @@ public class ArchonRobot extends StrategyRobot {
 	}
 	
 	
-//	radio 
-//	a - attack loc
-//	s - swarm - dir, target loc
-//	z - swarm retreat, dir
-//	x - ??? profit
+	//	radio 
+	//	a - attack loc
+	//	s - swarm - dir, target loc
+	//	z - swarm retreat, dir
+	//	x - ??? profit
 	public void attack_move()
 	{
-		debug.setIndicatorString(1, "" + archonIndex, Owner.JVEN);
 		if (currLoc.equals(dc.getAlliedArchons()[0]))
 		{
-//			leader code
-			ur.scan(false, true);
+			// leader code
 			
+			
+			
+			// TODO(jven): this is throwing array index out of bounds exceptions
+			// (1/16 1:54 PM)
+			//ur.scan(false, true);
 			if (ur.numEnemyArchons>0)
 			{
 				
+				
+				
 			}
-			
-			
 		} else
 		{
-//			follow code
+			// follow code
 			
 			
 			
 		}
+		// distribute flux
+		fm.manageFlux();
 	}
 	
 	public boolean checkAttackMoveTargets()
@@ -318,12 +331,14 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void power_cap()
 	{
-		
+		// distribute flux
+		fm.manageFlux();
 	}
 	
 	public void defend_base()
 	{
-		
+		// distribute flux
+		fm.manageFlux();
 	}
 	
 	private boolean spawnUnitInDir(
