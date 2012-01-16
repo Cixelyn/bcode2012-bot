@@ -8,7 +8,10 @@ public abstract class BaseRobot {
 	final DataCache dc;
 	final MapCache mc;
 	final Navigator nav;
+	final Micro mi;
 	final Radio io;
+	final Debug debug;
+	final SharedExplorationSystem ses;
 	Navigation nv;
 	
 	// Robot Stats
@@ -24,7 +27,6 @@ public abstract class BaseRobot {
 	public final int spawnRound;
 	public int currRound;
 	
-	
 	public EnemyArchonInfo enemyArchonInfo;
 	
 	// Internal Statistics
@@ -35,6 +37,8 @@ public abstract class BaseRobot {
 	public BaseRobot(RobotController myRC) {
 		rc = myRC;
 		
+		currLoc = rc.getLocation();
+		currDir = rc.getDirection();
 		myType = rc.getType();
 		myTeam = rc.getTeam();
 		myID = rc.getRobot().getID();
@@ -44,7 +48,10 @@ public abstract class BaseRobot {
 		dc = new DataCache(this);
 		mc = new MapCache(this);
 		nav = new Navigator(this);
+		mi = new Micro(this);
 		io = new Radio(this);
+		debug = new Debug(this, "jven");
+		ses = new SharedExplorationSystem(this);
 		
 		spawnRound = Clock.getRoundNum();
 		
@@ -69,10 +76,9 @@ public abstract class BaseRobot {
 			
 			currRound = Clock.getRoundNum();
 			
-			// show state of robot
-//			rc.setIndicatorString(0, "" + myType + " - " + currState);
-			rc.setIndicatorString(1,
-					"Enemy archons remaining: " + enemyArchonInfo.getNumEnemyArchons());
+			debug.setIndicatorString(1,
+					"Enemy archons remaining: " + enemyArchonInfo.getNumEnemyArchons(),
+					"jven");
 			
 			// Main Radio Receive Call
 			try {
@@ -100,6 +106,8 @@ public abstract class BaseRobot {
 				rc.addMatchObservation(e.toString());
 			}
 			
+			// Set indicator strings
+			debug.showIndicatorStrings();
 		
 			// End of Turn
 			stopClock();
@@ -129,7 +137,7 @@ public abstract class BaseRobot {
         if(executeStartTime!=Clock.getRoundNum()) {
             int currRound = Clock.getRoundNum();
             int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
-            System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+            debug.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
         }  
 	}
 	
