@@ -1,5 +1,6 @@
 package ducks;
 
+import ducks.Debug.Owner;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -101,6 +102,8 @@ public class Micro {
 	 * @throws GameActionException
 	 */
 	public void attackMove() throws GameActionException {
+		// prepare
+		br.nav.prepare();
 		// attack
 		if (!rc.isAttackActive()) {
 			attackClosestEnemy();
@@ -163,11 +166,8 @@ public class Micro {
 	}
 	
 	private boolean normalTowards(MapLocation target) throws GameActionException {
-		// sense tiles
-		br.mc.senseAllTiles();
-		// get step
-		br.nav.prepare();
 		Direction dir = br.nav.navigateToDestination();
+		br.debug.setIndicatorString(2, "Tangent bug says: " + dir, Owner.JVEN);
 		if (dir == Direction.OMNI || dir == Direction.NONE) {
 			return false;
 		}
@@ -185,6 +185,7 @@ public class Micro {
 					rc.setDirection(d);
 				} else {
 					rc.moveForward();
+					br.mc.senseAfterMove(d);
 				}
 				return true;
 			}
@@ -193,10 +194,6 @@ public class Micro {
 	}
 	
 	private boolean moonwalkTowards(MapLocation target) throws GameActionException {
-		// sense tiles
-		br.mc.senseAllTiles();
-		// get step
-		br.nav.prepare();
 		Direction dir = br.nav.navigateToDestination();
 		if (dir == Direction.OMNI || dir == Direction.NONE) {
 			return false;
@@ -215,6 +212,7 @@ public class Micro {
 					rc.setDirection(d.opposite());
 				} else {
 					rc.moveBackward();
+					br.mc.senseAfterMove(d);
 				}
 				return true;
 			}
@@ -258,6 +256,7 @@ public class Micro {
 						rc.setDirection(d);
 					} else {
 						rc.moveBackward();
+						br.mc.senseAfterMove(d.opposite());
 					}
 					return true;
 				}
@@ -268,6 +267,7 @@ public class Micro {
 						rc.setDirection(d);
 					} else {
 						rc.moveForward();
+						br.mc.senseAfterMove(d);
 					}
 					return true;
 				}
@@ -294,6 +294,7 @@ public class Micro {
 					rc.setDirection(d);
 				} else {
 					rc.moveForward();
+					br.mc.senseAfterMove(d);
 				}
 				return true;
 			}

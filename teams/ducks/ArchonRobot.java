@@ -209,6 +209,8 @@ public class ArchonRobot extends StrategyRobot {
 		isDefender = currLoc.equals(dc.getAlliedArchons()[5]);
 		// set my initial exploration direction
 		explorationDirection = myHome.directionTo(currLoc);
+		// sense all
+		mc.senseAll();
 		// done
 		initialized = true;
 	}
