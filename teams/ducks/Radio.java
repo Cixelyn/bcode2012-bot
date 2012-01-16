@@ -8,6 +8,32 @@ import battlecode.common.MapLocation;
 import battlecode.common.Message;
 import battlecode.common.Team;
 
+/**
+ *
+ * The radio class encapsulates the sending of messages between robots
+ * TODO: defend against message replay DoS attacks
+ * 
+ * 
+ * <h1>Channel List</h1>
+ * <ul>
+ *   <li> #x - everyone
+ *   <li> #s - soldiers
+ *   <li> #a - archons
+ *   <li> #e - shared exploration messages 
+ * </ul>
+ * 
+ * <h1>Message Types</h1>
+ * <ul>
+ *   <li> e - map edges
+ *   <li> m - map terrain tile framents
+ *   <li> p - power node fragments
+ * 
+ *   <li> d - annouce dead archons
+ *   <li> a,s,z,x - reserved for swarm
+ * </ul>
+ * 
+ *
+ */
 public class Radio {
 
 	private String[] listenAddrs;

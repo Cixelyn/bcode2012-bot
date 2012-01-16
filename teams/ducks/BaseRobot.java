@@ -14,6 +14,7 @@ public abstract class BaseRobot {
 	final FluxManager fm;
 	final Debug debug;
 	final SharedExplorationSystem ses;
+	final UnitRadar ur;
 	
 	// Robot Stats
 	final RobotType myType;
@@ -56,6 +57,7 @@ public abstract class BaseRobot {
 		fm = new FluxManager(this);
 		debug = new Debug(this, Owner.JVEN);
 		ses = new SharedExplorationSystem(this);
+		ur = new UnitRadar(this);
 		
 		spawnRound = Clock.getRoundNum();
 		
