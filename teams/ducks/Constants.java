@@ -11,13 +11,11 @@ public final class Constants {
 	public static final Direction[] directions = Direction.values();
 
 	
-	public static final int ROUNDS_TO_EXPLORE = 200;
-	public static final int DISTANCE_TO_ARCHON0_ON_GOHOME = 49;
-	public static final int DISTANCE_TO_HOME_ON_GOHOME = 49;
-	
+	public static final int ROUNDS_TO_EXPLORE = 150;
+	public static final int DISTANCE_TO_HOME_ON_GOHOME = 25;
 	public static final int ARMY_SIZE_ON_INITIAL_BUILD = 5;
 	public static final int BUILD_ARMY_ROUND_THRESHOLD = 1000;
-	
+	public static final int SPLIT_DISTANCE = 16;
 	
 
 	/*************************************************************
@@ -49,8 +47,6 @@ public final class Constants {
 	/** The maximum distance units should be from the closest archon */
 	public static final int MAX_SWARM_RADIUS = 9;
 	
-	/** Minimum distance for archons to be from each other at initial split. */
-	public static final int SPLIT_DISTANCE = 16;
 	/** Number of soldiers each archon makes after initial split. */
 	public static final int SOLDIERS_PER_ARCHON = 5;
 	/** Maximum number of rounds to spend splitting. */
