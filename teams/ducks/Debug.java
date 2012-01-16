@@ -27,6 +27,11 @@ public class Debug {
 		indicatorStrings = new String[GameConstants.NUMBER_OF_INDICATOR_STRINGS];
 	}
 	
+	public void logError(Exception e) {
+		e.printStackTrace();
+		rc.addMatchObservation(e.toString());
+	}
+	
 	public void println(String message) {
 		if (showDebug) {
 			System.out.println(message);
@@ -42,9 +47,10 @@ public class Debug {
 	
 	public void showIndicatorStrings() {
 		for (int row = 0; row < GameConstants.NUMBER_OF_INDICATOR_STRINGS; row++) {
-			rc.setIndicatorString(row, "");
 			if (showDebug) {
 				rc.setIndicatorString(row, indicatorStrings[row]);
+			} else {
+				rc.setIndicatorString(row, "");
 			}
 		}
 	}

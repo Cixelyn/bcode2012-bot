@@ -140,7 +140,7 @@ public class ArchonOwnership {
 			return false;
 		}
 		// check ownership
-		if (br.birthday - ownership[0] >= GameConstants.WAKE_DELAY &&
+		if (br.birthday - ownership[0] <= GameConstants.WAKE_DELAY &&
 				ownership[1] == br.birthplace.x &&
 				ownership[2] == br.birthplace.y) {
 			archonOwnerID = ownership[3];
