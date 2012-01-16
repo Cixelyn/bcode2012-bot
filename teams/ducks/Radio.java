@@ -149,7 +149,7 @@ public class Radio {
 		int end = msg.indexOf("!");
 		int[] ints = new int[end];
 		
-		for(int i=end; --i > 0; ) {
+		for(int i=end; --i >= 0; ) {
 			ints[i] = msg.charAt(i) - 0x100;
 		}
 		return ints;
@@ -190,7 +190,7 @@ public class Radio {
 		int num = msg.indexOf("!") / 2;
 		int[] ints = new int[num];
 		
-		for(int i=num; --i > 0;) {	
+		for(int i=num; --i >= 0;) {	
 			ints[i] = 
 				((msg.charAt(i*2  )      ) - 0x100) +  // lo bits
 				((msg.charAt(i*2+1) - 0x100) << 15);   // hi bits
@@ -341,7 +341,7 @@ public class Radio {
 		Radio io = new Radio();
 		
 		int[] a;
-		a = new int[]{0,10000,20000,30000,40000,500000,1073741823};
+		a = new int[]{555,10000,20000,30000,40000,500000,1073741823};
 		
 		io.sendShorts("",a);
 		System.out.println((Arrays.toString(Radio.decodeShorts(io.msgContainer))));
