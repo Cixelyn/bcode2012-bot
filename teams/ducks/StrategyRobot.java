@@ -21,17 +21,30 @@ public abstract class StrategyRobot extends BaseRobot {
 		gotoState(processTransitions(currState));
 		execute(currState);
 	}
-	
+
+	/**
+	 * Returns the current Robot's state
+	 * @return
+	 */
 	public RobotState getCurrentState() {
 		return currState;
 	}
 	
 	/**
 	 * returns which state to transition to.
-	 * (return the same state if not transitioning)
+	 * (return the same state if not transitioning
+	 * Use this to setup the normal state transition diagram
 	 */
 	public abstract RobotState processTransitions(RobotState state) throws GameActionException;
+
 	
+	
+	/**
+	 * ONLY CALL WHEN PROCESSING MESSAGES OTHERWISE YOU GET G'ED
+	 * Because decoupling is impossible for 
+	 * @param newstate - state you want to switch into
+	 * @throws GameActionException
+	 */
 	public void gotoState(RobotState newstate) throws GameActionException {
 		if (newstate!=currState)
 		{
@@ -39,6 +52,7 @@ public abstract class StrategyRobot extends BaseRobot {
 			currState = newstate;
 		}
 	}
+
 	
 	/**
 	 * set up fields for transitionoing from oldstate to newstate
