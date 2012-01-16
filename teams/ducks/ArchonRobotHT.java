@@ -26,15 +26,16 @@ public class ArchonRobotHT extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
-		//if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
-//		if(myArchonID==5 && Clock.getRoundNum()%500==5)
-//			System.out.println(mc);
+//		if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
+		if(myArchonID==5 && Clock.getRoundNum()%500==5)
+			System.out.println(mc);
 		mc.senseAfterMove(lastMoved);
 		
 		rc.setIndicatorString(0, ""+aboutToMove);
 		if(!rc.isMovementActive()) {
 			if(aboutToMove && rc.canMove(currDir))  {
 				rc.moveForward();
+				lastMoved = currDir;
 				aboutToMove = false;
 			} else {
 				Direction dir = currDir;
@@ -47,7 +48,7 @@ public class ArchonRobotHT extends BaseRobot{
 				int i=0;
 				while(!rc.canMove(dir)) {
 					i++;
-					if(i>10) break;
+					if(i>3) break;
 					if(Math.random()<0.5) 
 						dir = dir.rotateLeft();
 					else
@@ -58,13 +59,15 @@ public class ArchonRobotHT extends BaseRobot{
 			}
 		}
 		
-		if(Math.random()<0.001) {
-		ses.broadcastPowerNodeGraph();
-		ses.broadcastMapFragment();
-		ses.broadcastMapEdges();
+		
+		if(Math.random()<0.2) {
+			ses.broadcastPowerNodeFragment();
+			ses.broadcastMapFragment();
+			ses.broadcastMapEdges();
 		}
 		mc.extractUpdatedPackedDataStep();
-
+		
+		
 	}
 	@Override
 	public void processMessage(char msgType, StringBuilder sb) {
@@ -77,7 +80,7 @@ public class ArchonRobotHT extends BaseRobot{
 			ses.receiveMapFragment(data);
 		} else if(msgType=='p') {
 			data = Radio.decodeInts(sb);
-			ses.receivePowerNodeGraph(data);
+			ses.receivePowerNodeFragment(data);
 		} 
 	}
 }

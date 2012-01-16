@@ -8,6 +8,10 @@ public class SharedExplorationSystem {
 		this.baseRobot = baseRobot;
 	}
 	
+	/** Broadcasts robot's knowledge of one column of the map.
+	 * The column is decided by modding the turn number by robot's guess of the number
+	 * of columns on the map.
+	 */
 	public void broadcastMapFragment() {
 		int startRow;
 		int numRowBlocks;
@@ -51,11 +55,13 @@ public class SharedExplorationSystem {
 			buffer[c++] = baseRobot.mc.packedIsWall[xb][yb];
 			buffer[c++] = data;
 		}
-		if(c>32) System.out.println(c);
-		int[] ints = new int[c];
-		System.arraycopy(buffer, 0, ints, 0, c);
-		baseRobot.io.sendInts("#em", ints);
+		if(c>0) {
+			int[] ints = new int[c];
+			System.arraycopy(buffer, 0, ints, 0, c);
+			baseRobot.io.sendInts("#em", ints);
+		}
 	}
+	/** Broadcasts robot's knowledge of the four map edges. */
 	public void broadcastMapEdges() {
 		int[] edges = new int[] {
 				baseRobot.mc.edgeXMin, 
@@ -65,7 +71,8 @@ public class SharedExplorationSystem {
 		};
 		baseRobot.io.sendShorts("#ee", edges);
 	}
-	public void broadcastPowerNodeGraph() {
+	/** Broadcasts data about one node in the power node graph and its neighbors. */
+	public void broadcastPowerNodeFragment() {
 		PowerNodeGraph png = baseRobot.mc.powerNodeGraph;
 		int id = Clock.getRoundNum() % (png.nodeCount) + 1;
 		if(!png.nodeSensed[id]) return;
@@ -79,18 +86,21 @@ public class SharedExplorationSystem {
 		baseRobot.io.sendInts("#ep", ints);
 	}
 	
+	/** Receive data equivalent to one broadcast of a map fragment. */
 	public void receiveMapFragment(int[] data) {
 		for(int i=0; i<data.length; i+=2) {
 			baseRobot.mc.integrateTerrainInfo(data[i], data[i+1]);
 		}
 	}
+	/** Receive data equivalent to one broadcast of the four map edges. */
 	public void receiveMapEdges(int[] data) {
 		if(baseRobot.mc.edgeXMin==0) baseRobot.mc.edgeXMin = data[0];
 		if(baseRobot.mc.edgeXMax==0) baseRobot.mc.edgeXMax = data[1];
 		if(baseRobot.mc.edgeYMin==0) baseRobot.mc.edgeYMin = data[2];
 		if(baseRobot.mc.edgeYMax==0) baseRobot.mc.edgeYMax = data[3];
 	}
-	public void receivePowerNodeGraph(int[] data) {
+	/** Receive data equivalent to one broadcast of a power node fragment. */
+	public void receivePowerNodeFragment(int[] data) {
 		baseRobot.mc.integratePowerNodes(data);
 	}
 }

@@ -68,7 +68,7 @@ public class MapCache {
 				optimizedSensingList = new int[0][0][0];
 		}
 	}
-	public void initPackedDataStructures() {
+	private void initPackedDataStructures() {
 		//17,47 are optimized magic numbers from (128-60)/4 and (128+60)/4
 		for(int xb=17; xb<47; xb++) for(int yb=17; yb<47; yb++) { 
 			packedIsWall[xb][yb] = xb*(1<<22)+yb*(1<<16);
@@ -90,11 +90,9 @@ public class MapCache {
 		sb.append("Edge data: \nx=["+edgeXMin+","+edgeXMax+"] y=["+edgeYMin+","+edgeYMax+"] \n");
 		sb.append("Power node graph:");
 		sb.append(powerNodeGraph.toString());
-		for(int x=25; x<32; x++) for(int y=25; y<32; y++) {
-			sb.append(x+" "+y+" "+Integer.toBinaryString(packedIsWall[x][y])+" "+Integer.toBinaryString(packedSensed[x][y])+"\n");
-		}
 		return sb.toString();
 	}
+	
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
 	public void senseAll() {
 		senseAllTiles();
@@ -102,7 +100,6 @@ public class MapCache {
 		sensePowerNodes();
 		
 	}
-	
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. <br>
 	 * Assumes that we just moved in a direction, and we only want to sense the new information.
 	 */
@@ -315,6 +312,7 @@ public class MapCache {
 		}
 	}
 	
+	/** Update power node graph with data from a message. */
 	public void integratePowerNodes(int[] data) {
 		int mask = (1<<15)-1;
 		int nodeX = data[0] >> 15;
