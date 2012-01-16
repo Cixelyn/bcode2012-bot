@@ -5,7 +5,6 @@ import battlecode.common.RobotController;
 
 public class ArchonRobotJVExplore extends BaseRobot {
 	
-	private boolean madeScout;
 	
 	public ArchonRobotJVExplore(RobotController myRC) {
 		super(myRC);
