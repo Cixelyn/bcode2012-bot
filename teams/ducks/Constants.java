@@ -26,8 +26,10 @@ public final class Constants {
 	public static final int ARCHON_CLOSE_DISTANCE = 16;
 	public static final int ARCHON_MOVE_STUCK_ROUNDS = 20;
 	public static final int ARCHON_MOVE_REALLY_STUCK_ROUNDS = 40;
-	public static final int SWARM_DISTANCE_FROM_ARCHON = 3;
-	public static final int SWARM_DISTANCE_FROM_ARCHON2 = 5;
+	public static final int SWARM_DISTANCE_FROM_ARCHON = 2;
+	public static final int SWARM_DISTANCE_FROM_ARCHON2 = 4;
+	public static final int MAX_SWARM_ARCHON_DISTANCE_SQUARED = 64;
+	public static final int ATTACK_MOVE_KITE_DISTANCE_SQUARED = 17;
 
 	/*************************************************************
 	 * OLD CONSTANTS BELOW
