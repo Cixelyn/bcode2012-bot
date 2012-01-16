@@ -13,6 +13,15 @@ import battlecode.common.RobotType;
  * @author jven
  */
 public class Micro {
+	
+	private enum MicroMode {
+		HOLD_POSITION,
+		NORMAL,
+		MOONWALK,
+		SWARM,
+		KITE,
+		CHARGE
+	}
 
 	private BaseRobot br;
 	private RobotController rc;
@@ -25,15 +34,6 @@ public class Micro {
 	public Micro(BaseRobot myBR) {
 		br = myBR;
 		rc = myBR.rc;
-	}
-	
-	private enum MicroMode {
-		HOLD_POSITION,
-		NORMAL,
-		MOONWALK,
-		SWARM,
-		KITE,
-		CHARGE
 	}
 	
 	/**

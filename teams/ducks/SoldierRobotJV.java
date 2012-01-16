@@ -30,7 +30,7 @@ public class SoldierRobotJV extends BaseRobot {
 					currLoc.distanceSquaredTo(objective), "jven");
 		}
 		// power down if not enough flux, or suicide if all archons are dead
-		if (currFlux < Constants.POWER_DOWN_FLUX) {
+		if (currFlux < Constants.MIN_ROBOT_FLUX) {
 			if (enemyArchonInfo.getNumEnemyArchons() == 0) {
 				rc.suicide();
 			}
