@@ -20,6 +20,9 @@ public class ArchonRobot extends StrategyRobot {
 	private boolean isDefender;
 	private boolean initialized;
 	
+	/** The true (starting) index of the archon */
+	private int trueArchonIndex;
+	
 	// attack move variables
 	private boolean isLeader;
 	private int archonIndex;
@@ -41,6 +44,15 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public ArchonRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
+	
+		// calculate true archon ID
+		MapLocation[] alliedArchons = dc.getAlliedArchons();
+		for(int i=0; i<alliedArchons.length; i++ ) {
+			if(myRC.getLocation().equals(alliedArchons[i])) {
+				trueArchonIndex = i;
+			}
+		}
+		
 	}
 
 	@Override
