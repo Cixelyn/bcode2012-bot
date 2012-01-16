@@ -12,7 +12,6 @@ public abstract class BaseRobot {
 	final Radio io;
 	final Debug debug;
 	final SharedExplorationSystem ses;
-	Navigation nv;
 	
 	// Robot Stats
 	final RobotType myType;

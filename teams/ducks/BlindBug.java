@@ -1,12 +1,14 @@
 package ducks;
 
 import battlecode.common.Direction;
-import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
 import battlecode.common.TerrainTile;
 
-public class BlindBug extends Navigation {
+public class BlindBug {
 
+	private final BaseRobot br;
+	private final RobotController rc;
 	private MapLocation bugTarget;
 	private MapLocation bugStart;
 	private double bugSlope;
@@ -22,12 +24,8 @@ public class BlindBug extends Navigation {
 	private static final int BUG_ROUNDS_BEFORE_STOPPING_INITIAL = 3000;
 	
 	public BlindBug(BaseRobot myBR) {
-		super(myBR);
-	}
-	
-	@Override
-	public Direction navigateTo(MapLocation destination) throws GameActionException {
-		return navigateToFull(destination);
+		br = myBR;
+		rc = myBR.rc;
 	}
 	
 	/**
