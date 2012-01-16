@@ -47,6 +47,9 @@ public class Navigator {
 				mapCache.worldToCacheY(destination.y));
 		reset();
 	}
+	/** Does precomputation to allow the navigationToDestination to
+	 * return a more accurate result. Only matters for tangent bug right now.
+	 */
 	public void prepare() {
 		if(mode==NavigationMode.TANGENT_BUG) {
 			if(mapCache.edgeXMin!=0) tangentBug.edgeXMin = mapCache.edgeXMin;
@@ -59,10 +62,11 @@ public class Navigator {
 					mapCache.worldToCacheY(baseRobot.currLoc.y));
 		} 
 	}
+	/** Returns direction to go next in order to reach the destination. */
 	public Direction navigateToDestination() {
 		Direction dir = Direction.NONE;
 		if(mode==NavigationMode.RANDOM) {
-			dir = navigateCompletelyRandomly();
+			dir = navigateRandomly();
 		} else if(mode==NavigationMode.BUG) {
 			dir = navigateBug();
 		} else if(mode==NavigationMode.TANGENT_BUG) {
@@ -110,6 +114,27 @@ public class Navigator {
 				return dir;
 		}
 		return Direction.NONE;
+	}
+	private Direction navigateRandomly() {
+		// With 1/4 probability, reset heading towards destination.
+		// Otherwise, randomly perturb current direction by up to 90 degrees.
+		double d = Math.random();
+		if(d*1000-(int)(d*1000)<0.25) return baseRobot.currLoc.directionTo(destination);
+		d=d*2-1;
+		d = d*d*Math.signum(d);
+		Direction dir = baseRobot.currDir;
+		if(d<0) {
+			do {
+				d++;
+				dir = dir.rotateLeft();
+			} while(d<0);
+		} else {
+			do {
+				d++;
+				dir = dir.rotateRight();
+			} while(d<0);
+		}
+		return dir;
 	}
 	private Direction navigateBug() {
 		return blindBug.navigateToIgnoreBots(destination);
