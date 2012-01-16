@@ -57,6 +57,9 @@ public class SoldierRobot extends StrategyRobot {
 			debug.setIndicatorString(0, "" + myType + " - LOW FLUX", Owner.ALL);
 			return;
 		}
+		// TODO(jven): debug, archon ownership stuff
+		debug.setIndicatorString(
+				2, "Owner ID: " + ao.getArchonOwnerID(), Owner.JVEN);
 		switch (state) {
 			case INITIALIZE:
 				initialize();
@@ -75,6 +78,10 @@ public class SoldierRobot extends StrategyRobot {
 		switch(msgType) {
 			case 'd':
 				eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
+				break;
+			case 'o':
+				ao.processOwnership(Radio.decodeShorts(sb));
+				break;
 			default:
 				super.processMessage(msgType, sb);
 		}
