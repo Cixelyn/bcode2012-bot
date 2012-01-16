@@ -29,6 +29,9 @@ public class ArchonRobot extends StrategyRobot {
 	private MapLocation enemyPowerNode;
 	private int roundsToChase;
 	private int roundSinceMove;
+
+	// defender variables
+	private int numDefenders;
 	
 	
 	public ArchonRobot(RobotController myRC) {
@@ -169,6 +172,7 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case DEFEND_BASE:
 		{
+			numDefenders = 0;
 			
 		} break;
 		case POWER_CAP:
