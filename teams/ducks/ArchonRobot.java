@@ -6,6 +6,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class ArchonRobot extends StrategyRobot {
@@ -22,10 +23,17 @@ public class ArchonRobot extends StrategyRobot {
 	// attack move variables
 	private boolean isLeader;
 	private int archonIndex;
-	//private RobotInfo attackTarget;
-	//private MapLocation attackMoveTarget;
+	private RobotInfo attackTarget;
+	private MapLocation attackMoveTarget;
 	private Direction attackMoveDirection;
+	private int roundsLastSeenEnemy;
 	private MapLocation enemyPowerNode;
+	private int roundsToChase;
+	private int roundSinceMove;
+
+	// defender variables
+	private int numDefenders;
+	
 	
 	public ArchonRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
@@ -75,7 +83,7 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case ATTACK_MOVE:
 		{
-			if (attackMoveDirection!=null)
+			if (!checkAttackMoveTargets())
 			{
 				// TODO(jven): shouldn't we be defending our base in case of counter?
 				if (dc.getAlliedArchons().length >=
@@ -129,11 +137,11 @@ public class ArchonRobot extends StrategyRobot {
 		{
 			// set micro mode
 			mi.setKiteMode(Constants.SPLIT_DISTANCE);
+			// set flux management mode
+			fm.setBatteryMode();
 		} break;
 		case BUILD_ARMY:
 		{
-			// set flux management mode
-			fm.setBatteryMode();
 			switch (oldstate)
 			{
 			case SPLIT:
@@ -145,18 +153,42 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case ATTACK_MOVE:
 		{
+			switch (oldstate)
+			{
+			case BUILD_ARMY:
+			{
+				roundsToChase = Constants.CHASE_ROUNDS;
+			} break;
+			case POWER_CAP:
+			{
+				roundsToChase = Constants.CHASE_ROUNDS_WHEN_BUILDING;
+			} break;
+			default:
+			{
+				roundsToChase = Constants.CHASE_ROUNDS;
+			} break;
+			}
 			// set flux management mode
 			fm.setBatteryMode();
 		} break;
 		case DEFEND_BASE:
 		{
-			// set flux management mode
-			fm.setBatteryMode();
+			numDefenders = 0;
+			
 		} break;
 		case POWER_CAP:
 		{
 			// set flux management mode
 			fm.setBatteryMode();
+		} break;
+		}
+		
+		
+		switch (oldstate)
+		{
+		case ATTACK_MOVE:
+		{
+			attackMoveDirection = null;
 		} break;
 		}
 	}
@@ -299,34 +331,133 @@ public class ArchonRobot extends StrategyRobot {
 	}
 	
 	
-	//	radio 
-	//	a - attack loc
-	//	s - swarm - dir, target loc
-	//	z - swarm retreat, dir
-	//	x - ??? profit
+//	radio 
+//	a - attack target/announce target
+//	s - swarm - dir, target loc
+//	z - swarm retreat, dir
+//	x - gather
+//	
+//	priorities (high to low)
+//	as,az,ax - only sent by leader archon
+//	aa - sent by other archosn to announce enemys //TODO
+//	ss,sz,sx - sent by archons to their soldiers
+//			- possibly to be replaced by *s*z*x, where * = robot id
 	public void attack_move()
 	{
-		if (currLoc.equals(dc.getAlliedArchons()[0]))
+		checkAttackMoveStatus();
+		
+		
+		if (isLeader)
 		{
-			// leader code
+//			leader code
+			// TODO retreat code
 			
-			
-			
-			// TODO(jven): this is throwing array index out of bounds exceptions
-			// (1/16 1:54 PM)
-			//ur.scan(false, true);
-			if (ur.numEnemyArchons>0)
+			if (!rc.isMovementActive())
 			{
+				roundSinceMove++;
+				//TODO build soldiers
+				
+//				resend swarm information
+				io.sendShorts("#xs", 
+						new int[]{	attackMoveDirection.ordinal(), 
+									attackMoveTarget.x, attackMoveTarget.y});
+				
+//				calculate if we should move
+				int archons_ready = 0;
+				int myval = 0;
+				switch (attackMoveDirection)
+				{
+				case NORTH:			myval = -currLoc.y;					break;
+				case NORTH_EAST:	myval = -currLoc.y+currLoc.x;		break;
+				case EAST:			myval = currLoc.x;					break;
+				case SOUTH_EAST:	myval = currLoc.y+currLoc.x;		break;
+				case SOUTH:			myval = currLoc.y;					break;
+				case SOUTH_WEST:	myval = currLoc.y+currLoc.x;		break;
+				case WEST:			myval = -currLoc.x;					break;
+				case NORTH_WEST:	myval = -currLoc.y-currLoc.x;		break;
+				default: myval = 0; break;
+				}
+				
+				MapLocation[] archons = dc.getAlliedArchons();
+				for (int x=1; x<archons.length; x++)
+				{
+					// TODO inefficient, swap out later - more code
+					MapLocation loc = archons[x];
+					int value;
+					switch (attackMoveDirection)
+					{
+					case NORTH:			value = -loc.y;				break;
+					case NORTH_EAST:	value = -loc.y+loc.x;		break;
+					case EAST:			value = loc.x;				break;
+					case SOUTH_EAST:	value = loc.y+loc.x;		break;
+					case SOUTH:			value = loc.y;				break;
+					case SOUTH_WEST:	value = loc.y+loc.x;		break;
+					case WEST:			value = -loc.x;				break;
+					case NORTH_WEST:	value = -loc.y-loc.x;		break;
+					default: value = 0; break;
+					}
+					
+					if (value >= myval) 
+						archons_ready++;
+					else if (loc.distanceSquaredTo(currLoc) < Constants.ARCHON_CLOSE_DISTANCE) 
+						archons_ready++;
+				}
+				
+				int archon_threshold = archons.length/2;
+				
+				if (archons_ready >= archon_threshold)
+				{
+					nav.setDestination(attackMoveTarget);
+					nav.navigateToDestination();
+					roundSinceMove = 0;
+				} else
+				{
+					if (roundSinceMove > Constants.ARCHON_MOVE_STUCK_ROUNDS)
+					{
+						io.sendShort("#xx", attackMoveDirection.ordinal());
+					}
+//					else if (roundSinceMove > Constants.ARCHON_MOVE_STUCK_ROUNDS)
+//					{
+////						resend swarm information
+//						io.sendShorts("#xs", 
+//								new int[]{	attackMoveDirection.ordinal(), 
+//											attackMoveTarget.x, attackMoveTarget.y});
+//					}
+				}
 				
 				
 				
 			}
+			
 		} else
 		{
 			// follow code
-			
-			
-			
+			MapLocation[] archons = dc.getAlliedArchons();
+			MapLocation leader = archons[0];
+			if (!rc.isMovementActive())
+			{
+				MapLocation target = currLoc;
+				switch (archonIndex)
+				{
+				case 1:
+					target = leader.add(attackMoveDirection.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON);
+					break;
+				case 2:
+					target = leader.add(attackMoveDirection.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON);
+					break;
+				case 3:
+					target = leader.add(attackMoveDirection.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
+					break;
+				case 4:
+					target = leader.add(attackMoveDirection.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
+					break;
+				}
+				
+				target = target.add(attackMoveDirection);
+				
+				nav.setDestination(target);
+				nav.navigateToDestination();
+			}
 		}
 		// distribute flux
 		fm.manageFlux();
@@ -334,6 +465,66 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public boolean checkAttackMoveTargets()
 	{
+		ur.scan(false, true);
+		if (ur.numEnemyArchons>0)
+		{
+//			for now, just use the first one TODO
+			attackTarget = ur.enemyInfos[ur.enemyArchons[0]];
+			attackMoveTarget = attackTarget.location;
+			attackMoveDirection = currLoc.directionTo(attackMoveTarget);
+			roundsLastSeenEnemy = 0;
+			return true;
+		}
+		
+		if (ur.numEnemyTowers>0)
+		{
+			for (int x=0; x<ur.numEnemyTowers; x++)
+			{
+				// TODO check if we can attack this tower
+				boolean canAttackTower = false;
+				if (canAttackTower)
+				{
+					attackTarget = ur.enemyInfos[ur.enemyTowers[x]];
+					attackMoveTarget = attackTarget.location;
+					attackMoveDirection = currLoc.directionTo(attackMoveTarget);
+					roundsLastSeenEnemy = 0;
+					return true;
+				}
+			}
+		}
+		
+		if (ur.numEnemyRobots-ur.numEnemyTowers>Constants.NON_TRIVIAL_ENEMY_CONCENTRATION)
+		{
+//			for now, just use the closest TODO
+			attackTarget = ur.closetEnemy;
+			attackMoveTarget = attackTarget.location;
+			attackMoveDirection = currLoc.directionTo(attackMoveTarget);
+			roundsLastSeenEnemy = 0;
+			return true;
+		}
+		
+		if (roundsLastSeenEnemy < roundsToChase)
+		{
+			attackMoveTarget = currLoc.add(attackMoveDirection, Constants.CHASE_DIRECTION_MULTIPLIER);
+			roundsLastSeenEnemy++;
+			return true;
+		}
+		
+		if (enemyPowerNode == null)
+		{
+			enemyPowerNode = mc.getEnemyPowerCoreLocation();
+			if (enemyPowerNode == null)
+			{
+				attackMoveTarget = mc.guessEnemyPowerCoreLocation();
+				attackMoveDirection = currLoc.directionTo(attackMoveTarget);
+			}
+		} else
+		{
+			attackTarget = null;
+			attackMoveTarget = null;
+			attackMoveDirection = null;
+		}
+		
 		return false;
 	}
 	

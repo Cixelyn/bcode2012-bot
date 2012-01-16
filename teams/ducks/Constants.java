@@ -19,6 +19,16 @@ public final class Constants {
 	public static final int SOLDIER_BROADCAST_FREQUENCY = 30;
 	public static final int ARCHON_OWNERSHIP_BUFFER_LENGTH = 5;
 	
+//	attack move constants
+	public static final int NON_TRIVIAL_ENEMY_CONCENTRATION = 5;
+	public static final int CHASE_DIRECTION_MULTIPLIER = 9;
+	public static final int CHASE_ROUNDS = 50;
+	public static final int CHASE_ROUNDS_WHEN_BUILDING = 30;
+	public static final int ARCHON_CLOSE_DISTANCE = 16;
+	public static final int ARCHON_MOVE_STUCK_ROUNDS = 20;
+	public static final int ARCHON_MOVE_REALLY_STUCK_ROUNDS = 40;
+	public static final int SWARM_DISTANCE_FROM_ARCHON = 3;
+	public static final int SWARM_DISTANCE_FROM_ARCHON2 = 5;
 
 	/*************************************************************
 	 * OLD CONSTANTS BELOW
