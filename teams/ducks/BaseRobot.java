@@ -39,6 +39,8 @@ public abstract class BaseRobot {
 	public BaseRobot(RobotController myRC) {
 		rc = myRC;
 		
+		currLoc = rc.getLocation();
+		currDir = rc.getDirection();
 		myType = rc.getType();
 		myTeam = rc.getTeam();
 		myID = rc.getRobot().getID();

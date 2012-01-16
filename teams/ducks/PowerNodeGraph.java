@@ -43,7 +43,7 @@ public class PowerNodeGraph {
 	public String toString() {
 		String ret = "\n";
 		for(int i=1; i<=nodeCount; i++) {
-			ret+="node #"+i+" "+nodeLocations[i];
+			ret+="node #"+i+" "+nodeLocations[i]+" "+nodeSensed[i];
 			for(int j=0; j<degreeCount[i]; j++) {
 				ret+=" "+adjacencyList[i][j];
 			}

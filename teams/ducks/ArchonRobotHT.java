@@ -14,6 +14,7 @@ public class ArchonRobotHT extends BaseRobot{
 	public ArchonRobotHT(RobotController myRC) {
 		super(myRC);
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
+		nav.setNavigationMode(NavigationMode.RANDOM);
 		
 		// compute archon ID
 		MapLocation[] alliedArchons = this.dc.getAlliedArchons();
@@ -23,13 +24,14 @@ public class ArchonRobotHT extends BaseRobot{
 				break;
 			}
 		}
-		
-		
+		io.setAddresses(new String[] {"#e"});
 	}
 	
 	@Override
 	public void run() throws GameActionException {
 		//if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
+		if(myArchonID==5 && Clock.getRoundNum()%500==5)
+			System.out.println(mc);
 		mc.senseAfterMove(lastMoved);
 		MapLocation target = rc.senseCapturablePowerNodes()[0];
 		rc.setIndicatorString(0, "dxdy: "+(target.x-currLoc.x)+","+(target.y-currLoc.y));
@@ -72,5 +74,26 @@ public class ArchonRobotHT extends BaseRobot{
 		
 		}
 		
+		if(Math.random()<0.3) {
+		ses.broadcastPowerNodeGraph();
+		ses.broadcastMapFragment();
+		ses.broadcastMapEdges();
+		}
+		mc.extractUpdatedPackedDataStep();
+
+	}
+	@Override
+	public void processMessage(char msgType, StringBuilder sb) {
+		int[] data = null;
+		if(msgType=='e') {
+			data = Radio.decodeShorts(sb);
+			ses.receiveMapEdges(data);
+		} else if(msgType=='m') {
+			data = Radio.decodeInts(sb);
+			ses.receiveMapFragment(data);
+		} else if(msgType=='p') {
+			data = Radio.decodeInts(sb);
+			ses.receivePowerNodeGraph(data);
+		} 
 	}
 }

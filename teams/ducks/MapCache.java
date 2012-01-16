@@ -47,7 +47,7 @@ public class MapCache {
 		packedIsWall = new int[PACKED_MAP_SIZE][PACKED_MAP_SIZE];
 		packedSensed = new int[PACKED_MAP_SIZE][PACKED_MAP_SIZE];
 		packedDataUpdated = new HashSet<Integer>();
-		//initPackedDataStructures();
+		initPackedDataStructures();
 		powerNodeID = new short[MAP_SIZE][MAP_SIZE];
 		MapLocation loc = baseRobot.rc.sensePowerCore().getLocation();
 		powerCoreWorldX = loc.x;
@@ -74,12 +74,12 @@ public class MapCache {
 			packedIsWall[xb][yb] = xb*(1<<22)+yb*(1<<16);
 		}
 		for(int xb=17; xb<47; xb++)
-		System.arraycopy(packedIsWall[xb], 17, packedSensed[xb], 17, 30);
+			System.arraycopy(packedIsWall[xb], 17, packedSensed[xb], 17, 30);
 	}
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("\nSurrounding map data:"); 
+		StringBuilder sb = new StringBuilder("\nSurrounding map data:\n"); 
 		int myX = worldToCacheX(baseRobot.currLoc.x);
 		int myY = worldToCacheY(baseRobot.currLoc.y);
 		for(int y=myY-10; y<myY+10; y++) { 
@@ -90,6 +90,9 @@ public class MapCache {
 		sb.append("Edge data: \nx=["+edgeXMin+","+edgeXMax+"] y=["+edgeYMin+","+edgeYMax+"] \n");
 		sb.append("Power node graph:");
 		sb.append(powerNodeGraph.toString());
+		for(int x=25; x<32; x++) for(int y=25; y<32; y++) {
+			sb.append(x+" "+y+" "+Integer.toBinaryString(packedIsWall[x][y])+" "+Integer.toBinaryString(packedSensed[x][y])+"\n");
+		}
 		return sb.toString();
 	}
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
@@ -111,8 +114,6 @@ public class MapCache {
 		senseTilesOptimized(lastMoved);
 		senseMapEdges(lastMoved);
 		sensePowerNodes();
-//		if(Clock.getRoundNum()%100==5 && Clock.getRoundNum()<=1050)
-//			System.out.println(this);
 	}
 	
 	/** Senses the terrain of all tiles in sensing range of the robot. 
@@ -125,17 +126,17 @@ public class MapCache {
 		for(int dx=-senseRadius; dx<=senseRadius; dx++) for(int dy=-senseRadius; dy<=senseRadius; dy++) {
 			int x = myX+dx;
 			int y = myY+dy;
-			int xblock = myX/MAP_BLOCK_SIZE;
-			int yblock = myY/MAP_BLOCK_SIZE;
+			int xblock = x/MAP_BLOCK_SIZE;
+			int yblock = y/MAP_BLOCK_SIZE;
 			if(sensed[x][y]) continue;
 			MapLocation loc = myLoc.add(dx, dy);
 			TerrainTile tt = baseRobot.rc.senseTerrainTile(loc);
 			if(tt!=null) {
 				boolean b = (tt!=TerrainTile.LAND);
 				isWall[x][y] = b;
-				if(b) packedIsWall[xblock][yblock] |= (1 << x%4*4+y&4);
+				if(b) packedIsWall[xblock][yblock] |= (1 << (x%4*4+y%4));
 				sensed[x][y] = true;
-				packedSensed[xblock][yblock] |= (1 << x%4*4+y&4);
+				packedSensed[xblock][yblock] |= (1 << (x%4*4+y%4));
 			}
 		}
 	}
@@ -155,17 +156,17 @@ public class MapCache {
 			int dy = list[i][1];
 			int x = myX+dx;
 			int y = myY+dy;
-			int xblock = myX/MAP_BLOCK_SIZE;
-			int yblock = myY/MAP_BLOCK_SIZE;
+			int xblock = x/MAP_BLOCK_SIZE;
+			int yblock = y/MAP_BLOCK_SIZE;
 			if(sensed[x][y]) continue;
 			MapLocation loc = myLoc.add(dx, dy);
 			TerrainTile tt = baseRobot.rc.senseTerrainTile(loc);
 			if(tt!=null) {
 				boolean b = (tt!=TerrainTile.LAND);
 				isWall[x][y] = b;
-				if(b) packedIsWall[xblock][yblock] |= (1 << x%4*4+y&4);
+				if(b) packedIsWall[xblock][yblock] |= (1 << (x%4*4+y%4));
 				sensed[x][y] = true;
-				packedSensed[xblock][yblock] |= (1 << x%4*4+y&4);
+				packedSensed[xblock][yblock] |= (1 << (x%4*4+y%4));
 			}
 			
 		}
@@ -179,25 +180,30 @@ public class MapCache {
 		if(packedSensed[xblock][yblock]!=packedSensedInfo) {
 			packedDataUpdated.add(block);
 			packedIsWall[xblock][yblock] |= packedIsWallInfo;
+			if(xblock==32 && yblock==32) System.out.println(" AOPOEAHKEWO "+Integer.toBinaryString(packedIsWall[32][32]));
 			packedSensed[xblock][yblock] |= packedSensedInfo;
 		}
 	}
-	/** Extracts all the packed data in the updated packed fields into the 
-	 * unpacked arrays for terrain data.
+	/** Extracts some packed data in the updated packed fields into the 
+	 * unpacked arrays for terrain data. <br>
+	 * This must be run repeatedly to extract everything.
+	 * @return true if we are done extracting
 	 */
-	public void extractUpdatedPackedData() {
-		for(int block: packedDataUpdated) {
-			int xblock = block / 64;
-			int yblock = block % 64;
-			int isWallData = packedIsWall[xblock][yblock];
-			int sensedData = packedSensed[xblock][yblock];
-			for(int bit=0; bit<16; bit++) {
-				int x = xblock*MAP_BLOCK_SIZE+bit/4;
-				int y = yblock*MAP_BLOCK_SIZE+bit%4;
-				isWall[x][y] = ((isWallData & (1<<bit)) != 0);
-				sensed[x][y] = ((sensedData & (1<<bit)) != 0);
-			}
+	public boolean extractUpdatedPackedDataStep() {
+		if(packedDataUpdated.isEmpty()) return true;
+		int block = packedDataUpdated.iterator().next();
+		int xblock = block / 64;
+		int yblock = block % 64;
+		int isWallData = packedIsWall[xblock][yblock];
+		int sensedData = packedSensed[xblock][yblock];
+		for(int bit=0; bit<16; bit++) {
+			int x = xblock*MAP_BLOCK_SIZE+bit/4;
+			int y = yblock*MAP_BLOCK_SIZE+bit%4;
+			isWall[x][y] = ((isWallData & (1<<bit)) != 0);
+			sensed[x][y] = ((sensedData & (1<<bit)) != 0);
 		}
+		packedDataUpdated.remove(block);
+		return false;
 	}
 	
 	/** Updates the edges of the map that we can sense. 
