@@ -79,7 +79,7 @@ public class ArchonRobot extends StrategyRobot {
 			{
 				// TODO(jven): shouldn't we be defending our base in case of counter?
 				if (dc.getAlliedArchons().length >=
-						enemyArchonInfo.getNumEnemyArchons() + 2)
+						eai.getNumEnemyArchons() + 2)
 				{
 					return RobotState.POWER_CAP;
 				} else if (enemyPowerNode!=null)
@@ -198,10 +198,7 @@ public class ArchonRobot extends StrategyRobot {
 			throws GameActionException {
 		switch(msgType) {
 			case 'd':
-				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
-				for (int id : deadEnemyArchonIDs) {
-					enemyArchonInfo.reportEnemyArchonKill(id);
-				}
+				eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
 			default:
 				super.processMessage(msgType, sb);
 		}

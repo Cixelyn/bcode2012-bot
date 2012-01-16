@@ -228,7 +228,7 @@ public class ArchonRobotOLD extends StrategyRobot {
 			case 'd':
 				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
 				for (int id : deadEnemyArchonIDs) {
-					enemyArchonInfo.reportEnemyArchonKill(id);
+					eai.reportEnemyArchonKill(id);
 				}
 			default:
 				super.processMessage(msgType, sb);
@@ -482,7 +482,7 @@ public class ArchonRobotOLD extends StrategyRobot {
 	
 	private boolean shouldDefend() {
 		try {
-			return (enemyArchonInfo.getNumEnemyArchons() > 0 &&
+			return (eai.getNumEnemyArchons() > 0 &&
 					currLoc.equals(dc.getAlliedArchons()[0]));
 		} catch (Exception e) {
 			return false;
@@ -491,7 +491,7 @@ public class ArchonRobotOLD extends StrategyRobot {
 	
 	private boolean shouldTower() throws GameActionException {
 		int numAlliedArchons = dc.getAlliedArchons().length;
-		int numEnemyArchons = enemyArchonInfo.getNumEnemyArchons();
+		int numEnemyArchons = eai.getNumEnemyArchons();
 		for (int idx = 0; idx < numAlliedArchons; idx++) {
 			if (currLoc.equals(dc.getAlliedArchons()[idx])) {
 				return idx >= GameConstants.NUMBER_OF_ARCHONS -

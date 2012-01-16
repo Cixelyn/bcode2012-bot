@@ -74,10 +74,7 @@ public class SoldierRobot extends StrategyRobot {
 			char msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
 			case 'd':
-				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
-				for (int id : deadEnemyArchonIDs) {
-					enemyArchonInfo.reportEnemyArchonKill(id);
-				}
+				eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
 			default:
 				super.processMessage(msgType, sb);
 		}
@@ -99,5 +96,7 @@ public class SoldierRobot extends StrategyRobot {
 		mi.attackMove();
 		// distribute flux
 		fm.manageFlux();
+		// send dead enemy archon info
+		eai.sendDeadEnemyArchonIDs();
 	}
 }
