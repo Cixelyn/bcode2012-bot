@@ -1,6 +1,5 @@
 package ducks;
 
-import ducks.Debug.Owner;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 
