@@ -11,6 +11,7 @@ public abstract class BaseRobot {
 	final Navigator nav;
 	final Micro mi;
 	final Radio io;
+	final FluxManager fm;
 	final Debug debug;
 	final SharedExplorationSystem ses;
 	
@@ -50,6 +51,7 @@ public abstract class BaseRobot {
 		nav = new Navigator(this);
 		mi = new Micro(this);
 		io = new Radio(this);
+		fm = new FluxManager(this);
 		debug = new Debug(this, Owner.JVEN);
 		ses = new SharedExplorationSystem(this);
 		

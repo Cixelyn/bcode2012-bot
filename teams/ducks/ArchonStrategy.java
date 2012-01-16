@@ -121,20 +121,27 @@ public class ArchonStrategy extends StrategyRobot {
 			} break;
 			case DEFEND:
 			{
-				// set objective
+				// set objective and micro mode
 				// TODO(jven): dc this
 				mi.setObjective(rc.sensePowerCore().getLocation());
 				mi.setMoonwalkMode();
+				// set flux management mode
+				fm.setBatteryMode();
 			} break;
 			case RUSH:
 			{
-				// set objective
+				// set objective and micro mode
 				mi.setObjective(explorationTarget);
 				mi.setMoonwalkMode();
+				// set flux management mode
+				fm.setBatteryMode();
 			} break;
 			case CHASE:
 			{
+				// set micro mode
 				mi.setKiteMode(Constants.ARCHON_SAFETY_RANGE);
+				// set flux management mode
+				fm.setBattleMode();
 			} break;
 			case SPAWN_SOLDIERS:
 			{
@@ -150,6 +157,8 @@ public class ArchonStrategy extends StrategyRobot {
 				default:
 					soldiersToSpawn = 1; break;
 				}
+				// set flux management mode
+				fm.setBatteryMode();
 			}
 			default:
 				break;
@@ -305,8 +314,7 @@ public class ArchonStrategy extends StrategyRobot {
 			}
 		}
 		// distribute flux
-		// TODO(jven): use flux manager
-		//distributeFlux();
+		fm.manageFlux();
 	}
 	
 	public void defend() throws GameActionException {
@@ -315,8 +323,7 @@ public class ArchonStrategy extends StrategyRobot {
 		// reset bearing if necessary
 		setBearing();
 		// distribute flux
-		// TODO(jven): use flux manager
-		//distributeFlux();
+		fm.manageFlux();
 		// send rally
 		sendRally(rc.sensePowerCore().getLocation());
 	}
@@ -327,8 +334,7 @@ public class ArchonStrategy extends StrategyRobot {
 		// reset bearing if necessary
 		setBearing();
 		// distribute flux
-		// TODO(jven): use flux manager
-		//distributeFlux();
+		fm.manageFlux();
 		// send rally
 		sendRally(explorationTarget);
 	}
@@ -342,8 +348,7 @@ public class ArchonStrategy extends StrategyRobot {
 		mi.setObjective(closestEnemy.location);
 		mi.attackMove();
 		// distribute flux
-		// TODO(jven): use flux manager
-		//distributeFlux();
+		fm.manageFlux();
 		// send rally
 		sendRally(closestEnemy.location);
 	}
@@ -380,8 +385,8 @@ public class ArchonStrategy extends StrategyRobot {
 		}
 		// distribute flux if we're not adjacent to tower or if we have too much
 		if (distance > 2 || currFlux == myType.maxFlux) {
-			// TODO(jven): use flux manager
-			//distributeFlux();
+			// distribute flux
+			fm.manageFlux();
 		}
 		// send rally
 		sendRally(powerCore);
