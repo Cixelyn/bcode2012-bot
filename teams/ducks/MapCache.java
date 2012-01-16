@@ -95,26 +95,43 @@ public class MapCache {
 	
 	/** Returns the enemy power core location if robot knows exactly where it is. <br>
 	 * Otherwise returns null.
+	 * @see MapCache#guessEnemyPowerCoreLocation()
 	 */
 	public MapLocation getEnemyPowerCoreLocation() {
 		return powerNodeGraph.nodeLocations[powerNodeGraph.enemyPowerCoreID];
 	}
-	/** Uses symmetry and known map edges to guess the location of the enemy 
-	 * power core. <br>
-	 * One should probably check getEnemyPowerCoreLocation()
-	 * first to see if robot knows the exact position. <br>
-	 * Returns null if no reasonable guess exists.
+	/** 
+	 * Returns the enemy power core location if robot knows exactly where it is. <br>
+	 * Otherwise, Uses symmetry and known map edges to guess 
+	 * the location of the enemy power core. <br>
+	 * If no map edges are known, uses power core graph to guess. 
 	 * @see MapCache#getEnemyPowerCoreLocation()
 	 */
 	public MapLocation guessEnemyPowerCoreLocation() {
+		// Return if we know for sure where the enemy core is
+		MapLocation knownEnemyCoreLoc = getEnemyPowerCoreLocation();
+		if(knownEnemyCoreLoc!=null) return knownEnemyCoreLoc;
+		
+		// If no map edges known, add up vectors of our base to each known power node location, and return a location far in that direction
 		int mapEdgesKnown = 0;
 		if(edgeXMin!=0) mapEdgesKnown++;
 		if(edgeXMax!=0) mapEdgesKnown++;
 		if(edgeYMin!=0) mapEdgesKnown++;
 		if(edgeYMax!=0) mapEdgesKnown++;
-		if(mapEdgesKnown<2) return null;
+		if(mapEdgesKnown==0) {
+			int sdx = 0;
+			int sdy = 0;
+			for(int i=2; i<powerNodeGraph.nodeCount; i++) {
+				sdx += powerNodeGraph.nodeLocations[i].x - powerCoreWorldX;
+				sdy += powerNodeGraph.nodeLocations[i].y - powerCoreWorldY;
+			}
+			double magnitude = Math.sqrt(sdx*sdx+sdy*sdy);
+			sdx = (int)(sdx*90/magnitude);
+			sdy = (int)(sdx*90/magnitude);
+			return new MapLocation(powerCoreWorldX + sdx, powerCoreWorldY + sdy);
+		}
 		
-		// Current heuristic: assume a square map, most likely 60x60.
+		// Current heuristic: assume a square map, most likely 60x60. assume rotational symmetry
 		int mapSize = 61;
 		int xminGuess = edgeXMin;
 		int xmaxGuess = edgeXMax;
@@ -148,6 +165,26 @@ public class MapCache {
 		int x = xminGuess+xmaxGuess-POWER_CORE_POSITION;
 		int y = yminGuess+ymaxGuess-POWER_CORE_POSITION;
 		return new MapLocation(cacheToWorldX(x), cacheToWorldY(y));
+	}
+	/** Returns the location of the best power node to capture, assuming
+	 * that the goal is to route to the enemy power core. <br>
+	 * Right now, we use the heuristic of going to the power node P with the 
+	 * smallest value of dist(cur_pos, P)+dist(P, enemy_power_core_guess)
+	 */
+	public MapLocation guessBestPowerNodeToCapture() {
+		MapLocation enemyPowerCoreGuess = guessEnemyPowerCoreLocation();
+		MapLocation[] nodeLocs = baseRobot.dc.getCapturablePowerCores();
+		MapLocation bestLoc = null;
+		double bestValue = Integer.MAX_VALUE;
+		for(MapLocation loc: nodeLocs) {
+			double value = Math.sqrt(baseRobot.currLoc.distanceSquaredTo(loc)) + 
+					Math.sqrt(loc.distanceSquaredTo(enemyPowerCoreGuess));
+			if(value<bestValue) {
+				bestValue = value;
+				bestLoc = loc;
+			}
+		}
+		return bestLoc;
 	}
 	
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
@@ -368,6 +405,7 @@ public class MapCache {
 				powerNodeGraph.adjacencyList[id][powerNodeGraph.degreeCount[id]++] = neighborID;
 				powerNodeGraph.adjacencyList[neighborID][powerNodeGraph.degreeCount[neighborID]++] = id;
 			}
+			powerNodeGraph.nodeSensedCount++;
 			powerNodeGraph.nodeSensed[id] = true;
 		}
 	}
@@ -416,6 +454,7 @@ public class MapCache {
 			powerNodeGraph.adjacencyList[id][powerNodeGraph.degreeCount[id]++] = neighborID;
 			powerNodeGraph.adjacencyList[neighborID][powerNodeGraph.degreeCount[neighborID]++] = id;
 		}
+		powerNodeGraph.nodeSensedCount++;
 		powerNodeGraph.nodeSensed[id] = true;
 	}
 	
