@@ -54,7 +54,7 @@ public abstract class BaseRobot {
 		mi = new Micro(this);
 		io = new Radio(this);
 		fm = new FluxManager(this);
-		debug = new Debug(this, Owner.JVEN);
+		debug = new Debug(this, Owner.YP);
 		ses = new SharedExplorationSystem(this);
 		ur = new UnitRadar(this);
 		eai = new EnemyArchonInfo(this);
@@ -83,6 +83,8 @@ public abstract class BaseRobot {
 			debug.setIndicatorString(1,
 					"Enemy archons remaining: " + eai.getNumEnemyArchons(),
 					Owner.JVEN);
+			debug.setIndicatorString(1,
+					"current location: " + currLoc,	Owner.YP);
 			
 			// Main Radio Receive Call
 			try {
