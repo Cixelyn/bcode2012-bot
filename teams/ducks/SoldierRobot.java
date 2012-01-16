@@ -26,6 +26,8 @@ public class SoldierRobot extends StrategyRobot {
 					return RobotState.HOLD_POSITION;
 				}
 				break;
+			case HOLD_POSITION:
+				break;
 			default:
 				break;
 		}
@@ -72,6 +74,9 @@ public class SoldierRobot extends StrategyRobot {
 			case HIBERNATE:
 				hbe.run(); //this call will halt until wakeup
 				break;
+			case SUICIDE:
+				rc.suicide();
+				break;
 			default:
 				break;
 		}
@@ -86,6 +91,11 @@ public class SoldierRobot extends StrategyRobot {
 				break;
 			case 'o':
 				ao.processOwnership(Radio.decodeShorts(sb));
+				break;
+			case 'w':
+				if (getCurrentState() == RobotState.HOLD_POSITION) {
+					gotoState(RobotState.SUICIDE);
+				}
 				break;
 			default:
 				super.processMessage(msgType, sb);

@@ -11,6 +11,7 @@ public enum RobotState {
 	
 	HOLD_POSITION,
 	HIBERNATE,
+	SUICIDE,
 	
 	// to delete errors
 	DEFEND,

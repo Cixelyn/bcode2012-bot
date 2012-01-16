@@ -90,7 +90,9 @@ public class ArchonRobot extends StrategyRobot {
 			if ((dc.getClosestEnemy() != null &&
 					dc.getClosestEnemy().type != RobotType.SCOUT) ||
 					armySizeBuilt >= armySizeTarget) {
-				//TODO wakeup code here? maybe?
+				// TODO(jven): pick one!
+				//wakeUpMyUnits();
+				wakeUpAllUnits();
 				if (isDefender) {
 					return RobotState.DEFEND_BASE;
 				} else {
@@ -643,6 +645,14 @@ public class ArchonRobot extends StrategyRobot {
 		rc.spawn(type);
 		currFlux -= type.spawnCost;
 		return true;
+	}
+	
+	private void wakeUpAllUnits() {
+		io.sendShort("#xw", 0);
+	}
+	
+	private void wakeUpMyUnits() {
+		io.sendShort("#" + trueArchonIndex + "w", 0);
 	}
 
 }
