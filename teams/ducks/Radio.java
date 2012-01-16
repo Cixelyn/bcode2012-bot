@@ -25,10 +25,10 @@ import battlecode.common.Team;
  * <h1>Message Types</h1>
  * <ul>
  *   <li> e - map edges
- *   <li> m - map terrain tile framents
+ *   <li> m - map terrain tile fragments
  *   <li> p - power node fragments
  * 
- *   <li> d - annouce dead archons
+ *   <li> d - announce dead archons
  *   <li> a,s,z,x - reserved for swarm
  * </ul>
  * 

@@ -16,6 +16,7 @@ public final class Constants {
 	public static final int ARMY_SIZE_ON_INITIAL_BUILD = 5;
 	public static final int BUILD_ARMY_ROUND_THRESHOLD = 1000;
 	public static final int SPLIT_DISTANCE = 16;
+	public static final int SOLDIER_BROADCAST_FREQUENCY = 30;
 	
 
 	/*************************************************************
@@ -32,8 +33,6 @@ public final class Constants {
 	
 	/** The frequency with which units broadcast information. */
 	public static final int ARCHON_BROADCAST_FREQUENCY = 4;
-	/** Soldier broadcast frequency for dead enemy archon array */
-	public static final int SOLDIER_BROADCAST_FREQUENCY = 30;
 	/** Archons try to stay at this range from enemy units. */
 	public static final int ARCHON_SAFETY_RANGE = 32;
 	/** Secret keys for use in messaging system, one for each team. */

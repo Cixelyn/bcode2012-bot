@@ -148,7 +148,7 @@ public class Micro {
 			if (br.myType != RobotType.SCOUT &&
 					closestEnemy.type == RobotType.ARCHON &&
 					closestEnemy.energon <= br.myType.attackPower) {
-				br.enemyArchonInfo.reportEnemyArchonKill(closestEnemy.robot.getID());
+				br.eai.reportEnemyArchonKill(closestEnemy.robot.getID());
 			}
 			return true;
 		} else {
@@ -167,7 +167,6 @@ public class Micro {
 	
 	private boolean normalTowards(MapLocation target) throws GameActionException {
 		Direction dir = br.nav.navigateToDestination();
-		br.debug.setIndicatorString(2, "Tangent bug says: " + dir, Owner.JVEN);
 		if (dir == Direction.OMNI || dir == Direction.NONE) {
 			return false;
 		}

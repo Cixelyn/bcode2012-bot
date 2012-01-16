@@ -13,8 +13,6 @@ public class SoldierRobotOLD extends StrategyRobot {
 	private int rallyPriority;
 	private MapLocation objective;
 	
-	private int timeUntilBroadcast;
-	
 	private MapLocation backOffLoc;
 	private RobotState prevState;
 	
@@ -82,7 +80,7 @@ public class SoldierRobotOLD extends StrategyRobot {
 	public void execute(RobotState state) throws GameActionException {
 		// power down if not enough flux, or suicide if we won
 		if (currFlux < Constants.MIN_ROBOT_FLUX) {
-			if (enemyArchonInfo.getNumEnemyArchons() == 0) {
+			if (eai.getNumEnemyArchons() == 0) {
 				rc.suicide();
 			}
 			return;
@@ -129,7 +127,7 @@ public class SoldierRobotOLD extends StrategyRobot {
 			case 'd':
 				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
 				for (int id : deadEnemyArchonIDs) {
-					enemyArchonInfo.reportEnemyArchonKill(id);
+					eai.reportEnemyArchonKill(id);
 				}
 			case 'b':
 				if (curState != RobotState.BACK_OFF &&
@@ -155,8 +153,7 @@ public class SoldierRobotOLD extends StrategyRobot {
 		objective = currLoc.add(
 				rc.sensePowerCore().getLocation().directionTo(
 				dc.getCapturablePowerCores()[0]), GameConstants.MAP_MAX_HEIGHT);
-		// set broadcast time
-		timeUntilBroadcast = 0;
+		// done
 		initalized = true;
 	}
 	
@@ -174,7 +171,7 @@ public class SoldierRobotOLD extends StrategyRobot {
 		// swarm towards objective
 		swarmTowards(objective);
 		// send dead enemy archon IDs
-		sendDeadEnemyArchonIDs();
+		eai.sendDeadEnemyArchonIDs();
 	}
 	
 	public void chase() throws GameActionException {
@@ -188,7 +185,7 @@ public class SoldierRobotOLD extends StrategyRobot {
 		// charge enemy
 		charge(closestEnemy.location);
 		// send dead enemy archon IDs
-		sendDeadEnemyArchonIDs();
+		eai.sendDeadEnemyArchonIDs();
 	}
 	
 	public void backOff() throws GameActionException {
@@ -232,7 +229,7 @@ public class SoldierRobotOLD extends StrategyRobot {
 					closestEnemy.location, closestEnemy.robot.getRobotLevel());
 			if (closestEnemy.type == RobotType.ARCHON &&
 					closestEnemy.energon <= myType.attackPower) {
-				enemyArchonInfo.reportEnemyArchonKill(closestEnemy.robot.getID());
+				eai.reportEnemyArchonKill(closestEnemy.robot.getID());
 			}
 		}
 	}
@@ -291,13 +288,6 @@ public class SoldierRobotOLD extends StrategyRobot {
 			} else if (rc.canMove(dir)) {
 				rc.moveForward();
 			}
-		}
-	}
-	
-	private void sendDeadEnemyArchonIDs() throws GameActionException {
-		if (--timeUntilBroadcast <= 0) {
-			io.sendShorts("#xd", enemyArchonInfo.getDeadEnemyArchonIDs());
-			timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
 		}
 	}
 }
