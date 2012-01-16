@@ -24,6 +24,8 @@ public class ArchonStrategy extends StrategyRobot {
 	private boolean initialized;
 	private boolean splitDone;
 	private int soldiersToSpawn;
+	private int roundsSinceSeenEnemy;
+	private Direction lastEnemyDirection;
 	
 	public ArchonStrategy(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
@@ -81,11 +83,11 @@ public class ArchonStrategy extends StrategyRobot {
 		case CHASE:
 		{
 			// make soldier if enough flux
-			if (currFlux == myMaxFlux)
+			if (currFlux > Constants.MIN_FLUX_TO_HOLD_IN_CHASE+RobotType.SOLDIER.spawnCost)
 				return (RobotState.SPAWN_SOLDIERS);
 				
 			// go back to previous state if no enemy in range
-			if (dc.getClosestEnemy() == null) {
+			if (roundsSinceSeenEnemy > Constants.ROUNDS_TO_CHASE) {
 				if (shouldDefend()) {
 					return (RobotState.DEFEND);
 				} else if (shouldTower()) {
@@ -142,6 +144,7 @@ public class ArchonStrategy extends StrategyRobot {
 				mi.setKiteMode(Constants.ARCHON_SAFETY_RANGE);
 				// set flux management mode
 				fm.setBattleMode();
+				roundsSinceSeenEnemy = 0;
 			} break;
 			case SPAWN_SOLDIERS:
 			{
@@ -341,16 +344,36 @@ public class ArchonStrategy extends StrategyRobot {
 	
 	public void chase() throws GameActionException {
 		RobotInfo closestEnemy = dc.getClosestEnemy();
-		if (closestEnemy == null) return;
-		// increase rally priority
-		rallyPriority++;
-		// kite enemy
-		mi.setObjective(closestEnemy.location);
-		mi.attackMove();
-		// distribute flux
-		fm.manageFlux();
-		// send rally
-		sendRally(closestEnemy.location);
+		if (closestEnemy == null)
+		{
+			roundsSinceSeenEnemy++;
+			
+			MapLocation target = currLoc.add(lastEnemyDirection, 6);
+			// increase rally priority
+			rallyPriority++;
+			// kite enemy
+			mi.setObjective(target);
+			mi.attackMove();
+			// distribute flux
+			fm.manageFlux();
+			// send rally
+			sendRally(target);
+			return;
+		} else
+		{
+			roundsSinceSeenEnemy = 0;
+			lastEnemyDirection = currLoc.directionTo(closestEnemy.location);
+			// increase rally priority
+			rallyPriority++;
+			// kite enemy
+			mi.setObjective(closestEnemy.location);
+			mi.attackMove();
+			// distribute flux
+			fm.manageFlux();
+			// send rally
+			sendRally(closestEnemy.location);
+		}
+		
 	}
 	
 	public void gotoPowerCore() throws GameActionException {

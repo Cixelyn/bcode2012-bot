@@ -25,6 +25,11 @@ public final class Constants {
 	/** Secret keys for use in messaging system, one for each team. */
 	public static final int[] RADIO_TEAM_KEYS = new int[] {5555, 1729};
 	
+	/** The minimum amount of flux to hold when in combat	*/
+	public static final int MIN_FLUX_TO_HOLD_IN_CHASE = 30;
+	/** Number of rounds to chase after last round seeing enemy	*/
+	public static final int ROUNDS_TO_CHASE = 30;
+	
 	/** The maximum distance units should be from the closest archon */
 	public static final int MAX_SWARM_RADIUS = 9;
 	
