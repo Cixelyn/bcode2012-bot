@@ -2,12 +2,15 @@ package ducks;
 
 import ducks.Debug.Owner;
 import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 public class SoldierRobot extends StrategyRobot {
 	
 	private boolean initialized;
 	private final HibernationEngine hbe;
+	
+	private MapLocation swarmObjective;
 	
 	public SoldierRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
@@ -22,10 +25,13 @@ public class SoldierRobot extends StrategyRobot {
 		
 		switch (state) {
 			case INITIALIZE:
-				if (initialized) {
-					return RobotState.HOLD_POSITION;
-				}
-				break;
+			if (initialized) {
+				return RobotState.HOLD_POSITION;
+			} break;
+			case SWARM:
+			{
+				
+			} break;
 			default:
 				break;
 		}
