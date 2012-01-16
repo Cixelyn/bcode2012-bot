@@ -1,11 +1,5 @@
 package ducks;
 
-import java.util.Arrays;
-
-import com.apple.crypto.provider.Debug;
-
-import ducks.Debug.Owner;
-
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotType;
