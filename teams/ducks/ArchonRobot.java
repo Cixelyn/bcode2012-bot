@@ -53,6 +53,7 @@ public class ArchonRobot extends StrategyRobot {
 		{
 			if (dc.getClosestEnemy()!=null || armySizeBuilt>=armySizeTarget)
 			{
+				//TODO wakeup code here? maybe?
 				if (isDefender)
 					return RobotState.DEFEND_BASE;
 				else return RobotState.ATTACK_MOVE;
@@ -158,9 +159,31 @@ public class ArchonRobot extends StrategyRobot {
 		}
 	}
 	
+	@Override
+	public void processMessage(char msgType, StringBuilder sb)
+			throws GameActionException {
+		
+		switch(msgType) {
+			case 'd':
+				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
+				for (int id : deadEnemyArchonIDs) {
+					enemyArchonInfo.reportEnemyArchonKill(id);
+				}
+			default:
+				super.processMessage(msgType, sb);
+		}
+	}
+	
 	public void initialize()
 	{
+		// set nav mode
+		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
+		// set radio addresses
+		io.setAddresses(new String[] {"#x", "#a"});
+		
+
 		isDefender = currLoc.equals(dc.getAlliedArchons()[5]);
+		
 		
 		initialized = true;
 	}
