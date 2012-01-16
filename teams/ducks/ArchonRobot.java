@@ -1,5 +1,6 @@
 package ducks;
 
+import ducks.Debug.Owner;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -126,7 +127,7 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case SPLIT:
 		{
-			// set micro objective and mode
+			// set micro mode
 			mi.setKiteMode(Constants.SPLIT_DISTANCE);
 		} break;
 		case BUILD_ARMY:
@@ -162,6 +163,9 @@ public class ArchonRobot extends StrategyRobot {
 
 	@Override
 	public void execute(RobotState state) throws GameActionException {
+		debug.setIndicatorString(
+				2, "Unack ownerships: " + ao.getNumUnacknowledgedOwnerships(),
+				Owner.JVEN);
 		switch (state) {
 		case INITIALIZE:
 			initialize();
@@ -198,6 +202,10 @@ public class ArchonRobot extends StrategyRobot {
 		switch(msgType) {
 			case 'd':
 				eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
+				break;
+			case 'o':
+				ao.processAcknowledgement(Radio.decodeShorts(sb));
+				break;
 			default:
 				super.processMessage(msgType, sb);
 		}
@@ -253,12 +261,16 @@ public class ArchonRobot extends StrategyRobot {
 			}
 			if (dc.getMovableDirections()[d.ordinal()]) {
 				if (spawnUnitInDir(RobotType.SOLDIER, d)) {
+					// claim ownership of the unit
+					ao.claimOwnership();
 					armySizeBuilt++;
 				}
 			}
 		}
 		// distribute flux
 		fm.manageFlux();
+		// send ownership information
+		ao.sendOwnerships();
 	}
 	
 	public void checkAttackMoveStatus()

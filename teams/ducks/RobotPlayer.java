@@ -43,7 +43,6 @@ public class RobotPlayer {
 				br.rc.addMatchObservation(e.toString());
 			}
 		}
-
 	}
 
 }
