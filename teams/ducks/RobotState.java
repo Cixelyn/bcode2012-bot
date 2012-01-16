@@ -9,8 +9,12 @@ public enum RobotState {
 	DEFEND_BASE,
 	POWER_CAP,
 	
+	// soldier bots states
 	HOLD_POSITION,
 	HIBERNATE,
+	CHASE,
+	SWARM,
+	ROAM,
 	SUICIDE,
 	
 	// to delete errors
@@ -20,6 +24,6 @@ public enum RobotState {
 	SPLIT,
 	POWER_SAVE,
 	RUSH,
-	CHASE,
+//		CHASE,
 	BACK_OFF
 }
