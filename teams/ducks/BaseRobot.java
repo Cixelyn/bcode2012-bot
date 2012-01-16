@@ -16,6 +16,7 @@ public abstract class BaseRobot {
 	final SharedExplorationSystem ses;
 	final UnitRadar ur;
 	final EnemyArchonInfo eai;
+	final ArchonOwnership ao;
 	
 	// Robot Stats
 	final RobotType myType;
@@ -28,7 +29,8 @@ public abstract class BaseRobot {
 	public MapLocation currLoc, currLocInFront, currLocInBack;
 	public Direction currDir;
 
-	public final int spawnRound;
+	public final int birthday;
+	public final MapLocation birthplace;
 	public int currRound;
 	
 	// Internal Statistics
@@ -58,8 +60,10 @@ public abstract class BaseRobot {
 		ses = new SharedExplorationSystem(this);
 		ur = new UnitRadar(this);
 		eai = new EnemyArchonInfo(this);
+		ao = new ArchonOwnership(this);
 		
-		spawnRound = Clock.getRoundNum();
+		birthday = Clock.getRoundNum();
+		birthplace = currLoc;
 	}
 	
 	public abstract void run() throws GameActionException;
@@ -132,7 +136,7 @@ public abstract class BaseRobot {
 	/**
 	 * @return age of the robot in rounds
 	 */
-	public int getAge() { return spawnRound - currRound; }
+	public int getAge() { return birthday - currRound; }
 
 	private void startClock() {
 		executeStartTime = Clock.getRoundNum();
