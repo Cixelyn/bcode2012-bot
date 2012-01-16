@@ -9,14 +9,15 @@ public enum RobotState {
 	DEFEND_BASE,
 	POWER_CAP,
 	
-	POWER_SAVE,
-	RUSH,
-	CHASE,
-	BACK_OFF,
+	HOLD_POSITION,
 	
 	// to delete errors
 	DEFEND,
 	GOTO_POWER_CORE,
 	SPAWN_SOLDIERS,
 	SPLIT,
+	POWER_SAVE,
+	RUSH,
+	CHASE,
+	BACK_OFF
 }

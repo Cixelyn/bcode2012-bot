@@ -66,19 +66,24 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case BUILD_ARMY:
 		{
-			if (dc.getClosestEnemy()!=null || armySizeBuilt>=armySizeTarget)
-			{
+			if ((dc.getClosestEnemy() != null &&
+					dc.getClosestEnemy().type != RobotType.SCOUT) ||
+					armySizeBuilt >= armySizeTarget) {
 				//TODO wakeup code here? maybe?
-				if (isDefender)
+				if (isDefender) {
 					return RobotState.DEFEND_BASE;
-				else return RobotState.ATTACK_MOVE;
+				} else {
+					return RobotState.ATTACK_MOVE;
+				}
 			}
 		} break;
 		case ATTACK_MOVE:
 		{
 			if (!checkAttackMoveTargets())
 			{
-				if (dc.getAlliedArchons().length >= enemyArchonInfo.getNumEnemyArchons()+2)
+				// TODO(jven): shouldn't we be defending our base in case of counter?
+				if (dc.getAlliedArchons().length >=
+						eai.getNumEnemyArchons() + 2)
 				{
 					return RobotState.POWER_CAP;
 				} else if (enemyPowerNode!=null)
@@ -159,7 +164,8 @@ public class ArchonRobot extends StrategyRobot {
 				roundsToChase = Constants.CHASE_ROUNDS;
 			} break;
 			}
-			
+			// set flux management mode
+			fm.setBatteryMode();
 		} break;
 		case DEFEND_BASE:
 		{
@@ -167,7 +173,8 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case POWER_CAP:
 		{
-			
+			// set flux management mode
+			fm.setBatteryMode();
 		} break;
 		}
 		
@@ -218,10 +225,7 @@ public class ArchonRobot extends StrategyRobot {
 			throws GameActionException {
 		switch(msgType) {
 			case 'd':
-				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
-				for (int id : deadEnemyArchonIDs) {
-					enemyArchonInfo.reportEnemyArchonKill(id);
-				}
+				eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
 			default:
 				super.processMessage(msgType, sb);
 		}
@@ -229,7 +233,7 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void initialize()
 	{
-		// set nav mode
+		// set navigation mode mode
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		// set radio addresses
 		io.setAddresses(new String[] {"#x", "#a"});
@@ -404,13 +408,14 @@ public class ArchonRobot extends StrategyRobot {
 //											attackMoveTarget.x, attackMoveTarget.y});
 //					}
 				}
+				
+				
+				
 			}
-			
-			
 			
 		} else
 		{
-//			follow code
+			// follow code
 			MapLocation[] archons = dc.getAlliedArchons();
 			MapLocation leader = archons[0];
 			if (!rc.isMovementActive())
@@ -438,6 +443,8 @@ public class ArchonRobot extends StrategyRobot {
 				nav.navigateToDestination();
 			}
 		}
+		// distribute flux
+		fm.manageFlux();
 	}
 	
 	public boolean checkAttackMoveTargets()
@@ -507,12 +514,14 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void power_cap()
 	{
-		
+		// distribute flux
+		fm.manageFlux();
 	}
 	
 	public void defend_base()
 	{
-		
+		// distribute flux
+		fm.manageFlux();
 	}
 	
 	private boolean spawnUnitInDir(
