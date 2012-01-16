@@ -93,6 +93,63 @@ public class MapCache {
 		return sb.toString();
 	}
 	
+	/** Returns the enemy power core location if robot knows exactly where it is. <br>
+	 * Otherwise returns null.
+	 */
+	public MapLocation getEnemyPowerCoreLocation() {
+		return powerNodeGraph.nodeLocations[powerNodeGraph.enemyPowerCoreID];
+	}
+	/** Uses symmetry and known map edges to guess the location of the enemy 
+	 * power core. <br>
+	 * One should probably check getEnemyPowerCoreLocation()
+	 * first to see if robot knows the exact position. <br>
+	 * Returns null if no reasonable guess exists.
+	 * @see MapCache#getEnemyPowerCoreLocation()
+	 */
+	public MapLocation guessEnemyPowerCoreLocation() {
+		int mapEdgesKnown = 0;
+		if(edgeXMin!=0) mapEdgesKnown++;
+		if(edgeXMax!=0) mapEdgesKnown++;
+		if(edgeYMin!=0) mapEdgesKnown++;
+		if(edgeYMax!=0) mapEdgesKnown++;
+		if(mapEdgesKnown<2) return null;
+		
+		// Current heuristic: assume a square map, most likely 60x60.
+		int mapSize = 61;
+		int xminGuess = edgeXMin;
+		int xmaxGuess = edgeXMax;
+		int yminGuess = edgeYMin;
+		int ymaxGuess = edgeYMax;
+		if(edgeXMin!=0 && edgeXMax!=0) {
+			mapSize = edgeXMax-edgeXMin;
+		} else if(edgeYMin!=0 && edgeYMax!=0) {
+			mapSize = edgeYMax-edgeYMin;
+		}
+		if(xminGuess==0) {
+			if(xmaxGuess==0) {
+				xminGuess = POWER_CORE_POSITION;
+				xmaxGuess = POWER_CORE_POSITION;
+			} else {
+				xminGuess = xmaxGuess - mapSize;
+			}
+		} else if(xmaxGuess==0) {
+			xmaxGuess = xminGuess + mapSize;
+		}
+		if(yminGuess==0) {
+			if(ymaxGuess==0) {
+				yminGuess = POWER_CORE_POSITION;
+				ymaxGuess = POWER_CORE_POSITION;
+			} else {
+				yminGuess = ymaxGuess - mapSize;
+			}
+		} else if(ymaxGuess==0) {
+			ymaxGuess = yminGuess + mapSize;
+		}
+		int x = xminGuess+xmaxGuess-POWER_CORE_POSITION;
+		int y = yminGuess+ymaxGuess-POWER_CORE_POSITION;
+		return new MapLocation(cacheToWorldX(x), cacheToWorldY(y));
+	}
+	
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
 	public void senseAll() {
 		senseAllTiles();
@@ -292,8 +349,11 @@ public class MapCache {
 			if(id==0) {
 				powerNodeGraph.nodeCount++;
 				id = powerNodeGraph.nodeCount;
-				powerNodeGraph.nodeLocations[id] = node.getLocation();
+				powerNodeGraph.nodeLocations[id] = nodeLoc;
 				powerNodeID[worldToCacheX(nodeLoc.x)][worldToCacheY(nodeLoc.y)] = id;
+			}
+			if(node.powerCoreTeam()!=null && node.powerCoreTeam()!=baseRobot.myTeam) {
+				powerNodeGraph.enemyPowerCoreID = id;
 			}
 			for(MapLocation neighborLoc: node.neighbors()) {
 				short neighborID = getPowerNodeID(neighborLoc);
@@ -315,8 +375,21 @@ public class MapCache {
 	/** Update power node graph with data from a message. */
 	public void integratePowerNodes(int[] data) {
 		int mask = (1<<15)-1;
-		int nodeX = data[0] >> 15;
-		int nodeY = data[0] & mask;
+		if(powerNodeGraph.enemyPowerCoreID==0 && data[0]!=32001) {
+			int coreX = data[0] >> 15;
+			int coreY = data[0] & mask;
+			short coreID = powerNodeID[worldToCacheX(coreX)][worldToCacheY(coreY)];
+			if(coreID==0) {
+				powerNodeGraph.nodeCount++;
+				coreID = powerNodeGraph.nodeCount;
+				powerNodeGraph.nodeLocations[coreID] = new MapLocation(coreX, coreY);
+				powerNodeID[worldToCacheX(coreX)][worldToCacheY(coreY)] = coreID;
+			} else {
+				powerNodeGraph.enemyPowerCoreID = coreID;
+			}
+		}
+		int nodeX = data[1] >> 15;
+		int nodeY = data[1] & mask;
 		MapLocation nodeLoc = new MapLocation(nodeX, nodeY);
 		short id = baseRobot.mc.getPowerNodeID(nodeLoc);
 		if(powerNodeGraph.nodeSensed[id])

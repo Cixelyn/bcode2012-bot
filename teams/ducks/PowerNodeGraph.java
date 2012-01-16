@@ -31,6 +31,11 @@ public class PowerNodeGraph {
 	 * becomes the accurate number when we sensed the power node.
 	 */
 	final short[] degreeCount;
+	/** This id, when used as an index in the nodeLocations array, 
+	 * will give the location of the enemy power core.
+	 * 0 means we don't know about it yet.
+	 */
+	short enemyPowerCoreID;
 	
 	public PowerNodeGraph() {
 		nodeLocations = new MapLocation[51];
@@ -49,6 +54,7 @@ public class PowerNodeGraph {
 			}
 			ret+="\n";
 		}
+		ret+="enemy core is node #"+enemyPowerCoreID+"\n";
 		return ret;
 	}
 	
