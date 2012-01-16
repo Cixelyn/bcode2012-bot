@@ -78,20 +78,10 @@ public class SharedExplorationSystem {
 		baseRobot.io.sendInts("#ep", ints);
 	}
 	
-	public void receiveMapUpdates(int[] data) {
-		//first 32 elements of data are 16 4x4 map blocks
-		
-		//then next 4 are edge data
-		
-		//next 1 is the maplocation of a power node, P
-		//next N are the maplocations of power nodes connected to P
-		
-		//for 60x60 map with a C_50 powernode graph, this will be 32+4+1+49=86 ints
-	}
-	
 	public void receiveMapFragment(int[] data) {
-		for(int i=0; i<data.length; i+=2) 
+		for(int i=0; i<data.length; i+=2) {
 			baseRobot.mc.integrateTerrainInfo(data[i], data[i+1]);
+		}
 	}
 	public void receiveMapEdges(int[] data) {
 		if(baseRobot.mc.edgeXMin==0) baseRobot.mc.edgeXMin = data[0];
