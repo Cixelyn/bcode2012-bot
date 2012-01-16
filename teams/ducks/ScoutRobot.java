@@ -30,7 +30,7 @@ public class ScoutRobot extends StrategyRobot {
 	@Override
 	public void execute(RobotState state) throws GameActionException {
 		// power down if not enough flux
-		if (currFlux < Constants.POWER_DOWN_FLUX) {
+		if (currFlux < Constants.MIN_ROBOT_FLUX) {
 			return;
 		}
 		switch (state) {
@@ -97,7 +97,7 @@ public class ScoutRobot extends StrategyRobot {
 				}
 			}
 		}
-		return damagedUnits >= Constants.MIN_DAMAGED_UNITS_TO_REGEN;
+		return damagedUnits >= 1;
 	}
 
 }
