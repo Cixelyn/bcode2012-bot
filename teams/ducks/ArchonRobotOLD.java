@@ -9,7 +9,7 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
 
-public class ArchonStrategy extends StrategyRobot {
+public class ArchonRobotOLD extends StrategyRobot {
 	
 	private int splitTime;
 	private Direction splitDirection;
@@ -27,7 +27,7 @@ public class ArchonStrategy extends StrategyRobot {
 	private int roundsSinceSeenEnemy;
 	private Direction lastEnemyDirection;
 	
-	public ArchonStrategy(RobotController myRC) {
+	public ArchonRobotOLD(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 	}
 	
