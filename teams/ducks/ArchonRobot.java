@@ -1,11 +1,11 @@
 package ducks;
 
+import ducks.Debug.Owner;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class ArchonRobot extends StrategyRobot {
@@ -22,8 +22,8 @@ public class ArchonRobot extends StrategyRobot {
 	// attack move variables
 	private boolean isLeader;
 	private int archonIndex;
-	private RobotInfo attackTarget;
-	private MapLocation attackMoveTarget;
+	//private RobotInfo attackTarget;
+	//private MapLocation attackMoveTarget;
 	private Direction attackMoveDirection;
 	private MapLocation enemyPowerNode;
 	
@@ -201,7 +201,7 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void initialize()
 	{
-		// set nav mode
+		// set navigation mode mode
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		// set radio addresses
 		io.setAddresses(new String[] {"#x", "#a"});
@@ -290,6 +290,7 @@ public class ArchonRobot extends StrategyRobot {
 //	x - ??? profit
 	public void attack_move()
 	{
+		debug.setIndicatorString(1, "" + archonIndex, Owner.JVEN);
 		if (currLoc.equals(dc.getAlliedArchons()[0]))
 		{
 //			leader code
