@@ -27,7 +27,10 @@ public class SoldierRobot extends StrategyRobot {
 				}
 				break;
 			case HOLD_POSITION:
-				break;
+				if(ao.getArchonOwnerID()==5) {
+					return RobotState.HIBERNATE;
+				}
+				
 			default:
 				break;
 		}

@@ -180,6 +180,8 @@ public class ArchonRobot extends StrategyRobot {
 		case DEFEND_BASE:
 		{
 			numDefenders = 0;
+			mi.setObjective(myHome);
+			mi.setMoonwalkMode();
 			
 		} break;
 		case POWER_CAP:
@@ -623,9 +625,16 @@ public class ArchonRobot extends StrategyRobot {
 		fm.manageFlux();
 	}
 	
-	public void defend_base()
+	public void defend_base() throws GameActionException
 	{
-		// distribute flux
+		if(spawnUnitInDir(RobotType.SOLDIER,currDir)) {
+			ao.claimOwnership();
+			numDefenders++;
+		}
+		else {
+			mi.attackMove();
+		}	
+		ao.sendOwnerships();
 		fm.manageFlux();
 	}
 	
