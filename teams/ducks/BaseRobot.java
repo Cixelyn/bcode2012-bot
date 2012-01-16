@@ -56,7 +56,7 @@ public abstract class BaseRobot {
 		mi = new Micro(this);
 		io = new Radio(this);
 		fm = new FluxManager(this);
-		debug = new Debug(this, Owner.YP);
+		debug = new Debug(this, Owner.JVEN);
 		ses = new SharedExplorationSystem(this);
 		ur = new UnitRadar(this);
 		eai = new EnemyArchonInfo(this);

@@ -341,7 +341,7 @@ public class ArchonRobot extends StrategyRobot {
 		// distribute flux
 		fm.manageFlux();
 		// send ownership information
-		ao.sendOwnerships();
+		ao.sendOwnerships(trueArchonIndex);
 	}
 	
 	public void checkAttackMoveStatus()
