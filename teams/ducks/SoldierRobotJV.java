@@ -81,7 +81,7 @@ public class SoldierRobotJV extends StrategyRobot {
 	@Override
 	public void execute(RobotState state) throws GameActionException {
 		// power down if not enough flux, or suicide if we won
-		if (currFlux < Constants.POWER_DOWN_FLUX) {
+		if (currFlux < Constants.MIN_ROBOT_FLUX) {
 			if (enemyArchonInfo.getNumEnemyArchons() == 0) {
 				rc.suicide();
 			}

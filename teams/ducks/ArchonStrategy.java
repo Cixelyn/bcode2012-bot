@@ -3,12 +3,9 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
-import battlecode.common.GameObject;
 import battlecode.common.MapLocation;
-import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
 
@@ -318,7 +315,8 @@ public class ArchonStrategy extends StrategyRobot {
 			}
 		}
 		// distribute flux
-		distributeFlux();
+		// TODO(jven): use flux manager
+		//distributeFlux();
 	}
 	
 	public void defend() throws GameActionException {
@@ -327,7 +325,8 @@ public class ArchonStrategy extends StrategyRobot {
 		// reset bearing if necessary
 		setBearing();
 		// distribute flux
-		distributeFlux();
+		// TODO(jven): use flux manager
+		//distributeFlux();
 		// send rally
 		sendRally();
 	}
@@ -338,7 +337,8 @@ public class ArchonStrategy extends StrategyRobot {
 		// reset bearing if necessary
 		setBearing();
 		// distribute flux
-		distributeFlux();
+		// TODO(jven): use flux manager
+		//distributeFlux();
 		// send rally
 		sendRally();
 	}
@@ -352,7 +352,8 @@ public class ArchonStrategy extends StrategyRobot {
 		// kite enemy
 		kite(closestEnemy.location);
 		// distribute flux
-		distributeFlux();
+		// TODO(jven): use flux manager
+		//distributeFlux();
 		// send rally
 		sendRally();
 	}
@@ -389,7 +390,8 @@ public class ArchonStrategy extends StrategyRobot {
 		}
 		// distribute flux if we're not adjacent to tower or if we have too much
 		if (distance > 2 || currFlux == myType.maxFlux) {
-			distributeFlux();
+			// TODO(jven): use flux manager
+			//distributeFlux();
 		}
 		// send rally
 		objective = powerCore;
@@ -505,55 +507,6 @@ public class ArchonStrategy extends StrategyRobot {
 		rc.spawn(type);
 		currFlux -= type.spawnCost;
 		return true;
-	}
-	
-	private void distributeFlux() throws GameActionException {
-		// check all directions around you, ground and air
-		for (Direction d : Direction.values()) {
-			// ignore none direction
-			if (d == Direction.NONE) {
-				continue;
-			}
-			for (RobotLevel level : RobotLevel.values()) {
-				// if we don't have flux to give, abort
-				if (this.currFlux < Constants.MIN_ARCHON_FLUX) {
-					break;
-				}
-				// ignore power node level
-				if (level == RobotLevel.POWER_NODE) {
-					continue;
-				}
-				// can't give flux to yourself, silly!
-				if (d == Direction.OMNI && level == RobotLevel.ON_GROUND) {
-					continue;
-				}
-				GameObject obj = dc.getAdjacentGameObject(d, level);
-				if (obj instanceof Robot && obj.getTeam() == myTeam) {
-					// TODO(jven): data cache this?
-					RobotInfo rInfo = rc.senseRobotInfo((Robot)obj);
-					// don't give flux to towers
-					if (rInfo.type == RobotType.TOWER || rInfo.type == RobotType.ARCHON) {
-						continue;
-					}
-					if (rInfo.flux <
-							Constants.MIN_UNIT_FLUX_RATIO * rInfo.type.maxFlux) {
-						double fluxToTransfer = Math.min(
-								Constants.MIN_UNIT_FLUX_RATIO * rInfo.type.maxFlux - rInfo.flux,
-								currFlux - Constants.MIN_ARCHON_FLUX);
-						if (fluxToTransfer > 0) {
-							// if we throw an exception, our info is stale, so abort
-							try {
-								rc.transferFlux(
-										rInfo.location, rInfo.robot.getRobotLevel(), fluxToTransfer);
-								currFlux -= fluxToTransfer;
-							} catch (GameActionException e) {
-								return;
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 	
 	private MapLocation getNextPowerCore() {
