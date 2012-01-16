@@ -17,7 +17,6 @@ public class ArchonRobotYP extends BaseRobot {
 
 	public ArchonRobotYP(RobotController myRC) {
 		super(myRC);
-		nv = new BlindBug(this);
 		nodes[0] = rc.sensePowerCore().getLocation();
 	}
 
@@ -111,7 +110,10 @@ public class ArchonRobotYP extends BaseRobot {
 			//rc.setIndicatorString(1, "before move "+bytecode+" cur "+currLoc);
 //			rc.setIndicatorString(1, "start:"+bugStart+" end:"+bugTarget+" cw:"+bugCW+" cur:"+currLoc+" obs:"+bugObs);
 			
-			Direction d = nv.navigateTo(nodes[nodeindex]);
+			nav.setNavigationMode(NavigationMode.BUG);
+			nav.setDestination(nodes[nodeindex]);
+			Direction d = nav.navigateToDestination();
+			//Direction d = nv.navigateTo(nodes[nodeindex]);
 			if (currDir == d)
 				rc.moveForward();
 			else

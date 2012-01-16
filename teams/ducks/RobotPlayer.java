@@ -9,9 +9,9 @@ public class RobotPlayer {
 		try {
 			switch (myRC.getType()) {
 			case ARCHON:
-//				br = new ArchonRobotYP(myRC);
+				br = new ArchonRobotYP(myRC);
 //				br = new ArchonRobotHT(myRC);
-				br = new ArchonStrategy(myRC);
+//				br = new ArchonStrategy(myRC);
 				break;
 			case SOLDIER:
 				br = new SoldierRobotJV(myRC);
