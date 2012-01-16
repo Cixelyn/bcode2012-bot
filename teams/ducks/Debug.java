@@ -42,9 +42,10 @@ public class Debug {
 	
 	public void showIndicatorStrings() {
 		for (int row = 0; row < GameConstants.NUMBER_OF_INDICATOR_STRINGS; row++) {
-			rc.setIndicatorString(row, "");
 			if (showDebug) {
 				rc.setIndicatorString(row, indicatorStrings[row]);
+			} else {
+				rc.setIndicatorString(row, "");
 			}
 		}
 	}

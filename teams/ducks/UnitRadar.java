@@ -19,6 +19,7 @@ public class UnitRadar {
 	
 	public UnitRadar(BaseRobot br) {
 		this.br = br;
+		lastscanround = -1;
 	}
 	
 	public final static int MAX_ROBOTS = 1024;
@@ -33,30 +34,39 @@ public class UnitRadar {
 	
 	public final RobotInfo[] enemyInfos = new RobotInfo[MAX_ROBOTS];
 	public final int[] enemyTimes = new int[MAX_ROBOTS];
+	public final int[] enemyRobots = new int[MAX_ENEMY_ROBOTS];
 	public final int[] enemyArchons = new int[6];
 	public final int[] enemySoldiers = new int[MAX_ENEMY_ROBOTS];
 	public final int[] enemyScouts = new int[MAX_ENEMY_ROBOTS];
 	public final int[] enemyDisruptors = new int[MAX_ENEMY_ROBOTS];
 	public final int[] enemyScorchers = new int[MAX_ENEMY_ROBOTS];
+	public final int[] enemyTowers = new int[MAX_ENEMY_ROBOTS];
+	public int numEnemyRobots;
 	public int numEnemyArchons;
 	public int numEnemySoldiers;
 	public int numEnemyScouts;
 	public int numEnemyDisruptors;
 	public int numEnemyScorchers;
+	public int numEnemyTowers;
 	
+	public int lastscanround;
 	
 	
 	public MapLocation closestEnemyLoc;
+	public RobotInfo closetEnemy;
 	public double closestEnemyDist;
 	
 	private void resetEnemyStats() {
-		closestEnemyLoc = null;
+//		closestEnemyLoc = null;
+		closetEnemy = null;
 		closestEnemyDist = 999;
+		numEnemyRobots = 0;
 		numEnemyArchons = 0;
 		numEnemySoldiers = 0;
 		numEnemyScouts = 0;
 		numEnemyDisruptors = 0;
 		numEnemyScorchers = 0;
+		numEnemyTowers = 0;
 	}
 	
 	private void resetAllyStats() {
@@ -70,6 +80,12 @@ public class UnitRadar {
 		enemyInfos[pos] = rinfo;
 		enemyTimes[pos] = Clock.getRoundNum();
 		
+
+		// TODO not caching this right now
+		//      if this was cached, would double cost of scan loop
+//		enemyRobots[numEnemyRobots] = pos; 
+		numEnemyRobots++;
+		
 		switch (rinfo.type)
 		{
 		case ARCHON: 		enemyArchons[numEnemyArchons++] = pos; break;
@@ -77,12 +93,14 @@ public class UnitRadar {
 		case SCORCHER: 		enemyScorchers[numEnemyScorchers++] = pos; break;
 		case SCOUT: 		enemyScouts[numEnemyScouts++] = pos; break;
 		case SOLDIER: 		enemySoldiers[numEnemySoldiers++] = pos; break;
+		case TOWER:			enemyTowers[numEnemyTowers++] = pos; break;
 		}
 		
 		// Distance Stats
 		int dist = rinfo.location.distanceSquaredTo(br.currLoc);
 		if(dist < closestEnemyDist) {
-			closestEnemyLoc = rinfo.location;
+//			closestEnemyLoc = rinfo.location;
+			closetEnemy = rinfo;
 			closestEnemyDist = dist;
 		}
 	}
@@ -105,6 +123,9 @@ public class UnitRadar {
 	 * @param scanEnemies - enable enemy data collection and scanning
 	 */
 	public void scan(boolean scanAllies, boolean scanEnemies) {
+//		if (lastscanround<br.currRound) 
+//		{ //TODO not sure if we actually want to cache this like this...
+		
 		Robot[] robots = br.rc.senseNearbyGameObjects(Robot.class);
 		
 		//reset stat collection
@@ -128,5 +149,8 @@ public class UnitRadar {
 				e.printStackTrace();
 			}
 		}
+		
+//			lastscanround = br.currRound;
+//		}
 	}
 }
