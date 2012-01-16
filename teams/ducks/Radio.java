@@ -123,7 +123,7 @@ public class Radio {
 		int end = msg.indexOf("!");
 		int[] ints = new int[end];
 		
-		for(int i=0; i < end; i++ ) {
+		for(int i=end; --i > 0; ) {
 			ints[i] = msg.charAt(i) - 0x100;
 		}
 		return ints;
@@ -161,18 +161,13 @@ public class Radio {
 	 * @return deserialized array
 	 */
 	public static int[] decodeInts(StringBuilder msg) {
-		
 		int num = msg.indexOf("!") / 2;
 		int[] ints = new int[num];
 		
-		for(int i=0; i < num; i++) {	
-			
-			int lo = (msg.charAt(i*2  )      ) - 0x100;
-			int hi = (msg.charAt(i*2+1) - 0x100) << 15;
-		
-			
-			ints[i] = lo+hi;
-			
+		for(int i=num; --i > 0;) {	
+			ints[i] = 
+				((msg.charAt(i*2  )      ) - 0x100) +  // lo bits
+				((msg.charAt(i*2+1) - 0x100) << 15);   // hi bits
 		}
 		
 		return ints;
