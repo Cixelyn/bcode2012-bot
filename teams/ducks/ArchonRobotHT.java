@@ -27,8 +27,8 @@ public class ArchonRobotHT extends BaseRobot{
 	@Override
 	public void run() throws GameActionException {
 //		if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
-		if(myArchonID==5 && Clock.getRoundNum()%500==5)
-			System.out.println(mc);
+//		if(myArchonID==5 && Clock.getRoundNum()%500==5)
+//			System.out.println(mc);
 		mc.senseAfterMove(lastMoved);
 		
 		rc.setIndicatorString(0, ""+aboutToMove);
