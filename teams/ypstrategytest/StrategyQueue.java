@@ -3,6 +3,7 @@ package ypstrategytest;
 import java.io.Serializable;
 
 public class StrategyQueue implements Serializable {
+	private static final long serialVersionUID = -1133529311351560380L;
 	StrategyQueueNode head;
 	StrategyQueueNode tail;
 	
@@ -47,6 +48,7 @@ public class StrategyQueue implements Serializable {
 }
 
 class StrategyQueueNode implements Serializable {
+	private static final long serialVersionUID = 3124818782510864386L;
 	public StrategyQueueNode next;
 	public StrategyElement data;
 	public StrategyQueueNode(StrategyQueueNode next, StrategyElement data) {

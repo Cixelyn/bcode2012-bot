@@ -5,6 +5,7 @@ import battlecode.common.RobotController;
 
 public class ArchonRobotJVExplore extends BaseRobot {
 	
+	@SuppressWarnings("unused")
 	private boolean madeScout;
 	
 	public ArchonRobotJVExplore(RobotController myRC) {

@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class StrategyHeap implements Serializable
 {
+	private static final long serialVersionUID = 8907175467943943170L;
 	public static final int MAX_STRATEGY_HEAP_SIZE = 100;
 	public StrategyElement[] heap;
 	public int size;

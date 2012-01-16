@@ -16,6 +16,7 @@ import battlecode.common.Clock;
 
 public class TestClass {
 	
+	@SuppressWarnings("unused")
 	public static void run() throws Exception
 	{
 		int t1,t2;
