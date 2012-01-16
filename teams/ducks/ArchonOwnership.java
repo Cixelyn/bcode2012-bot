@@ -61,7 +61,7 @@ public class ArchonOwnership {
 	/**
 	 * Broadcast ownership information. Only archons should call this.
 	 */
-	public void sendOwnerships() {
+	public void sendOwnerships(int trueArchonID) {
 		// ignore if not an archon
 		if (br.myType != RobotType.ARCHON) {
 			br.debug.println(
@@ -73,7 +73,7 @@ public class ArchonOwnership {
 			for (int[] ownership : buffer) {
 				if (ownership[0] != -1) {
 					br.io.sendShorts("#xo", new int[] {ownership[0], ownership[1],
-							ownership[2], br.myID});
+							ownership[2], trueArchonID});
 				}
 			}
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
@@ -140,6 +140,7 @@ public class ArchonOwnership {
 			archonOwnerID = ownership[3];
 			br.io.sendShorts("#ao", new int[] {ownership[0], ownership[1],
 					ownership[2]});
+			br.io.addAddress("#" + archonOwnerID);
 			return true;
 		} else {
 			return false;
