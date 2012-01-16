@@ -19,6 +19,12 @@ public final class Constants {
 	/** Units below this amount of flux will not execute their run method. */
 	public static final double POWER_DOWN_FLUX = 1;
 	
+	/** Robots must have this amount of flux in order to distribute. */
+	public static final double MIN_ROBOT_FLUX = 0.5;
+	/** Archons try to maintain this ratio of max flux on other units. */
+	public static final double MIN_UNIT_BATTLE_FLUX_RATIO = 0.15;
+	
+	
 	/** The frequency with which units broadcast information. */
 	public static final int ARCHON_BROADCAST_FREQUENCY = 4;
 	/** Soldier broadcast frequency for dead enemy archon array */

@@ -16,7 +16,7 @@ public abstract class StrategyRobot extends BaseRobot {
 	public void run() throws GameActionException {
 
 		// show state of robot
-		rc.setIndicatorString(0, "" + myType + " - " + currState);
+		debug.setIndicatorString(0,"" + myType + " - " + currState, "jven");
 		
 		gotoState(processTransitions(currState));
 		execute(currState);
