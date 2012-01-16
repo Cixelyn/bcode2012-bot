@@ -13,7 +13,6 @@ public class ArchonRobotHT extends BaseRobot{
 	int myArchonID;
 	public ArchonRobotHT(RobotController myRC) {
 		super(myRC);
-		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		nav.setNavigationMode(NavigationMode.RANDOM);
 		
 		// compute archon ID
@@ -30,51 +29,38 @@ public class ArchonRobotHT extends BaseRobot{
 	@Override
 	public void run() throws GameActionException {
 		//if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
-		if(myArchonID==5 && Clock.getRoundNum()%500==5)
-			System.out.println(mc);
+//		if(myArchonID==5 && Clock.getRoundNum()%500==5)
+//			System.out.println(mc);
 		mc.senseAfterMove(lastMoved);
-		MapLocation target = rc.senseCapturablePowerNodes()[0];
-		rc.setIndicatorString(0, "dxdy: "+(target.x-currLoc.x)+","+(target.y-currLoc.y));
-		rc.setIndicatorString(1, "abouttomove: "+aboutToMove);
-		nav.setDestination(target);
-		nav.prepare();
 		
+		rc.setIndicatorString(0, ""+aboutToMove);
 		if(!rc.isMovementActive()) {
-			Direction dir;
-			if(aboutToMove) {
-				dir = currDir;
+			if(aboutToMove && rc.canMove(currDir))  {
+				rc.moveForward();
 				aboutToMove = false;
 			} else {
-				dir = nav.navigateToDestination();
-				rc.setIndicatorString(2, dir.toString());
-			}
-			if(!(dir==Direction.NONE || dir==Direction.OMNI)) {
-				for(int i=0; i<30 && !rc.canMove(dir); i++) {
-					if(Math.random()<0.5)
+				Direction dir = currDir;
+				if(Math.random()<0.3)  {
+					if(Math.random()<0.5) 
 						dir = dir.rotateLeft();
 					else
 						dir = dir.rotateRight();
 				}
-				if(rc.canMove(dir)) {
-					if(dir==currDir) {
-						if(currLocInFront.equals(target)) {
-							if(currFlux>210 && rc.canMove(currDir)) {
-								rc.spawn(RobotType.TOWER);
-							}
-						} else {
-							lastMoved = currDir;
-							rc.moveForward();
-						}
-					} else {
-						rc.setDirection(dir);
-						aboutToMove = true;
-					}
+				int i=0;
+				while(!rc.canMove(dir)) {
+					i++;
+					if(i>10) break;
+					if(Math.random()<0.5) 
+						dir = dir.rotateLeft();
+					else
+						dir = dir.rotateRight();
 				}
+				rc.setDirection(dir);
+				aboutToMove = true;
 			}
-		
 		}
 		
-		if(Math.random()<0.3) {
+		if(Math.random()<0.001) {
 		ses.broadcastPowerNodeGraph();
 		ses.broadcastMapFragment();
 		ses.broadcastMapEdges();

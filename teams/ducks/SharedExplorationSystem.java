@@ -51,6 +51,7 @@ public class SharedExplorationSystem {
 			buffer[c++] = baseRobot.mc.packedIsWall[xb][yb];
 			buffer[c++] = data;
 		}
+		if(c>32) System.out.println(c);
 		int[] ints = new int[c];
 		System.arraycopy(buffer, 0, ints, 0, c);
 		baseRobot.io.sendInts("#em", ints);
@@ -85,9 +86,9 @@ public class SharedExplorationSystem {
 	}
 	public void receiveMapEdges(int[] data) {
 		if(baseRobot.mc.edgeXMin==0) baseRobot.mc.edgeXMin = data[0];
-		if(baseRobot.mc.edgeXMax==0) baseRobot.mc.edgeXMax = data[0];
-		if(baseRobot.mc.edgeYMin==0) baseRobot.mc.edgeXMin = data[0];
-		if(baseRobot.mc.edgeYMax==0) baseRobot.mc.edgeYMax = data[0];
+		if(baseRobot.mc.edgeXMax==0) baseRobot.mc.edgeXMax = data[1];
+		if(baseRobot.mc.edgeYMin==0) baseRobot.mc.edgeYMin = data[2];
+		if(baseRobot.mc.edgeYMax==0) baseRobot.mc.edgeYMax = data[3];
 	}
 	public void receivePowerNodeGraph(int[] data) {
 		baseRobot.mc.integratePowerNodes(data);
