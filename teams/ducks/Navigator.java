@@ -82,9 +82,11 @@ public class Navigator {
 			dir = navigateDStar();
 		} 
 		
-		
-		if(dir==Direction.NONE) return dir;
-		//WIGGLE! ^_^
+		if(dir==Direction.NONE || dir==Direction.OMNI) 
+			return Direction.NONE;
+		return wiggleToMovableDirection(dir);
+	}
+	private Direction wiggleToMovableDirection(Direction dir) {
 		boolean[] movable = baseRobot.dc.getMovableDirections();
 		int multiplier = ((int)(Math.random()*2))*2-1; // 1 or -1 with equal probability
 		int ord = dir.ordinal();
