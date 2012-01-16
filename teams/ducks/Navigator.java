@@ -64,9 +64,17 @@ public class Navigator {
 	}
 	/** Returns direction to go next in order to reach the destination. */
 	public Direction navigateToDestination() {
+		if(destination==null) 
+			return navigateCompletelyRandomly(); 
+		
 		Direction dir = Direction.NONE;
 		if(mode==NavigationMode.RANDOM) {
 			dir = navigateRandomly();
+		} else if(mode==NavigationMode.GREEDY) {
+			if(movesOnSameTarget > 2 * expectedMovesToReachTarget) 
+				dir = navigateRandomly();
+			else
+				dir = navigateGreedy();
 		} else if(mode==NavigationMode.BUG) {
 			dir = navigateBug();
 		} else if(mode==NavigationMode.TANGENT_BUG) {
@@ -84,7 +92,10 @@ public class Navigator {
 		
 		if(dir==Direction.NONE || dir==Direction.OMNI) 
 			return Direction.NONE;
-		return wiggleToMovableDirection(dir);
+		dir = wiggleToMovableDirection(dir);
+		if(dir==null) return Direction.NONE;
+		movesOnSameTarget++;
+		return dir;
 	}
 	private Direction wiggleToMovableDirection(Direction dir) {
 		boolean[] movable = baseRobot.dc.getMovableDirections();
@@ -96,7 +107,7 @@ public class Navigator {
 				return dir;
 			}
 		}
-		return Direction.NONE;
+		return null;
 	}
 	
 	private Direction dxdyToDirection(int dx, int dy) {
@@ -129,12 +140,23 @@ public class Navigator {
 			do {
 				d++;
 				dir = dir.rotateLeft();
-			} while(d<0);
+			} while(d<0 || mapCache.isWall(baseRobot.currLoc.add(dir)));
 		} else {
 			do {
 				d++;
 				dir = dir.rotateRight();
-			} while(d<0);
+			} while(d<0 || mapCache.isWall(baseRobot.currLoc.add(dir)));
+		}
+		return dir;
+	}
+	private Direction navigateGreedy() {
+		Direction dir = baseRobot.currLoc.directionTo(destination);
+		if(Math.random()<0.5) {
+			while(mapCache.isWall(baseRobot.currLoc.add(dir)))
+				dir = dir.rotateLeft();
+		} else {
+			while(mapCache.isWall(baseRobot.currLoc.add(dir)))
+				dir = dir.rotateRight();
 		}
 		return dir;
 	}
@@ -143,6 +165,6 @@ public class Navigator {
 	}
 	private Direction navigateDStar() {
 		//TODO implement
-		return navigateCompletelyRandomly();
+		throw new RuntimeException("DStar navigation not yet implemented!");
 	}
 }
