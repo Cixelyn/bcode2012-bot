@@ -21,29 +21,47 @@ public class UnitRadar {
 		this.br = br;
 	}
 	
-	private final static int MAX_ROBOTS = 1024;
-	private final static int MAX_ADJACENT = Direction.values().length;
+	public final static int MAX_ROBOTS = 1024;
+	public final static int MAX_ENEMY_ROBOTS = 50;
+	public final static int MAX_ADJACENT = 17;
 
-	private final RobotInfo[] allyInfos = new RobotInfo[MAX_ROBOTS];
-	private final int[] allyTimes = new int[MAX_ROBOTS];
+	public final RobotInfo[] allyInfos = new RobotInfo[MAX_ROBOTS];
+	public final int[] allyTimes = new int[MAX_ROBOTS];
 	
 	public int numAdjacentAllies;
-	public RobotInfo[] adjacentAllies = new RobotInfo[MAX_ADJACENT];
+	public final RobotInfo[] adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	
-	private final RobotInfo[] enemyInfos = new RobotInfo[MAX_ROBOTS];
-	private final int[] enemyTimes = new int[MAX_ROBOTS];
+	public final RobotInfo[] enemyInfos = new RobotInfo[MAX_ROBOTS];
+	public final int[] enemyTimes = new int[MAX_ROBOTS];
+	public final int[] enemyArchons = new int[6];
+	public final int[] enemySoldiers = new int[MAX_ENEMY_ROBOTS];
+	public final int[] enemyScouts = new int[MAX_ENEMY_ROBOTS];
+	public final int[] enemyDisruptors = new int[MAX_ENEMY_ROBOTS];
+	public final int[] enemyScorchers = new int[MAX_ENEMY_ROBOTS];
+	public int numEnemyArchons;
+	public int numEnemySoldiers;
+	public int numEnemyScouts;
+	public int numEnemyDisruptors;
+	public int numEnemyScorchers;
+	
+	
 	
 	public MapLocation closestEnemyLoc;
-	private double closestEnemyDist;
+	public double closestEnemyDist;
 	
 	private void resetEnemyStats() {
 		closestEnemyLoc = null;
 		closestEnemyDist = 999;
+		numEnemyArchons = 0;
+		numEnemySoldiers = 0;
+		numEnemyScouts = 0;
+		numEnemyDisruptors = 0;
+		numEnemyScorchers = 0;
 	}
 	
 	private void resetAllyStats() {
 		numAdjacentAllies = 0;
-		adjacentAllies = new RobotInfo[MAX_ADJACENT];
+//		adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	}
 	
 	
@@ -51,7 +69,16 @@ public class UnitRadar {
 		int pos = rinfo.robot.getID() % MAX_ROBOTS;
 		enemyInfos[pos] = rinfo;
 		enemyTimes[pos] = Clock.getRoundNum();
-	
+		
+		switch (rinfo.type)
+		{
+		case ARCHON: 		enemyArchons[numEnemyArchons++] = pos; break;
+		case DISRUPTER: 	enemyDisruptors[numEnemyDisruptors++] = pos; break;
+		case SCORCHER: 		enemyScorchers[numEnemyScorchers++] = pos; break;
+		case SCOUT: 		enemyScouts[numEnemyScouts++] = pos; break;
+		case SOLDIER: 		enemySoldiers[numEnemySoldiers++] = pos; break;
+		}
+		
 		// Distance Stats
 		int dist = rinfo.location.distanceSquaredTo(br.currLoc);
 		if(dist < closestEnemyDist) {
@@ -100,11 +127,6 @@ public class UnitRadar {
 				br.rc.addMatchObservation(e.toString());
 				e.printStackTrace();
 			}
-			
-			
 		}
-		
 	}
-	
-
 }

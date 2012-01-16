@@ -9,16 +9,20 @@ import battlecode.common.RobotInfo;
 public class ArchonRobot extends StrategyRobot {
 
 	
-	private RobotInfo attackTarget;
-	private MapLocation attackMoveTarget;
-	private Direction attackMoveDirection;
-	private MapLocation enemyPowerNode;
+	
 	
 	private int armySizeBuilt;
 	private int armySizeTarget;
 	private boolean isDefender;
 	private boolean initialized;
 	
+//	attack move variables
+	private boolean isLeader;
+	private int archonIndex;
+	private RobotInfo attackTarget;
+	private MapLocation attackMoveTarget;
+	private Direction attackMoveDirection;
+	private MapLocation enemyPowerNode;
 	
 	public ArchonRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
@@ -203,9 +207,57 @@ public class ArchonRobot extends StrategyRobot {
 		
 	}
 	
+	public void checkAttackMoveStatus()
+	{
+		if (!isLeader)
+		{
+			MapLocation[] locs = dc.getAlliedArchons();
+			if (locs[0].equals(currLoc))
+			{
+				isLeader = true;
+				archonIndex = 0;
+			} else if (locs[1].equals(currLoc))
+			{
+				archonIndex = 1;
+			} else if (locs[2].equals(currLoc))
+			{
+				archonIndex = 2;
+			} else if (locs[3].equals(currLoc))
+			{
+				archonIndex = 3;
+			} else if (locs[4].equals(currLoc))
+			{
+				archonIndex = 4;
+			}
+		}
+	}
+	
+	
+//	radio 
+//	a - attack loc
+//	s - swarm - dir, target loc
+//	z - swarm retreat, dir
+//	x - ??? profit
 	public void attack_move()
 	{
-		
+		if (currLoc.equals(dc.getAlliedArchons()[0]))
+		{
+//			leader code
+			ur.scan(false, true);
+			
+			if (ur.numEnemyArchons>0)
+			{
+				
+			}
+			
+			
+		} else
+		{
+//			follow code
+			
+			
+			
+		}
 	}
 	
 	public boolean checkAttackMoveTargets()
