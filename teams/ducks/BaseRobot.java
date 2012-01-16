@@ -20,6 +20,7 @@ public abstract class BaseRobot {
 	final double myMaxEnergon, myMaxFlux;
 	final Team myTeam;
 	final int myID;
+	final MapLocation myHome;
 
 	public double currEnergon, currFlux;
 	public MapLocation currLoc, currLocInFront, currLocInBack;
@@ -45,6 +46,7 @@ public abstract class BaseRobot {
 		myID = rc.getRobot().getID();
 		myMaxEnergon = myType.maxEnergon;
 		myMaxFlux = myType.maxFlux;
+		myHome = rc.sensePowerCore().getLocation();
 		
 		dc = new DataCache(this);
 		mc = new MapCache(this);

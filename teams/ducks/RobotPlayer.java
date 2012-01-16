@@ -10,20 +10,21 @@ public class RobotPlayer {
 			switch (myRC.getType()) {
 			case ARCHON:
 //				br = new ArchonRobotHT(myRC);
-				br = new ArchonStrategy(myRC);
+//				br = new ArchonStrategy(myRC);
+				br = new ArchonRobot(myRC);
 				break;
 			case SOLDIER:
 				br = new SoldierRobot(myRC);
 				break;
-			case SCOUT:
-				br = new ScoutRobot(myRC);
-				break;
-			case DISRUPTER:
-				br = new DisrupterRobot(myRC);
-				break;
-			case SCORCHER:
-				br = new ScorcherRobot(myRC);
-				break;
+//			case SCOUT:
+//				br = new ScoutRobot(myRC);
+//				break;
+//			case DISRUPTER:
+//				br = new DisrupterRobot(myRC);
+//				break;
+//			case SCORCHER:
+//				br = new ScorcherRobot(myRC);
+//				break;
 			default:
 				break;
 			}

@@ -10,6 +10,22 @@ public final class Constants {
 	/** Reverse ordinal mappings */
 	public static final Direction[] directions = Direction.values();
 
+	
+	public static final int ROUNDS_TO_EXPLORE = 200;
+	public static final int DISTANCE_TO_ARCHON0_ON_GOHOME = 49;
+	public static final int DISTANCE_TO_HOME_ON_GOHOME = 49;
+	
+	public static final int ARMY_SIZE_ON_INITIAL_BUILD = 5;
+	public static final int BUILD_ARMY_ROUND_THRESHOLD = 1000;
+	
+	
+
+	/*************************************************************
+	 * OLD CONSTANTS BELOW
+	 *************************************************************
+	 */
+	
+	
 	/** Robots must have this amount of flux in order to distribute. */
 	public static final double MIN_ROBOT_FLUX = 0.5;
 	/** Archons try to maintain this ratio of max flux on other units. */
