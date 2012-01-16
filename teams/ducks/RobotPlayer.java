@@ -13,7 +13,7 @@ public class RobotPlayer {
 //				br = new ArchonStrategy(myRC);
 				break;
 			case SOLDIER:
-				br = new SoldierRobotJV(myRC);
+				br = new SoldierRobot(myRC);
 				break;
 			case SCOUT:
 				br = new ScoutRobot(myRC);

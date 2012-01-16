@@ -8,7 +8,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
-public class SoldierRobotJV extends StrategyRobot {
+public class SoldierRobot extends StrategyRobot {
 	
 	private int rallyPriority;
 	private MapLocation objective;
@@ -21,7 +21,7 @@ public class SoldierRobotJV extends StrategyRobot {
 	private boolean initalized;
 	private boolean backedoff;
 	
-	public SoldierRobotJV(RobotController myRC) {
+	public SoldierRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 		initalized = false;
 	}
