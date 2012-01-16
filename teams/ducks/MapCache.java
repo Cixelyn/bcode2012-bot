@@ -378,15 +378,15 @@ public class MapCache {
 		if(powerNodeGraph.enemyPowerCoreID==0 && data[0]!=32001) {
 			int coreX = data[0] >> 15;
 			int coreY = data[0] & mask;
+			System.out.println(coreX+" "+coreY);
 			short coreID = powerNodeID[worldToCacheX(coreX)][worldToCacheY(coreY)];
 			if(coreID==0) {
 				powerNodeGraph.nodeCount++;
 				coreID = powerNodeGraph.nodeCount;
 				powerNodeGraph.nodeLocations[coreID] = new MapLocation(coreX, coreY);
 				powerNodeID[worldToCacheX(coreX)][worldToCacheY(coreY)] = coreID;
-			} else {
-				powerNodeGraph.enemyPowerCoreID = coreID;
-			}
+			} 
+			powerNodeGraph.enemyPowerCoreID = coreID;
 		}
 		int nodeX = data[1] >> 15;
 		int nodeY = data[1] & mask;
@@ -400,7 +400,7 @@ public class MapCache {
 			powerNodeGraph.nodeLocations[id] = nodeLoc;
 			powerNodeID[worldToCacheX(nodeX)][worldToCacheY(nodeY)] = id;
 		}
-		for(int i=1; i<data.length; i++) {
+		for(int i=2; i<data.length; i++) {
 			int neighborX = data[i] >> 15;
 			int neighborY = data[i] & mask;
 			MapLocation neighborLoc = new MapLocation(neighborX, neighborY);

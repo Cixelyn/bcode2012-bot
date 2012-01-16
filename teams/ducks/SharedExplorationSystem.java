@@ -1,6 +1,7 @@
 package ducks;
 
 import battlecode.common.Clock;
+import battlecode.common.MapLocation;
 
 public class SharedExplorationSystem {
 	final BaseRobot baseRobot;
@@ -74,14 +75,16 @@ public class SharedExplorationSystem {
 	/** Broadcasts data about one node in the power node graph and its neighbors. */
 	public void broadcastPowerNodeFragment() {
 		PowerNodeGraph png = baseRobot.mc.powerNodeGraph;
-		int id = Clock.getRoundNum() % (png.nodeCount-1) + 2;
+		int id = (Clock.getRoundNum() % (png.nodeCount-1)) + 2;
 		if(!png.nodeSensed[id]) return;
 		int degree = png.degreeCount[id];
 		int[] ints = new int[degree+2];
-		if(png.nodeLocations[2]!=null)
-			ints[0] = (png.nodeLocations[2].x << 15) + png.nodeLocations[2].y;
-		else 
+		if(png.enemyPowerCoreID!=0) {
+			MapLocation loc = png.nodeLocations[png.enemyPowerCoreID];
+			ints[0] = (loc.x << 15) + loc.y;
+		} else {
 			ints[0] = 32001;
+		}
 		ints[1] = (png.nodeLocations[id].x << 15) + png.nodeLocations[id].y;
 		for(int i=0; i<degree; i++) {
 			int neighborID = png.adjacencyList[id][i];

@@ -1,5 +1,7 @@
 package ducks;
 
+import java.util.Arrays;
+
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
