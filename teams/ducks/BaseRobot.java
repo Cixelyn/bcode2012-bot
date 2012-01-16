@@ -1,5 +1,6 @@
 package ducks;
 
+import ducks.Debug.Owner;
 import battlecode.common.*;
 
 public abstract class BaseRobot {
@@ -49,7 +50,7 @@ public abstract class BaseRobot {
 		nav = new Navigator(this);
 		mi = new Micro(this);
 		io = new Radio(this);
-		debug = new Debug(this, "jven");
+		debug = new Debug(this, Owner.JVEN);
 		ses = new SharedExplorationSystem(this);
 		
 		spawnRound = Clock.getRoundNum();
@@ -77,7 +78,7 @@ public abstract class BaseRobot {
 			
 			debug.setIndicatorString(1,
 					"Enemy archons remaining: " + enemyArchonInfo.getNumEnemyArchons(),
-					"jven");
+					Owner.JVEN);
 			
 			// Main Radio Receive Call
 			try {
