@@ -129,8 +129,8 @@ public class UnitRadar {
 		Robot[] robots = br.rc.senseNearbyGameObjects(Robot.class);
 		
 		//reset stat collection
-		if(scanAllies) resetEnemyStats();
-		if(scanEnemies) resetAllyStats();
+		if(scanEnemies) resetEnemyStats();
+		if(scanAllies) resetAllyStats();
 		
 		for(Robot r : robots) {
 			try{

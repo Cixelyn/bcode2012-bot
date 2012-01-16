@@ -15,6 +15,7 @@ public abstract class BaseRobot {
 	final Debug debug;
 	final SharedExplorationSystem ses;
 	final UnitRadar ur;
+	final EnemyArchonInfo eai;
 	
 	// Robot Stats
 	final RobotType myType;
@@ -29,8 +30,6 @@ public abstract class BaseRobot {
 
 	public final int spawnRound;
 	public int currRound;
-	
-	public EnemyArchonInfo enemyArchonInfo;
 	
 	// Internal Statistics
 	int executeStartTime;
@@ -58,10 +57,9 @@ public abstract class BaseRobot {
 		debug = new Debug(this, Owner.JVEN);
 		ses = new SharedExplorationSystem(this);
 		ur = new UnitRadar(this);
+		eai = new EnemyArchonInfo(this);
 		
 		spawnRound = Clock.getRoundNum();
-		
-		enemyArchonInfo = new EnemyArchonInfo();
 	}
 	
 	public abstract void run() throws GameActionException;
@@ -83,7 +81,7 @@ public abstract class BaseRobot {
 			currRound = Clock.getRoundNum();
 			
 			debug.setIndicatorString(1,
-					"Enemy archons remaining: " + enemyArchonInfo.getNumEnemyArchons(),
+					"Enemy archons remaining: " + eai.getNumEnemyArchons(),
 					Owner.JVEN);
 			
 			// Main Radio Receive Call
@@ -112,7 +110,7 @@ public abstract class BaseRobot {
 				rc.addMatchObservation(e.toString());
 			}
 			
-			// Set indicator strings
+			// Show indicator strings
 			debug.showIndicatorStrings();
 		
 			// End of Turn

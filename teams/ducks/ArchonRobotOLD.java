@@ -9,7 +9,7 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
 
-public class ArchonStrategy extends StrategyRobot {
+public class ArchonRobotOLD extends StrategyRobot {
 	
 	private int splitTime;
 	private Direction splitDirection;
@@ -27,7 +27,7 @@ public class ArchonStrategy extends StrategyRobot {
 	private int roundsSinceSeenEnemy;
 	private Direction lastEnemyDirection;
 	
-	public ArchonStrategy(RobotController myRC) {
+	public ArchonRobotOLD(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 	}
 	
@@ -228,7 +228,7 @@ public class ArchonStrategy extends StrategyRobot {
 			case 'd':
 				int[] deadEnemyArchonIDs = Radio.decodeShorts(sb);
 				for (int id : deadEnemyArchonIDs) {
-					enemyArchonInfo.reportEnemyArchonKill(id);
+					eai.reportEnemyArchonKill(id);
 				}
 			default:
 				super.processMessage(msgType, sb);
@@ -482,7 +482,7 @@ public class ArchonStrategy extends StrategyRobot {
 	
 	private boolean shouldDefend() {
 		try {
-			return (enemyArchonInfo.getNumEnemyArchons() > 0 &&
+			return (eai.getNumEnemyArchons() > 0 &&
 					currLoc.equals(dc.getAlliedArchons()[0]));
 		} catch (Exception e) {
 			return false;
@@ -491,7 +491,7 @@ public class ArchonStrategy extends StrategyRobot {
 	
 	private boolean shouldTower() throws GameActionException {
 		int numAlliedArchons = dc.getAlliedArchons().length;
-		int numEnemyArchons = enemyArchonInfo.getNumEnemyArchons();
+		int numEnemyArchons = eai.getNumEnemyArchons();
 		for (int idx = 0; idx < numAlliedArchons; idx++) {
 			if (currLoc.equals(dc.getAlliedArchons()[idx])) {
 				return idx >= GameConstants.NUMBER_OF_ARCHONS -

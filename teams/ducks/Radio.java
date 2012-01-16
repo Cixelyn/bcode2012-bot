@@ -25,10 +25,10 @@ import battlecode.common.Team;
  * <h1>Message Types</h1>
  * <ul>
  *   <li> e - map edges
- *   <li> m - map terrain tile framents
+ *   <li> m - map terrain tile fragments
  *   <li> p - power node fragments
  * 
- *   <li> d - annouce dead archons
+ *   <li> d - announce dead archons
  *   <li> a,s,z,x - reserved for swarm
  * </ul>
  * 
@@ -70,6 +70,70 @@ public class Radio {
 	 */
 	public void setAddresses(String[] addrs) {
 		listenAddrs = addrs;
+	}
+
+
+	/**
+	 * Returns whether a robot is already bound
+	 * to a particular address
+	 * @param addr
+	 * @return
+	 */
+	public boolean hasAddress(String addr) {
+		return findAddress(addr)!=-1;
+	}
+	
+	private int findAddress(String addr) {
+		for(int i=listenAddrs.length; --i>=0;) {
+			if(listenAddrs[i] == addr) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+
+	/**
+	 * Adds a particular address to the robot's active ports.
+	 * Internally checks whether the address is already bound or not
+	 * @param addr
+	 * @return whether address was bound or not
+	 */
+	public boolean addAddress(String addr) {
+		if(!hasAddress(addr)) {
+			
+			int oldlen = listenAddrs.length;
+			
+			String[] newAddrs = new String[oldlen + 1];
+			System.arraycopy(listenAddrs, 0, newAddrs, 0, oldlen);
+			newAddrs[oldlen] = addr;
+			listenAddrs = newAddrs;
+			
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	
+	/**
+	 * Removes a robot's binding to an address
+	 * Internally checks whether the address is already bound or not
+	 * @param addr
+	 */
+	public boolean removeAddress(String addr) {
+		int pos=findAddress(addr);
+		if(pos >= 0) {
+			int oldlen = listenAddrs.length;
+			String[] newAddrs = new String[oldlen - 1];
+			System.arraycopy(listenAddrs, 0, newAddrs, 0, pos);
+			System.arraycopy(listenAddrs, pos+1, newAddrs, pos, oldlen - pos -1);
+			listenAddrs = newAddrs;
+			return true;
+			
+		} else {
+			return false;
+		}
 	}
 	
 	
@@ -149,7 +213,7 @@ public class Radio {
 		int end = msg.indexOf("!");
 		int[] ints = new int[end];
 		
-		for(int i=end; --i > 0; ) {
+		for(int i=end; --i >= 0; ) {
 			ints[i] = msg.charAt(i) - 0x100;
 		}
 		return ints;
@@ -190,7 +254,7 @@ public class Radio {
 		int num = msg.indexOf("!") / 2;
 		int[] ints = new int[num];
 		
-		for(int i=num; --i > 0;) {	
+		for(int i=num; --i >= 0;) {	
 			ints[i] = 
 				((msg.charAt(i*2  )      ) - 0x100) +  // lo bits
 				((msg.charAt(i*2+1) - 0x100) << 15);   // hi bits
@@ -341,7 +405,7 @@ public class Radio {
 		Radio io = new Radio();
 		
 		int[] a;
-		a = new int[]{0,10000,20000,30000,40000,500000,1073741823};
+		a = new int[]{555,10000,20000,30000,40000,500000,1073741823};
 		
 		io.sendShorts("",a);
 		System.out.println((Arrays.toString(Radio.decodeShorts(io.msgContainer))));
@@ -357,7 +421,20 @@ public class Radio {
 		io.sendMapLocs("", locs);
 		System.out.println((Arrays.toString(Radio.decodeMapLocs(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
-		
+
+		io.setAddresses(new String[]{"#aa", "#bb"});
+		System.out.println((Arrays.toString(io.listenAddrs)));
+		io.addAddress("#cc");
+		io.addAddress("#dd");
+		io.addAddress("#ee");
+		io.addAddress("#dd");
+		System.out.println((Arrays.toString(io.listenAddrs)));
+		io.removeAddress("#bb");
+		io.removeAddress("#ee");
+		io.removeAddress("#ee");
+		io.removeAddress("#aa");
+		io.addAddress("#ff");
+		System.out.println((Arrays.toString(io.listenAddrs)));
 	}
 	
 	
