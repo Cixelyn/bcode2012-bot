@@ -18,7 +18,7 @@ public class ScoutRobotJV extends BaseRobot {
 	@Override
 	public void run() throws GameActionException {
 		// power down if not enough flux
-		if (currFlux < Constants.POWER_DOWN_FLUX) {
+		if (currFlux < Constants.MIN_ROBOT_FLUX) {
 			return;
 		}
 		switch (currState) {

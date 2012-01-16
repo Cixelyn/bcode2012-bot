@@ -21,7 +21,7 @@ public class SoldierRobot extends BaseRobot {
 		super(myRC);
 		nv = new BlindBug(this);
 		timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
-		target = myRC.getLocation().add(Constants.INITIAL_BEARING,
+		target = myRC.getLocation().add(Direction.EAST,
 				GameConstants.MAP_MAX_HEIGHT + GameConstants.MAP_MAX_WIDTH);
 		currState = RobotState.RUSH;
 		io.setAddresses(new String[] {"#x", "#s"});
@@ -30,7 +30,7 @@ public class SoldierRobot extends BaseRobot {
 	@Override
 	public void run() throws GameActionException {
 		// power down if not enough flux
-		if (currFlux < Constants.POWER_DOWN_FLUX) {
+		if (currFlux < Constants.MIN_ROBOT_FLUX) {
 			return;
 		}
 		switch (currState) {

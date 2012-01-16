@@ -360,7 +360,7 @@ public class ArchonRobotJV extends BaseRobot {
 			}
 			for (RobotLevel level : RobotLevel.values()) {
 				// if we don't have flux to give, abort
-				if (this.currFlux < Constants.MIN_ARCHON_FLUX) {
+				if (this.currFlux < Constants.MIN_ROBOT_FLUX) {
 					break;
 				}
 				// ignore power node level
@@ -380,10 +380,10 @@ public class ArchonRobotJV extends BaseRobot {
 						continue;
 					}
 					if (rInfo.flux <
-							Constants.MIN_UNIT_FLUX_RATIO * rInfo.type.maxFlux) {
+							0.75 * rInfo.type.maxFlux) {
 						double fluxToTransfer = Math.min(
-								Constants.MIN_UNIT_FLUX_RATIO * rInfo.type.maxFlux - rInfo.flux,
-								currFlux - Constants.MIN_ARCHON_FLUX);
+								0.75 * rInfo.type.maxFlux - rInfo.flux,
+								currFlux - Constants.MIN_ROBOT_FLUX);
 						if (fluxToTransfer > 0) {
 							// if we throw an exception, our info is stale, so abort
 							try {
