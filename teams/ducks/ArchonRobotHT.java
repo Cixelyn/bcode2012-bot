@@ -1,8 +1,5 @@
 package ducks;
 
-import java.util.Arrays;
-
-import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -30,8 +27,11 @@ public class ArchonRobotHT extends BaseRobot{
 	@Override
 	public void run() throws GameActionException {
 //		if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
-		if(myArchonID==0 && Clock.getRoundNum()%500==5)
-			System.out.println(mc);
+//		if(myArchonID==0 && Clock.getRoundNum()%500==5) {
+//			System.out.println(mc);
+//			System.out.println(mc.guessEnemyPowerCoreLocation());
+//			System.out.println(mc.guessBestPowerNodeToCapture());
+//		}
 		mc.senseAfterMove(lastMoved);
 		
 		rc.setIndicatorString(0, ""+aboutToMove);

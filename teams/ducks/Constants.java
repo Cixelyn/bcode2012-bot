@@ -17,6 +17,7 @@ public final class Constants {
 	public static final int BUILD_ARMY_ROUND_THRESHOLD = 1000;
 	public static final int SPLIT_DISTANCE = 16;
 	public static final int SOLDIER_BROADCAST_FREQUENCY = 30;
+	public static final int ARCHON_OWNERSHIP_BUFFER_LENGTH = 5;
 	
 //	attack move constants
 	public static final int NON_TRIVIAL_ENEMY_CONCENTRATION = 5;

@@ -10,6 +10,7 @@ public enum RobotState {
 	POWER_CAP,
 	
 	HOLD_POSITION,
+	HIBERNATE,
 	
 	// to delete errors
 	DEFEND,

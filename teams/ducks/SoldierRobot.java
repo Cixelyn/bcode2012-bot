@@ -7,9 +7,11 @@ import battlecode.common.RobotController;
 public class SoldierRobot extends StrategyRobot {
 	
 	private boolean initialized;
+	private final HibernationEngine hbe;
 	
 	public SoldierRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
+		hbe = new HibernationEngine(this);
 		initialized = false;
 	}
 
@@ -57,12 +59,18 @@ public class SoldierRobot extends StrategyRobot {
 			debug.setIndicatorString(0, "" + myType + " - LOW FLUX", Owner.ALL);
 			return;
 		}
+		// TODO(jven): debug, archon ownership stuff
+		debug.setIndicatorString(
+				2, "Owner ID: " + ao.getArchonOwnerID(), Owner.JVEN);
 		switch (state) {
 			case INITIALIZE:
 				initialize();
 				break;
 			case HOLD_POSITION:
 				holdPosition();
+				break;
+			case HIBERNATE:
+				hbe.run(); //this call will halt until wakeup
 				break;
 			default:
 				break;
@@ -75,6 +83,10 @@ public class SoldierRobot extends StrategyRobot {
 		switch(msgType) {
 			case 'd':
 				eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
+				break;
+			case 'o':
+				ao.processOwnership(Radio.decodeShorts(sb));
+				break;
 			default:
 				super.processMessage(msgType, sb);
 		}

@@ -34,6 +34,10 @@ public class ArchonRobot extends StrategyRobot {
 	private boolean gathering;
 	private boolean moving;
 	private int lastRoundCheckedTargets;
+
+	// defender variables
+	private int numDefenders;
+	
 	
 	public ArchonRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
@@ -85,15 +89,15 @@ public class ArchonRobot extends StrategyRobot {
 		{
 			if (!checkAttackMoveTargets())
 			{
-//				// TODO(jven): shouldn't we be defending our base in case of counter?
-//				if (dc.getAlliedArchons().length >=
-//						eai.getNumEnemyArchons() + 2)
-//				{
-//					return RobotState.POWER_CAP;
-//				} else if (enemyPowerNode!=null)
-//				{
-//					return RobotState.POWER_CAP;
-//				}
+				// TODO(jven): shouldn't we be defending our base in case of counter?
+				if (dc.getAlliedArchons().length >=
+						eai.getNumEnemyArchons() + 2)
+				{
+					return RobotState.POWER_CAP;
+				} else if (enemyPowerNode!=null)
+				{
+					return RobotState.POWER_CAP;
+				}
 			}
 		} break;
 		case DEFEND_BASE:
@@ -175,6 +179,7 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case DEFEND_BASE:
 		{
+			numDefenders = 0;
 			
 		} break;
 		case POWER_CAP:
@@ -196,6 +201,9 @@ public class ArchonRobot extends StrategyRobot {
 
 	@Override
 	public void execute(RobotState state) throws GameActionException {
+		debug.setIndicatorString(
+				2, "Unack ownerships: " + ao.getNumUnacknowledgedOwnerships(),
+				Owner.JVEN);
 		switch (state) {
 		case INITIALIZE:
 			initialize();
@@ -252,6 +260,10 @@ public class ArchonRobot extends StrategyRobot {
 //			dead archon messages
 		case 'd':
 			eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
+			break;
+		case 'o':
+			ao.processAcknowledgement(Radio.decodeShorts(sb));
+			break;
 		default:
 			super.processMessage(msgType, sb);
 		}
@@ -308,12 +320,16 @@ public class ArchonRobot extends StrategyRobot {
 			}
 			if (dc.getMovableDirections()[d.ordinal()]) {
 				if (spawnUnitInDir(RobotType.SOLDIER, d)) {
+					// claim ownership of the unit
+					ao.claimOwnership();
 					armySizeBuilt++;
 				}
 			}
 		}
 		// distribute flux
 		fm.manageFlux();
+		// send ownership information
+		ao.sendOwnerships();
 	}
 	
 	public void checkAttackMoveStatus()
