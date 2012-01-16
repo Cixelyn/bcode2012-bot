@@ -3,7 +3,7 @@ package ypstrategytest;
 import battlecode.common.Clock;
 
 
-public abstract class FixedStrategy extends Strategy {
+public abstract class FixedStrategyFull extends StrategyFull {
 	
 	final StrategyElement[] baseStrategy;
 	StrategyQueue baseQueue;
@@ -22,7 +22,7 @@ public abstract class FixedStrategy extends Strategy {
 	private static final StrategyElement WORST_STRATEGY = new StrategyElement(null, -999, 0, 0);
 	private static final int ARRAYLEN = StrategyConstants.MAX_ROUND_STRATEGY_ELEMENTS+StrategyConstants.MAX_NEWROUND_STRATEGY_ELEMENTS;
 	
-	public FixedStrategy(StrategyElement[] base) {
+	public FixedStrategyFull(StrategyElement[] base) {
 		baseStrategy = base;
 		roundStrategy = new StrategyElement[ARRAYLEN];
 		roundStrategyBackup = new StrategyElement[ARRAYLEN];

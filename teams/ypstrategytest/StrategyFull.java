@@ -1,7 +1,7 @@
 package ypstrategytest;
 
 
-public abstract class Strategy {
+public abstract class StrategyFull {
 	
 	/**
 	 * initialize the strategy for the given round number
