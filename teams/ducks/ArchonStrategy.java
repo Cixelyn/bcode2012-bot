@@ -19,31 +19,22 @@ public class ArchonStrategy extends StrategyRobot {
 	private int rallyPriority;
 	private Direction bearing;
 	private MapLocation explorationTarget;
-	private MapLocation objective;
 	
 	private int timeUntilBroadcast;
 	private boolean initialized;
 	private boolean splitDone;
-//	private RobotInfo closestEnemy;
 	private int soldiersToSpawn;
 	
 	public ArchonStrategy(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 	}
 	
-//	@Override
-//	public void run() throws GameActionException {
-//		processTransitions();
-//		execute();
-//	}
-	
-	
 	public RobotState processTransitions(RobotState state) throws GameActionException {
 		switch (state) {
 		case INITIALIZE:
 		{
 			if (initialized)
-				return RobotState.SPLIT;
+				return (RobotState.SPLIT);
 		} break;
 		case SPLIT:
 		{
@@ -55,7 +46,7 @@ public class ArchonStrategy extends StrategyRobot {
 		{
 			if (soldiersSpawned >= soldiersToSpawn) {
 				// rally units
-				sendRally();
+				sendRally(explorationTarget);
 				// change state
 				if (shouldDefend()) {
 					return (RobotState.DEFEND);
@@ -71,13 +62,10 @@ public class ArchonStrategy extends StrategyRobot {
 			// make soldier if enough flux
 			if (currFlux > RobotType.SOLDIER.spawnCost) {
 				return (RobotState.SPAWN_SOLDIERS);
-				
 			} else if (dc.getClosestEnemy() != null) {
 				// chase enemy if in range
 				return (RobotState.CHASE);
 			}
-			
-			objective = explorationTarget;
 		} break;
 		case DEFEND:
 		{
@@ -133,17 +121,27 @@ public class ArchonStrategy extends StrategyRobot {
 			} break;
 			case DEFEND:
 			{
-				// set objective
-				objective = rc.sensePowerCore().getLocation();
+				// set objective and micro mode
+				// TODO(jven): dc this
+				mi.setObjective(rc.sensePowerCore().getLocation());
+				mi.setMoonwalkMode();
+				// set flux management mode
+				fm.setBatteryMode();
 			} break;
 			case RUSH:
 			{
-				// set objective
-				objective = explorationTarget;
+				// set objective and micro mode
+				mi.setObjective(explorationTarget);
+				mi.setMoonwalkMode();
+				// set flux management mode
+				fm.setBatteryMode();
 			} break;
 			case CHASE:
 			{
-//				closestEnemy = dc.getClosestEnemy();
+				// set micro mode
+				mi.setKiteMode(Constants.ARCHON_SAFETY_RANGE);
+				// set flux management mode
+				fm.setBattleMode();
 			} break;
 			case SPAWN_SOLDIERS:
 			{
@@ -159,6 +157,8 @@ public class ArchonStrategy extends StrategyRobot {
 				default:
 					soldiersToSpawn = 1; break;
 				}
+				// set flux management mode
+				fm.setBatteryMode();
 			}
 			default:
 				break;
@@ -236,14 +236,13 @@ public class ArchonStrategy extends StrategyRobot {
 		// set nav mode
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		// set radio addresses
-			io.setAddresses(new String[] {"#x", "#a"});
+		io.setAddresses(new String[] {"#x", "#a"});
 		// set split direction, bearing, target
 		splitDirection = rc.sensePowerCore().getLocation().directionTo(currLoc);
 		rallyPriority = 0;
 		bearing = rc.sensePowerCore().getLocation().directionTo(
 				dc.getCapturablePowerCores()[0]);
 		explorationTarget = currLoc.add(bearing, GameConstants.MAP_MAX_HEIGHT);
-		objective = explorationTarget;
 		// set broadcast time
 		timeUntilBroadcast = 0;
 		initialized = true;
@@ -315,47 +314,43 @@ public class ArchonStrategy extends StrategyRobot {
 			}
 		}
 		// distribute flux
-		// TODO(jven): use flux manager
-		//distributeFlux();
+		fm.manageFlux();
 	}
 	
 	public void defend() throws GameActionException {
-		// move backwards towards bearing
-		moonwalkTowards(objective);
+		// move backwards towards target
+		mi.attackMove();
 		// reset bearing if necessary
 		setBearing();
 		// distribute flux
-		// TODO(jven): use flux manager
-		//distributeFlux();
+		fm.manageFlux();
 		// send rally
-		sendRally();
+		sendRally(rc.sensePowerCore().getLocation());
 	}
 	
 	public void rush() throws GameActionException {
 		// move backwards towards bearing
-		moonwalkTowards(objective);
+		mi.attackMove();
 		// reset bearing if necessary
 		setBearing();
 		// distribute flux
-		// TODO(jven): use flux manager
-		//distributeFlux();
+		fm.manageFlux();
 		// send rally
-		sendRally();
+		sendRally(explorationTarget);
 	}
 	
 	public void chase() throws GameActionException {
 		RobotInfo closestEnemy = dc.getClosestEnemy();
 		if (closestEnemy == null) return;
-		// set objective
+		// increase rally priority
 		rallyPriority++;
-		objective = closestEnemy.location;
 		// kite enemy
-		kite(closestEnemy.location);
+		mi.setObjective(closestEnemy.location);
+		mi.attackMove();
 		// distribute flux
-		// TODO(jven): use flux manager
-		//distributeFlux();
+		fm.manageFlux();
 		// send rally
-		sendRally();
+		sendRally(closestEnemy.location);
 	}
 	
 	public void gotoPowerCore() throws GameActionException {
@@ -364,7 +359,7 @@ public class ArchonStrategy extends StrategyRobot {
 		// move backwards towards power core if far away
 		int distance = currLoc.distanceSquaredTo(powerCore);
 		if (distance > 2) {
-			moonwalkTowards(powerCore);
+			mi.attackMove();
 		} else if (distance > 0 && distance <= 2) {
 			// build tower if in range
 			spawnUnitInDir(RobotType.TOWER, currLoc.directionTo(powerCore));
@@ -390,12 +385,11 @@ public class ArchonStrategy extends StrategyRobot {
 		}
 		// distribute flux if we're not adjacent to tower or if we have too much
 		if (distance > 2 || currFlux == myType.maxFlux) {
-			// TODO(jven): use flux manager
-			//distributeFlux();
+			// distribute flux
+			fm.manageFlux();
 		}
 		// send rally
-		objective = powerCore;
-		sendRally();
+		sendRally(powerCore);
 	}
 	
 	private void setBearing() throws GameActionException {
@@ -410,76 +404,8 @@ public class ArchonStrategy extends StrategyRobot {
 				TerrainTile.OFF_MAP) {
 			bearing = bearing.rotateLeft().rotateLeft();
 			explorationTarget = currLoc.add(bearing, GameConstants.MAP_MAX_HEIGHT);
+			mi.setObjective(explorationTarget);
 			rallyPriority++;
-		}
-	}
-	
-	private void moonwalkTowards(MapLocation target) throws GameActionException {
-		// wait if movement is active
-		if (rc.isMovementActive()) {
-			return;
-		}
-		// sense tiles
-		mc.senseAllTiles();
-		// move towards target
-		nav.setDestination(target);
-		nav.prepare();
-		Direction dir = nav.navigateToDestination();
-		if (dir != Direction.OMNI && dir != Direction.NONE) {
-			// TODO(jven): wiggle code should not be here
-			for (int tries = 0; tries < Constants.WIGGLE_TIMEOUT; tries++) {
-				if (!rc.canMove(dir)) {
-					if (Math.random() < 0.5) {
-						dir = dir.rotateLeft();
-					} else {
-						dir = dir.rotateRight();
-					}
-				} else {
-					break;
-				}
-			}
-			if (!rc.canMove(dir)) {
-				return;
-			}
-			// end wiggle code
-			if (currDir != dir.opposite()) {
-				rc.setDirection(dir.opposite());
-			} else if (rc.canMove(currDir.opposite())) {
-				rc.moveBackward();
-			}
-		}
-	}
-	
-	private void kite(MapLocation target) throws GameActionException {
-		// wait if movement is active
-		if (rc.isMovementActive()) {
-			return;
-		}
-		// turn in direction of target
-		Direction[] targetDirs = new Direction[] {
-				currLoc.directionTo(target),
-				currLoc.directionTo(target).rotateLeft(),
-				currLoc.directionTo(target).rotateRight()
-		};
-		for (Direction d : targetDirs) {
-			if (rc.canMove(d.opposite())) {
-				if (currDir != d) {
-					rc.setDirection(d);
-					return;
-				}
-				// stay at distance
-				int distance = currLoc.distanceSquaredTo(target);
-				if (distance < Constants.ARCHON_SAFETY_RANGE) {
-					if (rc.canMove(currDir.opposite())) {
-						rc.moveBackward();
-					}
-				} else {
-					if (rc.canMove(currDir)) {
-						rc.moveForward();
-					}
-				}
-				return;
-			}
 		}
 	}
 	
@@ -552,9 +478,9 @@ public class ArchonStrategy extends StrategyRobot {
 		return false;
 	}
 	
-	private void sendRally() throws GameActionException {
+	private void sendRally(MapLocation target) throws GameActionException {
 		if (--timeUntilBroadcast <= 0) {
-			io.sendShorts("#sr", new int[] {rallyPriority, objective.x, objective.y});
+			io.sendShorts("#sr", new int[] {rallyPriority, target.x, target.y});
 			io.sendShorts("#ar", new int[] {rallyPriority, bearing.ordinal()});
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
