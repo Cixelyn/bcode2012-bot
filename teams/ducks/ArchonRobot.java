@@ -22,6 +22,7 @@ public class ArchonRobot extends StrategyRobot {
 	
 	/** The true (starting) index of the archon */
 	private int trueArchonIndex;
+	private String myRadioChannel;
 	
 	// attack move variables
 	private boolean isLeader;
@@ -37,6 +38,7 @@ public class ArchonRobot extends StrategyRobot {
 	private boolean gathering;
 	private boolean moving;
 	private int lastRoundCheckedTargets;
+	private MapLocation leaderLoc;
 	
 
 	// defender variables
@@ -51,6 +53,7 @@ public class ArchonRobot extends StrategyRobot {
 		for(int i=0; i<alliedArchons.length; i++ ) {
 			if(myRC.getLocation().equals(alliedArchons[i])) {
 				trueArchonIndex = i;
+				myRadioChannel = "#"+i;
 			}
 		}
 		
@@ -251,13 +254,16 @@ public class ArchonRobot extends StrategyRobot {
 		case 's':
 		{
 			if (!isDefender)
-				gotoState(RobotState.ATTACK_ENEMY_BASE);
-			int[] msg = Radio.decodeShorts(sb);
-			if (msg[0]<archonIndex)
 			{
-				attackMoveDirection = Constants.directions[msg[1]];
-				attackMoveTarget = new MapLocation(msg[2], msg[3]);
-				lastRoundCheckedTargets = currRound;
+				gotoState(RobotState.ATTACK_ENEMY_BASE);
+			
+				int[] msg = Radio.decodeShorts(sb);
+				if (msg[0]<archonIndex)
+				{
+					attackMoveDirection = Constants.directions[msg[1]];
+					attackMoveTarget = new MapLocation(msg[2], msg[3]);
+					lastRoundCheckedTargets = currRound;
+				}
 			}
 		} break;
 		case 'x':
@@ -345,7 +351,8 @@ public class ArchonRobot extends StrategyRobot {
 		if (!isLeader)
 		{
 			MapLocation[] locs = dc.getAlliedArchons();
-			if (locs[0].equals(currLoc))
+			leaderLoc = locs[0];
+			if (leaderLoc.equals(currLoc))
 			{
 				isLeader = true;
 				archonIndex = 0;
@@ -368,26 +375,35 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void attack_enemy_base() throws GameActionException
 	{
-		if (attackTarget == null || !rc.canSenseObject(attackTarget.robot))
+		if (isLeader)
 		{
-			checkAttackMoveTargets();
-			if (enemyPowerNode == null)
+			if (attackTarget == null || !rc.canSenseObject(attackTarget.robot))
 			{
-				enemyPowerNode = mc.getEnemyPowerCoreLocation();
-				if (enemyPowerNode == null)
+				checkAttackMoveTargets();
+				if (attackTarget == null)
 				{
-					attackMoveTarget = mc.guessEnemyPowerCoreLocation();
-					if (attackMoveTarget == null)
+					enemyPowerNode = mc.getEnemyPowerCoreLocation();
+					if (enemyPowerNode == null)
 					{
-						attackMoveDirection = Direction.SOUTH;
-						attackMoveTarget = currLoc.add(attackMoveDirection,60);
-					} else
-					{
-						attackMoveDirection = currLoc.directionTo(attackMoveTarget);
+						attackMoveTarget = mc.guessEnemyPowerCoreLocation();
+						if (attackMoveTarget == null)
+						{
+							attackMoveDirection = Direction.SOUTH;
+							attackMoveTarget = currLoc.add(attackMoveDirection,60);
+						} else
+						{
+							attackMoveDirection = currLoc.directionTo(attackMoveTarget);
+						}
 					}
 				}
 			}
+		} else
+		{
+			attackMoveTarget = leaderLoc;
+			attackMoveDirection = currLoc.directionTo(attackMoveTarget);
+					
 		}
+		
 		attack_move(attackMoveTarget, attackMoveDirection, attackTarget);
 	}
 	
@@ -487,7 +503,7 @@ public class ArchonRobot extends StrategyRobot {
 				{
 					if (roundSinceMove > Constants.ARCHON_MOVE_STUCK_ROUNDS)
 					{
-						io.sendShort("#xx", attackDir.ordinal());
+						sendRallyAtLoc(currLoc,attackMoveDirection);
 					}
 //					else if (roundSinceMove > Constants.ARCHON_MOVE_STUCK_ROUNDS)
 //					{
@@ -549,12 +565,15 @@ public class ArchonRobot extends StrategyRobot {
 		io.sendShorts("#as", 
 				new int[]{	archonIndex, swarmDirection.ordinal(), 
 							target.x, target.y});
+		io.sendShorts(myRadioChannel+"s", 
+				new int[]{	archonIndex, swarmDirection.ordinal(), 
+							target.x, target.y});
 	}
 	
-	public void sendRallyAtLoc(MapLocation target)
+	public void sendRallyAtLoc(MapLocation target, Direction swarmDirection)
 	{
 		io.sendShorts("#ax", 
-				new int[]{	archonIndex, target.x, target.y});
+				new int[]{	archonIndex, target.x, target.y, swarmDirection.ordinal()});
 	}
 	
 	public boolean checkAttackMoveTargets()
