@@ -75,7 +75,8 @@ public class ArchonRobot extends StrategyRobot {
 		case GOHOME:
 		{
 			if (currLoc.distanceSquaredTo(myHome) <=
-					Constants.DISTANCE_TO_HOME_ON_GOHOME)
+					Constants.DISTANCE_TO_HOME_ON_GOHOME || currRound >=
+					Constants.ROUNDS_TO_GO_HOME)
 				return RobotState.SPLIT;
 		} break;
 		case SPLIT:
