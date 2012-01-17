@@ -728,9 +728,9 @@ public class ArchonRobot extends StrategyRobot {
 			ur.scan(true, true);
 			enemyDiff = ur.getArmyDifference();
 			
-			if (ur.numEnemyRobots > 0)
+			
+			if (ur.numEnemyRobots-ur.numEnemyTowers > 0)
 			{
-				
 				attackMoveTarget = ur.getEnemySwarmTarget();
 				attackMoveDirection = currLoc.directionTo(attackMoveTarget);
 				return true;
