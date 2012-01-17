@@ -837,7 +837,7 @@ public class ArchonRobot extends StrategyRobot {
 	public void power_cap() throws GameActionException
 	{
 		checkAttackMoveTargets();
-		if (attackMoveDirection!=null && enemyDiff >= 0)
+		if (attackMoveTarget!=null && enemyDiff >= 0)
 			attack_move(attackMoveTarget);
 				
 		if(nextNodeToCapture != null) {
