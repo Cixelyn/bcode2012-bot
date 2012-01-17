@@ -44,6 +44,9 @@ public class ArchonRobot extends StrategyRobot {
 	// defender variables
 	private int numDefenders;
 	
+	// power cap variables
+	private MapLocation nextNodeToCapture;
+	
 	
 	public ArchonRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
@@ -679,8 +682,19 @@ public class ArchonRobot extends StrategyRobot {
 		return false;
 	}
 	
-	public void power_cap()
+	public void power_cap() throws GameActionException
 	{
+		if(nextNodeToCapture == null || Math.random()<0.01) {
+			nextNodeToCapture = mc.guessBestPowerNodeToCapture();
+			mi.setObjective(nextNodeToCapture);
+		}
+		if(currLocInFront.equals(nextNodeToCapture)) {
+			if(currFlux > 200 && rc.canMove(currDir)) {
+				rc.spawn(RobotType.TOWER);
+			}
+		} else {
+			mi.attackMove();
+		}
 		// distribute flux
 		fm.manageFlux();
 	}
