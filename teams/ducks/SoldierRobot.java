@@ -277,7 +277,7 @@ public class SoldierRobot extends StrategyRobot {
 			if (swarmObjective == null)
 			{
 				findArchon();
-				mi.setSwarmMode(36);
+				mi.setSwarmMode(2, 36);
 				mi.setObjective(archonOVERLORD);
 				mi.attackMove();
 			} else
@@ -292,12 +292,12 @@ public class SoldierRobot extends StrategyRobot {
 			if (fromObjective == null)
 			{
 				findArchon();
-				mi.setSwarmMode(36);
+				mi.setSwarmMode(2, 36);
 				mi.setObjective(archonOVERLORD);
 				mi.attackMove();
 			} else
 			{
-				mi.setSwarmMode(36);
+				mi.setSwarmMode(2, 36);
 				mi.setObjective(fromObjective);
 				mi.attackMove();
 			}
