@@ -40,6 +40,7 @@ public class ArchonRobot extends StrategyRobot {
 	private int lastRoundCheckedTargets;
 	private MapLocation leaderLoc;
 	
+	
 	private MapLocation enemyPowerNode;
 	private boolean doneWithAttackBase;
 	
@@ -184,6 +185,8 @@ public class ArchonRobot extends StrategyRobot {
 				armySizeTarget = Constants.ARMY_SIZE_ON_INITIAL_BUILD;
 			} break;
 			}
+			fm.setBatteryMode();
+			
 		} break;
 		case ATTACK_ENEMY_BASE:
 		{
@@ -522,132 +525,137 @@ public class ArchonRobot extends StrategyRobot {
 		}
 		ao.sendOwnerships(trueArchonIndex);
 		
-		if (isLeader)
-		{
-//			leader code
-			// TODO retreat code
-			debug.setIndicatorString(2, "leader "+attackDir+" "+attackTarget, Owner.YP);
-			if (!rc.isMovementActive())
-			{
-				roundSinceMove++;
-				//TODO build soldiers
-				
-//				resend swarm information
-				sendSwarmInfo(attackDir, attackTarget);
-				
-//				calculate if we should move
-				int archons_ready = 0;
-				int myval = 0;
-				switch (attackDir)
-				{
-				case NORTH:			myval = -currLoc.y;					break;
-				case NORTH_EAST:	myval = -currLoc.y+currLoc.x;		break;
-				case EAST:			myval = currLoc.x;					break;
-				case SOUTH_EAST:	myval = currLoc.y+currLoc.x;		break;
-				case SOUTH:			myval = currLoc.y;					break;
-				case SOUTH_WEST:	myval = currLoc.y+currLoc.x;		break;
-				case WEST:			myval = -currLoc.x;					break;
-				case NORTH_WEST:	myval = -currLoc.y-currLoc.x;		break;
-				default: myval = 0; break;
-				}
-				myval--;
-				
-				MapLocation[] archons = dc.getAlliedArchons();
-				for (int x=1; x<archons.length; x++)
-				{
-					// TODO inefficient, swap out later - more code
-					MapLocation loc = archons[x];
-					int value;
-					switch (attackDir)
-					{
-					case NORTH:			value = -loc.y;				break;
-					case NORTH_EAST:	value = -loc.y+loc.x;		break;
-					case EAST:			value = loc.x;				break;
-					case SOUTH_EAST:	value = loc.y+loc.x;		break;
-					case SOUTH:			value = loc.y;				break;
-					case SOUTH_WEST:	value = loc.y+loc.x;		break;
-					case WEST:			value = -loc.x;				break;
-					case NORTH_WEST:	value = -loc.y-loc.x;		break;
-					default: value = 0; break;
-					}
-					
-					int dsq = loc.distanceSquaredTo(currLoc);
-					
-					if (value >= myval && dsq < Constants.MAX_SWARM_ARCHON_DISTANCE_SQUARED) 
-						archons_ready++;
-					else if (dsq < Constants.ARCHON_CLOSE_DISTANCE) 
-						archons_ready++;
-				}
-				
-				int archon_threshold = archons.length*3/8;
-				
-				if (archons_ready >= archon_threshold)
-				{
-					mi.setObjective(attackTarget);
-					mi.attackMove();
-					
-					roundSinceMove = 0;
-				} else
-				{
-					if (roundSinceMove > Constants.ARCHON_MOVE_STUCK_ROUNDS)
-					{
-						sendRallyAtLoc(currLoc,attackMoveDirection);
-					}
-//					else if (roundSinceMove > Constants.ARCHON_MOVE_STUCK_ROUNDS)
+		mi.setKiteMode(4);
+		mi.attackMove();
+		
+		
+		
+//		if (isLeader)
+//		{
+////			leader code
+//			// TODO retreat code
+//			debug.setIndicatorString(2, "leader "+attackDir+" "+attackTarget, Owner.YP);
+//			if (!rc.isMovementActive())
+//			{
+//				roundSinceMove++;
+//				//TODO build soldiers
+//				
+////				resend swarm information
+//				sendSwarmInfo(attackDir, attackTarget);
+//				
+////				calculate if we should move
+//				int archons_ready = 0;
+//				int myval = 0;
+//				switch (attackDir)
+//				{
+//				case NORTH:			myval = -currLoc.y;					break;
+//				case NORTH_EAST:	myval = -currLoc.y+currLoc.x;		break;
+//				case EAST:			myval = currLoc.x;					break;
+//				case SOUTH_EAST:	myval = currLoc.y+currLoc.x;		break;
+//				case SOUTH:			myval = currLoc.y;					break;
+//				case SOUTH_WEST:	myval = currLoc.y+currLoc.x;		break;
+//				case WEST:			myval = -currLoc.x;					break;
+//				case NORTH_WEST:	myval = -currLoc.y-currLoc.x;		break;
+//				default: myval = 0; break;
+//				}
+//				myval--;
+//				
+//				MapLocation[] archons = dc.getAlliedArchons();
+//				for (int x=1; x<archons.length; x++)
+//				{
+//					// TODO inefficient, swap out later - more code
+//					MapLocation loc = archons[x];
+//					int value;
+//					switch (attackDir)
 //					{
-////						resend swarm information
-//						io.sendShorts("#xs", 
-//								new int[]{	attackMoveDirection.ordinal(), 
-//											attackMoveTarget.x, attackMoveTarget.y});
+//					case NORTH:			value = -loc.y;				break;
+//					case NORTH_EAST:	value = -loc.y+loc.x;		break;
+//					case EAST:			value = loc.x;				break;
+//					case SOUTH_EAST:	value = loc.y+loc.x;		break;
+//					case SOUTH:			value = loc.y;				break;
+//					case SOUTH_WEST:	value = loc.y+loc.x;		break;
+//					case WEST:			value = -loc.x;				break;
+//					case NORTH_WEST:	value = -loc.y-loc.x;		break;
+//					default: value = 0; break;
 //					}
-				}
-			}
-		} else
-		{
-			// follow code
-			MapLocation[] archons = dc.getAlliedArchons();
-			MapLocation leader = archons[0];
-			
-
-			
-			if (!rc.isMovementActive())
-			{
-				MapLocation target = null;
-				
-				if (attackDir==null || 
-						currLoc.distanceSquaredTo(attackTarget) > Constants.MAX_SWARM_ARCHON_DISTANCE_SQUARED)
-				{
-					target = attackTarget;
-				} else
-				{
-					switch (archonIndex)
-					{
-					case 1:
-						target = attackTarget.add(attackDir.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON);
-						break;
-					case 2:
-						target = attackTarget.add(attackDir.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON);
-						break;
-					case 3:
-						target = attackTarget.add(attackDir.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
-						break;
-					case 4:
-						target = attackTarget.add(attackDir.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
-						break;
-					}
-					
-					target = target.add(attackDir);
-				}
-				
-//				resend swarm information
-				sendSwarmInfo(attackDir, target.add(attackDir,3));
-				
-				debug.setIndicatorString(2, archonIndex+" "+target, Owner.YP);
-				
-				mi.setObjective(target);
-				mi.attackMove();
-			}
-		}
+//					
+//					int dsq = loc.distanceSquaredTo(currLoc);
+//					
+//					if (value >= myval && dsq < Constants.MAX_SWARM_ARCHON_DISTANCE_SQUARED) 
+//						archons_ready++;
+//					else if (dsq < Constants.ARCHON_CLOSE_DISTANCE) 
+//						archons_ready++;
+//				}
+//				
+//				int archon_threshold = archons.length*3/8;
+//				
+//				if (archons_ready >= archon_threshold)
+//				{
+//					mi.setObjective(attackTarget);
+//					mi.attackMove();
+//					
+//					roundSinceMove = 0;
+//				} else
+//				{
+//					if (roundSinceMove > Constants.ARCHON_MOVE_STUCK_ROUNDS)
+//					{
+//						sendRallyAtLoc(currLoc,attackMoveDirection);
+//					}
+////					else if (roundSinceMove > Constants.ARCHON_MOVE_STUCK_ROUNDS)
+////					{
+//////						resend swarm information
+////						io.sendShorts("#xs", 
+////								new int[]{	attackMoveDirection.ordinal(), 
+////											attackMoveTarget.x, attackMoveTarget.y});
+////					}
+//				}
+//			}
+//		} else
+//		{
+//			// follow code
+//			MapLocation[] archons = dc.getAlliedArchons();
+//			MapLocation leader = archons[0];
+//			
+//
+//			
+//			if (!rc.isMovementActive())
+//			{
+//				MapLocation target = null;
+//				
+//				if (attackDir==null || 
+//						currLoc.distanceSquaredTo(attackTarget) > Constants.MAX_SWARM_ARCHON_DISTANCE_SQUARED)
+//				{
+//					target = attackTarget;
+//				} else
+//				{
+//					switch (archonIndex)
+//					{
+//					case 1:
+//						target = attackTarget.add(attackDir.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON);
+//						break;
+//					case 2:
+//						target = attackTarget.add(attackDir.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON);
+//						break;
+//					case 3:
+//						target = attackTarget.add(attackDir.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
+//						break;
+//					case 4:
+//						target = attackTarget.add(attackDir.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
+//						break;
+//					}
+//					
+//					target = target.add(attackDir);
+//				}
+//				
+////				resend swarm information
+//				sendSwarmInfo(attackDir, target.add(attackDir,3));
+//				
+//				debug.setIndicatorString(2, archonIndex+" "+target, Owner.YP);
+//				
+//				mi.setObjective(target);
+//				mi.attackMove();
+//			}
+//		}
 		// distribute flux
 		fm.manageFlux();
 	}
