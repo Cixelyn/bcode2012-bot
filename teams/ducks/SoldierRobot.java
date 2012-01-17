@@ -32,6 +32,7 @@ public class SoldierRobot extends StrategyRobot {
 	
 	private int lastScanRound;
 	
+	
 	public SoldierRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 		hbe = new HibernationEngine(this);
@@ -46,32 +47,43 @@ public class SoldierRobot extends StrategyRobot {
 	public RobotState processTransitions(RobotState state)
 			throws GameActionException {
 		
-		switch (state) {
+		switch (state) 
+		{
 		case INITIALIZE:
+		{
 			if (initialized) {
 				if (currRound < Constants.BUILD_ARMY_ROUND_THRESHOLD)
 					return RobotState.HOLD_POSITION;
 				else
 					return RobotState.SWARM;
-			} break;
-			case SWARM:
-			{
-				scanForEnemies();
-				if (ur.numEnemyRobots>0)
-					return RobotState.CHASE;
-			} break;
-			case CHASE:
-			{
-				if (roundsSinceSeenEnemy > Constants.SOLDIER_CHASE_ROUNDS)
-					return RobotState.SWARM;
-				else if (currLoc.distanceSquaredTo(archonOVERLORD) > Constants.SOLDIER_CHASE_DISTANCE_SQUARED)
-					return RobotState.SWARM;
-				
-			} break;
-			case HOLD_POSITION:
-				break;
-			default:
-				break;
+			} 
+		} break;
+		case SWARM:
+		{
+			scanForEnemies();
+			if (ur.numEnemyRobots>0)
+				return RobotState.CHASE;
+		} break;
+		case CHASE:
+		{
+			if (roundsSinceSeenEnemy > Constants.SOLDIER_CHASE_ROUNDS)
+				return RobotState.SWARM;
+			else if (currLoc.distanceSquaredTo(archonOVERLORD) > Constants.SOLDIER_CHASE_DISTANCE_SQUARED)
+				return RobotState.SWARM;
+			
+		} break;
+		case HOLD_POSITION:
+		{
+			if(ao.getArchonOwnerID()==5) {
+				return RobotState.HIBERNATE;
+			}
+		} break;
+		case HIBERNATE:
+		{
+			return RobotState.DEFEND_BASE;
+		} break;
+		default:
+			break;
 		}
 		return state;
 	}
@@ -79,36 +91,40 @@ public class SoldierRobot extends StrategyRobot {
 	@Override
 	public void prepareTransition(RobotState newstate, RobotState oldstate)
 			throws GameActionException {
-		switch (newstate) {
-			case INITIALIZE:
-			{
-				initialized = false;
-			} break;
-			case HOLD_POSITION:
-			{
-				// set micro mode
-				mi.setHoldPositionMode();
-				// set flux management mode
-				fm.setBatteryMode();
-			} break;
-			case SWARM:
-			{
-				// set micro mode
-				mi.setSwarmMode(2);
-				// set flux management mode
-				fm.setBatteryMode();
-			} break;
-			case CHASE:
-			{
-				// set micro mode
-				mi.setChargeMode();
-				// set flux management mode
-				fm.setBattleMode();
-			}
-			default:
-				break;
+		switch (newstate)
+		{
+		case INITIALIZE:
+		{
+			initialized = false;
+		} break;
+		case HOLD_POSITION:
+		{
+			// set micro mode
+			mi.setHoldPositionMode();
+			// set flux management mode
+			fm.setBatteryMode();
+		} break;
+		case SWARM:
+		{
+			// set micro mode
+			mi.setSwarmMode(2);
+			// set flux management mode
+			fm.setBatteryMode();
+		} break;
+		case CHASE:
+		{
+			// set micro mode
+			mi.setChargeMode();
+			// set flux management mode
+			fm.setBattleMode();
+		} break;
+		case DEFEND_BASE:
+		{
+			io.addAddress("#d");
+		} break;
+		default:
+			break;
 		}
-		
 	}
 
 	@Override
@@ -131,6 +147,9 @@ public class SoldierRobot extends StrategyRobot {
 				break;
 			case HIBERNATE:
 				hbe.run(); //this call will halt until wakeup
+				gotoState(RobotState.DEFEND_BASE);
+				break;
+			case DEFEND_BASE:
 				break;
 			case SUICIDE:
 				rc.suicide();
@@ -174,7 +193,10 @@ public class SoldierRobot extends StrategyRobot {
 			case 'w':
 			{
 				if (getCurrentState() == RobotState.HOLD_POSITION) {
-					gotoState(RobotState.SWARM);
+					if (isDefender)
+						gotoState(RobotState.DEFEND_BASE);
+					else
+						gotoState(RobotState.SWARM);
 				}
 			} break;
 			case 's':
@@ -186,6 +208,10 @@ public class SoldierRobot extends StrategyRobot {
 				swarmDirection = Constants.directions[msg[1]];
 				swarmObjective = new MapLocation(msg[2],msg[3]);
 				
+			} break;
+			case 'z':
+			{
+				gotoState(RobotState.HIBERNATE);
 			} break;
 			default:
 				super.processMessage(msgType, sb);

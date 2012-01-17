@@ -11,7 +11,8 @@ public final class Constants {
 	public static final Direction[] directions = Direction.values();
 
 	
-	public static final int ROUNDS_TO_EXPLORE = 150;
+	public static final int ROUNDS_TO_EXPLORE = 120;
+	public static final int ROUNDS_TO_GO_HOME = 240;
 	public static final int DISTANCE_TO_HOME_ON_GOHOME = 25;
 	public static final int ARMY_SIZE_ON_INITIAL_BUILD = 5;
 	public static final int BUILD_ARMY_ROUND_THRESHOLD = 1000;

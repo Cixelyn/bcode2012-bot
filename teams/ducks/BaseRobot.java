@@ -36,6 +36,7 @@ public abstract class BaseRobot {
 	// Internal Statistics
 	int executeStartTime;
 	int executeStartByte;
+	public Direction directionToSenseIn;
 	
 	
 	public BaseRobot(RobotController myRC) {

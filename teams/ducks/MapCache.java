@@ -131,17 +131,15 @@ public class MapCache {
 			return new MapLocation(powerCoreWorldX + sdx, powerCoreWorldY + sdy);
 		}
 		
-		// Current heuristic: assume a square map, most likely 60x60. assume rotational symmetry
+		/* Current heuristic: 
+		 *   - assume map size is 60 if we don't know it. 
+		 *   - assume rotational symmetry
+		 */
 		int mapSize = 61;
 		int xminGuess = edgeXMin;
 		int xmaxGuess = edgeXMax;
 		int yminGuess = edgeYMin;
 		int ymaxGuess = edgeYMax;
-		if(edgeXMin!=0 && edgeXMax!=0) {
-			mapSize = edgeXMax-edgeXMin;
-		} else if(edgeYMin!=0 && edgeYMax!=0) {
-			mapSize = edgeYMax-edgeYMin;
-		}
 		if(xminGuess==0) {
 			if(xmaxGuess==0) {
 				xminGuess = POWER_CORE_POSITION;

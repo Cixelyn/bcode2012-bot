@@ -20,6 +20,8 @@ import battlecode.common.Team;
  *   <li> #s - soldiers
  *   <li> #a - archons
  *   <li> #e - shared exploration messages 
+ *   <li> #d - defender channel
+ *   <li> #0-5 - trueArchonID Channel
  * </ul>
  * 
  * <h1>Message Types</h1>
@@ -30,6 +32,8 @@ import battlecode.common.Team;
  * 
  *   <li> d - announce dead archons
  *   <li> a,s,z,x - reserved for swarm
+ *   
+ *   <li> z - power down
  * </ul>
  * 
  *
