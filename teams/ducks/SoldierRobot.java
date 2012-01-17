@@ -30,8 +30,10 @@ public class SoldierRobot extends StrategyRobot {
 				if(ao.getArchonOwnerID()==5) {
 					return RobotState.HIBERNATE;
 				}
-				
-			default:
+				break;
+			case HIBERNATE:
+				return RobotState.DEFEND_BASE;
+		default:
 				break;
 		}
 		return state;
@@ -50,10 +52,12 @@ public class SoldierRobot extends StrategyRobot {
 				// set flux management mode
 				fm.setBatteryMode();
 				break;
+			case DEFEND_BASE:
+				io.addAddress("#d");
+				break;
 			default:
 				break;
 		}
-		
 	}
 
 	@Override
@@ -76,6 +80,9 @@ public class SoldierRobot extends StrategyRobot {
 				break;
 			case HIBERNATE:
 				hbe.run(); //this call will halt until wakeup
+				gotoState(RobotState.DEFEND_BASE);
+				break;
+			case DEFEND_BASE:
 				break;
 			case SUICIDE:
 				rc.suicide();

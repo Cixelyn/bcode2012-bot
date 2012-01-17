@@ -40,12 +40,13 @@ public class HibernationEngine {
 				
 				// validity check
 				mints = msgs[i].ints;
-				if(mints != null) continue;
+				if(mints == null) continue;
 				if(mints.length != 3) continue;
 				if(mints[0] != teamkey) continue;
 				
 				time = Clock.getRoundNum();
-				if(mints[2] <= time && mints[2] > time - 5) {
+				if(mints[2] <= time && mints[2] > time - 10) {
+					rc.setIndicatorString(0, "HIBERNATION DISENGAGE!");
 					return; //our exit point
 				}
 				
