@@ -75,13 +75,13 @@ public class SoldierRobot extends StrategyRobot {
 		case HOLD_POSITION:
 		{
 			if(ao.getArchonOwnerID()==5) {
-				return RobotState.HIBERNATE;
+				return RobotState.DEFEND_BASE;
 			}
 		} break;
 		case HIBERNATE:
 		{
 			return RobotState.DEFEND_BASE;
-		} break;
+		}
 		default:
 			break;
 		}
