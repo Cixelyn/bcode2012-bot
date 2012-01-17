@@ -22,6 +22,8 @@ public class ArchonRobotHT extends BaseRobot{
 			}
 		}
 		io.setAddresses(new String[] {"#e"});
+		nav.setNavigationMode(NavigationMode.BUG);
+		nav.setDestination(curLoc.add(-50, -50));
 	}
 	
 	@Override
@@ -32,33 +34,31 @@ public class ArchonRobotHT extends BaseRobot{
 //			System.out.println(mc.guessEnemyPowerCoreLocation());
 //			System.out.println(mc.guessBestPowerNodeToCapture());
 //		}
+		
+		
+		
+		
 		mc.senseAfterMove(lastMoved);
 		
 		rc.setIndicatorString(0, ""+aboutToMove);
 		if(!rc.isMovementActive()) {
-			if(aboutToMove && rc.canMove(curDir))  {
+			if(aboutToMove)  {
+				if(rc.canMove(curDir)) {
 				rc.moveForward();
 				lastMoved = curDir;
+				
+				} 
 				aboutToMove = false;
-			} else {
-				Direction dir = curDir;
-				if(Math.random()<0.3)  {
-					if(Math.random()<0.5) 
-						dir = dir.rotateLeft();
-					else
-						dir = dir.rotateRight();
+			} 
+			if(!aboutToMove && !rc.isMovementActive()) {
+				Direction dir = nav.navigateToDestination();
+				if(dir!=null) {
+					dir = nav.wiggleToMovableDirection(dir);
+					if(dir!=null) {
+					rc.setDirection(dir);
+					aboutToMove = true;
+					}
 				}
-				int i=0;
-				while(!rc.canMove(dir)) {
-					i++;
-					if(i>3) break;
-					if(Math.random()<0.5) 
-						dir = dir.rotateLeft();
-					else
-						dir = dir.rotateRight();
-				}
-				rc.setDirection(dir);
-				aboutToMove = true;
 			}
 		}
 		

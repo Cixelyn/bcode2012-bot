@@ -2,12 +2,13 @@ package ducks;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
+import battlecode.common.TerrainTile;
 
 public class NavigationSystem {
 	private final BaseRobot baseRobot;
 	private final MapCacheSystem mapCache; 
 	private final TangentBug tangentBug;
-	private final BlindBug blindBug;
+	private final NormalBug normalBug;
 	private final MapLocation zeroLoc;
 	private NavigationMode mode;
 	private MapLocation destination;
@@ -18,7 +19,7 @@ public class NavigationSystem {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
 		tangentBug = new TangentBug(mapCache.isWall);
-		blindBug = new BlindBug(baseRobot);
+		normalBug = new NormalBug();
 		zeroLoc = new MapLocation(0,0);
 		mode = NavigationMode.RANDOM;
 	}
@@ -26,7 +27,7 @@ public class NavigationSystem {
 	/** Resets the navigator, clearing it of any state. */
 	public void reset() {
 		tangentBug.reset(1, 0);
-		//TODO reset blindbug
+		normalBug.reset();
 	}
 	
 	public NavigationMode getNavigationMode() {
@@ -45,6 +46,8 @@ public class NavigationSystem {
 		expectedMovesToReachTarget = (int)(Math.sqrt(baseRobot.curLoc.distanceSquaredTo(destination)) *
 				TangentBug.MAP_UGLINESS_WEIGHT)+1;
 		this.destination = destination;
+		normalBug.setTarget(mapCache.worldToCacheX(destination.x), 
+				mapCache.worldToCacheY(destination.y));
 		tangentBug.setTarget(mapCache.worldToCacheX(destination.x), 
 				mapCache.worldToCacheY(destination.y));
 		reset();
@@ -79,6 +82,9 @@ public class NavigationSystem {
 				dir = navigateGreedy(destination);
 		} else if(mode==NavigationMode.BUG) {
 			dir = navigateBug();
+			if(movesOnSameTarget % (3*expectedMovesToReachTarget) == 0) {
+				normalBug.reset();
+			}
 		} else if(mode==NavigationMode.TANGENT_BUG) {
 			dir = navigateTangentBug();
 			if(movesOnSameTarget % expectedMovesToReachTarget == 0) {
@@ -86,7 +92,6 @@ public class NavigationSystem {
 				if(n>=2) {
 					tangentBug.reset(Math.min(4*n, 50), 0.4);
 				}
-				movesOnSameTarget++;
 			}
 		} else if(mode==NavigationMode.DSTAR) {
 			dir = navigateDStar();
@@ -115,6 +120,27 @@ public class NavigationSystem {
 	
 	private Direction dxdyToDirection(int dx, int dy) {
 		return zeroLoc.directionTo(zeroLoc.add(dx, dy));
+	}
+	/** This is private because it needs the state of the navigator to work. */
+	private Direction navigateBug() {
+		if(mapCache.edgeXMin!=0) normalBug.edgeXMin = mapCache.edgeXMin;
+		if(mapCache.edgeXMax!=0) normalBug.edgeXMax = mapCache.edgeXMax;
+		if(mapCache.edgeYMin!=0) normalBug.edgeYMin = mapCache.edgeYMin;
+		if(mapCache.edgeYMax!=0) normalBug.edgeYMax = mapCache.edgeYMax;
+		boolean movable[] = new boolean[8];
+		for(int i=0; i<8; i++) {
+			Direction dir = Constants.directions[i];
+			TerrainTile tt = baseRobot.rc.senseTerrainTile(
+					baseRobot.curLoc.add(dir));
+			movable[i] = (tt==null) ? baseRobot.rc.canMove(dir) :
+				(tt==TerrainTile.LAND);
+		}
+		int[] d = normalBug.computeMove(
+				mapCache.worldToCacheX(baseRobot.curLoc.x), 
+				mapCache.worldToCacheY(baseRobot.curLoc.y),
+				movable);
+		if(d==null) return Direction.NONE;
+		return dxdyToDirection(d[0], d[1]);
 	}
 	/** This is private because it needs the state of the navigator to work. */
 	private Direction navigateTangentBug() {
@@ -163,10 +189,6 @@ public class NavigationSystem {
 				dir = dir.rotateRight();
 		}
 		return dir;
-	}
-	/** This is private because it needs the state of the navigator to work. */
-	private Direction navigateBug() {
-		return blindBug.navigateToIgnoreBots(destination);
 	}
 	private Direction navigateDStar() {
 		//TODO implement
