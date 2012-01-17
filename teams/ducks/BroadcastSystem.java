@@ -38,7 +38,7 @@ import battlecode.common.Team;
  * 
  *
  */
-public class Radio {
+public class BroadcastSystem {
 
 	private String[] listenAddrs;
 	private BaseRobot br;
@@ -49,14 +49,14 @@ public class Radio {
 	StringBuilder msgContainer;
 	
 
-	public Radio() {
+	public BroadcastSystem() {
 		System.out.println("WARNING: RADIO NOT BOUND TO BASEROBOT");
 		msgContainer = new StringBuilder();
 	}
 
 	
 	
-	public Radio(BaseRobot br) {
+	public BroadcastSystem(BaseRobot br) {
 		this.br = br;
 		listenAddrs = new String[]{};
 		teamkey = (br.myTeam == Team.A ?
@@ -198,7 +198,7 @@ public class Radio {
 	 * otherwise deserialization will fail
 	 * @param header - "#[addr][type]"
 	 * @param ints - array of 15-bit ints
-	 * @see Radio#sendShort(String, int)
+	 * @see BroadcastSystem#sendShort(String, int)
 	 */
 	public void sendShorts(String header, int[] ints) {
 		msgContainer.append(header);
@@ -233,7 +233,7 @@ public class Radio {
 	 * a short instead, as it's much cheaper
 	 * @param header - "#[addr][type]"
 	 * @param ints - array of 31-bit ints
-	 * @see Radio#sendShorts(String, int[])
+	 * @see BroadcastSystem#sendShorts(String, int[])
 	 */
 	public void sendInts(String header, int[] ints) {
 		msgContainer.append(header);
@@ -273,7 +273,7 @@ public class Radio {
 	 * Queue a list of MapLocations
 	 * @param header
 	 * @param locs
-	 * @see Radio#sendShort(String, int) sendInt
+	 * @see BroadcastSystem#sendShort(String, int) sendInt
 	 */
 	public void sendMapLocs(String header, MapLocation[] locs) {
 		msgContainer.append(header);
@@ -406,24 +406,24 @@ public class Radio {
 	 * Test code to ensure serialization / deserialization works
 	 */
 	public static void main(String args[]) {
-		Radio io = new Radio();
+		BroadcastSystem io = new BroadcastSystem();
 		
 		int[] a;
 		a = new int[]{555,10000,20000,30000,40000,500000,1073741823};
 		
 		io.sendShorts("",a);
-		System.out.println((Arrays.toString(Radio.decodeShorts(io.msgContainer))));
+		System.out.println((Arrays.toString(BroadcastSystem.decodeShorts(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
 		
 		io.sendInts("",a);
-		System.out.println((Arrays.toString(Radio.decodeInts(io.msgContainer))));
+		System.out.println((Arrays.toString(BroadcastSystem.decodeInts(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
 		
 		MapLocation[] locs;
 		locs = new MapLocation[]{new MapLocation(3,20), new MapLocation(200,234), new MapLocation(4,9000)};
 		
 		io.sendMapLocs("", locs);
-		System.out.println((Arrays.toString(Radio.decodeMapLocs(io.msgContainer))));
+		System.out.println((Arrays.toString(BroadcastSystem.decodeMapLocs(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
 
 		io.setAddresses(new String[]{"#aa", "#bb"});

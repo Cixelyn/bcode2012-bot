@@ -3,9 +3,9 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 
-public class Navigator {
+public class NavigationSystem {
 	private final BaseRobot baseRobot;
-	private final MapCache mapCache; 
+	private final MapCacheSystem mapCache; 
 	private final TangentBug tangentBug;
 	private final BlindBug blindBug;
 	private final MapLocation zeroLoc;
@@ -14,7 +14,7 @@ public class Navigator {
 	private int movesOnSameTarget;
 	private int expectedMovesToReachTarget;
 	private final static int[] wiggleDirectionOrder = new int[] {0, 1, -1, 2, -2};
-	public Navigator(BaseRobot baseRobot) {
+	public NavigationSystem(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
 		tangentBug = new TangentBug(mapCache.isWall);
@@ -42,7 +42,7 @@ public class Navigator {
 		if(destination.equals(this.destination)) 
 			return;
 		movesOnSameTarget = 0;
-		expectedMovesToReachTarget = (int)(Math.sqrt(baseRobot.currLoc.distanceSquaredTo(destination)) *
+		expectedMovesToReachTarget = (int)(Math.sqrt(baseRobot.curLoc.distanceSquaredTo(destination)) *
 				TangentBug.MAP_UGLINESS_WEIGHT)+1;
 		this.destination = destination;
 		tangentBug.setTarget(mapCache.worldToCacheX(destination.x), 
@@ -60,8 +60,8 @@ public class Navigator {
 			if(mapCache.edgeYMax!=0) tangentBug.edgeYMax = mapCache.edgeYMax;
 
 			tangentBug.prepare(
-					mapCache.worldToCacheX(baseRobot.currLoc.x), 
-					mapCache.worldToCacheY(baseRobot.currLoc.y));
+					mapCache.worldToCacheX(baseRobot.curLoc.x), 
+					mapCache.worldToCacheY(baseRobot.curLoc.y));
 		} 
 	}
 	/** Returns direction to go next in order to reach the destination. */
@@ -107,7 +107,7 @@ public class Navigator {
 		for(int ddir : wiggleDirectionOrder) {
 			int index = (ord+multiplier*ddir+8) % 8;
 			if(movable[index]) {
-				return NavigatorUtilities.allDirections[index];
+				return Constants.directions[index];
 			}	
 		}
 		return null;
@@ -119,15 +119,15 @@ public class Navigator {
 	/** This is private because it needs the state of the navigator to work. */
 	private Direction navigateTangentBug() {
 		int[] d = tangentBug.computeMove(
-				mapCache.worldToCacheX(baseRobot.currLoc.x), 
-				mapCache.worldToCacheY(baseRobot.currLoc.y));
+				mapCache.worldToCacheX(baseRobot.curLoc.x), 
+				mapCache.worldToCacheY(baseRobot.curLoc.y));
 		if(d==null) return Direction.NONE;
 		return dxdyToDirection(d[0], d[1]);
 	}
 	public Direction navigateCompletelyRandomly() {
 		for(int tries=0; tries<32; tries++) {
-			Direction dir = NavigatorUtilities.getRandomDirection();
-			if(!mapCache.isWall(baseRobot.currLoc.add(dir)))
+			Direction dir = getRandomDirection();
+			if(!mapCache.isWall(baseRobot.curLoc.add(dir)))
 				return dir;
 		}
 		return Direction.NONE;
@@ -136,30 +136,30 @@ public class Navigator {
 		// With 1/4 probability, reset heading towards destination.
 		// Otherwise, randomly perturb current direction by up to 90 degrees.
 		double d = Math.random();
-		if(d*1000-(int)(d*1000)<0.25) return baseRobot.currLoc.directionTo(destination);
+		if(d*1000-(int)(d*1000)<0.25) return baseRobot.curLoc.directionTo(destination);
 		d=d*2-1;
 		d = d*d*Math.signum(d);
-		Direction dir = baseRobot.currDir;
+		Direction dir = baseRobot.curDir;
 		if(d<0) {
 			do {
 				d++;
 				dir = dir.rotateLeft();
-			} while(d<0 || mapCache.isWall(baseRobot.currLoc.add(dir)));
+			} while(d<0 || mapCache.isWall(baseRobot.curLoc.add(dir)));
 		} else {
 			do {
 				d++;
 				dir = dir.rotateRight();
-			} while(d<0 || mapCache.isWall(baseRobot.currLoc.add(dir)));
+			} while(d<0 || mapCache.isWall(baseRobot.curLoc.add(dir)));
 		}
 		return dir;
 	}
 	public Direction navigateGreedy(MapLocation destination) {
-		Direction dir = baseRobot.currLoc.directionTo(destination);
+		Direction dir = baseRobot.curLoc.directionTo(destination);
 		if(Math.random()<0.5) {
-			while(mapCache.isWall(baseRobot.currLoc.add(dir)))
+			while(mapCache.isWall(baseRobot.curLoc.add(dir)))
 				dir = dir.rotateLeft();
 		} else {
-			while(mapCache.isWall(baseRobot.currLoc.add(dir)))
+			while(mapCache.isWall(baseRobot.curLoc.add(dir)))
 				dir = dir.rotateRight();
 		}
 		return dir;
@@ -171,5 +171,10 @@ public class Navigator {
 	private Direction navigateDStar() {
 		//TODO implement
 		throw new RuntimeException("DStar navigation not yet implemented!");
+	}
+	
+	/** Returns a direction at random from the eight standard directions. */
+	public static Direction getRandomDirection() {
+		return Constants.directions[(int)(Math.random()*8)];
 	}
 }

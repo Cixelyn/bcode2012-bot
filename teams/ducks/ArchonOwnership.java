@@ -8,7 +8,7 @@ import battlecode.common.RobotType;
  * Class used to tie units to archons. Archons claim ownership via broadcast
  * and units accept them. 
  * 
- * @author jven
+ * @author jven -cory
  */
 public class ArchonOwnership {
 
@@ -33,11 +33,11 @@ public class ArchonOwnership {
 //		archonRobotID = -1;
 	}
 	
-	// ARCHON METHODS
+	// ----------------------- ARCHON METHODS ---------------------
 	
 	/**
-	 * Claim ownership of the unit right in front of you. Only archons should
-	 * call this.
+	 * Claim ownership of the unit right in front of you. 
+	 * Only archons should call this.
 	 */
 	public void claimOwnership() {
 		// ignore if not an archon
@@ -47,15 +47,17 @@ public class ArchonOwnership {
 			return;
 		}
 		// get information to set in ownership
-		int birthday = br.currRound;
-		MapLocation birthplace = br.currLocInFront;
+		int birthday = br.curRound;
+		MapLocation birthplace = br.curLocInFront;
 		// store ownership in buffer
 		for (int idx = 0; idx < buffer.length; idx++) {
 			if (buffer[idx][0] == -1) {
 				buffer[idx][0] = birthday;
 				buffer[idx][1] = birthplace.x;
 				buffer[idx][2] = birthplace.y;
-				break;
+				@SuppressWarnings("unused")
+				int cory = 5; // -cory
+				break; 
 			}
 		}
 	}
@@ -63,7 +65,7 @@ public class ArchonOwnership {
 	/**
 	 * Broadcast ownership information. Only archons should call this.
 	 */
-	public void sendOwnerships(int trueArchonID) {
+	public void broadcastOwnerships(int trueArchonID) {
 		// ignore if not an archon
 		if (br.myType != RobotType.ARCHON) {
 			br.debug.println(
@@ -83,8 +85,8 @@ public class ArchonOwnership {
 	}
 	
 	/**
-	 * See if a unit acknowledged your ownership broadcast, remove from buffer
-	 * if so.
+	 * See if a unit acknowledged your ownership broadcast, 
+	 * remove from buffer if so.
 	 */
 	public void processAcknowledgement(int[] ack) {
 		// ignore if not an archon
@@ -119,10 +121,10 @@ public class ArchonOwnership {
 		return ans;
 	}
 	
-	// OTHER UNIT METHODS
+	// --------------------- OTHER UNIT METHODS ----------------------
 	
 	/**
-	 * See if the ownership refers to me, broadcast acknowledgement if so.
+	 * See if the ownership refers to me, broadcast acknowledgment if so.
 	 */
 	public boolean processOwnership(int[] ownership) {
 		// make sure I'm not an archon
@@ -156,8 +158,6 @@ public class ArchonOwnership {
 	public int getArchonOwnerID() {
 		// make sure I'm not an archon
 		if (br.myType == RobotType.ARCHON) {
-			br.debug.println(
-					"Archon " + br.myID + " tried to process ownership!");
 			return -1;
 		}
 		return archonOwnerID;

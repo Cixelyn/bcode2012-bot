@@ -18,27 +18,27 @@ public class RobotPlayer {
 			case SCOUT:
 				br = new ScoutRobot(myRC);
 				break;
-//			case DISRUPTER:
+			case DISRUPTER:
 //				br = new DisrupterRobot(myRC);
-//				break;
-//			case SCORCHER:
+				break;
+			case SCORCHER:
 //				br = new ScorcherRobot(myRC);
-//				break;
+				break;
 			default:
 				break;
 			}
 		} catch (Exception e) {
-			System.out.println("Initializtion Failed");
+			System.out.println("Robot constructor failed");
 			e.printStackTrace();
 			br.rc.addMatchObservation(e.toString());
 		}
 
-		//main loop should never terminate
+		//Main loop should never terminate
 		while (true) {
 			try {
 				br.loop();
 			} catch (Exception e) {
-				System.out.println("Main Loop Terminated Unexpectedly");
+				System.out.println("Main loop terminated unexpectedly");
 				e.printStackTrace();
 				br.rc.addMatchObservation(e.toString());
 			}

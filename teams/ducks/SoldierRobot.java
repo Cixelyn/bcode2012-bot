@@ -10,7 +10,7 @@ import battlecode.common.RobotInfo;
 public class SoldierRobot extends StrategyRobot {
 	
 	private boolean initialized;
-	private final HibernationEngine hbe;
+	private final HibernationSystem hbe;
 	
 	private int ownerTrueID;
 //	private int ownerRobotID;
@@ -37,7 +37,7 @@ public class SoldierRobot extends StrategyRobot {
 	
 	public SoldierRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
-		hbe = new HibernationEngine(this);
+		hbe = new HibernationSystem(this);
 		initialized = false;
 		lastScanRound = -1;
 		ownerTrueID = -1;
@@ -54,7 +54,7 @@ public class SoldierRobot extends StrategyRobot {
 		case INITIALIZE:
 		{
 			if (initialized) {
-				if (currRound < Constants.BUILD_ARMY_ROUND_THRESHOLD)
+				if (curRound < Constants.BUILD_ARMY_ROUND_THRESHOLD)
 					return RobotState.HOLD_POSITION;
 				else
 					return RobotState.SWARM;
@@ -70,7 +70,7 @@ public class SoldierRobot extends StrategyRobot {
 		{
 			if (roundsSinceSeenEnemy > Constants.SOLDIER_CHASE_ROUNDS)
 				return RobotState.SWARM;
-			else if (currLoc.distanceSquaredTo(archonOVERLORD) > Constants.SOLDIER_CHASE_DISTANCE_SQUARED)
+			else if (curLoc.distanceSquaredTo(archonOVERLORD) > Constants.SOLDIER_CHASE_DISTANCE_SQUARED)
 				return RobotState.SWARM;
 			
 		} break;
@@ -133,7 +133,7 @@ public class SoldierRobot extends StrategyRobot {
 	public void execute(RobotState state) throws GameActionException {
 		// TODO(jven): use hibernation engine instead
 		// power down if not enough flux
-		if (currFlux < Constants.MIN_ROBOT_FLUX) {
+		if (rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
 			debug.setIndicatorString(0, "" + myType + " - LOW FLUX", Owner.ALL);
 			return;
 		}
@@ -182,11 +182,11 @@ public class SoldierRobot extends StrategyRobot {
 		switch(msgType) {
 			case 'd':
 			{
-				eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
+				eai.reportEnemyArchonKills(BroadcastSystem.decodeShorts(sb));
 			} break;
 			case 'o':
 			{
-				ao.processOwnership(Radio.decodeShorts(sb));
+				ao.processOwnership(BroadcastSystem.decodeShorts(sb));
 				if (ao.getArchonOwnerID()==5)
 					isDefender = true;
 				else
@@ -217,10 +217,10 @@ public class SoldierRobot extends StrategyRobot {
 				}
 				if (!isDefender)
 				{
-					int[] msg = Radio.decodeShorts(sb);
+					int[] msg = BroadcastSystem.decodeShorts(sb);
 //					swarmDirection = Constants.directions[msg[1]];
 					temp = new MapLocation(msg[4],msg[5]);
-					int dist = temp.distanceSquaredTo(currLoc);
+					int dist = temp.distanceSquaredTo(curLoc);
 					if (dist < closest)
 					{
 						enemydiff = msg[3]-100;
@@ -270,7 +270,7 @@ public class SoldierRobot extends StrategyRobot {
 		// distribute flux
 		fm.manageFlux();
 		// send dead enemy archon info
-		eai.sendDeadEnemyArchonIDs();
+		eai.broadcastDeadEnemyArchonIDs();
 	}
 	
 	public void swarm() throws GameActionException {
@@ -359,7 +359,7 @@ public class SoldierRobot extends StrategyRobot {
 			roundsSinceSeenEnemy++;
 			if (lastChaseDirection!=null)
 			{
-				MapLocation chaseLoc = currLoc.add(lastChaseDirection,Constants.SOLDIER_CHASE_DISTANCE_MULTIPLIER);
+				MapLocation chaseLoc = curLoc.add(lastChaseDirection,Constants.SOLDIER_CHASE_DISTANCE_MULTIPLIER);
 				mi.setChargeMode();
 				mi.setObjective(chaseLoc);
 				mi.attackMove();
@@ -379,16 +379,16 @@ public class SoldierRobot extends StrategyRobot {
 	}
 	
 	public void scanForEnemies() throws GameActionException {
-		if (currRound>lastScanRound)
+		if (curRound>lastScanRound)
 		{
 			ur.scan(false, true);
-			lastScanRound = currRound;
+			lastScanRound = curRound;
 		}
 	}
 	
 	public void defendBase() throws GameActionException {
 		mi.attackMove();
 		fm.manageFlux();
-		eai.sendDeadEnemyArchonIDs();
+		eai.broadcastDeadEnemyArchonIDs();
 	}
 }

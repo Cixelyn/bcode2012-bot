@@ -6,14 +6,14 @@ import battlecode.common.RobotController;
 
 public class ScoutRobot extends StrategyRobot {
 	
-	private final HibernationEngine hbe;
+	private final HibernationSystem hbe;
 
 	public ScoutRobot(RobotController myRC) {
 		super(myRC, RobotState.DEFEND_BASE);
 		mi.setObjective(myHome);
 		mi.setChargeMode();
 		
-		hbe = new HibernationEngine(this);
+		hbe = new HibernationSystem(this);
 		io.setAddresses(new String[]{"#d"});
 	}
 

@@ -5,13 +5,11 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
+import ducks.Debug.Owner;
 
 /**
  * Handles the attacking and moving for robots.
- * 
- * @author jven
  */
 public class Micro {
 	
@@ -51,23 +49,17 @@ public class Micro {
 		}
 	}
 	
-	/**
-	 * Don't navigate, spin around to look for enemies
-	 */
+	/** Don't navigate, spin around to look for enemies */
 	public void setHoldPositionMode() {
 		mode = MicroMode.HOLD_POSITION;
 	}
 	
-	/**
-	 * Navigate forwards.
-	 */
+	/** Navigate forwards. */
 	public void setNormalMode() {
 		mode = MicroMode.NORMAL;
 	}
 	
-	/**
-	 * Navigate backwards.
-	 */
+	/** Navigate backwards. */
 	public void setMoonwalkMode() {
 		mode = MicroMode.MOONWALK;
 	}
@@ -163,7 +155,7 @@ public class Micro {
 	
 	private boolean holdPosition() throws GameActionException {
 		if (br.myType.attackAngle != 360) {
-			rc.setDirection(br.currDir.rotateLeft().rotateLeft().rotateLeft());
+			rc.setDirection(br.curDir.rotateLeft().rotateLeft().rotateLeft());
 			return true;
 		} else {
 			return false;
@@ -172,7 +164,6 @@ public class Micro {
 	
 	/** Returns true iff we did some movement action (moving or turning). */
 	private boolean normalTowards() throws GameActionException {
-		
 		if(dirAboutToMoveIn == null) {
 			Direction dir = br.nav.navigateToDestination();
 			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
@@ -183,8 +174,7 @@ public class Micro {
 		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
 		if(dir==null) 
 			return false;
-		if(dir == br.currDir) {
-			if (br.myType==RobotType.SOLDIER && rc.senseObjectAtLocation(br.currLocInFront, RobotLevel.POWER_NODE)!=null) return false;
+		if(dir == br.curDir) {
 			rc.moveForward();
 			br.directionToSenseIn = dir;
 			dirAboutToMoveIn = null;
@@ -206,7 +196,7 @@ public class Micro {
 		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
 		if(dir==null) 
 			return false;
-		if(dir == br.currDir.opposite()) {
+		if(dir == br.curDir.opposite()) {
 			rc.moveBackward();
 			br.directionToSenseIn = dir;
 			dirAboutToMoveIn = null;
@@ -217,20 +207,23 @@ public class Micro {
 		return true;
 	}
 	private boolean swarmTowards() throws GameActionException {
+		System.out.println("WTFFF     FFFFFFFFFFFFFFF");
 		// step towards closest archon if too far away, navigate normally otherwise
 		MapLocation closestArchon = br.dc.getClosestArchon();
 		if (closestArchon != null) {
-			if(br.currLoc.distanceSquaredTo(closestArchon) >= tooFarDistance) {
-				rc.setIndicatorString(2, "Going to archon");
+			System.out.println("GGGGGGGGGGGGGGGGGGGGGGGGGGGF");
+			if(br.curLoc.distanceSquaredTo(closestArchon) >= tooFarDistance) {
+				br.debug.setIndicatorString(2, "Going to archon", Owner.YP);
 				return randomTowards(closestArchon);
-			} else if (br.currLoc.distanceSquaredTo(closestArchon) <= tooCloseDistance) {
-				rc.setIndicatorString(2, "Backing off from archon");
-				MapLocation locAwayFromArchon = br.currLoc.add(closestArchon.directionTo(br.currLoc), 5);
+			} else if (br.curLoc.distanceSquaredTo(closestArchon) <= tooCloseDistance) {
+				br.debug.setIndicatorString(2, "backing to archon", Owner.YP);
+				MapLocation locAwayFromArchon = br.curLoc.add(closestArchon.directionTo(br.curLoc), 5);
 				return randomTowards(locAwayFromArchon);
 			}
 		}
-		moonwalkTowards();
-		rc.setIndicatorString(2, "Going to target");
+		System.out.println("eawwwwwwwwwwwwwwwwwwwwwww");
+		normalTowards();
+		br.debug.setIndicatorString(2, "normal towards", Owner.YP);
 		return false;
 	}
 	
@@ -249,12 +242,12 @@ public class Micro {
 				dir.rotateLeft(),
 				dir.rotateRight()
 		};
-		int distanceSquared = br.currLoc.distanceSquaredTo(target);
+		int distanceSquared = br.curLoc.distanceSquaredTo(target);
 		for (Direction d : targetDirs) {
 			if (distanceSquared < tooFarDistance) {
 				// move backwards
 				if (rc.canMove(d.opposite())) {
-					if (br.currDir != d) {
+					if (br.curDir != d) {
 						rc.setDirection(d);
 					} else {
 						rc.moveBackward();
@@ -266,7 +259,7 @@ public class Micro {
 			} else {
 				// move forwards
 				if (rc.canMove(d)) {
-					if (br.currDir != d) {
+					if (br.curDir != d) {
 						rc.setDirection(d);
 					} else {
 						rc.moveForward();
@@ -291,8 +284,7 @@ public class Micro {
 		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
 		if(dir==null) 
 			return false;
-		if(dir == br.currDir) {
-			if (br.myType==RobotType.SOLDIER && rc.senseObjectAtLocation(br.currLocInFront, RobotLevel.POWER_NODE)!=null) return false;
+		if(dir == br.curDir) {
 			rc.moveForward();
 			br.directionToSenseIn = dir;
 			dirAboutToMoveIn = null;
@@ -314,8 +306,7 @@ public class Micro {
 		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
 		if(dir==null) 
 			return false;
-		if(dir == br.currDir) {
-			if (br.myType==RobotType.SOLDIER && rc.senseObjectAtLocation(br.currLocInFront, RobotLevel.POWER_NODE)!=null) return false;
+		if(dir == br.curDir) {
 			rc.moveForward();
 			br.directionToSenseIn = dir;
 			dirAboutToMoveIn = null;

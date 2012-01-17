@@ -3,13 +3,14 @@ package ducks;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 
-public class EnemyArchonInfo {
+/** TODO doc this whole class juston lalwl. */
+public class EnemyArchonKillCache {
 
 	private BaseRobot br;
 	private int[] deadEnemyArchonIDs;
 	private int timeUntilBroadcast;
 	
-	public EnemyArchonInfo(BaseRobot myBR) {
+	public EnemyArchonKillCache(BaseRobot myBR) {
 		br = myBR;
 		deadEnemyArchonIDs = new int[GameConstants.NUMBER_OF_ARCHONS];
 		for (int i = 0; i < GameConstants.NUMBER_OF_ARCHONS; i++) {
@@ -36,7 +37,7 @@ public class EnemyArchonInfo {
 		}
 	}
 	
-	public int getNumEnemyArchons() {
+	public int getNumEnemyArchonsAlive() {
 		for (int i = 0; i < GameConstants.NUMBER_OF_ARCHONS; i++) {
 			if (deadEnemyArchonIDs[i] == -1) {
 				return GameConstants.NUMBER_OF_ARCHONS - i;
@@ -45,7 +46,7 @@ public class EnemyArchonInfo {
 		return 0;
 	}
 	
-	public void sendDeadEnemyArchonIDs() throws GameActionException {
+	public void broadcastDeadEnemyArchonIDs() throws GameActionException {
 		if (--timeUntilBroadcast <= 0) {
 			br.io.sendShorts("#xd", getDeadEnemyArchonIDs());
 			timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
@@ -53,7 +54,7 @@ public class EnemyArchonInfo {
 	}
 	
 	private int[] getDeadEnemyArchonIDs() {
-		int[] ans = new int[GameConstants.NUMBER_OF_ARCHONS - getNumEnemyArchons()];
+		int[] ans = new int[GameConstants.NUMBER_OF_ARCHONS - getNumEnemyArchonsAlive()];
 		for (int i = 0; i < GameConstants.NUMBER_OF_ARCHONS; i++) {
 			if (deadEnemyArchonIDs[i] == -1) {
 				break;

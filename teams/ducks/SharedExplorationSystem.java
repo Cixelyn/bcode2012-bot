@@ -17,15 +17,15 @@ public class SharedExplorationSystem {
 		int startRow;
 		int numRowBlocks;
 		if(baseRobot.mc.edgeXMin!=0) {
-			startRow = (baseRobot.mc.edgeXMin+1)/MapCache.MAP_BLOCK_SIZE;
+			startRow = (baseRobot.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
 			if(baseRobot.mc.edgeXMax!=0) {
-				numRowBlocks = baseRobot.mc.edgeXMax/MapCache.MAP_BLOCK_SIZE-(baseRobot.mc.edgeXMin+1)/MapCache.MAP_BLOCK_SIZE+1;
+				numRowBlocks = baseRobot.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-(baseRobot.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
 			} else {
 				numRowBlocks = 16;
 			}
 		} else if(baseRobot.mc.edgeXMax!=0) {
 			numRowBlocks = 16;
-			startRow = baseRobot.mc.edgeXMax/MapCache.MAP_BLOCK_SIZE-numRowBlocks+1;
+			startRow = baseRobot.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-numRowBlocks+1;
 		} else {
 			startRow = 0;
 			numRowBlocks = 64;
@@ -33,15 +33,15 @@ public class SharedExplorationSystem {
 		int startCol;
 		int numColBlocks;
 		if(baseRobot.mc.edgeYMin!=0) {
-			startCol = (baseRobot.mc.edgeYMin+1)/MapCache.MAP_BLOCK_SIZE;
+			startCol = (baseRobot.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
 			if(baseRobot.mc.edgeYMax!=0) {
-				numColBlocks = baseRobot.mc.edgeYMax/MapCache.MAP_BLOCK_SIZE-(baseRobot.mc.edgeYMin+1)/MapCache.MAP_BLOCK_SIZE+1;
+				numColBlocks = baseRobot.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-(baseRobot.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
 			} else {
 				numColBlocks = 16;
 			}
 		} else if(baseRobot.mc.edgeYMax!=0) {
 			numColBlocks = 16;
-			startCol = baseRobot.mc.edgeYMax/MapCache.MAP_BLOCK_SIZE-numColBlocks+1;
+			startCol = baseRobot.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-numColBlocks+1;
 		} else {
 			startCol = 0;
 			numColBlocks = 64;
