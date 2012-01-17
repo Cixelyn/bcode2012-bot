@@ -712,6 +712,8 @@ public class ArchonRobot extends StrategyRobot {
 				io.sendShort("#dz", 0);
 			}
 		}
+	
+		debug.setIndicatorString(1, Integer.toString(ur.roundsSinceEnemySighted), Owner.YP);
 		
 		
 		if(currFlux > 150) 
@@ -722,7 +724,7 @@ public class ArchonRobot extends StrategyRobot {
 		}
 		else {
 			nav.setNavigationMode(NavigationMode.RANDOM);
-			mi.setNormalMode();
+			mi.setMoonwalkMode();
 			mi.attackMove();
 			System.out.println(mi.getObjective());
 		}	
