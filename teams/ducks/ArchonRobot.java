@@ -31,7 +31,7 @@ public class ArchonRobot extends StrategyRobot {
 	private MapLocation attackMoveTarget;
 	private Direction attackMoveDirection;
 	private int roundsLastSeenEnemy;
-	private MapLocation enemyPowerNode;
+	
 	private int roundsToChase;
 	private int roundSinceMove;
 	private RobotState prevState;
@@ -39,6 +39,9 @@ public class ArchonRobot extends StrategyRobot {
 	private boolean moving;
 	private int lastRoundCheckedTargets;
 	private MapLocation leaderLoc;
+	
+	private MapLocation enemyPowerNode;
+	private boolean doneWithAttackBase;
 	
 
 	// defender variables
@@ -109,7 +112,7 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case ATTACK_ENEMY_BASE:
 		{
-			if (enemyPowerNode!=null && attackMoveTarget==null)
+			if (doneWithAttackBase && attackMoveTarget==null)
 			{
 				// TODO(jven): shouldn't we be defending our base in case of counter?
 				if (dc.getAlliedArchons().length >=
@@ -177,7 +180,7 @@ public class ArchonRobot extends StrategyRobot {
 		case ATTACK_ENEMY_BASE:
 		{
 			prevState = oldstate;
-			
+			doneWithAttackBase = true;
 			roundsToChase = Constants.ARCHON_CHASE_ROUNDS;
 			mi.setNormalMode();
 			// set flux management mode
@@ -253,6 +256,8 @@ public class ArchonRobot extends StrategyRobot {
 	@Override
 	public void processMessage(char msgType, StringBuilder sb)
 			throws GameActionException {
+		int priority = 99;
+		
 		switch(msgType) {
 		
 //		swarm messages
@@ -277,7 +282,20 @@ public class ArchonRobot extends StrategyRobot {
 		case 'x':
 		{
 //			TODO ??????
-		}break;
+		} break;
+		case 'a':
+		{
+			if (!isDefender)
+			{
+				int[] msg = Radio.decodeShorts(sb);
+				if (attackTarget==null || roundsLastSeenEnemy>0)
+				{
+					attackMoveTarget = new MapLocation(msg[1], msg[2]);
+					roundsLastSeenEnemy = 0;
+					gotoState(RobotState.ATTACK_ENEMY_BASE);
+				}
+			}
+		} break;
 		
 //			dead archon messages
 		case 'd':
@@ -383,6 +401,7 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void attack_enemy_base() throws GameActionException
 	{
+		checkAttackMoveStatus();
 		if (isLeader)
 		{
 			if (attackTarget == null || !rc.canSenseObject(attackTarget.robot))
@@ -394,6 +413,11 @@ public class ArchonRobot extends StrategyRobot {
 					if (enemyPowerNode == null)
 					{
 						attackMoveTarget = mc.guessEnemyPowerCoreLocation();
+						if (currLoc.distanceSquaredTo(attackMoveTarget) < 36)
+						{
+							doneWithAttackBase = true;
+							return;
+						}
 						if (attackMoveTarget == null)
 						{
 							attackMoveDirection = Direction.SOUTH;
@@ -402,11 +426,38 @@ public class ArchonRobot extends StrategyRobot {
 						{
 							attackMoveDirection = currLoc.directionTo(attackMoveTarget);
 						}
+					} else
+					{
+						doneWithAttackBase = true;
+						return;
 					}
 				}
 			}
 		} else
 		{
+			checkAttackMoveTargets();
+			if (attackTarget!=null)
+			{
+				switch (attackTarget.type)
+				{
+				case ARCHON:
+					sendEnemyAtLoc(attackTarget.location);
+					attack_move(attackMoveTarget, attackMoveDirection, attackTarget);
+					return;
+				}
+			}
+			
+			enemyPowerNode = mc.getEnemyPowerCoreLocation();
+			if (enemyPowerNode == null)
+			{
+				attackMoveTarget = mc.guessEnemyPowerCoreLocation();
+				if (currLoc.distanceSquaredTo(attackMoveTarget) < 36)
+				{
+					doneWithAttackBase = true;
+					return;
+				}
+			}
+			
 			attackMoveTarget = leaderLoc;
 			attackMoveDirection = currLoc.directionTo(attackMoveTarget);
 		}
@@ -556,24 +607,24 @@ public class ArchonRobot extends StrategyRobot {
 				MapLocation target = null;
 				
 				if (attackDir==null || 
-						currLoc.distanceSquaredTo(leader) > Constants.MAX_SWARM_ARCHON_DISTANCE_SQUARED)
+						currLoc.distanceSquaredTo(attackTarget) > Constants.MAX_SWARM_ARCHON_DISTANCE_SQUARED)
 				{
-					target = leader;
+					target = attackTarget;
 				} else
 				{
 					switch (archonIndex)
 					{
 					case 1:
-						target = leader.add(attackDir.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON);
+						target = attackTarget.add(attackDir.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON);
 						break;
 					case 2:
-						target = leader.add(attackDir.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON);
+						target = attackTarget.add(attackDir.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON);
 						break;
 					case 3:
-						target = leader.add(attackDir.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
+						target = attackTarget.add(attackDir.rotateLeft().rotateLeft(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
 						break;
 					case 4:
-						target = leader.add(attackDir.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
+						target = attackTarget.add(attackDir.rotateRight().rotateRight(),Constants.SWARM_DISTANCE_FROM_ARCHON2);
 						break;
 					}
 					
@@ -581,7 +632,7 @@ public class ArchonRobot extends StrategyRobot {
 				}
 				
 //				resend swarm information
-				sendSwarmInfo(attackDir, attackTarget.add(attackDir,3));
+				sendSwarmInfo(attackDir, target.add(attackDir,3));
 				
 				debug.setIndicatorString(2, archonIndex+" "+target, Owner.YP);
 				
@@ -620,6 +671,12 @@ public class ArchonRobot extends StrategyRobot {
 	{
 		io.sendShorts("#ax", 
 				new int[]{	archonIndex, target.x, target.y, swarmDirection.ordinal()});
+	}
+	
+	public void sendEnemyAtLoc(MapLocation target)
+	{
+		io.sendShorts("#aa", 
+				new int[]{	archonIndex, target.x, target.y});
 	}
 	
 	public boolean checkAttackMoveTargets()

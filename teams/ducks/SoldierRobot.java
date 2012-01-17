@@ -294,6 +294,7 @@ public class SoldierRobot extends StrategyRobot {
 //				}
 			}
 		}
+		fm.manageFlux();
 	}
 	
 	public void chase() throws GameActionException {
@@ -316,6 +317,7 @@ public class SoldierRobot extends StrategyRobot {
 			mi.attackMove();
 			
 		}
+		fm.manageFlux();
 	}
 	
 	public void scanForEnemies() throws GameActionException {
