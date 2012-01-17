@@ -627,14 +627,24 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void defend_base() throws GameActionException
 	{
+		ur.scan(false, true);
+		if (ur.numEnemySoldiers > 0 || ur.numEnemyArchons > 0) {
+			io.sendWakeupCall();
+			io.sendShort("#zz", 0); //FIXME: dummy call for now to trigger wakeup
+		}
+		
+		
 		if(spawnUnitInDir(RobotType.SOLDIER,currDir)) {
 			ao.claimOwnership();
 			numDefenders++;
 		}
 		else {
+			nav.setNavigationMode(NavigationMode.RANDOM);
 			mi.attackMove();
 		}	
-		ao.sendOwnerships();
+			
+		
+		ao.sendOwnerships(trueArchonIndex);
 		fm.manageFlux();
 	}
 	
