@@ -30,6 +30,7 @@ public class UnitRadar {
 	public final int[] allyTimes = new int[MAX_ROBOTS];
 	
 	public int numAdjacentAllies;
+	public int numAllyRobots;
 	public final RobotInfo[] adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	
 	public final RobotInfo[] enemyInfos = new RobotInfo[MAX_ROBOTS];
@@ -48,6 +49,9 @@ public class UnitRadar {
 	public int numEnemyDisruptors;
 	public int numEnemyScorchers;
 	public int numEnemyTowers;
+	
+	public int vecEnemyX;
+	public int vecEnemyY;
 	
 	public int roundsSinceEnemySighted;
 	
@@ -69,10 +73,14 @@ public class UnitRadar {
 		numEnemyDisruptors = 0;
 		numEnemyScorchers = 0;
 		numEnemyTowers = 0;
+		
+		vecEnemyX = 0;
+		vecEnemyY = 0;
 	}
 	
 	private void resetAllyStats() {
 		numAdjacentAllies = 0;
+		numAllyRobots = 0;
 //		adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	}
 	
@@ -99,7 +107,13 @@ public class UnitRadar {
 		}
 		
 		// Distance Stats
-		int dist = rinfo.location.distanceSquaredTo(br.currLoc);
+		MapLocation eloc = rinfo.location;
+		
+		vecEnemyX += eloc.x - br.currLoc.x;
+		vecEnemyY += eloc.y - br.currLoc.y;
+		
+		
+		int dist = eloc.distanceSquaredTo(br.currLoc);
 		if(dist < closestEnemyDist) {
 //			closestEnemyLoc = rinfo.location;
 			closetEnemy = rinfo;
@@ -111,6 +125,8 @@ public class UnitRadar {
 		int pos = rinfo.robot.getID() % MAX_ROBOTS;
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
+		
+		numAllyRobots++;
 		
 		if(rinfo.location.isAdjacentTo(br.currLoc)) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
@@ -163,4 +179,19 @@ public class UnitRadar {
 //			lastscanround = br.currRound;
 //		}
 	}
+	
+	
+	public int getArmyDifference() {
+		return numAllyRobots - numEnemyRobots;
+	}
+	
+	public MapLocation getEnemySwarmTarget() {
+		double a = Math.sqrt(vecEnemyX * vecEnemyX + vecEnemyY * vecEnemyY) + .01;
+		
+		return new MapLocation(
+				(int)(vecEnemyX*7/a) + br.currLoc.x,
+				(int)(vecEnemyY*7/a) + br.currLoc.y);
+		
+	}
+	
 }
