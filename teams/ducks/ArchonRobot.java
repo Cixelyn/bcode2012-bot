@@ -108,7 +108,7 @@ public class ArchonRobot extends StrategyRobot {
 			}
 			if ((dc.getClosestEnemy() != null &&
 					dc.getClosestEnemy().type != RobotType.SCOUT) ||
-					armySizeBuilt >= armySizeTarget) {
+					currRound >= Constants.MAX_ROUNDS_TO_BUILD_ARMY) {
 				// TODO(jven): pick one!
 				//wakeUpMyUnits();
 				wakeUpAllUnits();
@@ -275,6 +275,23 @@ public class ArchonRobot extends StrategyRobot {
 		int priority = 99;
 		
 		switch(msgType) {
+		
+		case 's':
+		{
+			RobotState curstate = getCurrentState();
+			
+			if (curstate == RobotState.BUILD_ARMY)
+			{
+				if (isDefender)
+				{
+					gotoState(RobotState.DEFEND_BASE);
+				} else
+				{
+					gotoState(RobotState.ATTACK_ENEMY_BASE);
+				}
+			}
+			
+		} break;
 		
 //		swarm messages
 //		case 's':
