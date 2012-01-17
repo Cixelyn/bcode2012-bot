@@ -1,5 +1,7 @@
 package ducks;
 
+import java.util.Arrays;
+
 import battlecode.common.*;
 
 public class DataCache {
