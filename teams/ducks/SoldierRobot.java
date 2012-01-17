@@ -121,8 +121,9 @@ public class SoldierRobot extends StrategyRobot {
 		case DEFEND_BASE:
 		{
 			io.addAddress("#d");
-				mi.setObjective(myHome);
-				mi.setNormalMode();
+			mi.setObjective(myHome);
+			mi.setNormalMode();
+		} break;
 		default:
 			break;
 		}
