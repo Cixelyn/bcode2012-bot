@@ -15,9 +15,9 @@ public class RobotPlayer {
 			case SOLDIER:
 				br = new SoldierRobot(myRC);
 				break;
-//			case SCOUT:
-//				br = new ScoutRobot(myRC);
-//				break;
+			case SCOUT:
+				br = new ScoutRobot(myRC);
+				break;
 //			case DISRUPTER:
 //				br = new DisrupterRobot(myRC);
 //				break;

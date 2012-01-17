@@ -31,6 +31,7 @@ public class UnitRadar {
 	
 	public int numAdjacentAllies;
 	public int numAllyRobots;
+	public int numAllyDamaged;
 	public final RobotInfo[] adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	
 	public final RobotInfo[] enemyInfos = new RobotInfo[MAX_ROBOTS];
@@ -86,6 +87,7 @@ public class UnitRadar {
 	private void resetAllyStats() {
 		numAdjacentAllies = 0;
 		numAllyRobots = 0;
+		numAllyDamaged = 0;
 //		adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	}
 	
@@ -136,6 +138,11 @@ public class UnitRadar {
 		allyTimes[pos] = Clock.getRoundNum();
 		
 		numAllyRobots++;
+		
+		if(rinfo.energon != rinfo.type.maxEnergon) {
+			numAllyDamaged++;
+		}
+		
 		
 		if(rinfo.location.isAdjacentTo(br.currLoc)) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
