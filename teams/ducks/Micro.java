@@ -145,7 +145,7 @@ public class Micro {
 			if (br.myType != RobotType.SCOUT &&
 					closestEnemy.type == RobotType.ARCHON &&
 					closestEnemy.energon <= br.myType.attackPower) {
-				br.eai.reportEnemyArchonKill(closestEnemy.robot.getID());
+				br.eakc.reportEnemyArchonKill(closestEnemy.robot.getID());
 			}
 			return true;
 		} else {

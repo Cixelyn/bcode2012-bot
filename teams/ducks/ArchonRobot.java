@@ -129,7 +129,7 @@ public class ArchonRobot extends StrategyRobot {
 			{
 				// TODO(jven): shouldn't we be defending our base in case of counter?
 				if (dc.getAlliedArchons().length >=
-						eai.getNumEnemyArchonsAlive() + 2)
+						eakc.getNumEnemyArchonsAlive() + 2)
 				{
 					return RobotState.POWER_CAP;
 				} else if (enemyPowerNode!=null)
@@ -162,22 +162,22 @@ public class ArchonRobot extends StrategyRobot {
 		case EXPLORE:
 		{
 			// set micro objective and mode
-			mi.setObjective(
+			micro.setObjective(
 					curLoc.add(explorationDirection, GameConstants.MAP_MAX_HEIGHT));
-			mi.setNormalMode();
+			micro.setNormalMode();
 		} break;
 		case GOHOME:
 		{
 			// set micro objective and mode
-			mi.setObjective(myHome);
-			mi.setNormalMode();
+			micro.setObjective(myHome);
+			micro.setNormalMode();
 		} break;
 		case SPLIT:
 		{
 			// set micro objective and mode
-			mi.setKiteMode(Constants.SPLIT_DISTANCE);
+			micro.setKiteMode(Constants.SPLIT_DISTANCE);
 			// set flux management mode
-			fm.setBatteryMode();
+			fbs.setBatteryMode();
 		} break;
 		case BUILD_ARMY:
 		{
@@ -189,7 +189,7 @@ public class ArchonRobot extends StrategyRobot {
 				armySizeTarget = Constants.ARMY_SIZE_ON_INITIAL_BUILD;
 			} break;
 			}
-			fm.setBatteryMode();
+			fbs.setBatteryMode();
 			
 		} break;
 		case ATTACK_ENEMY_BASE:
@@ -197,16 +197,16 @@ public class ArchonRobot extends StrategyRobot {
 			prevState = oldstate;
 			doneWithAttackBase = true;
 			roundsToChase = Constants.ARCHON_CHASE_ROUNDS;
-			mi.setNormalMode();
+			micro.setNormalMode();
 			// set flux management mode
-			fm.setBattleMode();
+			fbs.setBattleMode();
 		} break;
 		case DEFEND_BASE:
 		{
 			numDefenders = 0;
-			mi.setObjective(myHome);
-			mi.setMoonwalkMode();
-			fm.setBattleMode();
+			micro.setObjective(myHome);
+			micro.setMoonwalkMode();
+			fbs.setBattleMode();
 			
 		} break;
 		case POWER_CAP:
@@ -214,7 +214,7 @@ public class ArchonRobot extends StrategyRobot {
 			nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 			
 			// set flux management mode
-			fm.setBatteryMode();
+			fbs.setBatteryMode();
 		} break;
 		}
 		
@@ -332,7 +332,7 @@ public class ArchonRobot extends StrategyRobot {
 		
 //			dead archon messages
 		case 'd':
-			eai.reportEnemyArchonKills(BroadcastSystem.decodeShorts(sb));
+			eakc.reportEnemyArchonKills(BroadcastSystem.decodeShorts(sb));
 			break;
 		case 'o':
 			ao.processAcknowledgement(BroadcastSystem.decodeShorts(sb));
@@ -362,11 +362,11 @@ public class ArchonRobot extends StrategyRobot {
 	public void explore() throws GameActionException
 	{
 		// navigate towards exploration target
-		mi.attackMove();
+		micro.attackMove();
 		// change direction halfway through
 		if (curRound == Constants.ROUNDS_TO_EXPLORE / 2) {
 			explorationDirection = explorationDirection.rotateLeft().rotateLeft();
-			mi.setObjective(curLoc.add(
+			micro.setObjective(curLoc.add(
 					explorationDirection, GameConstants.MAP_MAX_HEIGHT));
 		}
 	}
@@ -374,14 +374,14 @@ public class ArchonRobot extends StrategyRobot {
 	public void gohome() throws GameActionException
 	{
 		// navigate towards home
-		mi.attackMove();
+		micro.attackMove();
 	}
 	
 	public void split() throws GameActionException
 	{
 		// kite from closest archon
-		mi.setObjective(dc.getClosestArchon());
-		mi.attackMove();
+		micro.setObjective(dc.getClosestArchon());
+		micro.attackMove();
 	}
 	
 	public void build_army() throws GameActionException
@@ -400,7 +400,7 @@ public class ArchonRobot extends StrategyRobot {
 			}
 		}
 		// distribute flux
-		fm.manageFlux();
+		fbs.manageFlux();
 		// send ownership information
 		ao.broadcastOwnerships(trueArchonIndex);
 	}
@@ -415,7 +415,7 @@ public class ArchonRobot extends StrategyRobot {
 			{
 				isLeader = true;
 				archonIndex = 0;
-				mi.setKiteMode(Constants.ATTACK_MOVE_KITE_DISTANCE_SQUARED);
+				micro.setKiteMode(Constants.ATTACK_MOVE_KITE_DISTANCE_SQUARED);
 			} else if (locs[1].equals(curLoc))
 			{
 				archonIndex = 1;
@@ -569,27 +569,27 @@ public class ArchonRobot extends StrategyRobot {
 				
 				debug.setIndicatorString(2, "moving towards:"+moveTarget+", enemy diff is "+enemyDiff, Owner.YP);
 				
-				mi.setNormalMode();
-				mi.setObjective(moveTarget);
-				mi.attackMove();
+				micro.setNormalMode();
+				micro.setObjective(moveTarget);
+				micro.attackMove();
 			} else
 			{
 				sendSwarmInfo(attackMoveTarget,enemyDiff);
 				
-				MapLocation swarmcenter = ur.getEnemySwarmCenter();
+				MapLocation swarmcenter = radar.getEnemySwarmCenter();
 				
 				debug.setIndicatorString(2, "enemy center at:"+swarmcenter+", swarmTarget:"+attackMoveTarget+", enemy diff is "+enemyDiff, Owner.YP);
 				
-				mi.setKiteMode(25);
-				mi.setObjective(swarmcenter);
-				mi.attackMove();
+				micro.setKiteMode(25);
+				micro.setObjective(swarmcenter);
+				micro.attackMove();
 			}
 		} else
 		{
-			MapLocation swarmcenter = ur.getEnemySwarmCenter();
-			mi.setKiteMode(100);
-			mi.setObjective(swarmcenter);
-			mi.attackMove();
+			MapLocation swarmcenter = radar.getEnemySwarmCenter();
+			micro.setKiteMode(100);
+			micro.setObjective(swarmcenter);
+			micro.attackMove();
 		}
 		
 		
@@ -724,7 +724,7 @@ public class ArchonRobot extends StrategyRobot {
 //			}
 //		}
 		// distribute flux
-		fm.manageFlux();
+		fbs.manageFlux();
 	}
 	
 	public void sendSwarmInfo(MapLocation target, int diff)
@@ -751,13 +751,13 @@ public class ArchonRobot extends StrategyRobot {
 	{
 		if (lastRoundCheckedTargets<curRound)
 		{
-			ur.scan(true, true);
-			enemyDiff = ur.getArmyDifference();
+			radar.scan(true, true);
+			enemyDiff = radar.getArmyDifference();
 			
 			
-			if (ur.numEnemyRobots-ur.numEnemyTowers > 0)
+			if (radar.numEnemyRobots-radar.numEnemyTowers > 0)
 			{
-				attackMoveTarget = ur.getEnemySwarmTarget();
+				attackMoveTarget = radar.getEnemySwarmTarget();
 				attackMoveDirection = curLoc.directionTo(attackMoveTarget);
 				return true;
 				
@@ -852,7 +852,7 @@ public class ArchonRobot extends StrategyRobot {
 		}
 		if(nextNodeToCapture == null || Math.random()<0.01) {
 			nextNodeToCapture = mc.guessBestPowerNodeToCapture();
-			mi.setObjective(nextNodeToCapture);
+			micro.setObjective(nextNodeToCapture);
 			
 		}
 		if(curLocInFront.equals(nextNodeToCapture)) {
@@ -865,7 +865,7 @@ public class ArchonRobot extends StrategyRobot {
 //			mi.setNormalMode();
 //			mi.attackMove();
 			// distribute flux
-			fm.manageFlux();
+			fbs.manageFlux();
 		}
 		
 	}
@@ -873,13 +873,13 @@ public class ArchonRobot extends StrategyRobot {
 
 	public void defend_base() throws GameActionException
 	{
-		ur.scan(false, true);
-		if (ur.numEnemySoldiers > 0 || ur.numEnemyArchons > 0) {
+		radar.scan(false, true);
+		if (radar.numEnemySoldiers > 0 || radar.numEnemyArchons > 0) {
 			io.sendWakeupCall();
 			io.sendShort("#zz", 0); //FIXME: dummy call for now to trigger wakeup
 			nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		} else {
-			if(curRound % 5 == 0 && ur.roundsSinceEnemySighted > 10) { // send back to sleep
+			if(curRound % 5 == 0 && radar.roundsSinceEnemySighted > 10) { // send back to sleep
 				io.sendShort("#dz", 0);
 			}
 			nav.setNavigationMode(NavigationMode.RANDOM);
@@ -903,14 +903,14 @@ public class ArchonRobot extends StrategyRobot {
 			}
 		}
 		else {
-			mi.setMoonwalkMode();
-			mi.attackMove();
-			System.out.println(mi.getObjective());
+			micro.setMoonwalkMode();
+			micro.attackMove();
+			System.out.println(micro.getObjective());
 		}	
 			
 		
 		ao.broadcastOwnerships(trueArchonIndex);
-		fm.manageFlux();
+		fbs.manageFlux();
 	}
 	
 	private boolean spawnUnitInDir(

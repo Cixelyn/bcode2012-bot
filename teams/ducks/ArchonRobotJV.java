@@ -143,14 +143,14 @@ public class ArchonRobotJV extends BaseRobot {
 	 */
 	private void explore() throws GameActionException {
 		// set micro mode
-		mi.setNormalMode();
+		micro.setNormalMode();
 		// set objective for some place far away from home, in a different direction
 		// from the other Archons
-		mi.setObjective(myHome.add(myHome.directionTo(birthplace),
+		micro.setObjective(myHome.add(myHome.directionTo(birthplace),
 				GameConstants.MAP_MAX_HEIGHT));
 		// TODO(jven): explore more haphazardly to fill in gaps
 		// tangent bug to destination
-		mi.attackMove();
+		micro.attackMove();
 	}
 	
 	/**
@@ -158,11 +158,11 @@ public class ArchonRobotJV extends BaseRobot {
 	 */
 	private void returnHome() throws GameActionException {
 		// set micro mode
-		mi.setNormalMode();
+		micro.setNormalMode();
 		// set objective for home
-		mi.setObjective(myHome);
+		micro.setObjective(myHome);
 		// tangent bug to home
-		mi.attackMove();
+		micro.attackMove();
 	}
 	
 	/**
@@ -170,11 +170,11 @@ public class ArchonRobotJV extends BaseRobot {
 	 */
 	private void split() throws GameActionException {
 		// set micro mode
-		mi.setKiteMode(ArchonConstants.ARCHON_SPLIT_DISTANCE);
+		micro.setKiteMode(ArchonConstants.ARCHON_SPLIT_DISTANCE);
 		// set objective for closest archon
-		mi.setObjective(dc.getClosestArchon());
+		micro.setObjective(dc.getClosestArchon());
 		// kite closest archon
-		mi.attackMove();
+		micro.attackMove();
 	}
 	
 	/**
