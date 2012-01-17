@@ -13,7 +13,7 @@ public class Navigator {
 	private MapLocation destination;
 	private int movesOnSameTarget;
 	private int expectedMovesToReachTarget;
-	private static int[] wiggleDirectionOrder = new int[] {0, 1, -1, 2, -2};
+	private final static int[] wiggleDirectionOrder = new int[] {0, 1, -1, 2, -2};
 	public Navigator(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
@@ -91,21 +91,23 @@ public class Navigator {
 		} 
 		
 		if(dir==Direction.NONE || dir==Direction.OMNI) 
-			return Direction.NONE;
-		dir = wiggleToMovableDirection(dir);
-		if(dir==null) return Direction.NONE;
+			return Direction.NONE; 
 		movesOnSameTarget++;
 		return dir;
 	}
-	private Direction wiggleToMovableDirection(Direction dir) {
+	/** Given a direction, randomly perturbs it to a direction that the 
+	 * robot can move in. 
+	 * TODO perhaps we should put this in the Micro class
+	 */
+	public Direction wiggleToMovableDirection(Direction dir) {
 		boolean[] movable = baseRobot.dc.getMovableDirections();
 		int multiplier = ((int)(Math.random()*2))*2-1; // 1 or -1 with equal probability
 		int ord = dir.ordinal();
 		for(int ddir : wiggleDirectionOrder) {
-			if(movable[(ord+multiplier*ddir+8)%8]) {
-				movesOnSameTarget++;
-				return dir;
-			}
+			int index = (ord+multiplier*ddir+8) % 8;
+			if(movable[index]) {
+				return NavigatorUtilities.allDirections[index];
+			}	
 		}
 		return null;
 	}
@@ -123,7 +125,7 @@ public class Navigator {
 	private Direction navigateCompletelyRandomly() {
 		for(int tries=0; tries<32; tries++) {
 			Direction dir = NavigatorUtilities.getRandomDirection();
-			if(baseRobot.rc.canMove(dir))
+			if(!mapCache.isWall(baseRobot.currLoc.add(dir)))
 				return dir;
 		}
 		return Direction.NONE;
