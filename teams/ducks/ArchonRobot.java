@@ -189,6 +189,7 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case POWER_CAP:
 		{
+			
 			// set flux management mode
 			fm.setBatteryMode();
 		} break;
