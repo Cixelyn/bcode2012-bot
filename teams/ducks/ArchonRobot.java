@@ -561,28 +561,37 @@ public class ArchonRobot extends StrategyRobot {
 		ao.sendOwnerships(trueArchonIndex);
 		
 		
-		
-		if (attackMoveTarget == null)
+		if (enemyDiff >= 0)
 		{
-			sendSwarmInfo(moveTarget,enemyDiff);
-			
-			debug.setIndicatorString(2, "moving towards:"+moveTarget+", enemy diff is "+enemyDiff, Owner.YP);
-			
-			mi.setNormalMode();
-			mi.setObjective(moveTarget);
-			mi.attackMove();
+			if (attackMoveTarget == null)
+			{
+				sendSwarmInfo(moveTarget,enemyDiff);
+				
+				debug.setIndicatorString(2, "moving towards:"+moveTarget+", enemy diff is "+enemyDiff, Owner.YP);
+				
+				mi.setNormalMode();
+				mi.setObjective(moveTarget);
+				mi.attackMove();
+			} else
+			{
+				sendSwarmInfo(attackMoveTarget,enemyDiff);
+				
+				MapLocation swarmcenter = ur.getEnemySwarmCenter();
+				
+				debug.setIndicatorString(2, "enemy center at:"+swarmcenter+", swarmTarget:"+attackMoveTarget+", enemy diff is "+enemyDiff, Owner.YP);
+				
+				mi.setKiteMode(25);
+				mi.setObjective(swarmcenter);
+				mi.attackMove();
+			}
 		} else
 		{
-			sendSwarmInfo(attackMoveTarget,enemyDiff);
-			
 			MapLocation swarmcenter = ur.getEnemySwarmCenter();
-			
-			debug.setIndicatorString(2, "enemy center at:"+swarmcenter+", swarmTarget:"+attackMoveTarget+", enemy diff is "+enemyDiff, Owner.YP);
-			
-			mi.setKiteMode(25);
+			mi.setKiteMode(100);
 			mi.setObjective(swarmcenter);
 			mi.attackMove();
 		}
+		
 		
 
 		
@@ -822,6 +831,10 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void power_cap() throws GameActionException
 	{
+		checkAttackMoveTargets();
+		if (attackMoveTarget!=null && enemyDiff >= 0)
+			attack_move(attackMoveTarget);
+				
 		if(nextNodeToCapture != null) {
 			boolean stillCapturable = false;
 			for(MapLocation loc: dc.getCapturablePowerCores()) {
@@ -842,10 +855,6 @@ public class ArchonRobot extends StrategyRobot {
 				rc.spawn(RobotType.TOWER);
 			}
 		} else {
-//			if (attackMoveTarget != null)
-//				if (!rc.isMovementActive())
-//					attack_move(attackMoveTarget);
-			
 			attack_move(nextNodeToCapture);
 			
 //			mi.setNormalMode();

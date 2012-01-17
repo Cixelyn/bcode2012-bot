@@ -226,7 +226,7 @@ public class Micro {
 				return randomTowards(locAwayFromArchon);
 			}
 		}
-		normalTowards();
+		moonwalkTowards();
 		rc.setIndicatorString(2, "Going to target");
 		return false;
 	}
