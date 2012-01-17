@@ -714,13 +714,17 @@ public class ArchonRobot extends StrategyRobot {
 		}
 		
 		
-		if(spawnUnitInDir(RobotType.SOLDIER,currDir)) {
+		if(currFlux > 150) 
+		{
+			spawnUnitInDir(RobotType.SOLDIER,currDir);
 			ao.claimOwnership();
 			numDefenders++;
 		}
 		else {
 			nav.setNavigationMode(NavigationMode.RANDOM);
+			mi.setNormalMode();
 			mi.attackMove();
+			System.out.println(mi.getObjective());
 		}	
 			
 		
