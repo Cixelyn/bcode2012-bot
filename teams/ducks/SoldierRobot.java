@@ -26,6 +26,8 @@ public class SoldierRobot extends StrategyRobot {
 	private RobotInfo target2;
 	private MapLocation target2Loc;
 	
+	private MapLocation fromObjective;
+	private int enemydiff;
 	
 	private int roundsSinceSeenEnemy;
 	private Direction lastChaseDirection;
@@ -60,9 +62,9 @@ public class SoldierRobot extends StrategyRobot {
 		} break;
 		case SWARM:
 		{
-			scanForEnemies();
-			if (ur.numEnemyRobots>0)
-				return RobotState.CHASE;
+//			scanForEnemies();
+//			if (ur.numEnemyRobots>0)
+//				return RobotState.CHASE;
 		} break;
 		case CHASE:
 		{
@@ -174,6 +176,8 @@ public class SoldierRobot extends StrategyRobot {
 			char msgType, StringBuilder sb) throws GameActionException {
 		
 		swarmPriority = 999;
+		int closest = 999;
+		MapLocation temp;
 		
 		switch(msgType) {
 			case 'd':
@@ -209,8 +213,15 @@ public class SoldierRobot extends StrategyRobot {
 					gotoState(RobotState.SWARM);
 				}
 				int[] msg = Radio.decodeShorts(sb);
-				swarmDirection = Constants.directions[msg[1]];
-				swarmObjective = new MapLocation(msg[2],msg[3]);
+//				swarmDirection = Constants.directions[msg[1]];
+				temp = new MapLocation(msg[4],msg[5]);
+				int dist = temp.distanceSquaredTo(currLoc);
+				if (dist < closest)
+				{
+					enemydiff = msg[3]-100;
+					swarmObjective = new MapLocation(msg[1],msg[2]);
+					fromObjective = temp;
+				}
 				
 			} break;
 			case 'z':
@@ -259,42 +270,78 @@ public class SoldierRobot extends StrategyRobot {
 	
 	public void swarm() throws GameActionException {
 		
-		if (!rc.isMovementActive())
+		
+		
+		if (enemydiff>=0)
 		{
-			findArchon();
-			
-			if (swarmObjective==null)
+			if (swarmObjective == null)
 			{
+				findArchon();
+				mi.setSwarmMode(2, 36);
 				mi.setObjective(archonOVERLORD);
 				mi.attackMove();
 			} else
 			{
-				MapLocation[] archons = dc.getAlliedArchons();
-//				MapLocation loc = archons[0];
-				MapLocation loc = archonOVERLORD;
-				loc.add(swarmDirection, Constants.SOLDIER_SWARM_IN_FRONT);
-				
-				mi.setObjective(loc);
+				mi.setChargeMode();
+				mi.setObjective(swarmObjective);
 				mi.attackMove();
-				
-//				int dist = currLoc.distanceSquaredTo(loc);
-//				if (dist <= Constants.SOLDIER_SWARM_DISTANCE)
-//				{
-//					if (currDir == swarmDirection)
-//					{
-//						
-//					} else
-//					{
-//						rc.setDirection(swarmDirection);
-//					}
-//				} else
-//				{
-//					mi.setObjective(loc);
-//					mi.attackMove();
-//				}
+			}
+			
+		} else
+		{
+			if (fromObjective == null)
+			{
+				findArchon();
+				mi.setSwarmMode(2, 36);
+				mi.setObjective(archonOVERLORD);
+				mi.attackMove();
+			} else
+			{
+				mi.setSwarmMode(2, 36);
+				mi.setObjective(fromObjective);
+				mi.attackMove();
 			}
 		}
+		
 		fm.manageFlux();
+		
+		return;
+		
+//		if (!rc.isMovementActive())
+//		{
+//			findArchon();
+//			
+//			if (swarmObjective==null)
+//			{
+//				mi.setObjective(archonOVERLORD);
+//				mi.attackMove();
+//			} else
+//			{
+//				MapLocation[] archons = dc.getAlliedArchons();
+////				MapLocation loc = archons[0];
+//				MapLocation loc = archonOVERLORD;
+//				loc.add(swarmDirection, Constants.SOLDIER_SWARM_IN_FRONT);
+//				
+//				mi.setObjective(loc);
+//				mi.attackMove();
+//				
+////				int dist = currLoc.distanceSquaredTo(loc);
+////				if (dist <= Constants.SOLDIER_SWARM_DISTANCE)
+////				{
+////					if (currDir == swarmDirection)
+////					{
+////						
+////					} else
+////					{
+////						rc.setDirection(swarmDirection);
+////					}
+////				} else
+////				{
+////					mi.setObjective(loc);
+////					mi.attackMove();
+////				}
+//			}
+//		}
 	}
 	
 	public void chase() throws GameActionException {
