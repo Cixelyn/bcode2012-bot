@@ -291,4 +291,8 @@ public class Micro {
 		
 		return true;
 	}
+	
+	public MapLocation getObjective() {
+		return this.objective;
+	}
 }
