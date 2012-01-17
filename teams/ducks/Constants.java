@@ -33,7 +33,8 @@ public final class Constants {
 	public static final int MAX_SWARM_ARCHON_DISTANCE_SQUARED = 64;
 	public static final int ATTACK_MOVE_KITE_DISTANCE_SQUARED = 17;
 	public static final int ARCHON_FLUX_DURING_COMBAT = 40;
-	public static final int MAX_ROUNDS_TO_ATTACKBASE = 1800;
+	public static final int MAX_ROUNDS_TO_ATTACKBASE = 1500;
+	public static final int MAX_ROUNDS_TO_BUILD_ARMY = 800;
 	
 //	swarm constants
 	public static final int SOLDIER_CHASE_ROUNDS = 30;

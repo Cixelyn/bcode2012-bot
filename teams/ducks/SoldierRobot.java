@@ -210,19 +210,24 @@ public class SoldierRobot extends StrategyRobot {
 			case 's':
 			{
 				if (getCurrentState() == RobotState.HOLD_POSITION) {
-					gotoState(RobotState.SWARM);
+					if (isDefender)
+						gotoState(RobotState.DEFEND_BASE);
+					else
+						gotoState(RobotState.SWARM);
 				}
-				int[] msg = Radio.decodeShorts(sb);
-//				swarmDirection = Constants.directions[msg[1]];
-				temp = new MapLocation(msg[4],msg[5]);
-				int dist = temp.distanceSquaredTo(currLoc);
-				if (dist < closest)
+				if (!isDefender)
 				{
-					enemydiff = msg[3]-100;
-					swarmObjective = new MapLocation(msg[1],msg[2]);
-					fromObjective = temp;
+					int[] msg = Radio.decodeShorts(sb);
+//					swarmDirection = Constants.directions[msg[1]];
+					temp = new MapLocation(msg[4],msg[5]);
+					int dist = temp.distanceSquaredTo(currLoc);
+					if (dist < closest)
+					{
+						enemydiff = msg[3]-100;
+						swarmObjective = new MapLocation(msg[1],msg[2]);
+						fromObjective = temp;
+					}
 				}
-				
 			} break;
 			case 'z':
 			{

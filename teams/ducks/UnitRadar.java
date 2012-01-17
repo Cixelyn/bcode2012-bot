@@ -116,8 +116,8 @@ public class UnitRadar {
 		// Distance Stats
 		MapLocation eloc = rinfo.location;
 		
-//		centerEnemyX += eloc.x;
-//		centerEnemyY += eloc.y;
+		centerEnemyX += eloc.x;
+		centerEnemyY += eloc.y;
 		
 //		vecEnemyX += eloc.x - br.currLoc.x;
 //		vecEnemyY += eloc.y - br.currLoc.y;
