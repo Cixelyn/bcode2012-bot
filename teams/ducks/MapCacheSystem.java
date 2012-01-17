@@ -465,12 +465,24 @@ public class MapCacheSystem {
 	public boolean isSensed(MapLocation loc) {
 		return sensed[worldToCacheX(loc.x)][worldToCacheY(loc.y)];
 	}
-	/** Is the given map location a wall tile? Will return false if the robot does not know. */
+	/** Is the given map location a wall tile (or an off map tile)? <br>
+	 * Will return false if the robot does not know. 
+	 */
 	public boolean isWall(MapLocation loc) {
 		return isWall[worldToCacheX(loc.x)][worldToCacheY(loc.y)];
 	}
+	/** Is the given map location an off map tile? <br>
+	 *  Will return false if the robot does not know. 
+	 */
+	public boolean isOffMap(MapLocation loc) {
+		int x = worldToCacheX(loc.x);
+		int y = worldToCacheY(loc.y);
+		return edgeXMin!=0 && x<=edgeXMin || edgeXMax!=0 && x>=edgeXMax ||
+				edgeYMin!=0 && y<=edgeYMin || edgeYMax!=0 && y>=edgeYMax;
+	}
 	/** Gets the unique index of the power node at the given location 
-	 * for PowerNodeGraph to use in its data structure.
+	 * for PowerNodeGraph to use in its data structure. <br>
+	 * Returns 0 if there is no power node known to be there.
 	 */
 	private short getPowerNodeID(MapLocation loc) {
 		return powerNodeID[worldToCacheX(loc.x)][worldToCacheY(loc.y)];

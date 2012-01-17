@@ -47,7 +47,6 @@ public abstract class BaseRobot {
 	private int executeStartByte;
 	
 	
-	
 	public BaseRobot(RobotController myRC) {
 		rc = myRC;
 		
