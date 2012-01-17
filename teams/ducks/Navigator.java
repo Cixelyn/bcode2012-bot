@@ -33,6 +33,8 @@ public class Navigator {
 		return mode;
 	}
 	public void setNavigationMode(NavigationMode mode) {
+		if(this.mode == mode) 
+			return;
 		this.mode = mode;
 		reset();
 	}

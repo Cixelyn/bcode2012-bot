@@ -103,7 +103,7 @@ public class ArchonRobot extends StrategyRobot {
 				if (isDefender) {
 					return RobotState.DEFEND_BASE;
 				} else {
-					return RobotState.ATTACK_ENEMY_BASE;
+					return RobotState.POWER_CAP;
 				}
 			}
 		} break;
@@ -192,6 +192,8 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case POWER_CAP:
 		{
+			nav.setNavigationMode(NavigationMode.TANGENT_BUG);
+			
 			// set flux management mode
 			fm.setBatteryMode();
 		} break;
@@ -684,19 +686,33 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void power_cap() throws GameActionException
 	{
+		if(nextNodeToCapture != null) {
+			boolean stillCapturable = false;
+			for(MapLocation loc: dc.getCapturablePowerCores()) {
+				if(loc.equals(nextNodeToCapture)) {
+					stillCapturable = true;
+					break;
+				}
+			}
+			if(!stillCapturable) nextNodeToCapture = null;
+		}
 		if(nextNodeToCapture == null || Math.random()<0.01) {
 			nextNodeToCapture = mc.guessBestPowerNodeToCapture();
 			mi.setObjective(nextNodeToCapture);
+			
+			System.out.println("WTF "+nextNodeToCapture);
 		}
 		if(currLocInFront.equals(nextNodeToCapture)) {
 			if(currFlux > 200 && rc.canMove(currDir)) {
 				rc.spawn(RobotType.TOWER);
 			}
 		} else {
+			mi.setNormalMode();
 			mi.attackMove();
+			// distribute flux
+			fm.manageFlux();
 		}
-		// distribute flux
-		fm.manageFlux();
+		
 	}
 
 
