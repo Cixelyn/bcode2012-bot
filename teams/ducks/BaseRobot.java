@@ -72,7 +72,7 @@ public abstract class BaseRobot {
 	public void loop() {
 		while(true) {
 			
-			startClock();
+			resetClock();
 	
 			// Useful Statistics
 			currEnergon = rc.getEnergon();
@@ -139,7 +139,7 @@ public abstract class BaseRobot {
 	 */
 	public int getAge() { return birthday - currRound; }
 
-	private void startClock() {
+	public void resetClock() {
 		executeStartTime = Clock.getRoundNum();
 		executeStartByte = Clock.getBytecodeNum();
 	}
