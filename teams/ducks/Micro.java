@@ -314,6 +314,7 @@ public class Micro {
 		if(dir==null) 
 			return false;
 		if(dir == br.currDir) {
+			if (br.myType==RobotType.SOLDIER && rc.senseObjectAtLocation(br.currLocInFront, RobotLevel.POWER_NODE)!=null) return false;
 			rc.moveForward();
 			br.directionToSenseIn = dir;
 			dirAboutToMoveIn = null;
