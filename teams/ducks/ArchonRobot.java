@@ -78,7 +78,8 @@ public class ArchonRobot extends StrategyRobot {
 		case GOHOME:
 		{
 			if (currLoc.distanceSquaredTo(myHome) <=
-					Constants.DISTANCE_TO_HOME_ON_GOHOME)
+					Constants.DISTANCE_TO_HOME_ON_GOHOME || currRound >=
+					Constants.ROUNDS_TO_GO_HOME)
 				return RobotState.SPLIT;
 		} break;
 		case SPLIT:
@@ -182,6 +183,8 @@ public class ArchonRobot extends StrategyRobot {
 		case DEFEND_BASE:
 		{
 			numDefenders = 0;
+			mi.setObjective(myHome);
+			mi.setMoonwalkMode();
 			
 		} break;
 		case POWER_CAP:
@@ -206,6 +209,12 @@ public class ArchonRobot extends StrategyRobot {
 		debug.setIndicatorString(
 				2, "Unack ownerships: " + ao.getNumUnacknowledgedOwnerships(),
 				Owner.JVEN);
+		
+		if(directionToSenseIn!=null) {
+			mc.senseAfterMove(directionToSenseIn);
+			directionToSenseIn = null;
+		}
+		
 		switch (state) {
 		case INITIALIZE:
 			initialize();
@@ -675,10 +684,33 @@ public class ArchonRobot extends StrategyRobot {
 		// distribute flux
 		fm.manageFlux();
 	}
-	
-	public void defend_base()
+
+
+	public void defend_base() throws GameActionException
 	{
-		// distribute flux
+		ur.scan(false, true);
+		if (ur.numEnemySoldiers > 0 || ur.numEnemyArchons > 0) {
+			numDefenders = 0;
+			io.sendWakeupCall();
+			io.sendShort("#zz", 0); //FIXME: dummy call for now to trigger wakeup
+		} else {
+			if(currRound % 5 == 0 && ur.roundsSinceEnemySighted > 10) { // send back to sleep
+				io.sendShort("#dz", 0);
+			}
+		}
+		
+		
+		if(spawnUnitInDir(RobotType.SOLDIER,currDir)) {
+			ao.claimOwnership();
+			numDefenders++;
+		}
+		else {
+			nav.setNavigationMode(NavigationMode.RANDOM);
+			mi.attackMove();
+		}	
+			
+		
+		ao.sendOwnerships(trueArchonIndex);
 		fm.manageFlux();
 	}
 	

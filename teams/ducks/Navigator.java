@@ -13,7 +13,7 @@ public class Navigator {
 	private MapLocation destination;
 	private int movesOnSameTarget;
 	private int expectedMovesToReachTarget;
-	private static int[] wiggleDirectionOrder = new int[] {0, 1, -1, 2, -2};
+	private final static int[] wiggleDirectionOrder = new int[] {0, 1, -1, 2, -2};
 	public Navigator(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
@@ -69,12 +69,12 @@ public class Navigator {
 		
 		Direction dir = Direction.NONE;
 		if(mode==NavigationMode.RANDOM) {
-			dir = navigateRandomly();
+			dir = navigateRandomly(destination);
 		} else if(mode==NavigationMode.GREEDY) {
 			if(movesOnSameTarget > 2 * expectedMovesToReachTarget) 
-				dir = navigateRandomly();
+				dir = navigateRandomly(destination);
 			else
-				dir = navigateGreedy();
+				dir = navigateGreedy(destination);
 		} else if(mode==NavigationMode.BUG) {
 			dir = navigateBug();
 		} else if(mode==NavigationMode.TANGENT_BUG) {
@@ -91,21 +91,22 @@ public class Navigator {
 		} 
 		
 		if(dir==Direction.NONE || dir==Direction.OMNI) 
-			return Direction.NONE;
-		dir = wiggleToMovableDirection(dir);
-		if(dir==null) return Direction.NONE;
+			return Direction.NONE; 
 		movesOnSameTarget++;
 		return dir;
 	}
-	private Direction wiggleToMovableDirection(Direction dir) {
+	/** Given a direction, randomly perturbs it to a direction that the 
+	 * robot can move in. 
+	 */
+	public Direction wiggleToMovableDirection(Direction dir) {
 		boolean[] movable = baseRobot.dc.getMovableDirections();
 		int multiplier = ((int)(Math.random()*2))*2-1; // 1 or -1 with equal probability
 		int ord = dir.ordinal();
 		for(int ddir : wiggleDirectionOrder) {
-			if(movable[(ord+multiplier*ddir+8)%8]) {
-				movesOnSameTarget++;
-				return dir;
-			}
+			int index = (ord+multiplier*ddir+8) % 8;
+			if(movable[index]) {
+				return NavigatorUtilities.allDirections[index];
+			}	
 		}
 		return null;
 	}
@@ -113,6 +114,7 @@ public class Navigator {
 	private Direction dxdyToDirection(int dx, int dy) {
 		return zeroLoc.directionTo(zeroLoc.add(dx, dy));
 	}
+	/** This is private because it needs the state of the navigator to work. */
 	private Direction navigateTangentBug() {
 		int[] d = tangentBug.computeMove(
 				mapCache.worldToCacheX(baseRobot.currLoc.x), 
@@ -120,15 +122,15 @@ public class Navigator {
 		if(d==null) return Direction.NONE;
 		return dxdyToDirection(d[0], d[1]);
 	}
-	private Direction navigateCompletelyRandomly() {
+	public Direction navigateCompletelyRandomly() {
 		for(int tries=0; tries<32; tries++) {
 			Direction dir = NavigatorUtilities.getRandomDirection();
-			if(baseRobot.rc.canMove(dir))
+			if(!mapCache.isWall(baseRobot.currLoc.add(dir)))
 				return dir;
 		}
 		return Direction.NONE;
 	}
-	private Direction navigateRandomly() {
+	public Direction navigateRandomly(MapLocation destination) {
 		// With 1/4 probability, reset heading towards destination.
 		// Otherwise, randomly perturb current direction by up to 90 degrees.
 		double d = Math.random();
@@ -149,7 +151,7 @@ public class Navigator {
 		}
 		return dir;
 	}
-	private Direction navigateGreedy() {
+	public Direction navigateGreedy(MapLocation destination) {
 		Direction dir = baseRobot.currLoc.directionTo(destination);
 		if(Math.random()<0.5) {
 			while(mapCache.isWall(baseRobot.currLoc.add(dir)))
@@ -160,6 +162,7 @@ public class Navigator {
 		}
 		return dir;
 	}
+	/** This is private because it needs the state of the navigator to work. */
 	private Direction navigateBug() {
 		return blindBug.navigateToIgnoreBots(destination);
 	}

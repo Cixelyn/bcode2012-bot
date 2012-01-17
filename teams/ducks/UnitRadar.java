@@ -49,6 +49,8 @@ public class UnitRadar {
 	public int numEnemyScorchers;
 	public int numEnemyTowers;
 	
+	public int roundsSinceEnemySighted;
+	
 	public int lastscanround;
 	
 	
@@ -148,6 +150,14 @@ public class UnitRadar {
 				br.rc.addMatchObservation(e.toString());
 				e.printStackTrace();
 			}
+		}
+	
+		
+		// compute some global statistics
+		if(numEnemyRobots == 0 ) {
+			roundsSinceEnemySighted++;
+		} else{
+			roundsSinceEnemySighted=0;
 		}
 		
 //			lastscanround = br.currRound;
