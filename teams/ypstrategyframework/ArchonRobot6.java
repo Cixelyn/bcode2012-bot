@@ -4,6 +4,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotLevel;
 
 enum ArchonState {
 	INITIALIZE,
@@ -56,7 +57,7 @@ public class ArchonRobot6 extends BaseRobot {
 		cleanupForRound();
 	}
 	
-	private void execute(ArchonState curState)
+	private void execute(ArchonState curState) throws GameActionException
 	{
 		switch(curState)
 		{
@@ -93,7 +94,7 @@ public class ArchonRobot6 extends BaseRobot {
 		}
 	}
 	
-	private void gotoState(ArchonState newstate)
+	private void gotoState(ArchonState newstate) throws GameActionException
 	{
 		switch (newstate)
 		{
@@ -125,7 +126,7 @@ public class ArchonRobot6 extends BaseRobot {
 		curState = ArchonState.INITIALSCOUT;
 	}
 	
-	private void initialScout() {
+	private void initialScout() throws GameActionException {
 		if (currRound > ArchonConstants.INITIAL_SCOUT_ROUNDS)
 		{
 			gotoState(ArchonState.INITIALRETURN);
@@ -137,7 +138,7 @@ public class ArchonRobot6 extends BaseRobot {
 		}
 		ab.initialScout();
 	}
-	private void initialReturn() {
+	private void initialReturn() throws GameActionException {
 		if (currLoc.distanceSquaredTo(rc.sensePowerCore().getLocation()) 
 				<= ArchonConstants.INITIAL_RETURN_DISTANCE ||
 				currRound >= ArchonConstants.MAX_INITIAL_RETURN_ROUNDS)
@@ -148,7 +149,7 @@ public class ArchonRobot6 extends BaseRobot {
 		ab.initialReturn();
 		
 	}
-	private void initialSplit() {
+	private void initialSplit() throws GameActionException {
 		if (roundsSplit++ > ArchonConstants.MAX_INITIAL_SPLIT_ROUNDS)
 		{
 			gotoState(ArchonState.INITIALBUILD);
@@ -163,7 +164,7 @@ public class ArchonRobot6 extends BaseRobot {
 			ab.initialSplit();
 		}
 	}
-	private void initialBuild() {
+	private void initialBuild() throws GameActionException {
 		if (roundsBuild++ > ArchonConstants.MAX_INITIAL_BUILD_ROUNDS)
 		{
 			gotoState(ArchonState.SWARM);
@@ -177,7 +178,7 @@ public class ArchonRobot6 extends BaseRobot {
 		ab.initialBuild();
 		
 	}
-	private void swarm() {
+	private void swarm() throws GameActionException {
 		if (ab.isLeader())
 		{
 			if (ab.seeEnemies() || ab.hasTarget())
@@ -203,16 +204,19 @@ public class ArchonRobot6 extends BaseRobot {
 			
 			if (rc.canSenseSquare(leader))
 			{
-				ab.keepOff(powernode);
-				ab.giveFlux()
+				if (rc.senseObjectAtLocation(currLoc, RobotLevel.POWER_NODE)!=null)
+					ab.getOutOfSquare();
+				else
+				{
+					ab.swarmAround(leader);
+				}
 			} else
 			{
-				ab.swarmMoveTo(powernode);
+				ab.returnToSwarm(leader);
 			}
 		}
 	}
 	private void engage() {
-		// TODO Auto-generated method stub
 		
 	}
 	private void chase() {

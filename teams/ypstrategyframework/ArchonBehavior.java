@@ -97,4 +97,19 @@ public class ArchonBehavior {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	public void getOutOfSquare() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void swarmAround(MapLocation leader) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void returnToSwarm(MapLocation leader) {
+		// TODO Auto-generated method stub
+		
+	}
 }
