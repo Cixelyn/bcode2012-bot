@@ -1,21 +1,44 @@
 package ducks;
 
 import ducks.Debug.Owner;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 
 public class SoldierRobot extends StrategyRobot {
 	
 	private boolean initialized;
 	private final HibernationEngine hbe;
 	
+	private int ownerTrueID;
+//	private int ownerRobotID;
+	
+	private boolean isDefender;
 	private MapLocation swarmObjective;
+	private Direction swarmDirection;
+	private int swarmPriority;
+	private MapLocation archonOVERLORD;
+	
+	private RobotInfo target;
+	private MapLocation targetLoc;
+	private RobotInfo target2;
+	private MapLocation target2Loc;
+	
+	
+	private int roundsSinceSeenEnemy;
+	private Direction lastChaseDirection;
+	
+	private int lastScanRound;
 	
 	public SoldierRobot(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 		hbe = new HibernationEngine(this);
 		initialized = false;
+		lastScanRound = -1;
+		ownerTrueID = -1;
+//		ownerRobotID = -1;
 	}
 
 
@@ -26,10 +49,23 @@ public class SoldierRobot extends StrategyRobot {
 		switch (state) {
 		case INITIALIZE:
 			if (initialized) {
-				return RobotState.HOLD_POSITION;
+				if (currRound < Constants.BUILD_ARMY_ROUND_THRESHOLD)
+					return RobotState.HOLD_POSITION;
+				else
+					return RobotState.SWARM;
 			} break;
 			case SWARM:
 			{
+				scanForEnemies();
+				if (ur.numEnemyRobots>0)
+					return RobotState.CHASE;
+			} break;
+			case CHASE:
+			{
+				if (roundsSinceSeenEnemy > Constants.SOLDIER_CHASE_ROUNDS)
+					return RobotState.SWARM;
+				else if (currLoc.distanceSquaredTo(archonOVERLORD) > Constants.SOLDIER_CHASE_DISTANCE_SQUARED)
+					return RobotState.SWARM;
 				
 			} break;
 			case HOLD_POSITION:
@@ -45,14 +81,30 @@ public class SoldierRobot extends StrategyRobot {
 			throws GameActionException {
 		switch (newstate) {
 			case INITIALIZE:
+			{
 				initialized = false;
-				break;
+			} break;
 			case HOLD_POSITION:
+			{
 				// set micro mode
 				mi.setHoldPositionMode();
 				// set flux management mode
 				fm.setBatteryMode();
-				break;
+			} break;
+			case SWARM:
+			{
+				// set micro mode
+				mi.setSwarmMode(2);
+				// set flux management mode
+				fm.setBatteryMode();
+			} break;
+			case CHASE:
+			{
+				// set micro mode
+				mi.setChargeMode();
+				// set flux management mode
+				fm.setBattleMode();
+			}
 			default:
 				break;
 		}
@@ -83,6 +135,12 @@ public class SoldierRobot extends StrategyRobot {
 			case SUICIDE:
 				rc.suicide();
 				break;
+			case SWARM:
+				swarm();
+				break;
+			case CHASE:
+				chase();
+				break;
 			default:
 				break;
 		}
@@ -91,18 +149,44 @@ public class SoldierRobot extends StrategyRobot {
 	@Override
 	public void processMessage(
 			char msgType, StringBuilder sb) throws GameActionException {
+		
+		swarmPriority = 999;
+		
 		switch(msgType) {
 			case 'd':
+			{
 				eai.reportEnemyArchonKills(Radio.decodeShorts(sb));
-				break;
+			} break;
 			case 'o':
+			{
 				ao.processOwnership(Radio.decodeShorts(sb));
-				break;
+				if (ao.getArchonOwnerID()==5)
+					isDefender = true;
+				else
+					isDefender = false;
+				
+				ownerTrueID = ao.getArchonOwnerID();
+//				ownerRobotID = ao.getArchonRobotID();
+				
+				findArchon();
+				
+			} break;
 			case 'w':
+			{
 				if (getCurrentState() == RobotState.HOLD_POSITION) {
-					gotoState(RobotState.SUICIDE);
+					gotoState(RobotState.SWARM);
 				}
-				break;
+			} break;
+			case 's':
+			{
+				if (getCurrentState() == RobotState.HOLD_POSITION) {
+					gotoState(RobotState.SWARM);
+				}
+				int[] msg = Radio.decodeShorts(sb);
+				swarmDirection = Constants.directions[msg[1]];
+				swarmObjective = new MapLocation(msg[2],msg[3]);
+				
+			} break;
 			default:
 				super.processMessage(msgType, sb);
 		}
@@ -115,8 +199,23 @@ public class SoldierRobot extends StrategyRobot {
 		io.setAddresses(new String[] {"#x", "#s"});
 		// sense all
 		mc.senseAll();
+		
+		// just get closest for now
+		findArchon();
+		
 		// done
 		initialized = true;
+	}
+	
+	private void findArchon() throws GameActionException {
+		if (ownerTrueID >= 0)
+		{
+			MapLocation[] archons = dc.getAlliedArchons();
+			archonOVERLORD = archons[(ownerTrueID)%archons.length];
+		} else
+		{
+			archonOVERLORD = dc.getClosestArchon();
+		}
 	}
 	
 	public void holdPosition() throws GameActionException {
@@ -126,5 +225,74 @@ public class SoldierRobot extends StrategyRobot {
 		fm.manageFlux();
 		// send dead enemy archon info
 		eai.sendDeadEnemyArchonIDs();
+	}
+	
+	public void swarm() throws GameActionException {
+		
+		if (!rc.isMovementActive())
+		{
+			findArchon();
+			
+			if (swarmObjective==null)
+			{
+				mi.setObjective(archonOVERLORD);
+				mi.attackMove();
+			} else
+			{
+				MapLocation[] archons = dc.getAlliedArchons();
+//				MapLocation loc = archons[0];
+				MapLocation loc = archonOVERLORD;
+				loc.add(swarmDirection, Constants.SOLDIER_SWARM_IN_FRONT);
+				
+				mi.setObjective(loc);
+				mi.attackMove();
+				
+//				int dist = currLoc.distanceSquaredTo(loc);
+//				if (dist <= Constants.SOLDIER_SWARM_DISTANCE)
+//				{
+//					if (currDir == swarmDirection)
+//					{
+//						
+//					} else
+//					{
+//						rc.setDirection(swarmDirection);
+//					}
+//				} else
+//				{
+//					mi.setObjective(loc);
+//					mi.attackMove();
+//				}
+			}
+		}
+	}
+	
+	public void chase() throws GameActionException {
+		scanForEnemies();
+		if (ur.numEnemyRobots==0)
+		{
+			roundsSinceSeenEnemy++;
+			if (lastChaseDirection!=null)
+			{
+				MapLocation chaseLoc = currLoc.add(lastChaseDirection,Constants.SOLDIER_CHASE_DISTANCE_MULTIPLIER);
+			} else {
+				roundsSinceSeenEnemy += 9999;
+			}
+		} else
+		{
+			roundsSinceSeenEnemy = 0;
+			
+			mi.setChargeMode();
+			mi.setObjective(ur.closetEnemy.location);
+			mi.attackMove();
+			
+		}
+	}
+	
+	public void scanForEnemies() throws GameActionException {
+		if (currRound>lastScanRound)
+		{
+			ur.scan(false, true);
+			lastScanRound = currRound;
+		}
 	}
 }

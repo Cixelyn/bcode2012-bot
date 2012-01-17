@@ -18,6 +18,7 @@ public class ArchonOwnership {
 	private int timeUntilBroadcast;
 	
 	private int archonOwnerID;
+//	private int archonRobotID;
 
 	public ArchonOwnership(BaseRobot myBR) {
 		br = myBR;
@@ -29,6 +30,7 @@ public class ArchonOwnership {
 		}
 		timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		archonOwnerID = -1;
+//		archonRobotID = -1;
 	}
 	
 	// ARCHON METHODS
@@ -138,6 +140,7 @@ public class ArchonOwnership {
 				ownership[1] == br.birthplace.x &&
 				ownership[2] == br.birthplace.y) {
 			archonOwnerID = ownership[3];
+//			archonRobotID = ownership[4];
 			br.io.sendShorts("#ao", new int[] {ownership[0], ownership[1],
 					ownership[2]});
 			br.io.addAddress("#" + archonOwnerID);
@@ -148,7 +151,7 @@ public class ArchonOwnership {
 	}
 	
 	/**
-	 * Get ID of owner archon, -1 if not set.
+	 * Get true ID of owner archon, -1 if not set.
 	 */
 	public int getArchonOwnerID() {
 		// make sure I'm not an archon
@@ -159,4 +162,17 @@ public class ArchonOwnership {
 		}
 		return archonOwnerID;
 	}
+	
+//	/**
+//	 * Get robot ID of owner archon, -1 if not set.
+//	 */
+//	public int getArchonRobotID() {
+//		// make sure I'm not an archon
+//		if (br.myType == RobotType.ARCHON) {
+//			br.debug.println(
+//					"Archon " + br.myID + " tried to process ownership!");
+//			return -1;
+//		}
+//		return archonRobotID;
+//	}
 }
