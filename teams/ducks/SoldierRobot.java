@@ -121,7 +121,8 @@ public class SoldierRobot extends StrategyRobot {
 		case DEFEND_BASE:
 		{
 			io.addAddress("#d");
-		} break;
+				mi.setObjective(myHome);
+				mi.setNormalMode();
 		default:
 			break;
 		}
@@ -148,8 +149,11 @@ public class SoldierRobot extends StrategyRobot {
 			case HIBERNATE:
 				hbe.run(); //this call will halt until wakeup
 				gotoState(RobotState.DEFEND_BASE);
+				io.sendWakeupCall();
+				io.sendShort("#zz", 0);
 				break;
 			case DEFEND_BASE:
+				defendBase();
 				break;
 			case SUICIDE:
 				rc.suicide();
@@ -250,6 +254,12 @@ public class SoldierRobot extends StrategyRobot {
 		// distribute flux
 		fm.manageFlux();
 		// send dead enemy archon info
+		eai.sendDeadEnemyArchonIDs();
+	}
+	
+	public void defendBase() throws GameActionException {
+		mi.attackMove();
+		fm.manageFlux();
 		eai.sendDeadEnemyArchonIDs();
 	}
 	

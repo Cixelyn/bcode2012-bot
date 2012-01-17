@@ -47,6 +47,7 @@ public class HibernationEngine {
 				time = Clock.getRoundNum();
 				if(mints[2] <= time && mints[2] > time - 10) {
 					rc.setIndicatorString(0, "HIBERNATION DISENGAGE!");
+					br.resetClock();
 					return; //our exit point
 				}
 				
