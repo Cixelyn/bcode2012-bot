@@ -11,7 +11,6 @@ public class ArchonRobotHT extends BaseRobot{
 	int myArchonID;
 	public ArchonRobotHT(RobotController myRC) {
 		super(myRC);
-		nav.setNavigationMode(NavigationMode.RANDOM);
 		
 		// compute archon ID
 		MapLocation[] alliedArchons = this.dc.getAlliedArchons();
@@ -40,7 +39,6 @@ public class ArchonRobotHT extends BaseRobot{
 		
 		mc.senseAfterMove(lastMoved);
 		
-		rc.setIndicatorString(0, ""+aboutToMove);
 		if(!rc.isMovementActive()) {
 			if(aboutToMove)  {
 				if(rc.canMove(curDir)) {

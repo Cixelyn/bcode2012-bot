@@ -52,6 +52,10 @@ public class NavigationSystem {
 	 * navigator is reset. 
 	 */
 	public void setDestination(MapLocation destination) {
+		if(destination==null) {
+			this.destination = null;
+			return;
+		}
 		if(destination.equals(this.destination)) 
 			return;
 		movesOnSameTarget = 0;
@@ -89,7 +93,7 @@ public class NavigationSystem {
 	 */
 	public Direction navigateToDestination() {
 		if(destination==null) 
-			return navigateCompletelyRandomly(); 
+			return null; 
 		
 		Direction dir = Direction.NONE;
 		if(mode==NavigationMode.RANDOM) {
@@ -117,7 +121,7 @@ public class NavigationSystem {
 		} 
 		
 		if(dir==Direction.NONE || dir==Direction.OMNI) 
-			return Direction.NONE; 
+			return null; 
 		movesOnSameTarget++;
 		return dir;
 	}
