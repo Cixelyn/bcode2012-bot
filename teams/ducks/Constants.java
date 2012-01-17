@@ -21,7 +21,7 @@ public final class Constants {
 	public static final int ARCHON_OWNERSHIP_BUFFER_LENGTH = 5;
 	
 //	attack move constants
-	public static final int NON_TRIVIAL_ENEMY_CONCENTRATION = 5;
+	public static final int NON_TRIVIAL_ENEMY_CONCENTRATION = 2;
 	public static final int ARCHON_CHASE_DIRECTION_MULTIPLIER = 9;
 	public static final int ARCHON_CHASE_ROUNDS = 50;
 	public static final int ARCHON_CHASE_ROUNDS_WHEN_BUILDING = 30;
