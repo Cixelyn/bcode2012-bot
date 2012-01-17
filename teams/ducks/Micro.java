@@ -115,13 +115,13 @@ public class Micro {
 					holdPosition();
 					break;
 				case NORMAL:
-					normalTowards(objective);
+					normalTowards();
 					break;
 				case MOONWALK:
-					moonwalkTowards(objective);
+					moonwalkTowards();
 					break;
 				case SWARM:
-					swarmTowards(objective);
+					swarmTowards();
 					break;
 				case KITE:
 					kiteTowards(objective);
@@ -166,7 +166,7 @@ public class Micro {
 	}
 	
 	/** Returns true iff we did some movement action (moving or turning). */
-	private boolean normalTowards(MapLocation target) throws GameActionException {
+	private boolean normalTowards() throws GameActionException {
 		if(dirAboutToMoveIn == null) {
 			Direction dir = br.nav.navigateToDestination();
 			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
@@ -188,7 +188,7 @@ public class Micro {
 		return true;
 	}
 	
-	private boolean moonwalkTowards(MapLocation target) throws GameActionException {
+	private boolean moonwalkTowards() throws GameActionException {
 		if(dirAboutToMoveIn == null) {
 			Direction dir = br.nav.navigateToDestination();
 			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
@@ -209,7 +209,7 @@ public class Micro {
 		
 		return true;
 	}
-	private boolean swarmTowards(MapLocation target) throws GameActionException {
+	private boolean swarmTowards() throws GameActionException {
 		// step towards closest archon if too far away, navigate normally otherwise
 		MapLocation closestArchon = br.dc.getClosestArchon();
 		if (closestArchon != null &&
@@ -219,33 +219,37 @@ public class Micro {
 				return true;
 			}
 		}
-		normalTowards(target);
+		normalTowards();
 		rc.setIndicatorString(2, "Going to target");
 		return false;
 	}
 	
 	private boolean kiteTowards(MapLocation target) throws GameActionException {
-		// get direction to target
-		Direction dir = br.currLoc.directionTo(target);
-		if (dir == Direction.OMNI || dir == Direction.NONE) {
-			return false;
+		if(dirAboutToMoveIn == null) {
+			Direction dir = br.nav.navigateGreedy(target);
+			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
+				return false;
+			dirAboutToMoveIn = dir;
 		}
+		
+		Direction dir = dirAboutToMoveIn;
 		// try the three appropriate directions
 		Direction[] targetDirs = new Direction[] {
 				dir,
 				dir.rotateLeft(),
 				dir.rotateRight()
 		};
-		int distance = br.currLoc.distanceSquaredTo(target);
+		int distanceSquared = br.currLoc.distanceSquaredTo(target);
 		for (Direction d : targetDirs) {
-			if (distance < microDistance) {
+			if (distanceSquared < microDistance) {
 				// move backwards
 				if (rc.canMove(d.opposite())) {
 					if (br.currDir != d) {
 						rc.setDirection(d);
 					} else {
 						rc.moveBackward();
-						br.mc.senseAfterMove(d.opposite());
+						br.directionToSenseIn = dir.opposite();
+						dirAboutToMoveIn = null;
 					}
 					return true;
 				}
@@ -256,7 +260,8 @@ public class Micro {
 						rc.setDirection(d);
 					} else {
 						rc.moveForward();
-						br.mc.senseAfterMove(d);
+						br.directionToSenseIn = dir;
+						dirAboutToMoveIn = null;
 					}
 					return true;
 				}
@@ -266,28 +271,24 @@ public class Micro {
 	}
 	
 	private boolean chargeTowards(MapLocation target) throws GameActionException {
-		// get direction to target
-		Direction dir = br.currLoc.directionTo(target);
-		if (dir == Direction.OMNI || dir == Direction.NONE) {
+		if(dirAboutToMoveIn == null) {
+			Direction dir = br.nav.navigateGreedy(target);
+			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
+				return false;
+			dirAboutToMoveIn = dir;
+		}
+		
+		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
+		if(dir==null) 
 			return false;
+		if(dir == br.currDir) {
+			rc.moveForward();
+			br.directionToSenseIn = dir;
+			dirAboutToMoveIn = null;
+		} else {
+			rc.setDirection(dir);
 		}
-		// try the three appropriate directions
-		Direction[] targetDirs = new Direction[] {
-				dir,
-				dir.rotateLeft(),
-				dir.rotateRight()
-		};
-		for (Direction d : targetDirs) {
-			if (rc.canMove(d)) {
-				if (br.currDir != d) {
-					rc.setDirection(d);
-				} else {
-					rc.moveForward();
-					br.mc.senseAfterMove(d);
-				}
-				return true;
-			}
-		}
-		return false;
+		
+		return true;
 	}
 }

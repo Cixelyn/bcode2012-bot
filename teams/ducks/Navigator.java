@@ -69,12 +69,12 @@ public class Navigator {
 		
 		Direction dir = Direction.NONE;
 		if(mode==NavigationMode.RANDOM) {
-			dir = navigateRandomly();
+			dir = navigateRandomly(destination);
 		} else if(mode==NavigationMode.GREEDY) {
 			if(movesOnSameTarget > 2 * expectedMovesToReachTarget) 
-				dir = navigateRandomly();
+				dir = navigateRandomly(destination);
 			else
-				dir = navigateGreedy();
+				dir = navigateGreedy(destination);
 		} else if(mode==NavigationMode.BUG) {
 			dir = navigateBug();
 		} else if(mode==NavigationMode.TANGENT_BUG) {
@@ -97,7 +97,6 @@ public class Navigator {
 	}
 	/** Given a direction, randomly perturbs it to a direction that the 
 	 * robot can move in. 
-	 * TODO perhaps we should put this in the Micro class
 	 */
 	public Direction wiggleToMovableDirection(Direction dir) {
 		boolean[] movable = baseRobot.dc.getMovableDirections();
@@ -115,6 +114,7 @@ public class Navigator {
 	private Direction dxdyToDirection(int dx, int dy) {
 		return zeroLoc.directionTo(zeroLoc.add(dx, dy));
 	}
+	/** This is private because it needs the state of the navigator to work. */
 	private Direction navigateTangentBug() {
 		int[] d = tangentBug.computeMove(
 				mapCache.worldToCacheX(baseRobot.currLoc.x), 
@@ -122,7 +122,7 @@ public class Navigator {
 		if(d==null) return Direction.NONE;
 		return dxdyToDirection(d[0], d[1]);
 	}
-	private Direction navigateCompletelyRandomly() {
+	public Direction navigateCompletelyRandomly() {
 		for(int tries=0; tries<32; tries++) {
 			Direction dir = NavigatorUtilities.getRandomDirection();
 			if(!mapCache.isWall(baseRobot.currLoc.add(dir)))
@@ -130,7 +130,7 @@ public class Navigator {
 		}
 		return Direction.NONE;
 	}
-	private Direction navigateRandomly() {
+	public Direction navigateRandomly(MapLocation destination) {
 		// With 1/4 probability, reset heading towards destination.
 		// Otherwise, randomly perturb current direction by up to 90 degrees.
 		double d = Math.random();
@@ -151,7 +151,7 @@ public class Navigator {
 		}
 		return dir;
 	}
-	private Direction navigateGreedy() {
+	public Direction navigateGreedy(MapLocation destination) {
 		Direction dir = baseRobot.currLoc.directionTo(destination);
 		if(Math.random()<0.5) {
 			while(mapCache.isWall(baseRobot.currLoc.add(dir)))
@@ -162,6 +162,7 @@ public class Navigator {
 		}
 		return dir;
 	}
+	/** This is private because it needs the state of the navigator to work. */
 	private Direction navigateBug() {
 		return blindBug.navigateToIgnoreBots(destination);
 	}
