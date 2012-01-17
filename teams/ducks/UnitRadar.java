@@ -53,6 +53,9 @@ public class UnitRadar {
 	public int vecEnemyX;
 	public int vecEnemyY;
 	
+	public int centerEnemyX;
+	public int centerEnemyY;
+	
 	public int roundsSinceEnemySighted;
 	
 	public int lastscanround;
@@ -76,6 +79,8 @@ public class UnitRadar {
 		
 		vecEnemyX = 0;
 		vecEnemyY = 0;
+		centerEnemyX = 0;
+		centerEnemyY = 0;
 	}
 	
 	private void resetAllyStats() {
@@ -109,8 +114,12 @@ public class UnitRadar {
 		// Distance Stats
 		MapLocation eloc = rinfo.location;
 		
-		vecEnemyX += eloc.x - br.currLoc.x;
-		vecEnemyY += eloc.y - br.currLoc.y;
+//		centerEnemyX += eloc.x;
+//		centerEnemyY += eloc.y;
+		
+//		vecEnemyX += eloc.x - br.currLoc.x;
+//		vecEnemyY += eloc.y - br.currLoc.y;
+		
 		
 		
 		int dist = eloc.distanceSquaredTo(br.currLoc);
@@ -168,6 +177,20 @@ public class UnitRadar {
 			}
 		}
 	
+		if (numEnemyRobots == 0)
+		{
+			centerEnemyX = centerEnemyY = -1;
+			vecEnemyX = br.currLoc.x;
+			vecEnemyY = br.currLoc.y;
+			
+		} else
+		{
+			centerEnemyX = centerEnemyX/numEnemyRobots;
+			centerEnemyY = centerEnemyY/numEnemyRobots;
+			vecEnemyX = centerEnemyX - br.currLoc.x;
+			vecEnemyY = centerEnemyY - br.currLoc.y;
+		}
+		
 		
 		// compute some global statistics
 		if(numEnemyRobots == 0 ) {
@@ -186,12 +209,16 @@ public class UnitRadar {
 	}
 	
 	public MapLocation getEnemySwarmTarget() {
-		double a = Math.sqrt(vecEnemyX * vecEnemyX + vecEnemyY * vecEnemyY) + .01;
+		double a = Math.sqrt(vecEnemyX * vecEnemyX + vecEnemyY * vecEnemyY) + .001;
 		
 		return new MapLocation(
 				(int)(vecEnemyX*7/a) + br.currLoc.x,
 				(int)(vecEnemyY*7/a) + br.currLoc.y);
 		
+	}
+	
+	public MapLocation getEnemySwarmCenter() {
+		return new MapLocation(centerEnemyX, centerEnemyY);
 	}
 	
 }
