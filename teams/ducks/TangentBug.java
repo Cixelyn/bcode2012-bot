@@ -2,7 +2,7 @@ package ducks;
 
 
 
-public class TangentBug{
+public class TangentBug {
 	final static int[][] d = new int[][] {{-1,-1}, {0,-1}, {1,-1}, {1,0}, 
 		{1,1}, {0,1}, {-1,1}, {-1,0}};
 	

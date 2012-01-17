@@ -16,7 +16,7 @@ public class ArchonRobotHT extends BaseRobot{
 		// compute archon ID
 		MapLocation[] alliedArchons = this.dc.getAlliedArchons();
 		for(int i=alliedArchons.length; --i>=0; ) {
-			if(alliedArchons[i].equals(this.currLoc)) {
+			if(alliedArchons[i].equals(this.curLoc)) {
 				myArchonID = i;
 				break;
 			}
@@ -36,12 +36,12 @@ public class ArchonRobotHT extends BaseRobot{
 		
 		rc.setIndicatorString(0, ""+aboutToMove);
 		if(!rc.isMovementActive()) {
-			if(aboutToMove && rc.canMove(currDir))  {
+			if(aboutToMove && rc.canMove(curDir))  {
 				rc.moveForward();
-				lastMoved = currDir;
+				lastMoved = curDir;
 				aboutToMove = false;
 			} else {
-				Direction dir = currDir;
+				Direction dir = curDir;
 				if(Math.random()<0.3)  {
 					if(Math.random()<0.5) 
 						dir = dir.rotateLeft();
@@ -76,13 +76,13 @@ public class ArchonRobotHT extends BaseRobot{
 	public void processMessage(char msgType, StringBuilder sb) {
 		int[] data = null;
 		if(msgType=='e') {
-			data = Radio.decodeShorts(sb);
+			data = BroadcastSystem.decodeShorts(sb);
 			ses.receiveMapEdges(data);
 		} else if(msgType=='m') {
-			data = Radio.decodeInts(sb);
+			data = BroadcastSystem.decodeInts(sb);
 			ses.receiveMapFragment(data);
 		} else if(msgType=='p') {
-			data = Radio.decodeInts(sb);
+			data = BroadcastSystem.decodeInts(sb);
 			ses.receivePowerNodeFragment(data);
 		} 
 	}

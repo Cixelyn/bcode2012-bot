@@ -15,7 +15,7 @@ import battlecode.common.TerrainTile;
  * our team's power core, and linearly shift between cache coordinates and world coordinates
  * using this transformation.
  */
-public class MapCache {
+public class MapCacheSystem {
 	public final static int MAP_SIZE = 256;
 	public final static int POWER_CORE_POSITION = 128;
 	public final static int MAP_BLOCK_SIZE = 4;
@@ -41,7 +41,7 @@ public class MapCache {
 	int senseRadius;
 	/** optimized sensing list of position vectors for each unit */
 	private final int[][][] optimizedSensingList;
-	public MapCache(BaseRobot baseRobot) {
+	public MapCacheSystem(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		isWall = new boolean[MAP_SIZE][MAP_SIZE];
 		sensed = new boolean[MAP_SIZE][MAP_SIZE];
@@ -81,8 +81,8 @@ public class MapCache {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("\nSurrounding map data:\n"); 
-		int myX = worldToCacheX(baseRobot.currLoc.x);
-		int myY = worldToCacheY(baseRobot.currLoc.y);
+		int myX = worldToCacheX(baseRobot.curLoc.x);
+		int myY = worldToCacheY(baseRobot.curLoc.y);
 		for(int y=myY-10; y<myY+10; y++) { 
 			for(int x=myX-10; x<myX+10; x++) 
 				sb.append((y==myY&&x==myX)?'x':(!sensed[x][y])?'o':(isWall[x][y])?'#':'.'); 
@@ -96,7 +96,7 @@ public class MapCache {
 	
 	/** Returns the enemy power core location if robot knows exactly where it is. <br>
 	 * Otherwise returns null.
-	 * @see MapCache#guessEnemyPowerCoreLocation()
+	 * @see MapCacheSystem#guessEnemyPowerCoreLocation()
 	 */
 	public MapLocation getEnemyPowerCoreLocation() {
 		return powerNodeGraph.nodeLocations[powerNodeGraph.enemyPowerCoreID];
@@ -106,7 +106,7 @@ public class MapCache {
 	 * Otherwise, Uses symmetry and known map edges to guess 
 	 * the location of the enemy power core. <br>
 	 * If no map edges are known, uses power core graph to guess. 
-	 * @see MapCache#getEnemyPowerCoreLocation()
+	 * @see MapCacheSystem#getEnemyPowerCoreLocation()
 	 */
 	public MapLocation guessEnemyPowerCoreLocation() {
 		// Return if we know for sure where the enemy core is
@@ -176,7 +176,7 @@ public class MapCache {
 		MapLocation bestLoc = null;
 		double bestValue = Integer.MAX_VALUE;
 		for(MapLocation loc: nodeLocs) {
-			double value = Math.sqrt(baseRobot.currLoc.distanceSquaredTo(loc)) + 
+			double value = Math.sqrt(baseRobot.curLoc.distanceSquaredTo(loc)) + 
 					Math.sqrt(loc.distanceSquaredTo(enemyPowerCoreGuess));
 			if(value<bestValue) {
 				bestValue = value;
@@ -212,8 +212,8 @@ public class MapCache {
 	/** Senses the terrain of all tiles in sensing range of the robot. 
 	 * Should be called when a unit (probably only archon or scout) is newly spawned.
 	 */
-	public void senseAllTiles() {
-		MapLocation myLoc = baseRobot.currLoc;
+	private void senseAllTiles() {
+		MapLocation myLoc = baseRobot.curLoc;
 		int myX = worldToCacheX(myLoc.x);
 		int myY = worldToCacheY(myLoc.y);
 		for(int dx=-senseRadius; dx<=senseRadius; dx++) for(int dy=-senseRadius; dy<=senseRadius; dy++) {
@@ -239,9 +239,9 @@ public class MapCache {
 	 * Assumes that we have sensed everything we could have in the past. 
 	 * @param lastMoved the direction we just moved in
 	 */
-	public void senseTilesOptimized(Direction lastMoved) {
+	private void senseTilesOptimized(Direction lastMoved) {
 		final int[][] list = optimizedSensingList[lastMoved.ordinal()];
-		MapLocation myLoc = baseRobot.currLoc;
+		MapLocation myLoc = baseRobot.curLoc;
 		int myX = worldToCacheX(myLoc.x);
 		int myY = worldToCacheY(myLoc.y);
 		for (int i=0; i<list.length; i++) {
@@ -302,8 +302,8 @@ public class MapCache {
 	/** Updates the edges of the map that we can sense. 
 	 * Checks all four cardinal directions for edges. 
 	 * Should be called in the beginning of the game. */
-	public void senseAllMapEdges() {
-		MapLocation myLoc = baseRobot.currLoc;
+	private void senseAllMapEdges() {
+		MapLocation myLoc = baseRobot.curLoc;
 		if(edgeXMin==0 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
@@ -342,8 +342,8 @@ public class MapCache {
 	 *  
 	 * For example, if we just moved NORTH, we only need to check to the north of us for a new wall,
 	 * since a wall could not have appeared in any other direction. */
-	public void senseMapEdges(Direction lastMoved) {
-		MapLocation myLoc = baseRobot.currLoc;
+	private void senseMapEdges(Direction lastMoved) {
+		MapLocation myLoc = baseRobot.curLoc;
 		if(edgeXMin==0 && lastMoved.dx==-1 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
@@ -379,7 +379,7 @@ public class MapCache {
 	}
 	
 	/** Updates the power node graph with all the power nodes in sensing range and their connections. */
-	public void sensePowerNodes() {
+	private void sensePowerNodes() {
 		for(PowerNode node: baseRobot.rc.senseNearbyGameObjects(PowerNode.class)) {
 			MapLocation nodeLoc = node.getLocation();
 			short id = getPowerNodeID(nodeLoc);

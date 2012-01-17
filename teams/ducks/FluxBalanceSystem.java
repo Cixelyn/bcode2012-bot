@@ -14,7 +14,7 @@ import battlecode.common.RobotType;
  * 
  * @author jven
  */
-public class FluxManager {
+public class FluxBalanceSystem {
 	
 	private enum FluxManagerMode {
 		BATTERY,
@@ -26,7 +26,7 @@ public class FluxManager {
 	
 	private FluxManagerMode mode;
 	
-	public FluxManager(BaseRobot myBR) {
+	public FluxBalanceSystem(BaseRobot myBR) {
 		br = myBR;
 		rc = myBR.rc;
 	}
@@ -79,7 +79,7 @@ public class FluxManager {
 			}
 			for (RobotLevel level : RobotLevel.values()) {
 				// if we don't have flux to give, abort
-				if (br.currFlux < Constants.MIN_ROBOT_FLUX) {
+				if (br.rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
 					return;
 				}
 				// ignore power node level
@@ -100,11 +100,10 @@ public class FluxManager {
 					}
 					if (rInfo.flux < rInfo.type.maxFlux) {
 						double fluxToTransfer = Math.min(rInfo.type.maxFlux - rInfo.flux,
-								br.currFlux - Constants.MIN_ROBOT_FLUX);
+								br.rc.getFlux() - Constants.MIN_ROBOT_FLUX);
 						if (fluxToTransfer > 0) {
 							rc.transferFlux(
 									rInfo.location, rInfo.robot.getRobotLevel(), fluxToTransfer);
-							br.currFlux -= fluxToTransfer;
 						}
 					}
 				}
@@ -121,7 +120,7 @@ public class FluxManager {
 			}
 			for (RobotLevel level : RobotLevel.values()) {
 				// if we don't have flux to give, abort
-				if (br.currFlux < Constants.MIN_ROBOT_FLUX) {
+				if (br.rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
 					return;
 				}
 				// ignore power node level
@@ -145,11 +144,10 @@ public class FluxManager {
 						double fluxToTransfer = Math.min(
 								Constants.MIN_UNIT_BATTLE_FLUX_RATIO *
 								rInfo.type.maxFlux - rInfo.flux,
-								br.currFlux - Constants.MIN_ROBOT_FLUX);
+								br.rc.getFlux() - Constants.MIN_ROBOT_FLUX);
 						if (fluxToTransfer > 0) {
 							rc.transferFlux(
 									rInfo.location, rInfo.robot.getRobotLevel(), fluxToTransfer);
-							br.currFlux -= fluxToTransfer;
 						}
 					}
 				}
@@ -171,7 +169,7 @@ public class FluxManager {
 			}
 			for (RobotLevel level : RobotLevel.values()) {
 				// if we don't have flux to give, abort
-				if (br.currFlux < Constants.MIN_ROBOT_FLUX) {
+				if (br.rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
 					return;
 				}
 				// ignore power node level
@@ -192,12 +190,11 @@ public class FluxManager {
 					}
 					if (rInfo.flux < rInfo.type.maxFlux) {
 						double fluxToTransfer = Math.min(rInfo.type.maxFlux - rInfo.flux,
-								br.currFlux - Constants.MIN_UNIT_BATTLE_FLUX_RATIO *
+								br.rc.getFlux() - Constants.MIN_UNIT_BATTLE_FLUX_RATIO *
 								br.myType.maxFlux);
 						if (fluxToTransfer > 0) {
 							rc.transferFlux(
 									rInfo.location, rInfo.robot.getRobotLevel(), fluxToTransfer);
-							br.currFlux -= fluxToTransfer;
 						}
 					}
 				}

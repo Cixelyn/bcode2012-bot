@@ -53,81 +53,49 @@ public class DataCache {
 	}
 	
 	public MapLocation[] getAlliedArchons() {
-		if(br.currRound > alliedArchonsTime) {
+		if(br.curRound > alliedArchonsTime) {
 			alliedArchons = rc.senseAlliedArchons();
-			alliedArchonsTime = br.currRound;
+			alliedArchonsTime = br.curRound;
 		}
 		return alliedArchons;
 	}
 	
 	public MapLocation getClosestArchon() {
-		if (br.currRound > closestArchonTime) {
+		if (br.curRound > closestArchonTime) {
 			closestArchon = null;
 			int closestDistance = Integer.MAX_VALUE;
 			for (MapLocation archon : getAlliedArchons()) {
-				int distance = br.currLoc.distanceSquaredTo(archon);
+				int distance = br.curLoc.distanceSquaredTo(archon);
 				if (distance > 0 && distance < closestDistance) {
 					closestArchon = archon;
 					closestDistance = distance;
 				}
 			}
-			closestArchonTime = br.currRound;
+			closestArchonTime = br.curRound;
 		}
 		return closestArchon;
 	}
 	
-	public boolean[] getMovableDirections()
-	{
-		if (br.currRound > moveableDirectionsTime)
-		{
-			moveableDirections[0] = rc.canMove(Direction.NORTH);
-			moveableDirections[1] = rc.canMove(Direction.NORTH_EAST);
-			moveableDirections[2] = rc.canMove(Direction.EAST);
-			moveableDirections[3] = rc.canMove(Direction.SOUTH_EAST);
-			moveableDirections[4] = rc.canMove(Direction.SOUTH);
-			moveableDirections[5] = rc.canMove(Direction.SOUTH_WEST);
-			moveableDirections[6] = rc.canMove(Direction.WEST);
-			moveableDirections[7] = rc.canMove(Direction.NORTH_WEST);
-			moveableDirectionsTime = br.currRound;
+	/** This returns directions that the unit can move in, i.e. 
+	 * those that are not blocked by other robots or walls.
+	 */
+	public boolean[] getMovableDirections() {
+		if (br.curRound > moveableDirectionsTime) {
+			for(int i=0; i<8; i++) 
+				moveableDirections[i] = rc.canMove(Constants.directions[i]);
+			moveableDirectionsTime = br.curRound;
 		}
 		return moveableDirections;
 	}
-	
-	public boolean[] getMovableLand()
-	{
-		if (br.currRound > moveableLandTime)
-		{
-			TerrainTile tt;
-			tt = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH));
-			moveableLand[0] = tt==TerrainTile.LAND||tt==null;
-			tt = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_EAST));
-			moveableLand[1] = tt==TerrainTile.LAND||tt==null;
-			tt = rc.senseTerrainTile(br.currLoc.add(Direction.EAST));
-			moveableLand[2] = tt==TerrainTile.LAND||tt==null;
-			tt = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_EAST));
-			moveableLand[3] = tt==TerrainTile.LAND||tt==null;
-			tt = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH));
-			moveableLand[4] = tt==TerrainTile.LAND||tt==null;
-			tt = rc.senseTerrainTile(br.currLoc.add(Direction.SOUTH_WEST));
-			moveableLand[5] = tt==TerrainTile.LAND||tt==null;
-			tt = rc.senseTerrainTile(br.currLoc.add(Direction.WEST));
-			moveableLand[6] = tt==TerrainTile.LAND||tt==null;
-			tt = rc.senseTerrainTile(br.currLoc.add(Direction.NORTH_WEST));
-			moveableLand[7] = tt==TerrainTile.LAND||tt==null;
-			moveableLandTime = br.currRound;
-		}
-		return moveableLand;
-	}
-	
-	
-	public GameObject getAdjacentGameObject(
-			Direction d, RobotLevel level) throws GameActionException {
-		if (br.currRound > adjacentGameObjectsTime) {
+
+	public GameObject getAdjacentGameObject(Direction d, RobotLevel level) 
+			throws GameActionException {
+		if (br.curRound > adjacentGameObjectsTime) {
 			isAdjacentGameObjectGroundCached =
 					new boolean[Direction.values().length];
 			isAdjacentGameObjectAirCached =
 					new boolean[Direction.values().length];
-			adjacentGameObjectsTime = br.currRound;
+			adjacentGameObjectsTime = br.curRound;
 		}
 		if (level == RobotLevel.ON_GROUND) {
 			if (isAdjacentGameObjectGroundCached[d.ordinal()]) {
@@ -154,27 +122,10 @@ public class DataCache {
 		}
 	}
 	
-	public TerrainTile getAdjacentTerrainTile(
-			Direction d) throws GameActionException {
-		if (br.currRound > adjacentTerrainTilesTime) {
-			isAdjacentTerrainTileCached =
-					new boolean[Direction.values().length];
-			adjacentTerrainTilesTime = br.currRound;
-		}
-		if (isAdjacentTerrainTileCached[d.ordinal()]) {
-			return adjacentTerrainTiles[d.ordinal()];
-		} else {
-			TerrainTile tt = rc.senseTerrainTile(rc.getLocation().add(d));
-			this.adjacentTerrainTiles[d.ordinal()] = tt;
-			isAdjacentTerrainTileCached[d.ordinal()] = true;
-			return tt;
-		}
-	}
-	
 	public Robot[] getNearbyRobots() {
-		if (br.currRound > nearbyRobotsTime) {
+		if (br.curRound > nearbyRobotsTime) {
 			nearbyRobots = null;
-			nearbyRobotsTime = br.currRound;
+			nearbyRobotsTime = br.curRound;
 		}
 		if (nearbyRobots == null) {
 			nearbyRobots = rc.senseNearbyGameObjects(Robot.class);
@@ -183,9 +134,9 @@ public class DataCache {
 	}
 	
 	public MapLocation[] getCapturablePowerCores() {
-		if (br.currRound > capturablePowerCoresTime) {
+		if (br.curRound > capturablePowerCoresTime) {
 			capturablePowerCores = null;
-			capturablePowerCoresTime = br.currRound;
+			capturablePowerCoresTime = br.curRound;
 		}
 		if (capturablePowerCores == null) {
 			capturablePowerCores = rc.senseCapturablePowerNodes();
@@ -194,9 +145,9 @@ public class DataCache {
 	}
 	
 	public PowerNode[] getAlliedPowerNodes() {
-		if (br.currRound > alliedPowerNodesTime) {
+		if (br.curRound > alliedPowerNodesTime) {
 			alliedPowerNodes = null;
-			alliedPowerNodesTime = br.currRound;
+			alliedPowerNodesTime = br.curRound;
 		}
 		if (alliedPowerNodes == null) {
 			alliedPowerNodes = rc.senseAlliedPowerNodes();
@@ -205,7 +156,7 @@ public class DataCache {
 	}
 	
 	public RobotInfo getClosestEnemy() throws GameActionException {
-		if (br.currRound > closestEnemyTime) {
+		if (br.curRound > closestEnemyTime) {
 			int closestDistance = Integer.MAX_VALUE;
 			closestEnemy = null;
 			// TODO(jven): prioritize archons?
@@ -220,55 +171,44 @@ public class DataCache {
 					if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
 						continue;
 					}
-					int distance = br.currLoc.distanceSquaredTo(rInfo.location);
+					int distance = br.curLoc.distanceSquaredTo(rInfo.location);
 					if (distance < closestDistance) {
 						closestDistance = distance;
 						closestEnemy = rInfo;
 					}
 				}
 			}
-			closestEnemyTime = br.currRound;
+			closestEnemyTime = br.curRound;
 		}
 		return closestEnemy;
 	}
 	
 	public MapLocation getClosestCapturablePowerCore()
 			throws GameActionException {
-		if (br.currRound > closestCapturablePowerCoreTime) {
+		if (br.curRound > closestCapturablePowerCoreTime) {
 			int closestDistance = Integer.MAX_VALUE;
 			closestCapturablePowerCore = null;
 			for (MapLocation capturablePowerCore : getCapturablePowerCores()) {
-				int distance = br.currLoc.distanceSquaredTo(capturablePowerCore);
+				int distance = br.curLoc.distanceSquaredTo(capturablePowerCore);
 				if (distance < closestDistance) {
 					closestDistance = distance;
 					closestCapturablePowerCore = capturablePowerCore;
 				}
 			}
-			closestCapturablePowerCoreTime = br.currRound;
+			closestCapturablePowerCoreTime = br.curRound;
 		}
 		return closestCapturablePowerCore;
 	}
 	
 	// TODO(jven): this doesn't belong here?
-	private boolean isTowerTargetable(
-			RobotInfo tower) throws GameActionException {
-		// don't shoot at enemy towers not connected to one of ours
+	private boolean isTowerTargetable(RobotInfo tower) 
+			throws GameActionException {
 		PowerNode pn = (PowerNode)rc.senseObjectAtLocation(
 				tower.location, RobotLevel.POWER_NODE);
 		if (pn == null) {
 			return false;
 		}
-		for (PowerNode myPN : getAlliedPowerNodes()) {
-			if (!rc.senseConnected(myPN)) {
-				continue;
-			}
-			for (MapLocation loc : pn.neighbors()) {
-				if (myPN.getLocation().equals(loc)) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return rc.senseConnected(pn);
 	}
 	
 }

@@ -1,70 +1,77 @@
 package ducks;
 
-import ducks.Debug.Owner;
-import battlecode.common.*;
+import battlecode.common.Clock;
+import battlecode.common.Direction;
+import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
+import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
+import battlecode.common.RobotType;
+import battlecode.common.Team;
 
 public abstract class BaseRobot {
 	
-	final RobotController rc;
-	final DataCache dc;
-	final MapCache mc;
-	final Navigator nav;
-	final Micro mi;
-	final Radio io;
-	final FluxManager fm;
-	final Debug debug;
-	final SharedExplorationSystem ses;
-	final UnitRadar ur;
-	final EnemyArchonInfo eai;
-	final ArchonOwnership ao;
+	public final RobotController rc;
+	public final DataCache dc;
+	public final MapCacheSystem mc;
+	public final NavigationSystem nav;
+	public final Micro mi;
+	public final BroadcastSystem io;
+	public final FluxBalanceSystem fm;
+	public final Debug debug = null; // TODO rewrite debug and deal with this
+	public final SharedExplorationSystem ses;
+	public final RadarSystem ur;
+	public final EnemyArchonKillCache eai;
+	public final ArchonOwnership ao;
 	
-	// Robot Stats
-	final RobotType myType;
-	final double myMaxEnergon, myMaxFlux;
-	final Team myTeam;
-	final int myID;
-	final MapLocation myHome;
-
-	public double currEnergon, currFlux;
-	public MapLocation currLoc, currLocInFront, currLocInBack;
-	public Direction currDir;
-
+	// Robot Statistics - Permanent
+	public final RobotType myType;
+	public final double myMaxEnergon, myMaxFlux;
+	public final Team myTeam;
+	public final int myID;
+	public final MapLocation myHome;
 	public final int birthday;
 	public final MapLocation birthplace;
-	public int currRound;
+	
+	// Robot Statistics - updated per turn
+	public double curEnergon;
+	public MapLocation curLoc, curLocInFront, curLocInBack;
+	public Direction curDir;
+	public int curRound;
+	
+	// Robot State - left over from previous turns
+	public Direction directionToSenseIn;
 	
 	// Internal Statistics
-	int executeStartTime;
-	int executeStartByte;
-	public Direction directionToSenseIn;
+	private int executeStartTime;
+	private int executeStartByte;
+	
 	
 	
 	public BaseRobot(RobotController myRC) {
 		rc = myRC;
 		
-		currLoc = rc.getLocation();
-		currDir = rc.getDirection();
 		myType = rc.getType();
 		myTeam = rc.getTeam();
 		myID = rc.getRobot().getID();
 		myMaxEnergon = myType.maxEnergon;
 		myMaxFlux = myType.maxFlux;
 		myHome = rc.sensePowerCore().getLocation();
+		birthday = Clock.getRoundNum();
+		birthplace = rc.getLocation();
 		
 		dc = new DataCache(this);
-		mc = new MapCache(this);
-		nav = new Navigator(this);
+		mc = new MapCacheSystem(this);
+		nav = new NavigationSystem(this);
 		mi = new Micro(this);
-		io = new Radio(this);
-		fm = new FluxManager(this);
-		debug = new Debug(this, Owner.YP);
+		io = new BroadcastSystem(this);
+		fm = new FluxBalanceSystem(this);
 		ses = new SharedExplorationSystem(this);
-		ur = new UnitRadar(this);
-		eai = new EnemyArchonInfo(this);
+		ur = new RadarSystem(this);
+		eai = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
 		
-		birthday = Clock.getRoundNum();
-		birthplace = currLoc;
+		updateRoundVariables();
 	}
 	
 	public abstract void run() throws GameActionException;
@@ -74,22 +81,7 @@ public abstract class BaseRobot {
 			
 			resetClock();
 	
-			// Useful Statistics
-			currEnergon = rc.getEnergon();
-			currFlux = rc.getFlux();
-			currLoc = rc.getLocation();
-			currDir = rc.getDirection();
-			
-			currLocInFront = currLoc.add(currDir);
-			currLocInBack = currLoc.add(currDir.opposite());
-			
-			currRound = Clock.getRoundNum();
-			
-			debug.setIndicatorString(1,
-					"Enemy archons remaining: " + eai.getNumEnemyArchons(),
-					Owner.JVEN);
-			debug.setIndicatorString(1,
-					"current location: " + currLoc,	Owner.YP);
+			updateRoundVariables();
 			
 			// Main Radio Receive Call
 			try {
@@ -116,9 +108,6 @@ public abstract class BaseRobot {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
 			}
-			
-			// Show indicator strings
-			debug.showIndicatorStrings();
 		
 			// End of Turn
 			stopClock();
@@ -127,30 +116,39 @@ public abstract class BaseRobot {
 		}
 	}
 	
+	private void updateRoundVariables() {
+		curRound = Clock.getRoundNum();
+		curEnergon = rc.getEnergon();
+		curLoc = rc.getLocation();
+		curDir = rc.getDirection();
+		curLocInFront = curLoc.add(curDir);
+		curLocInBack = curLoc.add(curDir.opposite());
+	}
+	
 	/**
-	 * message handler for all robot types
+	 * Message handler for all robot types
 	 * @param msgType
 	 * @param sb
 	 */
 	public void processMessage(char msgType, StringBuilder sb) throws GameActionException {}
 
 	/**
-	 * @return age of the robot in rounds
+	 * @return The age of the robot in rounds
 	 */
-	public int getAge() { return birthday - currRound; }
+	public int getAge() { 
+		return birthday - curRound; 
+	}
 
 	public void resetClock() {
 		executeStartTime = Clock.getRoundNum();
 		executeStartByte = Clock.getBytecodeNum();
 	}
-	
 	private void stopClock() {
         if(executeStartTime!=Clock.getRoundNum()) {
             int currRound = Clock.getRoundNum();
             int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
-            debug.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+            System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
         }  
 	}
-	
 	
 }

@@ -7,6 +7,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.Serializable;
 
+/** A utility for fixed-bytecode deep copying of serializable objects. */
 public class Cloner 
 {
 	static PipedInputStream pis;
@@ -14,8 +15,9 @@ public class Cloner
 	static ObjectOutputStream oos;
 	static ObjectInputStream ois;
 	
-	static
-	{
+	private Cloner() {}
+	
+	static {
 		try {
 			pis = new PipedInputStream();
 			pos = new PipedOutputStream(pis);
@@ -26,8 +28,7 @@ public class Cloner
 		}
 	}
 	
-	public static Object clone(Serializable o) throws IOException, ClassNotFoundException
-	{
+	public static Object clone(Serializable o) throws IOException, ClassNotFoundException {
 		oos.reset();
 		oos.writeObject(o);
 		return ois.readObject();
