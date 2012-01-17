@@ -33,12 +33,24 @@ public class NavigationSystem {
 	public NavigationMode getNavigationMode() {
 		return mode;
 	}
+	/** Sets the navigation mode. <br>
+	 * This should only be called when necessary, as changing the mode
+	 * resets the internal state of the navigator.
+	 */
 	public void setNavigationMode(NavigationMode mode) {
 		if(this.mode == mode) 
 			return;
 		this.mode = mode;
 		reset();
 	}
+	
+	public MapLocation getDestination() {
+		return destination;
+	}
+	/** Sets the destination that the system is navigating towards. <br>
+	 * Whenever the destination changes, the internal state of the 
+	 * navigator is reset. 
+	 */
 	public void setDestination(MapLocation destination) {
 		if(destination.equals(this.destination)) 
 			return;
@@ -52,8 +64,9 @@ public class NavigationSystem {
 				mapCache.worldToCacheY(destination.y));
 		reset();
 	}
-	/** Does precomputation to allow the navigationToDestination to
+	/** Does precomputation to allow the navigationToDestination() to
 	 * return a more accurate result. Only matters for tangent bug right now.
+	 * @see NavigationSystem#navigateToDestination()
 	 */
 	public void prepare() {
 		if(mode==NavigationMode.TANGENT_BUG) {
@@ -67,7 +80,13 @@ public class NavigationSystem {
 					mapCache.worldToCacheY(baseRobot.curLoc.y));
 		} 
 	}
-	/** Returns direction to go next in order to reach the destination. */
+	/** Returns direction to go next in order to reach the destination. <br>
+	 * In the case of tangent bug, uses up all 
+	 * precomputation from the prepare() calls. <br>
+	 * May return null for no movement. <br>
+	 * This method only considers walls as blocked movement, not units so it
+	 * may return a direction that moves towards another robot. <br>
+	 */
 	public Direction navigateToDestination() {
 		if(destination==null) 
 			return navigateCompletelyRandomly(); 
@@ -103,7 +122,8 @@ public class NavigationSystem {
 		return dir;
 	}
 	/** Given a direction, randomly perturbs it to a direction that the 
-	 * robot can move in. 
+	 * robot can move in. Will return null if no direction within the
+	 * hemicircle of the given direction is movable.
 	 */
 	public Direction wiggleToMovableDirection(Direction dir) {
 		boolean[] movable = baseRobot.dc.getMovableDirections();
@@ -150,6 +170,11 @@ public class NavigationSystem {
 		if(d==null) return Direction.NONE;
 		return dxdyToDirection(d[0], d[1]);
 	}
+	/** Goes in a completely random direction, with no bias towards the 
+	 * destination. May be useful for getting unstuck.
+	 * This method only considers walls as blocked movement, not units so it
+	 * may return a direction that moves towards another robot. <br>
+	 */
 	public Direction navigateCompletelyRandomly() {
 		for(int tries=0; tries<32; tries++) {
 			Direction dir = getRandomDirection();
@@ -158,9 +183,12 @@ public class NavigationSystem {
 		}
 		return Direction.NONE;
 	}
+	/** With 1/4 probability, reset heading towards destination.
+	 * Otherwise, randomly perturb current direction by up to 90 degrees. <br>
+	 * This method only considers walls as blocked movement, not units so it
+	 * may return a direction that moves towards another robot. <br>
+	 */
 	public Direction navigateRandomly(MapLocation destination) {
-		// With 1/4 probability, reset heading towards destination.
-		// Otherwise, randomly perturb current direction by up to 90 degrees.
 		double d = Math.random();
 		if(d*1000-(int)(d*1000)<0.25) return baseRobot.curLoc.directionTo(destination);
 		d=d*2-1;
@@ -179,6 +207,10 @@ public class NavigationSystem {
 		}
 		return dir;
 	}
+	/** Goes directly towards the destination. Can easily get stuck. 
+	 * This method only considers walls as blocked movement, not units so it
+	 * may return a direction that moves towards another robot. <br>
+	 */
 	public Direction navigateGreedy(MapLocation destination) {
 		Direction dir = baseRobot.curLoc.directionTo(destination);
 		if(Math.random()<0.5) {
@@ -191,12 +223,11 @@ public class NavigationSystem {
 		return dir;
 	}
 	private Direction navigateDStar() {
-		//TODO implement
 		throw new RuntimeException("DStar navigation not yet implemented!");
 	}
 	
 	/** Returns a direction at random from the eight standard directions. */
-	public static Direction getRandomDirection() {
+	private static Direction getRandomDirection() {
 		return Constants.directions[(int)(Math.random()*8)];
 	}
 }

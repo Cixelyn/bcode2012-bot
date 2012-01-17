@@ -472,7 +472,7 @@ public class MapCacheSystem {
 	/** Gets the unique index of the power node at the given location 
 	 * for PowerNodeGraph to use in its data structure.
 	 */
-	public short getPowerNodeID(MapLocation loc) {
+	private short getPowerNodeID(MapLocation loc) {
 		return powerNodeID[worldToCacheX(loc.x)][worldToCacheY(loc.y)];
 	}
 	
