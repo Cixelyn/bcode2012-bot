@@ -5,6 +5,7 @@ import java.util.HashSet;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
+import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
 
 /** This data structure caches the terrain of the world map as sensed by one robot. 
@@ -187,15 +188,18 @@ public class MapCache {
 	
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
 	public void senseAll() {
+		if(baseRobot.myType == RobotType.SOLDIER)
+			return;
 		senseAllTiles();
 		senseAllMapEdges();
 		sensePowerNodes();
-		
 	}
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. <br>
 	 * Assumes that we just moved in a direction, and we only want to sense the new information.
 	 */
 	public void senseAfterMove(Direction lastMoved) {
+		if(baseRobot.myType == RobotType.SOLDIER)
+			return;
 		if(lastMoved==null || lastMoved==Direction.NONE || lastMoved==Direction.OMNI) {
 			senseAll();
 			return;

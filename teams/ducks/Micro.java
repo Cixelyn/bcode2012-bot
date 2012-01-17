@@ -29,7 +29,8 @@ public class Micro {
 	private MicroMode mode;
 	private MapLocation objective;
 	
-	private int microDistance;
+	private int tooFarDistance;
+	private int tooCloseDistance;
 	private Direction dirAboutToMoveIn; 
 	
 	public Micro(BaseRobot myBR) {
@@ -75,9 +76,10 @@ public class Micro {
 	 * archon.
 	 * @param mySwarmRadius The distance to maintain from the closest archon
 	 */
-	public void setSwarmMode(int swarmRadius) {
+	public void setSwarmMode(int tooFarDistance, int tooCloseDistance) {
 		mode = MicroMode.SWARM;
-		microDistance = swarmRadius;
+		this.tooFarDistance = tooFarDistance;
+		this.tooCloseDistance = tooCloseDistance;
 	}
 	
 	/**
@@ -86,7 +88,9 @@ public class Micro {
 	 */
 	public void setKiteMode(int kiteDistance) {
 		mode = MicroMode.KITE;
-		microDistance = kiteDistance;
+		double sqrt = Math.sqrt(kiteDistance);
+		tooFarDistance = (int)((sqrt+1)*(sqrt+1))+1;
+		tooCloseDistance = (int)((sqrt-1)*(sqrt-1));
 	}
 	
 	/**
@@ -212,11 +216,14 @@ public class Micro {
 	private boolean swarmTowards() throws GameActionException {
 		// step towards closest archon if too far away, navigate normally otherwise
 		MapLocation closestArchon = br.dc.getClosestArchon();
-		if (closestArchon != null &&
-				br.currLoc.distanceSquaredTo(closestArchon) > microDistance) {
-			if (chargeTowards(closestArchon)) {
+		if (closestArchon != null) {
+			if(br.currLoc.distanceSquaredTo(closestArchon) >= tooFarDistance) {
 				rc.setIndicatorString(2, "Going to archon");
-				return true;
+				return randomTowards(closestArchon);
+			} else if (br.currLoc.distanceSquaredTo(closestArchon) <= tooCloseDistance) {
+				rc.setIndicatorString(2, "Backing off from archon");
+				MapLocation locAwayFromArchon = br.currLoc.add(closestArchon.directionTo(br.currLoc), 5);
+				return randomTowards(locAwayFromArchon);
 			}
 		}
 		normalTowards();
@@ -241,7 +248,7 @@ public class Micro {
 		};
 		int distanceSquared = br.currLoc.distanceSquaredTo(target);
 		for (Direction d : targetDirs) {
-			if (distanceSquared < microDistance) {
+			if (distanceSquared < tooFarDistance) {
 				// move backwards
 				if (rc.canMove(d.opposite())) {
 					if (br.currDir != d) {
@@ -273,6 +280,28 @@ public class Micro {
 	private boolean chargeTowards(MapLocation target) throws GameActionException {
 		if(dirAboutToMoveIn == null) {
 			Direction dir = br.nav.navigateGreedy(target);
+			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
+				return false;
+			dirAboutToMoveIn = dir;
+		}
+		
+		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
+		if(dir==null) 
+			return false;
+		if(dir == br.currDir) {
+			rc.moveForward();
+			br.directionToSenseIn = dir;
+			dirAboutToMoveIn = null;
+		} else {
+			rc.setDirection(dir);
+		}
+		
+		return true;
+	}
+	
+	private boolean randomTowards(MapLocation target) throws GameActionException {
+		if(dirAboutToMoveIn == null) {
+			Direction dir = br.nav.navigateRandomly(target);
 			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
 				return false;
 			dirAboutToMoveIn = dir;
