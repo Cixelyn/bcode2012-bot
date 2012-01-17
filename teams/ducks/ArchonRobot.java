@@ -930,9 +930,9 @@ public class ArchonRobot extends StrategyRobot {
 		}
 		// return if terrain tile is bad
 		if ((type.level == RobotLevel.ON_GROUND &&
-				dc.getAdjacentTerrainTile(dir) != TerrainTile.LAND) ||
+				!rc.canMove(dir)) ||
 				(type.level == RobotLevel.IN_AIR &&
-				dc.getAdjacentTerrainTile(dir) == TerrainTile.OFF_MAP)) {
+				rc.senseTerrainTile(curLoc.add(dir)) == TerrainTile.OFF_MAP)) {
 			return false;
 		}
 		// return if unit is in the way
