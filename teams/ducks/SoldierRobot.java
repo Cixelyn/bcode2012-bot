@@ -62,9 +62,9 @@ public class SoldierRobot extends StrategyRobot {
 		} break;
 		case SWARM:
 		{
-//			scanForEnemies();
-//			if (ur.numEnemyRobots>0)
-//				return RobotState.CHASE;
+			scanForEnemies();
+			if (ur.numEnemyRobots>0 && enemydiff>=0)
+				return RobotState.CHASE;
 		} break;
 		case CHASE:
 		{
@@ -349,14 +349,20 @@ public class SoldierRobot extends StrategyRobot {
 //		}
 	}
 	
+	
+	
+	
 	public void chase() throws GameActionException {
 		scanForEnemies();
-		if (ur.numEnemyRobots==0)
+		if (ur.numEnemyRobots-ur.numEnemyTowers==0)
 		{
 			roundsSinceSeenEnemy++;
 			if (lastChaseDirection!=null)
 			{
 				MapLocation chaseLoc = currLoc.add(lastChaseDirection,Constants.SOLDIER_CHASE_DISTANCE_MULTIPLIER);
+				mi.setChargeMode();
+				mi.setObjective(chaseLoc);
+				mi.attackMove();
 			} else {
 				roundsSinceSeenEnemy += 9999;
 			}
@@ -364,7 +370,7 @@ public class SoldierRobot extends StrategyRobot {
 		{
 			roundsSinceSeenEnemy = 0;
 			
-			mi.setChargeMode();
+			mi.setKiteMode(3);
 			mi.setObjective(ur.closetEnemy.location);
 			mi.attackMove();
 			
