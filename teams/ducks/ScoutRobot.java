@@ -5,11 +5,16 @@ import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
 public class ScoutRobot extends StrategyRobot {
+	
+	private final HibernationEngine hbe;
 
 	public ScoutRobot(RobotController myRC) {
 		super(myRC, RobotState.DEFEND_BASE);
 		mi.setObjective(myHome);
 		mi.setChargeMode();
+		
+		hbe = new HibernationEngine(this);
+		io.setAddresses(new String[]{"#d"});
 	}
 
 	@Override
@@ -32,5 +37,17 @@ public class ScoutRobot extends StrategyRobot {
 			rc.regenerate();
 		}
 		debug.setIndicatorString(2, Integer.toString(ur.numAllyDamaged), Owner.YP);
+	}
+	
+	@Override
+	public void processMessage(char msgType, StringBuilder sb) throws GameActionException {
+		switch(msgType) {
+			case 'z':
+			{	
+				hbe.run();
+			}
+			
+		}
+		
 	}
 }

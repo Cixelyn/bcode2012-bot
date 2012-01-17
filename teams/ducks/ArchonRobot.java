@@ -863,10 +863,12 @@ public class ArchonRobot extends StrategyRobot {
 		if (ur.numEnemySoldiers > 0 || ur.numEnemyArchons > 0) {
 			io.sendWakeupCall();
 			io.sendShort("#zz", 0); //FIXME: dummy call for now to trigger wakeup
+			nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		} else {
 			if(currRound % 5 == 0 && ur.roundsSinceEnemySighted > 10) { // send back to sleep
 				io.sendShort("#dz", 0);
 			}
+			nav.setNavigationMode(NavigationMode.RANDOM);
 		}
 	
 		debug.setIndicatorString(1, Integer.toString(numDefenders), Owner.YP);
@@ -887,7 +889,6 @@ public class ArchonRobot extends StrategyRobot {
 			}
 		}
 		else {
-			nav.setNavigationMode(NavigationMode.RANDOM);
 			mi.setMoonwalkMode();
 			mi.attackMove();
 			System.out.println(mi.getObjective());
