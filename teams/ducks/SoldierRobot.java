@@ -107,7 +107,7 @@ public class SoldierRobot extends StrategyRobot {
 		case SWARM:
 		{
 			// set micro mode
-			mi.setSwarmMode(2);
+			mi.setSwarmMode(10);
 			// set flux management mode
 			fm.setBatteryMode();
 		} break;
