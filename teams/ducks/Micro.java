@@ -30,6 +30,7 @@ public class Micro {
 	private MapLocation objective;
 	
 	private int microDistance;
+	private Direction dirAboutToMoveIn; 
 	
 	public Micro(BaseRobot myBR) {
 		br = myBR;
@@ -164,60 +165,50 @@ public class Micro {
 		}
 	}
 	
+	/** Returns true iff we did some movement action (moving or turning). */
 	private boolean normalTowards(MapLocation target) throws GameActionException {
-		Direction dir = br.nav.navigateToDestination();
-		if (dir == Direction.OMNI || dir == Direction.NONE) {
+		if(dirAboutToMoveIn == null) {
+			Direction dir = br.nav.navigateToDestination();
+			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
+				return false;
+			dirAboutToMoveIn = dir;
+		}
+		
+		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
+		if(dir==null) 
 			return false;
+		if(dir == br.currDir) {
+			rc.moveForward();
+			br.directionToSenseIn = dir;
+			dirAboutToMoveIn = null;
+		} else {
+			rc.setDirection(dir);
 		}
-		// TODO(jven): wiggle doesn't seem to be happening, even though it's
-		// in navigator
-		Direction[] wiggleDirs = new Direction[] {
-				dir,
-				dir.rotateLeft(),
-				dir.rotateRight()
-		};
-		// step
-		for (Direction d : wiggleDirs) {
-			if (rc.canMove(d)) {
-				if (br.currDir != d) {
-					rc.setDirection(d);
-				} else {
-					rc.moveForward();
-					br.mc.senseAfterMove(d);
-				}
-				return true;
-			}
-		}
-		return false;
+		
+		return true;
 	}
 	
 	private boolean moonwalkTowards(MapLocation target) throws GameActionException {
-		Direction dir = br.nav.navigateToDestination();
-		if (dir == Direction.OMNI || dir == Direction.NONE) {
+		if(dirAboutToMoveIn == null) {
+			Direction dir = br.nav.navigateToDestination();
+			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
+				return false;
+			dirAboutToMoveIn = dir;
+		}
+		
+		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
+		if(dir==null) 
 			return false;
+		if(dir == br.currDir.opposite()) {
+			rc.moveBackward();
+			br.directionToSenseIn = dir;
+			dirAboutToMoveIn = null;
+		} else {
+			rc.setDirection(dir);
 		}
-		// TODO(jven): wiggle doesn't seem to be happening, even though it's
-		// in navigator
-		Direction[] wiggleDirs = new Direction[] {
-				dir,
-				dir.rotateLeft(),
-				dir.rotateRight()
-		};
-		// step
-		for (Direction d : wiggleDirs) {
-			if (rc.canMove(d)) {
-				if (br.currDir != d.opposite()) {
-					rc.setDirection(d.opposite());
-				} else {
-					rc.moveBackward();
-					br.mc.senseAfterMove(d);
-				}
-				return true;
-			}
-		}
-		return false;
+		
+		return true;
 	}
-	
 	private boolean swarmTowards(MapLocation target) throws GameActionException {
 		// step towards closest archon if too far away, navigate normally otherwise
 		MapLocation closestArchon = br.dc.getClosestArchon();
