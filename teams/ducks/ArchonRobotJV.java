@@ -17,6 +17,8 @@ public class ArchonRobotJV extends BaseRobot {
 	 */
 	private static class ArchonConstants {
 		public static int ROUND_TO_STOP_EXPLORING = 100;
+		public static int HOME_RADIUS = 9;
+		public static int ARCHON_SPLIT_DISTANCE = 16;
 	}
 	
 	/**
@@ -27,7 +29,9 @@ public class ArchonRobotJV extends BaseRobot {
 	private enum ArchonState {
 		INITIALIZE,
 		EXPLORE,
-		RETURN_HOME
+		RETURN_HOME,
+		SPLIT,
+		BUILD_INITIAL_ARMY
 	}
 	
 	/** The current state of the Archon. */
@@ -57,6 +61,12 @@ public class ArchonRobotJV extends BaseRobot {
 			case RETURN_HOME:
 				returnHome();
 				break;
+			case SPLIT:
+				split();
+				break;
+			case BUILD_INITIAL_ARMY:
+				buildInitialArmy();
+				break;
 			default:
 				// we got g'd
 				rc.suicide();
@@ -85,6 +95,22 @@ public class ArchonRobotJV extends BaseRobot {
 				}
 				break;
 			case RETURN_HOME:
+				// consider ourselves home if we're close enough to our main
+				if (curLoc.distanceSquaredTo(myHome) <= ArchonConstants.HOME_RADIUS) {
+					return ArchonState.SPLIT;
+				}
+				break;
+			case SPLIT:
+				// stop splitting if we're far enough away from the closest archon
+				// or if our flux is full (meaning that we're taking way too long)
+				if (dc.getClosestArchon() == null ||
+						curLoc.distanceSquaredTo(dc.getClosestArchon()) >=
+						ArchonConstants.ARCHON_SPLIT_DISTANCE ||
+						rc.getFlux() == myMaxFlux) {
+					return ArchonState.BUILD_INITIAL_ARMY;
+				}
+				break;
+			case BUILD_INITIAL_ARMY:
 				break;
 			default:
 				// we got g'd
@@ -140,7 +166,23 @@ public class ArchonRobotJV extends BaseRobot {
 	}
 	
 	/**
-	 * Try to get away from other archons.
+	 * Try to get away from other archons. This state can be called at any time.
 	 */
+	private void split() throws GameActionException {
+		// set micro mode
+		mi.setKiteMode(ArchonConstants.ARCHON_SPLIT_DISTANCE);
+		// set objective for closest archon
+		mi.setObjective(dc.getClosestArchon());
+		// kite closest archon
+		mi.attackMove();
+	}
+	
+	/**
+	 * Build up our initial army. This state should only be called after the
+	 * initial split.
+	 */
+	private void buildInitialArmy() throws GameActionException {
+		
+	}
 
 }
