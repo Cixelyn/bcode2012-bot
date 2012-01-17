@@ -761,6 +761,11 @@ public class ArchonRobot extends StrategyRobot {
 				attackMoveDirection = currLoc.directionTo(attackMoveTarget);
 				return true;
 				
+//			} else if (attackMoveDirection!=null && roundsLastSeenEnemy < roundsToChase)
+//			{
+//				attackMoveTarget = currLoc.add(attackMoveDirection, Constants.ARCHON_CHASE_DIRECTION_MULTIPLIER);
+//				roundsLastSeenEnemy++;
+//				return true;
 			} else
 			{
 				attackTarget = null;
@@ -832,7 +837,7 @@ public class ArchonRobot extends StrategyRobot {
 	public void power_cap() throws GameActionException
 	{
 		checkAttackMoveTargets();
-		if (attackMoveTarget!=null && enemyDiff >= 0)
+		if (attackMoveDirection!=null && enemyDiff >= 0)
 			attack_move(attackMoveTarget);
 				
 		if(nextNodeToCapture != null) {

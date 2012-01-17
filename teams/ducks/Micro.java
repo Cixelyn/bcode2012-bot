@@ -5,6 +5,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
 /**
@@ -171,6 +172,7 @@ public class Micro {
 	
 	/** Returns true iff we did some movement action (moving or turning). */
 	private boolean normalTowards() throws GameActionException {
+		
 		if(dirAboutToMoveIn == null) {
 			Direction dir = br.nav.navigateToDestination();
 			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
@@ -182,6 +184,7 @@ public class Micro {
 		if(dir==null) 
 			return false;
 		if(dir == br.currDir) {
+			if (br.myType==RobotType.SOLDIER && rc.senseObjectAtLocation(br.currLocInFront, RobotLevel.POWER_NODE)!=null) return false;
 			rc.moveForward();
 			br.directionToSenseIn = dir;
 			dirAboutToMoveIn = null;
