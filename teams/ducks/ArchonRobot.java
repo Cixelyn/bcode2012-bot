@@ -97,6 +97,10 @@ public class ArchonRobot extends StrategyRobot {
 		} break;
 		case BUILD_ARMY:
 		{
+			if (currRound > Constants.MAX_ROUNDS_TO_ATTACKBASE)
+			{
+				return RobotState.POWER_CAP;
+			}
 			if ((dc.getClosestEnemy() != null &&
 					dc.getClosestEnemy().type != RobotType.SCOUT) ||
 					armySizeBuilt >= armySizeTarget) {
@@ -106,12 +110,16 @@ public class ArchonRobot extends StrategyRobot {
 				if (isDefender) {
 					return RobotState.DEFEND_BASE;
 				} else {
-					return RobotState.POWER_CAP;
+					return RobotState.ATTACK_ENEMY_BASE;
 				}
 			}
 		} break;
 		case ATTACK_ENEMY_BASE:
 		{
+			if (currRound > Constants.MAX_ROUNDS_TO_ATTACKBASE)
+			{
+				return RobotState.POWER_CAP;
+			}
 			if (doneWithAttackBase && attackMoveTarget==null)
 			{
 				// TODO(jven): shouldn't we be defending our base in case of counter?
@@ -292,7 +300,7 @@ public class ArchonRobot extends StrategyRobot {
 				{
 					attackMoveTarget = new MapLocation(msg[1], msg[2]);
 					roundsLastSeenEnemy = 0;
-					gotoState(RobotState.ATTACK_ENEMY_BASE);
+//					gotoState(RobotState.ATTACK_ENEMY_BASE);
 				}
 			}
 		} break;
@@ -764,6 +772,10 @@ public class ArchonRobot extends StrategyRobot {
 				rc.spawn(RobotType.TOWER);
 			}
 		} else {
+			if (attackMoveTarget != null)
+				if (!rc.isMovementActive())
+					attack_move(attackMoveTarget);
+			
 			mi.setNormalMode();
 			mi.attackMove();
 			// distribute flux
