@@ -515,7 +515,7 @@ public class ArchonRobot extends StrategyRobot {
 						archons_ready++;
 				}
 				
-				int archon_threshold = archons.length*5/8;
+				int archon_threshold = archons.length*3/8;
 				
 				if (archons_ready >= archon_threshold)
 				{
@@ -576,7 +576,7 @@ public class ArchonRobot extends StrategyRobot {
 				}
 				
 //				resend swarm information
-				sendSwarmInfo(attackDir, attackTarget);
+				sendSwarmInfo(attackDir, attackTarget.add(attackDir,3));
 				
 				debug.setIndicatorString(2, archonIndex+" "+target, Owner.YP);
 				
