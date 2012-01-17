@@ -206,6 +206,7 @@ public class ArchonRobot extends StrategyRobot {
 			numDefenders = 0;
 			mi.setObjective(myHome);
 			mi.setMoonwalkMode();
+			fm.setBattleMode();
 			
 		} break;
 		case POWER_CAP:
@@ -853,14 +854,22 @@ public class ArchonRobot extends StrategyRobot {
 			}
 		}
 	
-		debug.setIndicatorString(1, Integer.toString(ur.roundsSinceEnemySighted), Owner.YP);
+		debug.setIndicatorString(1, Integer.toString(numDefenders), Owner.YP);
 		
 		
 		if(currFlux > 150) 
 		{
-			spawnUnitInDir(RobotType.SOLDIER,currDir);
-			ao.claimOwnership();
-			numDefenders++;
+			boolean spawned = false;
+			if(numDefenders % 4 == 1) {
+				spawned = spawnUnitInDir(RobotType.SCOUT,currDir);
+			} else {
+				spawned = spawnUnitInDir(RobotType.SOLDIER,currDir);
+			}
+			
+			if(spawned) {
+				numDefenders++;
+				ao.claimOwnership();
+			}
 		}
 		else {
 			nav.setNavigationMode(NavigationMode.RANDOM);
