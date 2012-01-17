@@ -7,7 +7,9 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
+import battlecode.common.TerrainTile;
 
 public class ArchonRobot extends StrategyRobot {
 
@@ -830,11 +832,18 @@ public class ArchonRobot extends StrategyRobot {
 			rc.setDirection(dir);
 			return false;
 		}
-		// wait if not enough flux
+		// return if not enough flux
 		if (currFlux < type.spawnCost) {
 			return false;
 		}
-		// wait if unit is in the way
+		// return if terrain tile is bad
+		if ((type.level == RobotLevel.ON_GROUND &&
+				dc.getAdjacentTerrainTile(dir) != TerrainTile.LAND) ||
+				(type.level == RobotLevel.IN_AIR &&
+				dc.getAdjacentTerrainTile(dir) == TerrainTile.OFF_MAP)) {
+			return false;
+		}
+		// return if unit is in the way
 		if (dc.getAdjacentGameObject(dir, type.level) != null) {
 			return false;
 		}
