@@ -836,7 +836,6 @@ public class ArchonRobot extends StrategyRobot {
 			nextNodeToCapture = mc.guessBestPowerNodeToCapture();
 			mi.setObjective(nextNodeToCapture);
 			
-			System.out.println("WTF "+nextNodeToCapture);
 		}
 		if(currLocInFront.equals(nextNodeToCapture)) {
 			if(currFlux > 200 && rc.canMove(currDir)) {
