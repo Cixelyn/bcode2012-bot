@@ -21,9 +21,9 @@ public final class Constants {
 	
 //	attack move constants
 	public static final int NON_TRIVIAL_ENEMY_CONCENTRATION = 5;
-	public static final int CHASE_DIRECTION_MULTIPLIER = 9;
-	public static final int CHASE_ROUNDS = 50;
-	public static final int CHASE_ROUNDS_WHEN_BUILDING = 30;
+	public static final int ARCHON_CHASE_DIRECTION_MULTIPLIER = 9;
+	public static final int ARCHON_CHASE_ROUNDS = 50;
+	public static final int ARCHON_CHASE_ROUNDS_WHEN_BUILDING = 30;
 	public static final int ARCHON_CLOSE_DISTANCE = 16;
 	public static final int ARCHON_MOVE_STUCK_ROUNDS = 20;
 	public static final int ARCHON_MOVE_REALLY_STUCK_ROUNDS = 40;
@@ -31,6 +31,14 @@ public final class Constants {
 	public static final int SWARM_DISTANCE_FROM_ARCHON2 = 4;
 	public static final int MAX_SWARM_ARCHON_DISTANCE_SQUARED = 64;
 	public static final int ATTACK_MOVE_KITE_DISTANCE_SQUARED = 17;
+	public static final int ARCHON_FLUX_DURING_COMBAT = 40;
+	
+//	swarm constants
+	public static final int SOLDIER_CHASE_ROUNDS = 30;
+	public static final int SOLDIER_CHASE_DISTANCE_SQUARED = 40;
+	public static final int SOLDIER_CHASE_DISTANCE_MULTIPLIER = 9;
+	public static final int SOLDIER_SWARM_IN_FRONT = 4;
+	public static final int SOLDIER_SWARM_DISTANCE = 10;
 
 	/*************************************************************
 	 * OLD CONSTANTS BELOW

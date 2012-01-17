@@ -174,7 +174,7 @@ public class ArchonRobot extends StrategyRobot {
 		{
 			prevState = oldstate;
 			
-			roundsToChase = Constants.CHASE_ROUNDS;
+			roundsToChase = Constants.ARCHON_CHASE_ROUNDS;
 			mi.setNormalMode();
 			// set flux management mode
 			fm.setBattleMode();
@@ -246,14 +246,17 @@ public class ArchonRobot extends StrategyRobot {
 		{
 			if (!isDefender)
 			{
-				gotoState(RobotState.ATTACK_ENEMY_BASE);
-			
-				int[] msg = Radio.decodeShorts(sb);
-				if (msg[0]<archonIndex)
+				if (!isLeader)
 				{
-					attackMoveDirection = Constants.directions[msg[1]];
-					attackMoveTarget = new MapLocation(msg[2], msg[3]);
-					lastRoundCheckedTargets = currRound;
+					gotoState(RobotState.ATTACK_ENEMY_BASE);
+					
+					int[] msg = Radio.decodeShorts(sb);
+					if (msg[0]<archonIndex)
+					{
+						attackMoveDirection = Constants.directions[msg[1]];
+						attackMoveTarget = new MapLocation(msg[2], msg[3]);
+						lastRoundCheckedTargets = currRound;
+					}
 				}
 			}
 		} break;
@@ -392,7 +395,6 @@ public class ArchonRobot extends StrategyRobot {
 		{
 			attackMoveTarget = leaderLoc;
 			attackMoveDirection = currLoc.directionTo(attackMoveTarget);
-					
 		}
 		
 		attack_move(attackMoveTarget, attackMoveDirection, attackTarget);
@@ -416,7 +418,7 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void attack_move(Direction attackDir) throws GameActionException
 	{
-		attack_move(currLoc.add(attackDir,Constants.CHASE_DIRECTION_MULTIPLIER), attackDir, null);
+		attack_move(currLoc.add(attackDir,Constants.ARCHON_CHASE_DIRECTION_MULTIPLIER), attackDir, null);
 	}
 	
 	public void attack_move(MapLocation attackTarget, Direction attackDir, RobotInfo attackInfo) throws GameActionException
@@ -424,6 +426,28 @@ public class ArchonRobot extends StrategyRobot {
 		checkAttackMoveStatus();
 		
 //		checkAttackMoveTargets();
+		
+		if (!rc.isMovementActive())
+		{
+			if (currFlux > Constants.ARCHON_FLUX_DURING_COMBAT+RobotType.SOLDIER.spawnCost)
+			{
+				boolean[] movable = dc.getMovableDirections();
+				// build army
+				for (Direction d : Constants.directions) {
+					if (d == Direction.OMNI || d == Direction.NONE) {
+						continue;
+					}
+					if (movable[d.ordinal()]) {
+						if (spawnUnitInDir(RobotType.SOLDIER, d)) {
+							// claim ownership of the unit
+							ao.claimOwnership();
+							armySizeBuilt++;
+						}
+					}
+				}
+			}
+		}
+		ao.sendOwnerships(trueArchonIndex);
 		
 		if (isLeader)
 		{
@@ -510,6 +534,9 @@ public class ArchonRobot extends StrategyRobot {
 			// follow code
 			MapLocation[] archons = dc.getAlliedArchons();
 			MapLocation leader = archons[0];
+			
+
+			
 			if (!rc.isMovementActive())
 			{
 				MapLocation target = null;
@@ -539,6 +566,9 @@ public class ArchonRobot extends StrategyRobot {
 					target = target.add(attackDir);
 				}
 				
+//				resend swarm information
+				sendSwarmInfo(attackDir, attackTarget);
+				
 				debug.setIndicatorString(2, archonIndex+" "+target, Owner.YP);
 				
 				mi.setObjective(target);
@@ -553,12 +583,23 @@ public class ArchonRobot extends StrategyRobot {
 	{
 		if (swarmDirection==null || target==null)
 			System.out.println("null");
-		io.sendShorts("#as", 
-				new int[]{	archonIndex, swarmDirection.ordinal(), 
-							target.x, target.y});
-		io.sendShorts(myRadioChannel+"s", 
-				new int[]{	archonIndex, swarmDirection.ordinal(), 
-							target.x, target.y});
+		
+		int[] msg = new int[] {archonIndex, swarmDirection.ordinal(),target.x, target.y};
+		
+		io.sendShorts("#as", msg);
+		io.sendShorts(myRadioChannel+"s", msg);
+	}
+	
+	public void sendSwarmInfoLeader(Direction swarmDirection, MapLocation target)
+	{
+		if (swarmDirection==null || target==null)
+			System.out.println("null");
+		
+		int[] msg = new int[] {archonIndex, swarmDirection.ordinal(),target.x, target.y};
+		
+		io.sendShorts("#as", msg);
+		io.sendShorts(myRadioChannel+"s", msg);
+//		io.sendShorts("#xs", msg);
 	}
 	
 	public void sendRallyAtLoc(MapLocation target, Direction swarmDirection)
@@ -610,9 +651,9 @@ public class ArchonRobot extends StrategyRobot {
 				return true;
 			}
 			
-			if (roundsLastSeenEnemy < roundsToChase)
+			if (attackMoveDirection!=null && roundsLastSeenEnemy < roundsToChase)
 			{
-				attackMoveTarget = currLoc.add(attackMoveDirection, Constants.CHASE_DIRECTION_MULTIPLIER);
+				attackMoveTarget = currLoc.add(attackMoveDirection, Constants.ARCHON_CHASE_DIRECTION_MULTIPLIER);
 				roundsLastSeenEnemy++;
 				return true;
 			}
