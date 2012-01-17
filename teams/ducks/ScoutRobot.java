@@ -10,8 +10,8 @@ public class ScoutRobot extends StrategyRobot {
 
 	public ScoutRobot(RobotController myRC) {
 		super(myRC, RobotState.DEFEND_BASE);
-		mi.setObjective(myHome);
-		mi.setChargeMode();
+		micro.setObjective(myHome);
+		micro.setChargeMode();
 		
 		hbe = new HibernationSystem(this);
 		io.setAddresses(new String[]{"#d"});
@@ -31,12 +31,12 @@ public class ScoutRobot extends StrategyRobot {
 
 	@Override
 	public void execute(RobotState state) throws GameActionException {
-		mi.attackMove();
-		ur.scan(true, false);
-		if(ur.numAllyDamaged >= 2) {
+		micro.attackMove();
+		radar.scan(true, false);
+		if(radar.numAllyDamaged >= 2) {
 			rc.regenerate();
 		}
-		debug.setIndicatorString(2, Integer.toString(ur.numAllyDamaged), Owner.YP);
+		debug.setIndicatorString(2, Integer.toString(radar.numAllyDamaged), Owner.YP);
 	}
 	
 	@Override

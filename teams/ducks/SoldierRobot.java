@@ -63,7 +63,7 @@ public class SoldierRobot extends StrategyRobot {
 		case SWARM:
 		{
 			scanForEnemies();
-			if (ur.numEnemyRobots>0 && enemydiff>=0)
+			if (radar.numEnemyRobots>0 && enemydiff>=0)
 				return RobotState.CHASE;
 		} break;
 		case CHASE:
@@ -100,29 +100,29 @@ public class SoldierRobot extends StrategyRobot {
 		case HOLD_POSITION:
 		{
 			// set micro mode
-			mi.setHoldPositionMode();
+			micro.setHoldPositionMode();
 			// set flux management mode
-			fm.setBatteryMode();
+			fbs.setBatteryMode();
 		} break;
 		case SWARM:
 		{
 			// set micro mode
-			mi.setSwarmMode(2, 36);
+			micro.setSwarmMode(2, 36);
 			// set flux management mode
-			fm.setBatteryMode();
+			fbs.setBatteryMode();
 		} break;
 		case CHASE:
 		{
 			// set micro mode
-			mi.setChargeMode();
+			micro.setChargeMode();
 			// set flux management mode
-			fm.setBattleMode();
+			fbs.setBattleMode();
 		} break;
 		case DEFEND_BASE:
 		{
 			io.addAddress("#d");
-			mi.setObjective(myHome);
-			mi.setNormalMode();
+			micro.setObjective(myHome);
+			micro.setNormalMode();
 		} break;
 		default:
 			break;
@@ -182,7 +182,7 @@ public class SoldierRobot extends StrategyRobot {
 		switch(msgType) {
 			case 'd':
 			{
-				eai.reportEnemyArchonKills(BroadcastSystem.decodeShorts(sb));
+				eakc.reportEnemyArchonKills(BroadcastSystem.decodeShorts(sb));
 			} break;
 			case 'o':
 			{
@@ -266,11 +266,11 @@ public class SoldierRobot extends StrategyRobot {
 	
 	public void holdPosition() throws GameActionException {
 		// hold position
-		mi.attackMove();
+		micro.attackMove();
 		// distribute flux
-		fm.manageFlux();
+		fbs.manageFlux();
 		// send dead enemy archon info
-		eai.broadcastDeadEnemyArchonIDs();
+		eakc.broadcastDeadEnemyArchonIDs();
 	}
 	
 	public void swarm() throws GameActionException {
@@ -282,14 +282,14 @@ public class SoldierRobot extends StrategyRobot {
 			if (swarmObjective == null)
 			{
 				findArchon();
-				mi.setSwarmMode(2, 36);
-				mi.setObjective(archonOVERLORD);
-				mi.attackMove();
+				micro.setSwarmMode(2, 36);
+				micro.setObjective(archonOVERLORD);
+				micro.attackMove();
 			} else
 			{
-				mi.setChargeMode();
-				mi.setObjective(swarmObjective);
-				mi.attackMove();
+				micro.setChargeMode();
+				micro.setObjective(swarmObjective);
+				micro.attackMove();
 			}
 			
 		} else
@@ -297,18 +297,18 @@ public class SoldierRobot extends StrategyRobot {
 			if (fromObjective == null)
 			{
 				findArchon();
-				mi.setSwarmMode(2, 36);
-				mi.setObjective(archonOVERLORD);
-				mi.attackMove();
+				micro.setSwarmMode(2, 36);
+				micro.setObjective(archonOVERLORD);
+				micro.attackMove();
 			} else
 			{
-				mi.setSwarmMode(2, 36);
-				mi.setObjective(fromObjective);
-				mi.attackMove();
+				micro.setSwarmMode(2, 36);
+				micro.setObjective(fromObjective);
+				micro.attackMove();
 			}
 		}
 		
-		fm.manageFlux();
+		fbs.manageFlux();
 		
 		return;
 		
@@ -354,15 +354,15 @@ public class SoldierRobot extends StrategyRobot {
 	
 	public void chase() throws GameActionException {
 		scanForEnemies();
-		if (ur.numEnemyRobots-ur.numEnemyTowers==0)
+		if (radar.numEnemyRobots-radar.numEnemyTowers==0)
 		{
 			roundsSinceSeenEnemy++;
 			if (lastChaseDirection!=null)
 			{
 				MapLocation chaseLoc = curLoc.add(lastChaseDirection,Constants.SOLDIER_CHASE_DISTANCE_MULTIPLIER);
-				mi.setChargeMode();
-				mi.setObjective(chaseLoc);
-				mi.attackMove();
+				micro.setChargeMode();
+				micro.setObjective(chaseLoc);
+				micro.attackMove();
 			} else {
 				roundsSinceSeenEnemy += 9999;
 			}
@@ -370,25 +370,25 @@ public class SoldierRobot extends StrategyRobot {
 		{
 			roundsSinceSeenEnemy = 0;
 			
-			mi.setKiteMode(3);
-			mi.setObjective(ur.closetEnemy.location);
-			mi.attackMove();
+			micro.setKiteMode(3);
+			micro.setObjective(radar.closetEnemy.location);
+			micro.attackMove();
 			
 		}
-		fm.manageFlux();
+		fbs.manageFlux();
 	}
 	
 	public void scanForEnemies() throws GameActionException {
 		if (curRound>lastScanRound)
 		{
-			ur.scan(false, true);
+			radar.scan(false, true);
 			lastScanRound = curRound;
 		}
 	}
 	
 	public void defendBase() throws GameActionException {
-		mi.attackMove();
-		fm.manageFlux();
-		eai.broadcastDeadEnemyArchonIDs();
+		micro.attackMove();
+		fbs.manageFlux();
+		eakc.broadcastDeadEnemyArchonIDs();
 	}
 }

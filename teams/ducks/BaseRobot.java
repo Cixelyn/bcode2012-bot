@@ -15,13 +15,13 @@ public abstract class BaseRobot {
 	public final DataCache dc;
 	public final MapCacheSystem mc;
 	public final NavigationSystem nav;
-	public final Micro mi;
+	public final Micro micro;
 	public final BroadcastSystem io;
-	public final FluxBalanceSystem fm;
+	public final FluxBalanceSystem fbs;
 	public final Debug debug = null; // TODO rewrite debug and deal with this
 	public final SharedExplorationSystem ses;
-	public final RadarSystem ur;
-	public final EnemyArchonKillCache eai;
+	public final RadarSystem radar;
+	public final EnemyArchonKillCache eakc;
 	public final ArchonOwnership ao;
 	
 	// Robot Statistics - Permanent
@@ -63,12 +63,12 @@ public abstract class BaseRobot {
 		dc = new DataCache(this);
 		mc = new MapCacheSystem(this);
 		nav = new NavigationSystem(this);
-		mi = new Micro(this);
+		micro = new Micro(this);
 		io = new BroadcastSystem(this);
-		fm = new FluxBalanceSystem(this);
+		fbs = new FluxBalanceSystem(this);
 		ses = new SharedExplorationSystem(this);
-		ur = new RadarSystem(this);
-		eai = new EnemyArchonKillCache(this);
+		radar = new RadarSystem(this);
+		eakc = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
 		
 		updateRoundVariables();
