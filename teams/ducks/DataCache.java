@@ -71,6 +71,7 @@ public class DataCache {
 					closestDistance = distance;
 				}
 			}
+			closestArchonTime = br.currRound;
 		}
 		return closestArchon;
 	}
