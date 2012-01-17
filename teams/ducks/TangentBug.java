@@ -515,7 +515,7 @@ public class TangentBug {
 	/** Returns the direction that is equivalent to the given dx, dy value, 
 	 * or clockwise of it by as little as possible.
 	 */
-	public static int getDirClockwiseOf(int dx, int dy) {
+	private static int getDirClockwiseOf(int dx, int dy) {
 		if(dx==0) {
 			if(dy>0) return 5;
 			else return 1;
@@ -536,7 +536,7 @@ public class TangentBug {
 	/** Returns the direction that is equivalent to the given dx, dy value, 
 	 * or counterclockwise of it by as little as possible.
 	 */
-	public static int getDirCounterclockwiseOf(int dx, int dy) {
+	private static int getDirCounterclockwiseOf(int dx, int dy) {
 		if(dx==0) {
 			if(dy>0) return 5;
 			else return 1;
@@ -557,7 +557,7 @@ public class TangentBug {
 	/** Returns the direction that is equivalent to the given dx, dy value, 
 	 * or as close to it as possible.
 	 */
-	public static int getDirTowards(int dx, int dy) {
+	private static int getDirTowards(int dx, int dy) {
 		if(dx==0) {
 			if(dy>0) return 5;
 			else return 1;
