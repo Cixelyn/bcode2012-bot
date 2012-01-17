@@ -104,8 +104,11 @@ public class SoldierRobot extends StrategyRobot {
 				break;
 			case 'w':
 				if (getCurrentState() == RobotState.HOLD_POSITION) {
-					gotoState(RobotState.SUICIDE);
+					gotoState(RobotState.DEFEND_BASE);
 				}
+				break;
+			case 'z':
+				gotoState(RobotState.HIBERNATE);
 				break;
 			default:
 				super.processMessage(msgType, sb);

@@ -624,13 +624,19 @@ public class ArchonRobot extends StrategyRobot {
 		// distribute flux
 		fm.manageFlux();
 	}
-	
+
+
 	public void defend_base() throws GameActionException
 	{
 		ur.scan(false, true);
 		if (ur.numEnemySoldiers > 0 || ur.numEnemyArchons > 0) {
+			numDefenders = 0;
 			io.sendWakeupCall();
 			io.sendShort("#zz", 0); //FIXME: dummy call for now to trigger wakeup
+		} else {
+			if(currRound % 5 == 0 && ur.roundsSinceEnemySighted > 10) { // send back to sleep
+				io.sendShort("#dz", 0);
+			}
 		}
 		
 		
