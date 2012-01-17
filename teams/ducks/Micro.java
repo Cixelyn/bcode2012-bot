@@ -204,7 +204,7 @@ public class Micro {
 			br.directionToSenseIn = dir;
 			dirAboutToMoveIn = null;
 		} else {
-			rc.setDirection(dir);
+			rc.setDirection(dir.opposite());
 		}
 		
 		return true;
