@@ -862,7 +862,6 @@ public class ArchonRobot extends StrategyRobot {
 	{
 		ur.scan(false, true);
 		if (ur.numEnemySoldiers > 0 || ur.numEnemyArchons > 0) {
-			numDefenders = 0;
 			io.sendWakeupCall();
 			io.sendShort("#zz", 0); //FIXME: dummy call for now to trigger wakeup
 		} else {
