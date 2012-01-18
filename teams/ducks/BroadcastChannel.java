@@ -5,6 +5,7 @@ public enum BroadcastChannel {
 	ALL,
 	ARCHONS,
 	SOLDIERS,
+	SCOUTS,
 	EXPLORERS;
 	
 	public final String chanHeader;

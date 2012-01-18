@@ -24,6 +24,7 @@ public abstract class BaseRobot {
 	public final ArchonOwnership ao;
 	public final RallySystem rally;
 	public final MovementStateMachine msm;
+	public final ScoutWireSystem sws;
 	
 	// Robot Statistics - Permanent
 	public final RobotType myType;
@@ -73,6 +74,7 @@ public abstract class BaseRobot {
 		ao = new ArchonOwnership(this);
 		rally = new RallySystem(this);
 		msm = new MovementStateMachine(this);
+		sws = new ScoutWireSystem(this);
 		
 		updateRoundVariables();
 		mc.senseAll();
