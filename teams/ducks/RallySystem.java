@@ -20,8 +20,10 @@ public class RallySystem {
 	public MapLocation getCurrentObjective() throws GameActionException {
 		if (br.dc.getClosestEnemy() != null) {
 			return br.dc.getClosestEnemy().location;
-		} else {
+		} else if (br.mc.getEnemyPowerCoreLocation() == null) {
 			return br.mc.guessEnemyPowerCoreLocation();
+		} else {
+			return br.mc.guessBestPowerNodeToCapture();
 		}
 	}
 	

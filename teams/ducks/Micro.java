@@ -5,6 +5,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
 /**
@@ -29,6 +30,8 @@ public class Micro {
 	
 	private int microDistance;
 	private Direction dirAboutToMoveIn; 
+	
+	private boolean avoidPowerNodes = false;
 	
 	public Micro(BaseRobot myBR) {
 		br = myBR;
@@ -60,6 +63,11 @@ public class Micro {
 	/** Navigate backwards. */
 	public void setMoonwalkMode() {
 		mode = MicroMode.MOONWALK;
+	}
+	
+	/** Set whether the unit should avoid power nodes. */
+	public void toggleAvoidPowerNodes(boolean b) {
+		avoidPowerNodes = b;
 	}
 	
 	/**
@@ -167,6 +175,9 @@ public class Micro {
 		}
 		
 		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
+		if (avoidPowerNodes) {
+			dir = avoidPowerNode(dir);
+		}
 		if(dir==null) 
 			return false;
 		if(dir == br.curDir) {
@@ -189,6 +200,9 @@ public class Micro {
 		}
 		
 		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
+		if (avoidPowerNodes) {
+			dir = avoidPowerNode(dir);
+		}
 		if(dir==null) 
 			return false;
 		if(dir == br.curDir.opposite()) {
@@ -228,6 +242,9 @@ public class Micro {
 		};
 		int distanceSquared = br.curLoc.distanceSquaredTo(target);
 		for (Direction d : targetDirs) {
+			if (avoidPowerNodes) {
+				d = avoidPowerNode(d);
+			}
 			if (distanceSquared < microDistance) {
 				// move backwards
 				if (rc.canMove(d.opposite())) {
@@ -266,6 +283,9 @@ public class Micro {
 		}
 		
 		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
+		if (avoidPowerNodes) {
+			dir = avoidPowerNode(dir);
+		}
 		if(dir==null) 
 			return false;
 		if(dir == br.curDir) {
@@ -277,6 +297,30 @@ public class Micro {
 		}
 		
 		return true;
+	}
+	
+	private Direction avoidPowerNode(Direction dir) throws GameActionException {
+		if (dir == null || dir == Direction.NONE || dir == Direction.OMNI) {
+			return null;
+		}
+		MapLocation loc = br.curLoc.add(dir);
+		if (rc.canSenseSquare(loc) && rc.senseObjectAtLocation(
+				loc, RobotLevel.POWER_NODE) != null) {
+			Direction newDir = dir;
+			for (int tries = 0; tries < 30; tries++) {
+				if (Math.random() < 0.5) {
+					newDir = newDir.rotateLeft();
+				} else {
+					newDir = newDir.rotateRight();
+				}
+				MapLocation newLoc = br.curLoc.add(newDir);
+				if (rc.canMove(newDir) && !(rc.canSenseSquare(newLoc) &&
+						rc.senseObjectAtLocation(newLoc, RobotLevel.POWER_NODE) != null)) {
+					return newDir;
+				}
+			}
+		}
+		return dir;
 	}
 	
 	public MapLocation getObjective() {
