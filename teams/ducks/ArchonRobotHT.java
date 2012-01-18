@@ -26,13 +26,11 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 		io.setAddresses(new String[] {"#e"});
 		fbs.setBattleMode();
-		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
-		nav.setDestination(curLoc.add(-50, -50));
+		nav.setNavigationMode(NavigationMode.RANDOM);
 	}
 	
 	@Override
 	public void run() throws GameActionException {
-//		if(!currLoc.equals(rc.senseAlliedArchons()[0])) return;
 //		if(myArchonID==0 && Clock.getRoundNum()%500==5) {
 //			System.out.println(mc);
 //			System.out.println(mc.guessEnemyPowerCoreLocation());
@@ -40,63 +38,10 @@ public class ArchonRobotHT extends BaseRobot{
 //		}
 		
 		MapLocation target = mc.guessBestPowerNodeToCapture();
-		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+")");
+		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
 		rc.setIndicatorString(1, "aboutToMove: "+aboutToMove+", computedMoveDir: "+computedMoveDir);
 		nav.setDestination(target);
-		
-		if(dirToSense!=null) {
-			mc.senseAfterMove(dirToSense);
-			dirToSense = null;
-		}
-		
 		fbs.manageFlux();
-		
-		radar.scan(true, true);
-		
-		if(Clock.getBytecodeNum()<7000)
-			nav.prepare();
-		
-		if(!rc.isMovementActive()) {
-			if(aboutToMove)  {
-				if(rc.canMove(curDir)) {
-					if(mc.isPowerNode(curLocInFront)) {
-						if(rc.getFlux()>200) {
-							rc.spawn(RobotType.TOWER);
-						}
-					} else {
-						rc.moveForward();
-						dirToSense = curDir;
-						aboutToMove = false;
-					}
-				} else {
-					Direction dir = nav.wiggleToMovableDirection(computedMoveDir);
-					if(dir!=null) {
-						rc.setDirection(dir);
-					} else {
-						turnsStuck++;
-						if(turnsStuck>10) {
-							rc.setDirection(nav.navigateCompletelyRandomly());
-						}
-					}
-				}
-			} else if(rc.getFlux()>280) {
-				if(rc.canMove(curDir)) {
-					rc.spawn(RobotType.SOLDIER);
-				} else {
-					rc.setDirection(curDir.rotateLeft());
-				}
-			} else {
-				computedMoveDir = nav.navigateToDestination();
-				if(computedMoveDir!=null) {
-					Direction dir = nav.wiggleToMovableDirection(computedMoveDir);
-					if(dir!=null) {
-						rc.setDirection(dir);
-						turnsStuck = 0;
-						aboutToMove = true;
-					}
-				}
-			}
-		}
 		
 		
 		if(Clock.getBytecodeNum()<5000 && Clock.getRoundNum()%6==myArchonID) {
@@ -122,5 +67,24 @@ public class ArchonRobotHT extends BaseRobot{
 			data = BroadcastSystem.decodeInts(sb);
 			ses.receivePowerNodeFragment(data);
 		} 
+	}
+	
+	@Override
+	public MoveInfo computeNextMove() throws GameActionException {
+		if(rc.canMove(curDir) && curLocInFront.equals(nav.getDestination())) {
+			if(rc.getFlux()>200) {
+				return new MoveInfo(RobotType.TOWER, curDir);
+			}
+		} else if(rc.getFlux()>280) {
+			if(rc.canMove(curDir)) {
+				return new MoveInfo(RobotType.SOLDIER, curDir);
+			} else {
+				return new MoveInfo(curDir.rotateLeft());
+			}
+		} else {
+			return new MoveInfo(nav.navigateToDestination(), false);
+		}
+		
+		return null;
 	}
 }

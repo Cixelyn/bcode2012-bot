@@ -5,13 +5,10 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
+import battlecode.common.RobotLevel;
 
 public class SoldierRobotHT extends BaseRobot {
 	boolean checkedBehind = false;
-	boolean aboutToMove = false;
-	Direction computedMoveDir = null;
-	int turnsStuck = 0;
 	
 	public SoldierRobotHT(RobotController myRC) {
 		super(myRC);
@@ -24,47 +21,6 @@ public class SoldierRobotHT extends BaseRobot {
 		MapLocation closestArchon = dc.getClosestArchon();
 		nav.setDestination(closestArchon);
 		
-		if(!rc.isMovementActive() && rc.getFlux()>0.4) {
-			if(aboutToMove)  {
-				if(rc.canMove(curDir)) {
-					if(mc.isPowerNode(curLocInFront)) {
-						if(rc.canMove(curDir.opposite())) {
-							rc.moveBackward();
-							checkedBehind = false;
-							aboutToMove = false;
-						}
-					} else {
-						rc.moveForward();
-						checkedBehind = false;
-						aboutToMove = false;
-					}
-				} else {
-					Direction dir = nav.wiggleToMovableDirection(computedMoveDir);
-					if(dir!=null) {
-						rc.setDirection(dir);
-					} else {
-						turnsStuck++;
-						if(turnsStuck>10) {
-							rc.setDirection(nav.navigateCompletelyRandomly());
-						}
-					}
-				}
-			} else if(!checkedBehind) {
-				rc.setDirection(curDir.opposite());
-				checkedBehind = true;
-			} else {
-				computedMoveDir = nav.navigateToDestination();
-				if(computedMoveDir!=null) {
-					Direction dir = nav.wiggleToMovableDirection(computedMoveDir);
-					if(dir!=null) {
-						rc.setDirection(dir);
-						turnsStuck = 0;
-						aboutToMove = true;
-					}
-				}
-			}
-		}
-		
 		if(!rc.isAttackActive()) {
 			RobotInfo closestEnemy = dc.getClosestEnemy();
 			if (closestEnemy != null && rc.canAttackSquare(closestEnemy.location)) {
@@ -73,5 +29,19 @@ public class SoldierRobotHT extends BaseRobot {
 		} 
 	}
 	
-
+	@Override
+	public MoveInfo computeNextMove() throws GameActionException {
+		if(rc.getFlux()<1) return null;
+		if(!checkedBehind) {
+			checkedBehind = true;
+			return new MoveInfo(curDir.opposite());
+		} else {
+			Direction dir = nav.navigateToDestination();
+			if(dir==null) return null;
+			MapLocation loc = curLoc.add(dir);
+			if(rc.canSenseSquare(loc) && rc.senseObjectAtLocation(loc, RobotLevel.POWER_NODE)!=null)
+				return null;
+			return new MoveInfo(dir, false);
+		}
+	}
 }
