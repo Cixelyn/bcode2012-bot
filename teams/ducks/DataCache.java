@@ -194,7 +194,7 @@ public class DataCache {
 	}
 	
 	// TODO(jven): this doesn't belong here?
-	private boolean isTowerTargetable(RobotInfo tower) 
+	public boolean isTowerTargetable(RobotInfo tower) 
 			throws GameActionException {
 		PowerNode pn = (PowerNode)rc.senseObjectAtLocation(
 				tower.location, RobotLevel.POWER_NODE);
