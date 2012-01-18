@@ -26,6 +26,7 @@ public class SoldierRobotJV extends BaseRobot {
 	private enum SoldierState {
 		INITIALIZE,
 		DIZZY,
+		SUICIDE,
 		LOW_FLUX
 	}
 	
@@ -34,6 +35,9 @@ public class SoldierRobotJV extends BaseRobot {
 	
 	/** Whether the Soldier is done initializing. */
 	private boolean initialized;
+	
+	/** Whether the Soldier has been rallied. */
+	private boolean rallied = false;
 
 	public SoldierRobotJV(RobotController myRC) {
 		super(myRC);
@@ -64,6 +68,18 @@ public class SoldierRobotJV extends BaseRobot {
 		}
 	}
 	
+	@Override
+	public void processMessage(char msgType, StringBuilder sb)
+			throws GameActionException {
+		switch (msgType) {
+			case 'r':
+				rallied = true;
+				break;
+			default:
+				break;
+		}
+	}
+	
 	/** Returns the state the Soldier should execute this turn, using the current
 	 * state.
 	 * @modifies Must not modify the state of the Soldier in any way!
@@ -83,6 +99,9 @@ public class SoldierRobotJV extends BaseRobot {
 				}
 				break;
 			case DIZZY:
+				if (rallied) {
+					return SoldierState.SUICIDE;
+				}
 				break;
 			default:
 				// we got g'd

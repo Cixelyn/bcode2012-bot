@@ -23,6 +23,7 @@ public abstract class BaseRobot {
 	public final RadarSystem radar;
 	public final EnemyArchonKillCache eakc;
 	public final ArchonOwnership ao;
+	public final RallySystem rally;
 	public final MovementStateMachine msm;
 	
 	// Robot Statistics - Permanent
@@ -40,6 +41,7 @@ public abstract class BaseRobot {
 	public Direction curDir;
 	public int curRound;
 	
+	// TODO(jven): temporary?
 	// Robot State - left over from previous turns
 	public Direction directionToSenseIn;
 	
@@ -70,6 +72,7 @@ public abstract class BaseRobot {
 		radar = new RadarSystem(this);
 		eakc = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
+		rally = new RallySystem(this);
 		msm = new MovementStateMachine(this);
 		
 		updateRoundVariables();
@@ -91,9 +94,9 @@ public abstract class BaseRobot {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
 			}
-		
+			
 			// Main Run Call
-			try {
+			try{
 				run();
 			} catch (Exception e) {
 				e.printStackTrace();
