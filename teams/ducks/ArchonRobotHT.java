@@ -9,9 +9,12 @@ import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
 	int myArchonID;
+	int keepTargetTurns;
+	MapLocation target;
 	public ArchonRobotHT(RobotController myRC) {
 		super(myRC);
 		
+		keepTargetTurns = -1;
 		// compute archon ID
 		MapLocation[] alliedArchons = this.dc.getAlliedArchons();
 		for(int i=alliedArchons.length; --i>=0; ) {
@@ -46,21 +49,18 @@ public class ArchonRobotHT extends BaseRobot{
 			mc.extractUpdatedPackedDataStep();
 		}
 	}
+	
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
-		int[] data = null;
 		switch(msgType) {
 		case MAP_EDGES:
-			data = BroadcastSystem.decodeUShorts(sb);
-			ses.receiveMapEdges(data);
+			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 			break;
 		case MAP_FRAGMENTS:
-			data = BroadcastSystem.decodeInts(sb);
-			ses.receiveMapFragment(data);
+			ses.receiveMapFragment(BroadcastSystem.decodeInts(sb));
 			break;
 		case POWERNODE_FRAGMENTS:
-			data = BroadcastSystem.decodeInts(sb);
-			ses.receivePowerNodeFragment(data);
+			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 			break;
 		default:
 			super.processMessage(msgType, sb);
@@ -69,15 +69,33 @@ public class ArchonRobotHT extends BaseRobot{
 	}
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		MapLocation target = mc.guessBestPowerNodeToCapture();
+		boolean startCapping = Clock.getRoundNum()>1000;
+		radar.scan(true, true);
+		if(radar.closestEnemy != null) {
+			target = radar.closestEnemy.location;
+			keepTargetTurns = 30;
+		} else {
+			keepTargetTurns--;
+		}
+		
+		if(keepTargetTurns<0) 
+			target = startCapping ? mc.guessBestPowerNodeToCapture() : mc.guessEnemyPowerCoreLocation();
 		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
 		nav.setDestination(target);
 		
+		
+		
+		if(Clock.getRoundNum() < 60) {
+			return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
+		}
+		if(radar.closestEnemyDist <= 20) {
+			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
+		}
 		if(rc.canMove(curDir) && curLocInFront.equals(nav.getDestination())) {
-			if(rc.getFlux()>200) {
+			if(startCapping && rc.getFlux() > 200) {
 				return new MoveInfo(RobotType.TOWER, curDir);
 			}
-		} else if(rc.getFlux()>280) {
+		} else if(rc.getFlux()> (startCapping ? 210 : 200)) {
 			if(rc.canMove(curDir)) {
 				return new MoveInfo(RobotType.SOLDIER, curDir);
 			} else {
@@ -85,7 +103,8 @@ public class ArchonRobotHT extends BaseRobot{
 			}
 		} else {
 			Direction dir = nav.navigateToDestination();
-			if(dir==null) return null;
+			if(dir==null) 
+				return null;
 			if(curLoc.add(dir).equals(nav.getDestination()))
 				return new MoveInfo(dir);
 			return new MoveInfo(dir, false);

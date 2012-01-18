@@ -3,15 +3,20 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 
 public class SoldierRobotHT extends BaseRobot {
 	boolean checkedBehind = false;
+	int keepTargetTurns;
+	MapLocation target;
 	
 	public SoldierRobotHT(RobotController myRC) {
 		super(myRC);
+		
+		keepTargetTurns = -1;
 		nav.setNavigationMode(NavigationMode.GREEDY);
 		io.setChannels(new BroadcastChannel[] {BroadcastChannel.ALL, BroadcastChannel.SOLDIERS});
 		fbs.setBattleMode();
@@ -19,37 +24,37 @@ public class SoldierRobotHT extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		MapLocation closestArchon = dc.getClosestArchon();
-		nav.setDestination(closestArchon);
 		
 		if(!rc.isAttackActive()) {
 			RobotInfo closestEnemy = dc.getClosestEnemy();
+			if(closestEnemy != null) {
+				target = closestEnemy.location;
+				keepTargetTurns = 20;
+			}
 			if (closestEnemy != null && rc.canAttackSquare(closestEnemy.location)) {
 				rc.attackSquare(closestEnemy.location, closestEnemy.robot.getRobotLevel());
 			}
 		} 
 	}
 	@Override
-	public void processMessage(BroadcastType msgType, StringBuilder sb) {
-		int[] data = null;
-		switch(msgType) {
-		case MAP_EDGES:
-			data = BroadcastSystem.decodeUShorts(sb);
-			ses.receiveMapEdges(data);
-			break;
-		case MAP_FRAGMENTS:
-			data = BroadcastSystem.decodeInts(sb);
-			ses.receiveMapFragment(data);
-			break;
-		case POWERNODE_FRAGMENTS:
-			data = BroadcastSystem.decodeInts(sb);
-			ses.receivePowerNodeFragment(data);
-			break;
-		} 
-	}
-	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux()<1) return null;
+		keepTargetTurns--;
+		if(keepTargetTurns < 0) {
+			target = dc.getClosestArchon();
+			if(rc.canSenseSquare(target)) {
+				RobotInfo ri = rc.senseRobotInfo((Robot)rc.senseObjectAtLocation(
+						target, RobotLevel.ON_GROUND));
+				target = target.add(ri.direction, 5);
+				keepTargetTurns = 15;
+			}
+		}
+		nav.setDestination(target);
+		
+		
+		if(keepTargetTurns>0 && curLoc.distanceSquaredTo(target) <= 2) {
+			return new MoveInfo(curLoc.directionTo(target).opposite(), true);
+		}
 		if(!checkedBehind) {
 			checkedBehind = true;
 			return new MoveInfo(curDir.opposite());
@@ -59,6 +64,7 @@ public class SoldierRobotHT extends BaseRobot {
 			MapLocation loc = curLoc.add(dir);
 			if(rc.canSenseSquare(loc) && rc.senseObjectAtLocation(loc, RobotLevel.POWER_NODE)!=null)
 				return null;
+			checkedBehind = false;
 			return new MoveInfo(dir, false);
 		}
 	}
