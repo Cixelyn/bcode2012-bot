@@ -63,6 +63,11 @@ public class ArchonRobotJV extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
+		// TODO(jven): temporary
+		if (directionToSenseIn != null) {
+			mc.senseAfterMove(directionToSenseIn);
+			directionToSenseIn = null;
+		}
 		// transition to a new state if necessary
 		curState = getNextState();
 		// TODO(jven): debugging
@@ -98,9 +103,17 @@ public class ArchonRobotJV extends BaseRobot {
 	public void processMessage(char msgType, StringBuilder sb)
 			throws GameActionException {
 		switch (msgType) {
+			case 'e':
+				ses.receiveMapEdges(BroadcastSystem.decodeShorts(sb));
+				break;
+			case 'm':
+				ses.receiveMapFragment(BroadcastSystem.decodeInts(sb));
+				break;
+			case 'p':
+				ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
+				break;
 			case 'r':
 				rallied = true;
-				rally.processRally(BroadcastSystem.decodeMapLoc(sb));
 				break;
 			default:
 				break;
@@ -174,7 +187,7 @@ public class ArchonRobotJV extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		nav.setDestination(myHome);
 		// initialize broadcast system
-		io.setAddresses(new String[] {"#x", "#a"});
+		io.setAddresses(new String[] {"#x", "#a", "#e"});
 		// initialize map cache
 		mc.senseAll();
 		// done initializing
@@ -239,6 +252,8 @@ public class ArchonRobotJV extends BaseRobot {
 		// distribute flux
 		fbs.setBattleMode();
 		fbs.manageFlux();
+		// share exploration information
+		ses.broadcastMapEdges();
 	}
 	
 	/**
@@ -251,6 +266,8 @@ public class ArchonRobotJV extends BaseRobot {
 		micro.setObjective(rally.getCurrentObjective());
 		// go to objective
 		micro.attackMove();
+		// share exploration information
+		ses.broadcastMapEdges();
 		// send rally
 		rally.broadcastRally();
 	}

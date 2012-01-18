@@ -40,6 +40,7 @@ public abstract class BaseRobot {
 	public Direction curDir;
 	public int curRound;
 	
+	// TODO(jven): temporary?
 	// Robot State - left over from previous turns
 	public Direction directionToSenseIn;
 	
