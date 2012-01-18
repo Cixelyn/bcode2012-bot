@@ -1,7 +1,5 @@
 package ypstrategyframework;
 
-import org.apache.commons.lang.Validate;
-
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;

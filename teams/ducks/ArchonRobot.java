@@ -1,6 +1,5 @@
 package ducks;
 
-import ducks.Debug.Owner;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -10,7 +9,7 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
-import battlecode.common.TerrainTile;
+import ducks.Debug.Owner;
 
 public class ArchonRobot extends StrategyRobot {
 
