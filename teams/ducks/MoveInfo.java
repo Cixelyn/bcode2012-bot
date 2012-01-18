@@ -25,4 +25,13 @@ public class MoveInfo {
 		this.robotType = robotType;
 		this.dir = dirToSpawn;
 	}
+	
+	@Override
+	public String toString() {
+		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI) return "Do nothing";
+		if(robotType!=null) return "Spawn "+robotType+" to the "+dir;
+		if(moveForward) return "Move forward to the "+dir;
+		if(moveBackward) return "Move backward to the "+dir;
+		return "Turn to the "+dir;
+	}
 }
