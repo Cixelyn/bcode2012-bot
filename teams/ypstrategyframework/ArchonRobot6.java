@@ -1,5 +1,8 @@
 package ypstrategyframework;
 
+import org.apache.commons.lang.Validate;
+
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
@@ -28,8 +31,12 @@ class ArchonConstants {
 	public static final int MAX_INITIAL_BUILD_ROUNDS = 300;
 	
 	public static final int CHASE_THRESHOLD = 10;
+	public static final int CHASE_ROUNDS = 40;
+	
+	public static final int SAFE_THRESHOLD = 5;
 	
 	public static final int RETREAT_THRESHOLD = -10;
+	public static final int RETREAT_ROUNDS = 40;
 	
 }
 
@@ -41,10 +48,20 @@ public class ArchonRobot6 extends BaseRobot {
 	private int roundsSplit;
 	private int roundsBuild;
 	
+	private int[] evaluations;
+	private MapLocation[] evaluationOrigins;
+	
+	private int retreat_rounds;
+	
+	private Direction chaseDirection;
+	private int roundsLastSeenEnemy;
+	
 	
 	public ArchonRobot6(RobotController myRC) {
 		super(myRC);
 		ab = new ArchonBehavior(this);
+		evaluations = new int[6];
+		evaluationOrigins = new MapLocation[6];
 	}
 
 	@Override
@@ -105,7 +122,7 @@ public class ArchonRobot6 extends BaseRobot {
 		case INITIALBUILD:
 		{
 			roundsBuild = 0;
-		}
+		} break;
 		}
 		
 		curState = newstate;
@@ -216,20 +233,95 @@ public class ArchonRobot6 extends BaseRobot {
 			}
 		}
 	}
-	private void engage() {
+	private void engage() throws GameActionException {
+		int eval = ab.evaluatePosition();
+		
+		if (!ab.seeEnemies())
+		{
+			gotoState(ArchonState.CHASE);
+			return;
+		}
+		
+		if (eval > ArchonConstants.CHASE_THRESHOLD)
+		{
+			gotoState(ArchonState.CHASE);
+			return;
+		}
+		
+		if (eval < ArchonConstants.RETREAT_ROUNDS)
+		{
+			gotoState(ArchonState.CHASE);
+			return;
+		}
+		
+		ab.checkSoldiers();
+		
+		ab.keepDistance();
 		
 	}
-	private void chase() {
-		// TODO Auto-generated method stub
+	private void chase() throws GameActionException {
 		
+		int eval = ab.evaluatePosition();
+		
+		if (eval < ArchonConstants.RETREAT_THRESHOLD)
+		{
+			gotoState(ArchonState.RETREAT);
+			return;
+		}
+		if (eval < ArchonConstants.CHASE_THRESHOLD)
+		{
+			gotoState(ArchonState.ENGAGE);
+			return;
+		}
+		if (!ab.hasTarget() || !ab.seeEnemies())
+		{
+			if (roundsLastSeenEnemy++ > ArchonConstants.CHASE_ROUNDS)
+			{
+				gotoState(ArchonState.SWARM);
+				return;
+			}
+		} else
+		{
+			chaseDirection = currLoc.directionTo(ab.getTarget());
+			roundsLastSeenEnemy = 0;
+		}
+		if (chaseDirection==null)
+		{
+			gotoState(ArchonState.SWARM);
+			return;
+		}
+		ab.chase(chaseDirection);
 	}
-	private void retreat() {
-		// TODO Auto-generated method stub
+	private void retreat() throws GameActionException {
+		int eval = ab.evaluatePosition();
 		
+		if (eval > ArchonConstants.RETREAT_THRESHOLD)
+		{
+			if (retreat_rounds>ArchonConstants.RETREAT_ROUNDS)
+			{
+				gotoState(ArchonState.REGROUP);
+				return;
+			}
+		}
+		
+		ab.retreatFromEnemy();
 	}
-	private void regroup() {
-		// TODO Auto-generated method stub
+	private void regroup() throws GameActionException {
+		int eval = ab.evaluatePosition();
 		
+		if (eval > ArchonConstants.RETREAT_THRESHOLD)
+		{
+			gotoState(ArchonState.RETREAT);
+			return;
+		}
+		
+		if (eval > ArchonConstants.SAFE_THRESHOLD)
+		{
+			gotoState(ArchonState.SWARM);
+			return;
+		}
+		
+		ab.regroup();
 	}
 
 
