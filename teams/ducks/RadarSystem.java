@@ -15,12 +15,7 @@ public class RadarSystem {
 
 	BaseRobot br;
 
-	public RadarSystem(BaseRobot br) {
-		this.br = br;
-		lastscanround = -1;
-	}
-
-	public final static int MAX_ROBOTS = 1024;
+	public final static int MAX_ROBOTS = 4096;
 	public final static int MAX_ENEMY_ROBOTS = 50;
 	public final static int MAX_ADJACENT = 17;
 
@@ -58,10 +53,22 @@ public class RadarSystem {
 	public int roundsSinceEnemySighted;
 
 	public int lastscanround;
+	public boolean needToScanEnemies;
+	public boolean needToScanAllies;
+	
+	public Robot[] robots;
 
 	public RobotInfo closestEnemy;
 	public double closestEnemyDist;
 
+	public RadarSystem(BaseRobot br) {
+		this.br = br;
+		lastscanround = -1;
+		needToScanEnemies = true;
+		needToScanAllies = true;
+		robots = null;
+	}
+	
 	private void resetEnemyStats() {
 		closestEnemy = null;
 		closestEnemyDist = 999;
@@ -89,7 +96,7 @@ public class RadarSystem {
 		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
 			return;
 		
-		int pos = rinfo.robot.getID() % MAX_ROBOTS;
+		int pos = rinfo.robot.getID();
 		enemyInfos[pos] = rinfo;
 		enemyTimes[pos] = Clock.getRoundNum();
 
@@ -133,7 +140,7 @@ public class RadarSystem {
 	}
 
 	private void addAlly(RobotInfo rinfo) {
-		int pos = rinfo.robot.getID() % MAX_ROBOTS;
+		int pos = rinfo.robot.getID();
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
 
@@ -159,57 +166,108 @@ public class RadarSystem {
 	 *            - enable enemy data collection and scanning
 	 */
 	public void scan(boolean scanAllies, boolean scanEnemies) {
-
-		Robot[] robots = br.rc.senseNearbyGameObjects(Robot.class);
-
-		// reset stat collection
-		if (scanEnemies)
-			resetEnemyStats();
+		
+		if (lastscanround < br.curRound)
+		{
+			needToScanAllies = true;
+			needToScanEnemies = true;
+			lastscanround = br.curRound;
+			robots = br.rc.senseNearbyGameObjects(Robot.class);
+		}
+		
 		if (scanAllies)
-			resetAllyStats();
+		{
+			if (needToScanAllies)
+				needToScanAllies = false;
+			else
+				scanAllies = false;
+		}
+		
+		if (scanEnemies)
+		{
+			if (needToScanEnemies)
+				needToScanEnemies = false;
+			else
+				scanEnemies = false;
+		}
+		
+		if (scanAllies || scanEnemies)
+		{
+			Robot[] robots = this.robots;
 
-		for (Robot r : robots) {
-			try {
-				if (br.myTeam == r.getTeam()) {
-					if (scanAllies) {
-						addAlly(br.rc.senseRobotInfo(r));
+			// reset stat collection
+			if (scanEnemies)
+				resetEnemyStats();
+			if (scanAllies)
+				resetAllyStats();
+
+			for (Robot r : robots) {
+				try {
+					if (br.myTeam == r.getTeam()) {
+						if (scanAllies) {
+							addAlly(br.rc.senseRobotInfo(r));
+						}
+					} else {
+						if (scanEnemies) {
+							addEnemy(br.rc.senseRobotInfo(r));
+						}
 					}
+
+				} catch (GameActionException e) {
+					br.rc.addMatchObservation(e.toString());
+					e.printStackTrace();
+				}
+			}
+
+			if (scanEnemies)
+			{
+				if (numEnemyRobots == 0) {
+					centerEnemyX = centerEnemyY = -1;
+					vecEnemyX = br.curLoc.x;
+					vecEnemyY = br.curLoc.y;
 				} else {
-					if (scanEnemies) {
-						addEnemy(br.rc.senseRobotInfo(r));
-					}
+					centerEnemyX = centerEnemyX / numEnemyRobots;
+					centerEnemyY = centerEnemyY / numEnemyRobots;
+					vecEnemyX = centerEnemyX - br.curLoc.x;
+					vecEnemyY = centerEnemyY - br.curLoc.y;
 				}
 
-			} catch (GameActionException e) {
-				br.rc.addMatchObservation(e.toString());
-				e.printStackTrace();
+				// compute some global statistics
+				if (numEnemyRobots == 0) {
+					roundsSinceEnemySighted++;
+				} else {
+					roundsSinceEnemySighted = 0;
+				}
 			}
 		}
-
-		if (numEnemyRobots == 0) {
-			centerEnemyX = centerEnemyY = -1;
-			vecEnemyX = br.curLoc.x;
-			vecEnemyY = br.curLoc.y;
-		} else {
-			centerEnemyX = centerEnemyX / numEnemyRobots;
-			centerEnemyY = centerEnemyY / numEnemyRobots;
-			vecEnemyX = centerEnemyX - br.curLoc.x;
-			vecEnemyY = centerEnemyY - br.curLoc.y;
-		}
-
-		// compute some global statistics
-		if (numEnemyRobots == 0) {
-			roundsSinceEnemySighted++;
-		} else {
-			roundsSinceEnemySighted = 0;
-		}
-
 	}
+	
+//	/**
+//	 * Get the robot info for given enemy robot id.
+//	 */
+//	public RobotInfo getEnemyInfo(int robotid)
+//	{
+//		return enemyInfos[robotid];
+//	}
+//	
+//	/**
+//	 * Get the robot info for given allied robot id.
+//	 */
+//	public RobotInfo getAlliedInfo(int robotid)
+//	{
+//		return allyInfos[robotid];
+//	}
 
+	/**
+	 * Get the difference in strength between the two swarms
+	 */
 	public int getArmyDifference() {
 		return numAllyRobots - numEnemyRobots;
 	}
 
+	/**
+	 * Gets the calculated swarm target in order to chase an enemy swarm
+	 */
 	public MapLocation getEnemySwarmTarget() {
 		double a = Math.sqrt(vecEnemyX * vecEnemyX + vecEnemyY * vecEnemyY) + .001;
 
@@ -218,6 +276,9 @@ public class RadarSystem {
 
 	}
 
+	/**
+	 * Gets the calculated enemy swarm center
+	 */
 	public MapLocation getEnemySwarmCenter() {
 		return new MapLocation(centerEnemyX, centerEnemyY);
 	}

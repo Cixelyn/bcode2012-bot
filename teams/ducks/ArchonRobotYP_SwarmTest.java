@@ -1,8 +1,5 @@
 package ducks;
 
-import com.sun.org.apache.bcel.internal.generic.LAND;
-
-import sun.org.mozilla.javascript.internal.EvaluatorException;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
