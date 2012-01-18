@@ -1,5 +1,6 @@
 package ducks;
 
+import sun.org.mozilla.javascript.internal.EvaluatorException;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -12,20 +13,28 @@ import battlecode.common.TerrainTile;
 
 class ArchonConstantsYP {
 	public static final int FORMATION_CLOSENESS = 5;
+	public static final int MAX_SWARM_DISTANCE = 49;
 }
 
 enum FormationType {
 	FIXED_PYRAMID,
 	FIXED_ARROW,
 	FIXED_F,
+	
+	FLEXIBLE_LINE,
 }
+
+interface MapLocEval{
+	public int eval(MapLocation loc);
+}
+
 
 public class ArchonRobotYP extends StrategyRobotExtended {
 
 	public ArchonRobotYP(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 		initialized = false;
-		formation = FormationType.FIXED_PYRAMID;
+		formation = FormationType.FLEXIBLE_LINE;
 	}
 
 	boolean isLeader;
@@ -37,6 +46,57 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	
 	FormationType formation;
 	static final FormationType[] formationvals = FormationType.values();
+	
+	static final MapLocEval[] ducks = new MapLocEval[] {
+		new MapLocEval() {
+			@Override
+			public int eval(MapLocation loc) {
+				return -(loc.y<<1);
+			}
+		},
+		new MapLocEval() {
+			@Override
+			public int eval(MapLocation loc) {
+				return loc.x-loc.y;
+			}
+		},
+		new MapLocEval() {
+			@Override
+			public int eval(MapLocation loc) {
+				return loc.x<<1;
+			}
+		},
+		new MapLocEval() {
+			@Override
+			public int eval(MapLocation loc) {
+				return loc.x+loc.y;
+			}
+		},
+		new MapLocEval() {
+			@Override
+			public int eval(MapLocation loc) {
+				return loc.y<<1;
+			}
+		},
+		new MapLocEval() {
+			@Override
+			public int eval(MapLocation loc) {
+				return -loc.x+loc.y;
+			}
+		},
+		new MapLocEval() {
+			@Override
+			public int eval(MapLocation loc) {
+				return -(loc.x<<1);
+			}
+		},
+		new MapLocEval() {
+			@Override
+			public int eval(MapLocation loc) {
+				return -loc.x-loc.y;
+			}
+		}
+	};
 	
 	@Override
 	public RobotState processTransitions(RobotState state)
@@ -84,11 +144,9 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		
 		switch (newstate)
 		{
-		
-		
+			
+			
 		}
-		
-		
 	}
 	
 	@Override
@@ -165,7 +223,6 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		case SWARM:
 			swarm();
 			break;
-		
 		}
 	}
 
@@ -203,7 +260,7 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 						if (rc.senseObjectAtLocation(exploreloc, RobotLevel.ON_GROUND) == null)
 						{
 							rc.spawn(RobotType.TOWER);
-							formation = formationvals[(formation.ordinal()+1)%formationvals.length];
+//							formation = formationvals[(formation.ordinal()+1)%formationvals.length];
 						}
 						else
 							sendSwarmInfo(dir);
@@ -309,8 +366,28 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		case FIXED_ARROW:
 		case FIXED_F:
 			return checkFixedFormation(dir, formation);
+		case FLEXIBLE_LINE:
+			return checkFormationFlexibleLine(dir);
+			
 		}
 		
+		return true;
+	}
+	
+	private boolean checkFormationFlexibleLine(Direction dir) {
+		MapLocation[] archons = dc.getAlliedArchons();
+		MapLocEval eval = ducks[dir.ordinal()];
+		
+		int myval = eval.eval(curLoc);
+		
+		for (int x=1; x<archons.length; x++)
+		{
+			int val = eval.eval(archons[x]);
+			if (val < myval-3 || val > myval+3)
+				return false;
+			if (archons[x].distanceSquaredTo(curLoc) > ArchonConstantsYP.MAX_SWARM_DISTANCE)
+				return false;
+		}
 		return true;
 	}
 	
@@ -426,12 +503,106 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		case FIXED_F:
 			fixedSwarm(formation);
 			break;
+		case FLEXIBLE_LINE:
+			flexibleLineSwarm();
+			break;
 		default:
 			double d = 5/0;
 			if (d==42) d = 2;
 			
 		}
 		
+	}
+	
+	private void flexibleLineSwarm() throws GameActionException {
+		
+		MapLocation[] archons = dc.getAlliedArchons();
+		MapLocation leader = archons[0];
+		
+		if (expdir==null) 
+		{
+			if (rc.canSenseSquare(leader))
+			{
+				RobotInfo ri = rc.senseRobotInfo((Robot) rc.senseObjectAtLocation(leader, RobotLevel.ON_GROUND));
+				expdir = ri.direction;
+			} else
+			{
+				micro.setObjective(leader);
+				micro.attackMove();
+				return;
+			}
+		}
+		
+		
+		MapLocEval eval = ducks[expdir.ordinal()];
+		MapLocEval sepeval = ducks[(expdir.ordinal()+2)%8];
+		
+		int slval = sepeval.eval(leader);
+		
+		int[] separationvalues = new int[archons.length];
+		
+		for (int x=1; x<archons.length; x++)
+		{
+			separationvalues[x] = sepeval.eval(archons[x]);
+		}
+		
+		int myval = sepeval.eval(leader);
+		
+		int numabove = 0;
+		int numbelow = 0;
+		int index = 0;
+		int equal = 0;
+		
+		for (int x=1; x<archons.length; x++)
+		{
+			if (x==archonIndex) continue;
+			if (separationvalues[x] > slval)
+				numabove++;
+			else if (separationvalues[x] < slval)
+				numbelow++;
+			
+			if (separationvalues[x] < myval)
+				index++;
+			else if (separationvalues[x] == myval)
+				equal++;
+		}
+		
+//		if (numabove > 2)
+//		{
+//			if (index<4)
+//			{
+//				
+//			}
+//		} else if (numbelow > 3)
+//		{
+//			
+//		} else if (equal>0)
+//		{
+//			
+//		}
+		Direction dir = Constants.directions[(expdir.ordinal()+6)%8];
+		MapLocation target = null;
+		switch (index)
+		{
+		case 0:
+			target = leader.add(dir,5);
+			break;
+		case 1:
+			target = leader.add(dir,4);
+			break;
+		case 2:
+			target = leader.add(dir,2);
+			break;
+		case 3:
+			target = leader.add(dir.opposite(),2);
+			break;
+		case 4:
+			target = leader.add(dir.opposite(),4);
+			break;
+		}
+		
+		micro.setObjective(target);
+		micro.attackMove();
 	}
 	
 	private void fixedSwarm(FormationType formation) throws GameActionException {
@@ -454,11 +625,7 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		micro.setObjective(formationlocs[archonIndex]);
 		micro.attackMove();
 	}
-	
-	private void sendSwarmInfo(Direction dir)
-	{
-		io.sendShorts("#aa", new int[] {dir.ordinal(), formation.ordinal()});
-	}
+
 	
 //	@Override
 //	public MoveInfo computeNextMove() throws GameActionException {
@@ -580,5 +747,11 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		MapLocation[] formationlocs = createFixedFormation(expdir, loc, formation);
 		nav.setDestination(formationlocs[archonIndex]);
 		return new MoveInfo(nav.navigateToDestination());
+	}
+	
+	
+	private void sendSwarmInfo(Direction dir)
+	{
+		io.sendShorts("#aa", new int[] {dir.ordinal(), formation.ordinal()});
 	}
 }
