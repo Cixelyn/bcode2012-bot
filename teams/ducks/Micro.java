@@ -6,7 +6,6 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
-import ducks.Debug.Owner;
 
 /**
  * Handles the attacking and moving for robots.
@@ -213,17 +212,14 @@ public class Micro {
 		if (closestArchon != null) {
 			System.out.println("GGGGGGGGGGGGGGGGGGGGGGGGGGGF");
 			if(br.curLoc.distanceSquaredTo(closestArchon) >= tooFarDistance) {
-				br.debug.setIndicatorString(2, "Going to archon", Owner.YP);
 				return randomTowards(closestArchon);
 			} else if (br.curLoc.distanceSquaredTo(closestArchon) <= tooCloseDistance) {
-				br.debug.setIndicatorString(2, "backing to archon", Owner.YP);
 				MapLocation locAwayFromArchon = br.curLoc.add(closestArchon.directionTo(br.curLoc), 5);
 				return randomTowards(locAwayFromArchon);
 			}
 		}
 		System.out.println("eawwwwwwwwwwwwwwwwwwwwwww");
 		normalTowards();
-		br.debug.setIndicatorString(2, "normal towards", Owner.YP);
 		return false;
 	}
 	

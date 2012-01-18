@@ -1,6 +1,5 @@
 package ducks;
 
-import ducks.Debug.Owner;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -134,12 +133,9 @@ public class SoldierRobot extends StrategyRobot {
 		// TODO(jven): use hibernation engine instead
 		// power down if not enough flux
 		if (rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
-			debug.setIndicatorString(0, "" + myType + " - LOW FLUX", Owner.ALL);
 			return;
 		}
 		// TODO(jven): debug, archon ownership stuff
-		debug.setIndicatorString(
-				2, "Owner ID: " + ao.getArchonOwnerID(), Owner.JVEN);
 		switch (state) {
 			case INITIALIZE:
 				initialize();

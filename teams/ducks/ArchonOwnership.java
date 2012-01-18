@@ -42,8 +42,6 @@ public class ArchonOwnership {
 	public void claimOwnership() {
 		// ignore if not an archon
 		if (br.myType != RobotType.ARCHON) {
-			br.debug.println(
-					"Robot " + br.myID + " tried to claim ownership of a unit!");
 			return;
 		}
 		// get information to set in ownership
@@ -68,8 +66,6 @@ public class ArchonOwnership {
 	public void broadcastOwnerships(int trueArchonID) {
 		// ignore if not an archon
 		if (br.myType != RobotType.ARCHON) {
-			br.debug.println(
-					"Robot " + br.myID + " tried to claim ownership of a unit!");
 			return;
 		}
 		// broadcast buffer
@@ -91,8 +87,6 @@ public class ArchonOwnership {
 	public void processAcknowledgement(int[] ack) {
 		// ignore if not an archon
 		if (br.myType != RobotType.ARCHON) {
-			br.debug.println(
-					"Robot " + br.myID + " tried to process acknowledgement!");
 			return;
 		}
 		// check if a unit has acknowledged one of my ownerships
@@ -129,8 +123,6 @@ public class ArchonOwnership {
 	public boolean processOwnership(int[] ownership) {
 		// make sure I'm not an archon
 		if (br.myType == RobotType.ARCHON) {
-			br.debug.println(
-					"Archon " + br.myID + " tried to process ownership!");
 			return false;
 		}
 		// ignore if I already have an owner

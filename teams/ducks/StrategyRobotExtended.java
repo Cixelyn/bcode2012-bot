@@ -1,6 +1,5 @@
 package ducks;
 
-import ducks.Debug.Owner;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
@@ -22,9 +21,6 @@ public abstract class StrategyRobotExtended extends BaseRobot {
 	@Override
 	public void run() throws GameActionException {
 
-		// show state of robot
-		debug.setIndicatorString(0,"" + myType + " - " + curState, Owner.ALL);
-
 		initializeForRound();
 		
 		gotoState(processTransitions(curState));
@@ -42,7 +38,6 @@ public abstract class StrategyRobotExtended extends BaseRobot {
 	{
 		if (curState == newState)
 		{
-			debug.println("Tried to push same state: "+newState);
 		} else
 		{
 			stateStack[stack_size++] = curState;
@@ -57,7 +52,6 @@ public abstract class StrategyRobotExtended extends BaseRobot {
 	{
 		if (stack_size == 0)
 		{
-			debug.println("Tried to pop empty stack, curstate: "+curState);
 		} else
 		{
 			gotoState(stateStack[--stack_size]);

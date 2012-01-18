@@ -1,6 +1,5 @@
 package ducks;
 
-import ducks.Debug.Owner;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -9,7 +8,6 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
-import battlecode.common.TerrainTile;
 import battlecode.common.TerrainTile;
 
 public class ArchonRobot extends StrategyRobot {
@@ -230,9 +228,6 @@ public class ArchonRobot extends StrategyRobot {
 
 	@Override
 	public void execute(RobotState state) throws GameActionException {
-		debug.setIndicatorString(
-				2, "Unack ownerships: " + ao.getNumUnacknowledgedOwnerships(),
-				Owner.JVEN);
 		
 		if(directionToSenseIn!=null) {
 			mc.senseAfterMove(directionToSenseIn);
@@ -567,8 +562,6 @@ public class ArchonRobot extends StrategyRobot {
 			{
 				sendSwarmInfo(moveTarget,enemyDiff);
 				
-				debug.setIndicatorString(2, "moving towards:"+moveTarget+", enemy diff is "+enemyDiff, Owner.YP);
-				
 				micro.setNormalMode();
 				micro.setObjective(moveTarget);
 				micro.attackMove();
@@ -577,8 +570,6 @@ public class ArchonRobot extends StrategyRobot {
 				sendSwarmInfo(attackMoveTarget,enemyDiff);
 				
 				MapLocation swarmcenter = radar.getEnemySwarmCenter();
-				
-				debug.setIndicatorString(2, "enemy center at:"+swarmcenter+", swarmTarget:"+attackMoveTarget+", enemy diff is "+enemyDiff, Owner.YP);
 				
 				micro.setKiteMode(25);
 				micro.setObjective(swarmcenter);
@@ -885,8 +876,6 @@ public class ArchonRobot extends StrategyRobot {
 			nav.setNavigationMode(NavigationMode.RANDOM);
 		}
 	
-		debug.setIndicatorString(1, Integer.toString(numDefenders), Owner.YP);
-		
 		
 		if(rc.getFlux() > 150) 
 		{
