@@ -15,7 +15,7 @@ public class RobotPlayer {
 			case ARCHON:
 				if(owner.equals("haitao")) br = new ArchonRobotHT(myRC);
 				else if(owner.equals("justin"))  br = new ArchonRobotJV(myRC);
-				else if(owner.equals("yp"))  br = new ArchonRobotYP(myRC);
+				else if(owner.equals("yp"))  br = new ArchonRobotYP_SwarmTest(myRC);
 				else br = new ArchonRobot(myRC);
 				break;
 			case SOLDIER:

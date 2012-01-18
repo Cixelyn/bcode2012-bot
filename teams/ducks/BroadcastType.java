@@ -12,11 +12,17 @@ public enum BroadcastType {
 	ENEMY_ARCHON_KILL,
 
 	// rally code
-	RALLY;
+	RALLY,
+	
+	// swarm code
+	ANNOUNCE_ENEMY,
+//	(temporary)
+	SWARM_DETAILS,
 	
 	
+//	ending semicolon
+	;
 	
-
 	public char header;
 	BroadcastType() {
 		header = (char)(this.ordinal() + 0x100);
