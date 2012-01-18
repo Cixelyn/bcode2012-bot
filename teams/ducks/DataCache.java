@@ -1,7 +1,5 @@
 package ducks;
 
-import java.util.Arrays;
-
 import battlecode.common.*;
 
 public class DataCache {
@@ -17,8 +15,6 @@ public class DataCache {
 
 	private int moveableDirectionsTime = -1;
 	private boolean[] moveableDirections = new boolean[8];
-	private int moveableLandTime = -1;
-	private boolean[] moveableLand = new boolean[8];
 	
 	private boolean[] isAdjacentGameObjectGroundCached;
 	private boolean[] isAdjacentGameObjectAirCached;
@@ -27,11 +23,6 @@ public class DataCache {
 	private GameObject[] adjacentGameObjectsAir =
 			new GameObject[Direction.values().length];
 	private int adjacentGameObjectsTime = -1;
-	
-	private boolean[] isAdjacentTerrainTileCached;
-	private TerrainTile[] adjacentTerrainTiles =
-			new TerrainTile[Direction.values().length];
-	private int adjacentTerrainTilesTime = -1;
 	
 	private Robot[] nearbyRobots;
 	private int nearbyRobotsTime = -1;
