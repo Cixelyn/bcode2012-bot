@@ -1,5 +1,6 @@
 package ypstrategyframework;
 
+import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 
 public class ArchonBehavior {
@@ -109,6 +110,41 @@ public class ArchonBehavior {
 	}
 
 	public void returnToSwarm(MapLocation leader) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public int evaluatePosition() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public void chase(Direction chaseDirection) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void retreatFromEnemy() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public MapLocation getTarget() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void keepDistance() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void checkSoldiers() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void regroup() {
 		// TODO Auto-generated method stub
 		
 	}
