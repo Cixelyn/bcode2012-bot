@@ -14,11 +14,18 @@ class ArchonConstantsYP {
 	public static final int FORMATION_CLOSENESS = 5;
 }
 
+enum FormationType {
+	FIXED_PYRAMID,
+	FIXED_ARROW,
+	FIXED_F,
+}
+
 public class ArchonRobotYP extends StrategyRobotExtended {
 
 	public ArchonRobotYP(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 		initialized = false;
+		formation = FormationType.FIXED_PYRAMID;
 	}
 
 	boolean isLeader;
@@ -28,7 +35,8 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	MapLocation lastexploc;
 	MapLocation curexploc;
 	
-	
+	FormationType formation;
+	static final FormationType[] formationvals = FormationType.values();
 	
 	@Override
 	public RobotState processTransitions(RobotState state)
@@ -90,7 +98,9 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		case 'a' :
 		{
 			if (!isLeader) {
-				expdir = Constants.directions[BroadcastSystem.decodeShort(sb)];
+				int[] msg = BroadcastSystem.decodeShorts(sb);
+				expdir = Constants.directions[msg[0]];
+				formation = formationvals[msg[1]];
 			}
 		} break;
 		}
@@ -191,7 +201,10 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 				else
 					if (rc.getFlux()>=RobotType.TOWER.spawnCost)
 						if (rc.senseObjectAtLocation(exploreloc, RobotLevel.ON_GROUND) == null)
+						{
 							rc.spawn(RobotType.TOWER);
+							formation = formationvals[(formation.ordinal()+1)%formationvals.length];
+						}
 						else
 							sendSwarmInfo(dir);
 			}
@@ -290,53 +303,138 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	}
 
 	private boolean checkFormation(Direction dir) {
+		switch (formation)
+		{
+		case FIXED_PYRAMID:
+		case FIXED_ARROW:
+		case FIXED_F:
+			return checkFixedFormation(dir, formation);
+		}
 		
+		return true;
+	}
+	
+	private boolean checkFixedFormation(Direction dir, FormationType formation) {
 		MapLocation[] archons = dc.getAlliedArchons();
 		
-		MapLocation[] formation = createFormation(dir,curLoc);
+		MapLocation[] formationloc = createFixedFormation(dir,curLoc,formation);
 		
 		for (int x=1; x<archons.length; x++)
 		{
-			if (!archons[x].equals(formation[x]) &&
-					(rc.senseTerrainTile(formation[x])==TerrainTile.LAND 
-					&& archons[x].distanceSquaredTo(formation[x]) > ArchonConstantsYP.FORMATION_CLOSENESS))
+			if (!archons[x].equals(formationloc[x]) &&
+					(rc.senseTerrainTile(formationloc[x])==TerrainTile.LAND 
+					&& archons[x].distanceSquaredTo(formationloc[x]) > ArchonConstantsYP.FORMATION_CLOSENESS))
 				return false;
 		}
 		return true;
 	}
 	
-	private MapLocation[] createFormation(Direction dir, MapLocation base) {
+	private MapLocation[] createFixedFormation(Direction dir, MapLocation base, FormationType formation) {
+		
 		MapLocation[] locs = new MapLocation[dc.getAlliedArchons().length];
 		
-		Direction right = dir.rotateRight().rotateRight();
-		Direction left = dir.rotateLeft().rotateLeft();
-		
-		for (int x=1; x<locs.length; x++)
+		switch (formation)
 		{
-			switch (x)
+		case FIXED_PYRAMID:
+		{
+			Direction right = dir.rotateRight().rotateRight();
+			Direction left = dir.rotateLeft().rotateLeft();
+			
+			for (int x=1; x<locs.length; x++)
 			{
-			case 1:
-				locs[1] = base.add(dir).add(right);
-				break;
-			case 2:
-				locs[2] = base.add(dir).add(left);
-				break;
-			case 3:
-				locs[3] = base.add(right).add(right);
-				break;
-			case 4:
-				locs[4] = base.add(left).add(left);
-				break;
-			case 5:
-				locs[5] = base.add(dir,3);
-				break;
+				switch (x)
+				{
+				case 1:
+					locs[1] = base.add(dir).add(right);
+					break;
+				case 2:
+					locs[2] = base.add(dir).add(left);
+					break;
+				case 3:
+					locs[3] = base.add(right).add(right);
+					break;
+				case 4:
+					locs[4] = base.add(left).add(left);
+					break;
+				case 5:
+					locs[5] = base.add(dir,3);
+					break;
+				}
 			}
+		} break;
+		case FIXED_ARROW:
+		{
+			Direction right = dir.rotateRight().rotateRight();
+			Direction left = dir.rotateLeft().rotateLeft();
+			
+			for (int x=1; x<locs.length; x++)
+			{
+				switch (x)
+				{
+				case 1:
+					locs[1] = base.add(dir).add(right);
+					break;
+				case 2:
+					locs[2] = base.add(dir).add(left);
+					break;
+				case 3:
+					locs[3] = base.add(right,2);
+					break;
+				case 4:
+					locs[4] = base.add(left,2);
+					break;
+				case 5:
+					locs[5] = base.add(dir.opposite(),2);
+					break;
+				}
+			}
+		} break;
+		case FIXED_F:
+		{
+			for (int x=1; x<locs.length; x++)
+			{
+				switch (x)
+				{
+				case 1:
+					locs[1] = base.add(0,-4);
+					break;
+				case 2:
+					locs[2] = base.add(2,-4);
+					break;
+				case 3:
+					locs[3] = base.add(0,-2);
+					break;
+				case 4:
+					locs[4] = base.add(2,0);
+					break;
+				case 5:
+					locs[5] = base.add(0,2);
+					break;
+				}
+			}
+		} break;
 		}
 		
 		return locs;
 	}
 
 	private void swarm() throws GameActionException {
+		switch (formation)
+		{
+		case FIXED_ARROW:
+		case FIXED_PYRAMID:
+		case FIXED_F:
+			fixedSwarm(formation);
+			break;
+		default:
+			double d = 5/0;
+			if (d==42) d = 2;
+			
+		}
+		
+	}
+	
+	private void fixedSwarm(FormationType formation) throws GameActionException {
 		MapLocation loc = dc.getAlliedArchons()[0];
 		if (expdir==null) 
 		{
@@ -352,13 +450,135 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 			}
 		}
 		
-		MapLocation[] formation = createFormation(expdir, loc);
-		micro.setObjective(formation[archonIndex]);
+		MapLocation[] formationlocs = createFixedFormation(expdir, loc, formation);
+		micro.setObjective(formationlocs[archonIndex]);
 		micro.attackMove();
 	}
 	
 	private void sendSwarmInfo(Direction dir)
 	{
-		io.sendShort("#aa", dir.ordinal());
+		io.sendShorts("#aa", new int[] {dir.ordinal(), formation.ordinal()});
+	}
+	
+//	@Override
+//	public MoveInfo computeNextMove() throws GameActionException {
+//		if (isLeader)
+//		{
+//			return simpleExplore();
+//		} else
+//		{
+//			return simpleSwarm();
+//		}
+//	}
+	
+	public MoveInfo simpleExplore() throws GameActionException
+	{
+
+//		MapLocation exploreloc = myHome.add(Direction.WEST,40);
+		MapLocation exploreloc = mc.guessBestPowerNodeToCapture();
+		
+		if (curLoc.isAdjacentTo(exploreloc))
+		{
+			Direction dir = curLoc.directionTo(exploreloc);
+			if (curDir!=dir)
+				return new MoveInfo(RobotType.TOWER,dir);
+			else
+				if (rc.getFlux()>=RobotType.TOWER.spawnCost)
+					if (rc.senseObjectAtLocation(exploreloc, RobotLevel.ON_GROUND) == null)
+						return new MoveInfo(RobotType.TOWER,dir);
+					else
+						sendSwarmInfo(dir);
+			return null;
+		}
+		
+		if (exploreloc.equals(lastexploc))
+		{
+			exploreloc = curexploc;
+			switch (myHome.directionTo(exploreloc))
+			{
+			case WEST:
+				if (mc.edgeXMin!=0)
+				{
+					curexploc = generateExploreLoc();
+					exploreloc = curexploc;
+				}
+				break;
+			case NORTH:
+				if (mc.edgeYMin!=0)
+				{
+					curexploc = generateExploreLoc();
+					exploreloc = curexploc;
+				}
+				break;
+			case EAST:
+				if (mc.edgeXMax!=0)
+				{
+					curexploc = generateExploreLoc();
+					exploreloc = curexploc;
+				}
+				break;
+			case SOUTH:
+				if (mc.edgeYMax!=0)
+				{
+					curexploc = generateExploreLoc();
+					exploreloc = curexploc;
+				}
+				break;
+			}
+		} else if (curLoc.equals(exploreloc))
+		{
+			lastexploc = exploreloc;
+			curexploc = generateExploreLoc();
+			exploreloc = curexploc;
+		} else if (curLoc.isAdjacentTo(exploreloc) && !rc.canMove(curLoc.directionTo(exploreloc)))
+		{
+			lastexploc = exploreloc;
+			curexploc = generateExploreLoc();
+			exploreloc = curexploc;
+		}
+		
+		rc.setIndicatorString(1, "curloc "+curLoc);
+		rc.setIndicatorString(2, "exploring to "+exploreloc);
+		
+		nav.setDestination(exploreloc);
+		Direction dir = nav.wiggleToMovableDirection(nav.navigateToDestination());
+		if (dir==null) return null;
+		if (curDir != dir)
+			rc.setDirection(dir);
+		else
+		{
+			if (checkFormation(dir) && rc.canMove(dir))
+			{
+				rc.moveForward();
+				directionToSenseIn = dir;
+			}
+			else
+			{
+				sendSwarmInfo(dir);
+			}
+		}
+		return null;
+	}
+	
+	
+	public MoveInfo simpleSwarm() throws GameActionException
+	{
+		MapLocation loc = dc.getAlliedArchons()[0];
+		if (expdir==null) 
+		{
+			if (rc.canSenseSquare(loc))
+			{
+				RobotInfo ri = rc.senseRobotInfo((Robot) rc.senseObjectAtLocation(loc, RobotLevel.ON_GROUND));
+				expdir = ri.direction;
+			} else
+			{
+				nav.setDestination(loc);
+				return new MoveInfo(nav.navigateToDestination());
+			}
+		}
+		
+		MapLocation[] formationlocs = createFixedFormation(expdir, loc, formation);
+		nav.setDestination(formationlocs[archonIndex]);
+		return new MoveInfo(nav.navigateToDestination());
 	}
 }
