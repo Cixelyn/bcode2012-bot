@@ -63,7 +63,11 @@ public class ArchonRobotJV extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-
+		// TODO(jven): temporary
+		if (directionToSenseIn != null) {
+			mc.senseAfterMove(directionToSenseIn);
+			directionToSenseIn = null;
+		}
 		// transition to a new state if necessary
 		curState = getNextState();
 		// TODO(jven): debugging
