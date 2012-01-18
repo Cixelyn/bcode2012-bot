@@ -12,6 +12,7 @@ public class SoldierRobotHT extends BaseRobot {
 	boolean checkedBehind = false;
 	int keepTargetTurns;
 	MapLocation target;
+	MapLocation previousTarget;
 	
 	public SoldierRobotHT(RobotController myRC) {
 		super(myRC);
@@ -25,10 +26,13 @@ public class SoldierRobotHT extends BaseRobot {
 	@Override
 	public void run() throws GameActionException {
 		
+		fbs.manageFlux();
+		
 		if(!rc.isAttackActive()) {
 			RobotInfo closestEnemy = dc.getClosestEnemy();
 			if(closestEnemy != null) {
 				target = closestEnemy.location;
+				nav.setNavigationMode(NavigationMode.GREEDY);
 				keepTargetTurns = 20;
 			}
 			if (closestEnemy != null && rc.canAttackSquare(closestEnemy.location)) {
@@ -42,14 +46,21 @@ public class SoldierRobotHT extends BaseRobot {
 		keepTargetTurns--;
 		if(keepTargetTurns < 0) {
 			target = dc.getClosestArchon();
-			if(rc.canSenseSquare(target)) {
-				RobotInfo ri = rc.senseRobotInfo((Robot)rc.senseObjectAtLocation(
-						target, RobotLevel.ON_GROUND));
-				target = target.add(ri.direction, 5);
-				keepTargetTurns = 15;
+			if(target.distanceSquaredTo(curLoc)>49) {
+				nav.setNavigationMode(NavigationMode.BUG);
+			} else {
+				nav.setNavigationMode(NavigationMode.GREEDY);
+				if(rc.canSenseSquare(target)) {
+					RobotInfo ri = rc.senseRobotInfo((Robot)rc.senseObjectAtLocation(
+							target, RobotLevel.ON_GROUND));
+					target = target.add(ri.direction, 5);
+					keepTargetTurns = 15;
+				} 
 			}
 		}
-		nav.setDestination(target);
+		if(nav.getNavigationMode()!=NavigationMode.BUG || target.distanceSquaredTo(previousTarget)>25)
+			nav.setDestination(target);
+		previousTarget = target;
 		
 		
 		if(keepTargetTurns>0 && curLoc.distanceSquaredTo(target) <= 2) {

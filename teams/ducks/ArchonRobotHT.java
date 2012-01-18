@@ -70,7 +70,7 @@ public class ArchonRobotHT extends BaseRobot{
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		boolean startCapping = Clock.getRoundNum()>1000;
-		radar.scan(true, true);
+		radar.scan(false, true);
 		if(radar.closestEnemy != null) {
 			target = radar.closestEnemy.location;
 			keepTargetTurns = 30;
@@ -79,7 +79,9 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 		
 		if(keepTargetTurns<0) 
-			target = startCapping ? mc.guessBestPowerNodeToCapture() : mc.guessEnemyPowerCoreLocation();
+			target = startCapping ? (myArchonID==0 ? myHome : 
+				mc.guessBestPowerNodeToCapture()) : 
+				mc.guessEnemyPowerCoreLocation();
 		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
 		nav.setDestination(target);
 		
@@ -91,7 +93,8 @@ public class ArchonRobotHT extends BaseRobot{
 		if(radar.closestEnemyDist <= 20) {
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
-		if(rc.canMove(curDir) && curLocInFront.equals(nav.getDestination())) {
+		if(rc.canMove(curDir) && curLocInFront.equals(nav.getDestination()) && 
+				mc.isPowerNode(curLocInFront)) {
 			if(startCapping && rc.getFlux() > 200) {
 				return new MoveInfo(RobotType.TOWER, curDir);
 			}
