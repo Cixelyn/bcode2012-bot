@@ -81,15 +81,15 @@ public class SoldierRobotJV extends BaseRobot {
 	}
 	
 	@Override
-	public void processMessage(char msgType, StringBuilder sb)
+	public void processMessage(MessageType msgType, StringBuilder sb)
 			throws GameActionException {
 		switch (msgType) {
-			case 'r':
+			case RALLY:
 				rallied = true;
 				objective = BroadcastSystem.decodeMapLoc(sb);
 				break;
 			default:
-				break;
+				super.processMessage(msgType, sb);
 		}
 	}
 	

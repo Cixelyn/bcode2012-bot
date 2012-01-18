@@ -100,22 +100,23 @@ public class ArchonRobotJV extends BaseRobot {
 	}
 	
 	@Override
-	public void processMessage(char msgType, StringBuilder sb)
+	public void processMessage(MessageType msgType, StringBuilder sb)
 			throws GameActionException {
 		switch (msgType) {
-			case 'e':
-				ses.receiveMapEdges(BroadcastSystem.decodeShorts(sb));
+			case MAP_EDGES:
+				ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 				break;
-			case 'm':
+			case MAP_FRAGMENTS:
 				ses.receiveMapFragment(BroadcastSystem.decodeInts(sb));
 				break;
-			case 'p':
+			case POWERNODE_FRAGMENTS:
 				ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 				break;
-			case 'r':
+			case RALLY:
 				rallied = true;
 				break;
 			default:
+				this.processMessage(msgType, sb);
 				break;
 		}
 	}

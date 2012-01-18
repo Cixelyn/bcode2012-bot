@@ -265,28 +265,28 @@ public class ArchonRobot extends StrategyRobot {
 	}
 	
 	@Override
-	public void processMessage(char msgType, StringBuilder sb)
+	public void processMessage(MessageType msgType, StringBuilder sb)
 			throws GameActionException {
 		int priority = 99;
 		
 		switch(msgType) {
-		
-		case 's':
-		{
-			RobotState curstate = getCurrentState();
-			
-			if (curstate == RobotState.BUILD_ARMY)
-			{
-				if (isDefender)
-				{
-					gotoState(RobotState.DEFEND_BASE);
-				} else
-				{
-					gotoState(RobotState.ATTACK_ENEMY_BASE);
-				}
-			}
-			
-		} break;
+//		
+//		case 's':
+//		{
+//			RobotState curstate = getCurrentState();
+//			
+//			if (curstate == RobotState.BUILD_ARMY)
+//			{
+//				if (isDefender)
+//				{
+//					gotoState(RobotState.DEFEND_BASE);
+//				} else
+//				{
+//					gotoState(RobotState.ATTACK_ENEMY_BASE);
+//				}
+//			}
+//			
+//		} break;
 		
 //		swarm messages
 //		case 's':
@@ -326,14 +326,15 @@ public class ArchonRobot extends StrategyRobot {
 //		} break;
 		
 //			dead archon messages
-		case 'd':
-			eakc.reportEnemyArchonKills(BroadcastSystem.decodeShorts(sb));
+		case ENEMY_ARCHON_KILL:
+			eakc.reportEnemyArchonKills(BroadcastSystem.decodeUShorts(sb));
 			break;
-		case 'o':
-			ao.processAcknowledgement(BroadcastSystem.decodeShorts(sb));
+		case OWNERSHIP_CLAIM:
+			ao.processAcknowledgement(BroadcastSystem.decodeUShorts(sb));
 			break;
 		default:
 			super.processMessage(msgType, sb);
+			break;
 		}
 	}
 	
@@ -722,20 +723,20 @@ public class ArchonRobot extends StrategyRobot {
 	{
 		int[] msg = new int[] {archonIndex, target.x, target.y, diff+100, curLoc.x, curLoc.y};
 		
-		io.sendShorts("#xs", msg);
+//		io.sendShorts("#xs", msg);
 //		io.sendShorts(myRadioChannel+"s", msg);
 	}
 	
 	public void sendRallyAtLoc(MapLocation target, Direction swarmDirection)
 	{
-		io.sendShorts("#ax", 
-				new int[]{	archonIndex, target.x, target.y, swarmDirection.ordinal()});
+//		io.sendShorts("#ax", 
+//				new int[]{	archonIndex, target.x, target.y, swarmDirection.ordinal()});
 	}
 	
 	public void sendEnemyAtLoc(MapLocation target)
 	{
-		io.sendShorts("#aa", 
-				new int[]{	archonIndex, target.x, target.y});
+//		io.sendShorts("#aa", 
+//				new int[]{	archonIndex, target.x, target.y});
 	}
 	
 	public boolean checkAttackMoveTargets()
@@ -867,11 +868,11 @@ public class ArchonRobot extends StrategyRobot {
 		radar.scan(false, true);
 		if (radar.numEnemySoldiers > 0 || radar.numEnemyArchons > 0) {
 			io.sendWakeupCall();
-			io.sendShort("#zz", 0); //FIXME: dummy call for now to trigger wakeup
+//			io.sendShort("#zz", 0); //FIXME: dummy call for now to trigger wakeup
 			nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		} else {
 			if(curRound % 5 == 0 && radar.roundsSinceEnemySighted > 10) { // send back to sleep
-				io.sendShort("#dz", 0);
+//				io.sendShort("#dz", 0);
 			}
 			nav.setNavigationMode(NavigationMode.RANDOM);
 		}
@@ -934,11 +935,11 @@ public class ArchonRobot extends StrategyRobot {
 	}
 	
 	private void wakeUpAllUnits() {
-		io.sendShort("#xw", 0);
+//		io.sendShort("#xw", 0);
 	}
 	
 	private void wakeUpMyUnits() {
-		io.sendShort("#" + trueArchonIndex + "w", 0);
+//		io.sendShort("#" + trueArchonIndex + "w", 0);
 	}
 
 }
