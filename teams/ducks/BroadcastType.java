@@ -1,6 +1,6 @@
 package ducks;
 
-public enum MessageType {
+public enum BroadcastType {
 	
 	// shared exploration
 	POWERNODE_FRAGMENTS,
@@ -18,11 +18,11 @@ public enum MessageType {
 	
 
 	public char header;
-	MessageType() {
+	BroadcastType() {
 		header = (char)(this.ordinal() + 0x100);
 	}
 	
-	public static MessageType decode(char header) {
-		return MessageType.values()[header - 0x100];
+	public static BroadcastType decode(char header) {
+		return BroadcastType.values()[header - 0x100];
 	}
 }

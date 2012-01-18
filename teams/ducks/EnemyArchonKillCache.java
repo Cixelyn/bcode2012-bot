@@ -48,7 +48,7 @@ public class EnemyArchonKillCache {
 	
 	public void broadcastDeadEnemyArchonIDs() throws GameActionException {
 		if (--timeUntilBroadcast <= 0) {
-			br.io.sendUShorts(MessageChannel.ALL, MessageType.ENEMY_ARCHON_KILL, getDeadEnemyArchonIDs());
+			br.io.sendUShorts(BroadcastChannel.ALL, BroadcastType.ENEMY_ARCHON_KILL, getDeadEnemyArchonIDs());
 			timeUntilBroadcast = Constants.SOLDIER_BROADCAST_FREQUENCY;
 		}
 	}

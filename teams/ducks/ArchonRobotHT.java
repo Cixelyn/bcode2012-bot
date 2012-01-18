@@ -20,7 +20,11 @@ public class ArchonRobotHT extends BaseRobot{
 				break;
 			}
 		}
-		io.setAddresses(new String[] {"#e", "#x", "#a"});
+		io.setChannels(new BroadcastChannel[] {
+				BroadcastChannel.ALL,
+				BroadcastChannel.ARCHONS,
+				BroadcastChannel.EXPLORERS
+		});
 		fbs.setBattleMode();
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 	}
@@ -43,7 +47,7 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 	}
 	@Override
-	public void processMessage(MessageType msgType, StringBuilder sb) throws GameActionException {
+	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		int[] data = null;
 		switch(msgType) {
 		case MAP_EDGES:

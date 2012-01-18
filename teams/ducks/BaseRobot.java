@@ -141,7 +141,7 @@ public abstract class BaseRobot {
 	 * @param msgType
 	 * @param sb
 	 */
-	public void processMessage(MessageType msgType, StringBuilder sb) throws GameActionException {}
+	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {}
 
 	/**
 	 * @return The age of the robot in rounds

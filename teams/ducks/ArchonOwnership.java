@@ -72,7 +72,7 @@ public class ArchonOwnership {
 		if (--timeUntilBroadcast <= 0) {
 			for (int[] ownership : buffer) {
 				if (ownership[0] != -1) {
-					br.io.sendUShorts(MessageChannel.ALL, MessageType.OWNERSHIP_CLAIM,
+					br.io.sendUShorts(BroadcastChannel.ALL, BroadcastType.OWNERSHIP_CLAIM,
 							new int[] {ownership[0], ownership[1],
 							ownership[2], trueArchonID});
 				}
@@ -136,10 +136,12 @@ public class ArchonOwnership {
 				ownership[2] == br.birthplace.y) {
 			archonOwnerID = ownership[3];
 //			archonRobotID = ownership[4];
-			br.io.sendUShorts(MessageChannel.ARCHONS, MessageType.OWNERSHIP_CLAIM, new int[] {ownership[0], ownership[1],
+			br.io.sendUShorts(BroadcastChannel.ARCHONS, BroadcastType.OWNERSHIP_CLAIM, new int[] {ownership[0], ownership[1],
 					ownership[2]});
-			br.io.addChannel("#" + archonOwnerID);
-			return true;
+			
+			throw new RuntimeException("ArchonOwnership[processOwnership]: THIS IS BROKEN FIX ME LATER");
+//			br.io.addChannel("#" + archonOwnerID);
+//			return true;
 		} else {
 			return false;
 		}

@@ -265,7 +265,7 @@ public class ArchonRobot extends StrategyRobot {
 	}
 	
 	@Override
-	public void processMessage(MessageType msgType, StringBuilder sb)
+	public void processMessage(BroadcastType msgType, StringBuilder sb)
 			throws GameActionException {
 		int priority = 99;
 		
@@ -343,7 +343,10 @@ public class ArchonRobot extends StrategyRobot {
 		// set navigation mode mode
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		// set radio addresses
-		io.setAddresses(new String[] {"#x", "#a"});
+		io.setChannels(new BroadcastChannel[]{
+				BroadcastChannel.ALL,
+				BroadcastChannel.ARCHONS
+		});
 		// see if i'm the defender
 		isDefender = curLoc.equals(dc.getAlliedArchons()[5]);
 		if (!isDefender) checkAttackMoveStatus();

@@ -59,7 +59,7 @@ public class SharedExplorationSystem {
 		if(c>0) {
 			int[] ints = new int[c];
 			System.arraycopy(buffer, 0, ints, 0, c);
-			baseRobot.io.sendUInts(MessageChannel.EXPLORERS, MessageType.MAP_FRAGMENTS, ints);
+			baseRobot.io.sendUInts(BroadcastChannel.EXPLORERS, BroadcastType.MAP_FRAGMENTS, ints);
 		}
 	}
 	/** Broadcasts robot's knowledge of the four map edges. */
@@ -70,7 +70,7 @@ public class SharedExplorationSystem {
 				baseRobot.mc.edgeYMin,
 				baseRobot.mc.edgeYMax
 		};
-		baseRobot.io.sendUShorts(MessageChannel.ALL, MessageType.MAP_EDGES, edges);
+		baseRobot.io.sendUShorts(BroadcastChannel.ALL, BroadcastType.MAP_EDGES, edges);
 	}
 	/** Broadcasts data about one node in the power node graph and its neighbors. */
 	public void broadcastPowerNodeFragment() {
@@ -90,7 +90,7 @@ public class SharedExplorationSystem {
 			int neighborID = png.adjacencyList[id][i];
 			ints[i+2] = (png.nodeLocations[neighborID].x << 15) + png.nodeLocations[neighborID].y;
 		}
-		baseRobot.io.sendUInts(MessageChannel.EXPLORERS, MessageType.POWERNODE_FRAGMENTS, ints);
+		baseRobot.io.sendUInts(BroadcastChannel.EXPLORERS, BroadcastType.POWERNODE_FRAGMENTS, ints);
 	}
 	
 	/** Receive data equivalent to one broadcast of a map fragment. */

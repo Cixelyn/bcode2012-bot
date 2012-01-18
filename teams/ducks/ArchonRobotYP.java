@@ -150,7 +150,7 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	}
 	
 	@Override
-	public void processMessage(MessageType msgType, StringBuilder sb)
+	public void processMessage(BroadcastType msgType, StringBuilder sb)
 			throws GameActionException {
 //		switch (msgType) {
 //		case 'a' :
@@ -225,7 +225,7 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	}
 
 	private void initialize() {
-		io.addChannel("#a");
+		io.addChannel(BroadcastChannel.ARCHONS);
 		
 		if (isLeader)
 		{

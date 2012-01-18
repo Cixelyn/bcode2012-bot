@@ -1,15 +1,16 @@
 package ducks;
 
-public enum MessageChannel {
+public enum BroadcastChannel {
 
 	ALL,
 	ARCHONS,
 	SOLDIERS,
 	EXPLORERS;
 	
-	public final String chanName;
-	MessageChannel() {
-		chanName = "#" + (char)(this.ordinal() + 0x100);
+	public final String chanHeader;
+	
+	BroadcastChannel() {
+		chanHeader = "#" + (char)(this.ordinal() + 0x100);
 	}
 
 	public static String RobotChannel(int id) {

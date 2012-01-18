@@ -13,7 +13,7 @@ public class SoldierRobotHT extends BaseRobot {
 	public SoldierRobotHT(RobotController myRC) {
 		super(myRC);
 		nav.setNavigationMode(NavigationMode.GREEDY);
-		io.setAddresses(new String[] {"#x", "#s"});
+		io.setChannels(new BroadcastChannel[] {BroadcastChannel.ALL, BroadcastChannel.SOLDIERS});
 		fbs.setBattleMode();
 	}
 
@@ -30,7 +30,7 @@ public class SoldierRobotHT extends BaseRobot {
 		} 
 	}
 	@Override
-	public void processMessage(MessageType msgType, StringBuilder sb) {
+	public void processMessage(BroadcastType msgType, StringBuilder sb) {
 		int[] data = null;
 		switch(msgType) {
 		case MAP_EDGES:

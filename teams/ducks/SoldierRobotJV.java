@@ -81,7 +81,7 @@ public class SoldierRobotJV extends BaseRobot {
 	}
 	
 	@Override
-	public void processMessage(MessageType msgType, StringBuilder sb)
+	public void processMessage(BroadcastType msgType, StringBuilder sb)
 			throws GameActionException {
 		switch (msgType) {
 			case RALLY:
@@ -148,7 +148,7 @@ public class SoldierRobotJV extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.BUG);
 		nav.setDestination(myHome);
 		// initialize broadcast system
-		io.setAddresses(new String[] {"#x", "#s"});
+		io.setChannels(new BroadcastChannel[] {BroadcastChannel.ALL, BroadcastChannel.SOLDIERS});
 		// avoid power nodes
 		micro.toggleAvoidPowerNodes(true);
 		// set an initial objective
