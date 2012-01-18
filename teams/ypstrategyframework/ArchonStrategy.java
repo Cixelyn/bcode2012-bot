@@ -1,5 +1,6 @@
 package ypstrategyframework;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -56,7 +57,7 @@ public class ArchonStrategy extends StrategyRobot {
 		} break;
 		case SPAWN_SOLDIERS:
 		{
-			if (soldiersSpawned >= soldiersToSpawn) {
+			if (soldiersSpawned >= soldiersToSpawn || Clock.getRoundNum()>250) {
 				// rally units
 				sendRally();
 				// change state
