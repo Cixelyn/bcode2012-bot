@@ -7,7 +7,7 @@ public abstract class StrategyRobot extends BaseRobot {
 
 	private RobotState currState;
 	
-	public StrategyRobot(RobotController myRC, RobotState initialState) {
+	public StrategyRobot(RobotController myRC, RobotState initialState) throws GameActionException {
 		super(myRC);
 		currState = initialState;
 	}

@@ -46,6 +46,7 @@ public class RobotPlayer {
 				} else br = new SoldierRobot(myRC);
 				break;
 			case SCOUT:
+				if (owner.equals("justin")) br = new ScoutRobotJV(myRC);
 				break;
 			case DISRUPTER:
 				break;

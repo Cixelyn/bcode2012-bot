@@ -10,6 +10,11 @@ public enum BroadcastType {
 	// random shit
 	OWNERSHIP_CLAIM,
 	ENEMY_ARCHON_KILL,
+	
+	// scout wire system
+	WIRE_REQUEST,
+	WIRE_ACCEPT,
+	WIRE_CONFIRM,
 
 	// rally code
 	RALLY,

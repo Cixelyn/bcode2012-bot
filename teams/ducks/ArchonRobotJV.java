@@ -1,5 +1,7 @@
 package ducks;
 
+import java.util.Arrays;
+
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -34,6 +36,8 @@ public class ArchonRobotJV extends BaseRobot {
 	 * each state for details.
 	 */
 	private enum ArchonState {
+		SCOUT_TEST,
+		SUICIDE,
 		INITIALIZE,
 		EXPLORE,
 		RETURN_HOME,
@@ -51,8 +55,11 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	/** Whether the Archon has been rallied. */
 	private boolean rallied = false;
+	
+	/** TODO(jven): testing */
+	private int scoutBuiltRound = -1;
 
-	public ArchonRobotJV(RobotController myRC) {
+	public ArchonRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
 		// set initial state
 		curState = ArchonState.INITIALIZE;
@@ -71,6 +78,9 @@ public class ArchonRobotJV extends BaseRobot {
 		rc.setIndicatorString(0, myType + " - " + curState);
 		// execute
 		switch (curState) {
+			case SCOUT_TEST:
+				scoutTest();
+				break;
 			case INITIALIZE:
 				initialize();
 				break;
@@ -115,6 +125,9 @@ public class ArchonRobotJV extends BaseRobot {
 			case RALLY:
 				rallied = true;
 				break;
+			case WIRE_ACCEPT:
+				sws.processWireAccept(BroadcastSystem.decodeUShorts(sb));
+				break;
 			default:
 				this.processMessage(msgType, sb);
 				break;
@@ -129,6 +142,8 @@ public class ArchonRobotJV extends BaseRobot {
 	private ArchonState getNextState() throws GameActionException {
 		// check if we should transition
 		switch (curState) {
+			case SCOUT_TEST:
+				break;
 			case INITIALIZE:
 				// if we're done initializing, start exploring
 				if (initialized) {
@@ -154,7 +169,8 @@ public class ArchonRobotJV extends BaseRobot {
 						curLoc.distanceSquaredTo(dc.getClosestArchon()) >=
 						ArchonConstants.ARCHON_SPLIT_DISTANCE ||
 						rc.getFlux() == myMaxFlux) {
-					return ArchonState.BUILD_INITIAL_ARMY;
+//					return ArchonState.BUILD_INITIAL_ARMY;
+					return ArchonState.SCOUT_TEST;
 				}
 				break;
 			case BUILD_INITIAL_ARMY:
@@ -189,13 +205,52 @@ public class ArchonRobotJV extends BaseRobot {
 	}
 	
 	/**
+	 * TODO(jven): testing, Used to test scout wire behavior.
+	 */
+	private void scoutTest() throws GameActionException {
+		if (scoutBuiltRound == -1) {
+			// try to build a scout
+			for (Direction d : Direction.values()) {
+				if (d == Direction.OMNI || d == Direction.NONE) {
+					continue;
+				}
+				if (rc.getFlux() >
+						RobotType.SCOUT.spawnCost + RobotType.SCOUT.maxFlux &&
+						spawnUnitInDir(RobotType.SCOUT, d)) {
+					scoutBuiltRound = curRound;
+					break;
+				}
+			}
+		} else if (curLoc.equals(dc.getAlliedArchons()[0])) {
+			// wire stuff
+			if (!sws.ownsWire() && sws.getNumScoutsOnWire() < 6) {
+				sws.broadcastWireRequest();
+			} else {
+				sws.setWireStartLoc(curLoc);
+				sws.setWireEndLoc(myHome);
+				sws.broadcastWireConfirm();
+				micro.setNormalMode();
+				if (mc.getEnemyPowerCoreLocation() == null) {
+					nav.setNavigationMode(NavigationMode.GREEDY);
+					micro.setObjective(mc.guessEnemyPowerCoreLocation());
+				} else {
+					nav.setNavigationMode(NavigationMode.RANDOM);
+				}
+				micro.attackMove();
+			}
+		}
+		// distribute flux
+		fbs.setBatteryMode();
+		fbs.manageFlux();
+	}
+	
+	/**
 	 * Initializes the Archon. The Archon should only ever enter this state once:
 	 * at the beginning of the game.
 	 */
 	private void initialize() throws GameActionException {
 		// initialize navigation system
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
-		nav.setDestination(myHome);
 		// initialize broadcast system
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
@@ -274,7 +329,6 @@ public class ArchonRobotJV extends BaseRobot {
 	 * Build towers and G him.
 	 */
 	private void rush() throws GameActionException {
-		
 		// set objective
 		MapLocation powerNode = mc.guessBestPowerNodeToCapture();
 		int distance = curLoc.distanceSquaredTo(powerNode);
