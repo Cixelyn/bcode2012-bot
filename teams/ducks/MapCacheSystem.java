@@ -188,7 +188,7 @@ public class MapCacheSystem {
 	
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
 	public void senseAll() {
-		if(baseRobot.myType == RobotType.SOLDIER)
+		if(baseRobot.myType != RobotType.ARCHON && baseRobot.myType != RobotType.SCOUT)
 			return;
 		senseAllTiles();
 		senseAllMapEdges();
@@ -198,7 +198,7 @@ public class MapCacheSystem {
 	 * Assumes that we just moved in a direction, and we only want to sense the new information.
 	 */
 	public void senseAfterMove(Direction lastMoved) {
-		if(baseRobot.myType == RobotType.SOLDIER)
+		if(baseRobot.myType != RobotType.ARCHON && baseRobot.myType != RobotType.SCOUT)
 			return;
 		if(lastMoved==null || lastMoved==Direction.NONE || lastMoved==Direction.OMNI) {
 			return;

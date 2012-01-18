@@ -75,6 +75,7 @@ public abstract class BaseRobot {
 		msm = new MovementStateMachine(this);
 		
 		updateRoundVariables();
+		mc.senseAll();
 	}
 	
 	public abstract void run() throws GameActionException;
