@@ -20,10 +20,11 @@ public class ArchonRobotJV extends BaseRobot {
 	 * Constants used by the Archon.
 	 */
 	private static class ArchonConstants {
-		public static int ROUND_TO_STOP_EXPLORING = 100;
-		public static int HOME_RADIUS = 9;
-		public static int ARCHON_SPLIT_DISTANCE = 16;
-		//public static double SOLDIER_FLUX_RATIO = 0.2;
+		public static final int ROUND_TO_STOP_EXPLORING = 100;
+		public static final int HOME_RADIUS = 9;
+		public static final int ARCHON_SPLIT_DISTANCE = 16;
+		public static final int NUM_INITIAL_SOLDIERS = 5;
+		public static final double MIN_ARCHON_FLUX = 5;
 	}
 	
 	/**
@@ -36,7 +37,8 @@ public class ArchonRobotJV extends BaseRobot {
 		EXPLORE,
 		RETURN_HOME,
 		SPLIT,
-		BUILD_INITIAL_ARMY
+		BUILD_INITIAL_ARMY,
+		RUSH
 	}
 	
 	/** The current state of the Archon. */
@@ -44,6 +46,14 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	/** Whether the Archon is done initializing. */
 	private boolean initialized;
+	
+	/** Whether the Archon has been rallied. */
+	private boolean rallied = false;
+	
+	/** The number of soldiers currently built during the build_initial_army
+	 * state.
+	 */
+	private int initialSoldiersBuilt;
 
 	public ArchonRobotJV(RobotController myRC) {
 		super(myRC);
@@ -53,6 +63,11 @@ public class ArchonRobotJV extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
+		// TODO(jven): temporary
+		if (directionToSenseIn != null) {
+			mc.senseAfterMove(directionToSenseIn);
+			directionToSenseIn = null;
+		}
 		// transition to a new state if necessary
 		curState = getNextState();
 		// TODO(jven): debugging
@@ -74,9 +89,33 @@ public class ArchonRobotJV extends BaseRobot {
 			case BUILD_INITIAL_ARMY:
 				buildInitialArmy();
 				break;
+			case RUSH:
+				rush();
+				break;
 			default:
 				// we got g'd
 				rc.suicide();
+				break;
+		}
+	}
+	
+	@Override
+	public void processMessage(char msgType, StringBuilder sb)
+			throws GameActionException {
+		switch (msgType) {
+			case 'e':
+				ses.receiveMapEdges(BroadcastSystem.decodeShorts(sb));
+				break;
+			case 'm':
+				ses.receiveMapFragment(BroadcastSystem.decodeInts(sb));
+				break;
+			case 'p':
+				ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
+				break;
+			case 'r':
+				rallied = true;
+				break;
+			default:
 				break;
 		}
 	}
@@ -118,6 +157,17 @@ public class ArchonRobotJV extends BaseRobot {
 				}
 				break;
 			case BUILD_INITIAL_ARMY:
+				// if we've built enough soldiers or an enemy is nearby, start
+				// the rush
+				if (rallied ||
+						initialSoldiersBuilt >= ArchonConstants.NUM_INITIAL_SOLDIERS &&
+						rc.getFlux() >= ArchonConstants.MIN_ARCHON_FLUX ||
+						dc.getClosestEnemy() != null) {
+					rallied = true;
+					return ArchonState.RUSH;
+				}
+				break;
+			case RUSH:
 				break;
 			default:
 				// we got g'd
@@ -137,7 +187,7 @@ public class ArchonRobotJV extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		nav.setDestination(myHome);
 		// initialize broadcast system
-		io.setAddresses(new String[] {"#x", "#a"});
+		io.setAddresses(new String[] {"#x", "#a", "#e"});
 		// initialize map cache
 		mc.senseAll();
 		// done initializing
@@ -195,9 +245,31 @@ public class ArchonRobotJV extends BaseRobot {
 				continue;
 			}
 			if (spawnUnitInDir(RobotType.SOLDIER, d)) {
+				initialSoldiersBuilt++;
 				break;
 			}
 		}
+		// distribute flux
+		fbs.setBattleMode();
+		fbs.manageFlux();
+		// share exploration information
+		ses.broadcastMapEdges();
+	}
+	
+	/**
+	 * Rush across the map and pwn some n00bs.
+	 */
+	private void rush() throws GameActionException {
+		// set micro mode
+		micro.setMoonwalkMode();
+		// set objective
+		micro.setObjective(rally.getCurrentObjective());
+		// go to objective
+		micro.attackMove();
+		// share exploration information
+		ses.broadcastMapEdges();
+		// send rally
+		rally.broadcastRally();
 	}
 	
 	/**
@@ -206,6 +278,7 @@ public class ArchonRobotJV extends BaseRobot {
 	 * the right way.
 	 * @param type The type of robot to spawn
 	 * @param dir The direction to spawn the unit
+	 * @modifies Might modify direction and flux
 	 * @return Whether the method was successful
 	 */
 	private boolean spawnUnitInDir(
@@ -238,5 +311,4 @@ public class ArchonRobotJV extends BaseRobot {
 		rc.spawn(type);
 		return true;
 	}
-
 }
