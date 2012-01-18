@@ -8,10 +8,28 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
+	enum StrategyState {
+		/** Seek and destroy towards a target. */
+		RUSH, 
+		/** Hold a position. */
+		DEFEND,
+		/** Take power nodes. */
+		CAP;
+	}
+	enum BehaviorState {
+		/** Run away from enemy forces. */
+		RETREAT, 
+		/** Fight the enemy forces. Micro. */
+		BATTLE, 
+		/** Track enemy's last position and keep following them. */
+		CHASE;
+	}
 	int myArchonID;
 	int keepTargetTurns;
 	MapLocation target;
-	public ArchonRobotHT(RobotController myRC) {
+	StrategyState strat;
+	BehaviorState behavior;
+	public ArchonRobotHT(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		keepTargetTurns = -1;
@@ -30,24 +48,16 @@ public class ArchonRobotHT extends BaseRobot{
 		});
 		fbs.setBattleMode();
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
+		strat = StrategyState.RUSH;
+		behavior = BehaviorState.BATTLE;
 	}
 	
 	@Override
 	public void run() throws GameActionException {
-//		if(myArchonID==0 && Clock.getRoundNum()%500==5) {
-//			System.out.println(mc);
-//			System.out.println(mc.guessEnemyPowerCoreLocation());
-//			System.out.println(mc.guessBestPowerNodeToCapture());
-//		}
 		
-		fbs.manageFlux();
 		
-		if(Clock.getBytecodeNum()<5000 && Clock.getRoundNum()%6==myArchonID) {
-			ses.broadcastPowerNodeFragment();
-			ses.broadcastMapFragment();
-			ses.broadcastMapEdges();
-			mc.extractUpdatedPackedDataStep();
-		}
+		
+		
 	}
 	
 	@Override
@@ -79,7 +89,7 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 		
 		if(keepTargetTurns<0) 
-			target = startCapping ? (myArchonID==0 ? myHome : 
+			target = startCapping ? (myArchonID==1 ? myHome : 
 				mc.guessBestPowerNodeToCapture()) : 
 				mc.guessEnemyPowerCoreLocation();
 		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
@@ -113,5 +123,29 @@ public class ArchonRobotHT extends BaseRobot{
 			return new MoveInfo(dir, false);
 		}
 		return null;
+		
+		
+	}
+	
+	@Override
+	public void useExtraBytecodes() {
+		if(Clock.getBytecodesLeft()>2300) nav.prepare(); 
+			
+		if(Clock.getRoundNum()%6==myArchonID) {
+			if(Clock.getBytecodesLeft()>6000) {
+				int a = Clock.getBytecodeNum(); 
+				ses.broadcastPowerNodeFragment();
+				int b = Clock.getBytecodeNum(); 
+				ses.broadcastMapFragment();
+				int c = Clock.getBytecodeNum(); 
+				ses.broadcastMapEdges();
+				int d = Clock.getBytecodeNum(); 
+				int e = Clock.getBytecodeNum(); 
+//				if(e-a>2000) System.out.println("gay "+(b-a)+" "+(c-b)+" "+(d-c)+" "+(e-d));
+			}
+		}
+		super.useExtraBytecodes();
+		if(Clock.getBytecodesLeft()>3500) mc.extractUpdatedPackedDataStep();
+		while(Clock.getBytecodesLeft()>2300) { nav.prepare(); }
 	}
 }

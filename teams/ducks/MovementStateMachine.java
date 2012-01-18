@@ -104,8 +104,11 @@ public class MovementStateMachine {
 					rc.setDirection(dir);
 				} else {
 					turnsStuck++;
-					if(turnsStuck>=TURNS_STUCK_UNTIL_ROBOT_STARTS_MOVING_RANDOMLY) 
-						rc.setDirection(nav.navigateCompletelyRandomly());
+					if(turnsStuck>=TURNS_STUCK_UNTIL_ROBOT_STARTS_MOVING_RANDOMLY) {
+						Direction randomDir = nav.navigateCompletelyRandomly();
+						if(randomDir!=Direction.NONE)
+							rc.setDirection(randomDir);
+					}
 				}
 			} else if(nextMove.moveBackward) { 
 				if(rc.canMove(br.curDir.opposite())) {
