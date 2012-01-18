@@ -1,6 +1,5 @@
 package ducks;
 
-import ducks.Debug.Owner;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
@@ -36,7 +35,6 @@ public class ScoutRobot extends StrategyRobot {
 		if(radar.numAllyDamaged >= 2) {
 			rc.regenerate();
 		}
-		debug.setIndicatorString(2, Integer.toString(radar.numAllyDamaged), Owner.YP);
 	}
 	
 	@Override

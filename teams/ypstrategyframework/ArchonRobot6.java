@@ -1,7 +1,5 @@
 package ypstrategyframework;
 
-import org.apache.commons.lang.Validate;
-
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -48,7 +46,9 @@ public class ArchonRobot6 extends BaseRobot {
 	private int roundsSplit;
 	private int roundsBuild;
 	
+	@SuppressWarnings("unused")
 	private int[] evaluations;
+	@SuppressWarnings("unused")
 	private MapLocation[] evaluationOrigins;
 	
 	private int retreat_rounds;

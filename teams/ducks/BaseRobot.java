@@ -18,7 +18,6 @@ public abstract class BaseRobot {
 	public final Micro micro;
 	public final BroadcastSystem io;
 	public final FluxBalanceSystem fbs;
-	public final Debug debug = null; // TODO rewrite debug and deal with this
 	public final SharedExplorationSystem ses;
 	public final RadarSystem radar;
 	public final EnemyArchonKillCache eakc;
