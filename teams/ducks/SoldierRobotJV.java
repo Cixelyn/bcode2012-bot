@@ -147,6 +147,8 @@ public class SoldierRobotJV extends BaseRobot {
 		nav.setDestination(myHome);
 		// initialize broadcast system
 		io.setAddresses(new String[] {"#x", "#s"});
+		// avoid power nodes
+		micro.toggleAvoidPowerNodes(true);
 		// set an initial objective
 		objective = myHome;
 		// done initializing

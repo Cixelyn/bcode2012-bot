@@ -3,6 +3,7 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
+import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
@@ -40,6 +41,7 @@ public class ArchonRobotJV extends BaseRobot {
 		SPLIT,
 		BUILD_INITIAL_ARMY,
 		RUSH,
+		CAP,
 		ENGAGE
 	}
 	
@@ -93,6 +95,9 @@ public class ArchonRobotJV extends BaseRobot {
 				break;
 			case RUSH:
 				rush();
+				break;
+			case CAP:
+				cap();
 				break;
 			case ENGAGE:
 				engage();
@@ -177,11 +182,29 @@ public class ArchonRobotJV extends BaseRobot {
 				if (dc.getClosestEnemy() != null) {
 					return ArchonState.ENGAGE;
 				}
+				// if we've seen the enemy base, start tower capping
+				if (mc.getEnemyPowerCoreLocation() != null) {
+					return ArchonState.CAP;
+				}
+				break;
+			case CAP:
+				// if we've never seen the enemy base, rush
+				if (mc.getEnemyPowerCoreLocation() == null) {
+					return ArchonState.RUSH;
+				}
+				// if an enemy is nearby, engage
+				if (dc.getClosestEnemy() != null) {
+					return ArchonState.ENGAGE;
+				}
 				break;
 			case ENGAGE:
-				// if no enemy nearby, go back to rushing
+				// if no enemy nearby, go back to rushing or tower capping
 				if (dc.getClosestEnemy() == null) {
-					return ArchonState.RUSH;
+					if (mc.getEnemyPowerCoreLocation() == null) {
+						return ArchonState.RUSH;
+					} else {
+						return ArchonState.CAP;
+					}
 				}
 				break;
 			default:
@@ -216,6 +239,7 @@ public class ArchonRobotJV extends BaseRobot {
 	private void explore() throws GameActionException {
 		// set micro mode
 		micro.setNormalMode();
+		micro.toggleAvoidPowerNodes(false);
 		// set objective for some place far away from home, in a different direction
 		// from the other Archons
 		micro.setObjective(myHome.add(myHome.directionTo(birthplace),
@@ -231,6 +255,7 @@ public class ArchonRobotJV extends BaseRobot {
 	private void returnHome() throws GameActionException {
 		// set micro mode
 		micro.setNormalMode();
+		micro.toggleAvoidPowerNodes(false);
 		// set objective for home
 		micro.setObjective(myHome);
 		// tangent bug to home
@@ -243,6 +268,7 @@ public class ArchonRobotJV extends BaseRobot {
 	private void split() throws GameActionException {
 		// set micro mode
 		micro.setKiteMode(ArchonConstants.ARCHON_SPLIT_DISTANCE);
+		micro.toggleAvoidPowerNodes(false);
 		// set objective for closest archon
 		micro.setObjective(dc.getClosestArchon());
 		// kite closest archon
@@ -275,10 +301,9 @@ public class ArchonRobotJV extends BaseRobot {
 	private void rush() throws GameActionException {
 		// set micro mode
 		micro.setMoonwalkMode();
+		micro.toggleAvoidPowerNodes(false);
 		// set objective
 		micro.setObjective(rally.getCurrentObjective());
-		// go to objective
-		micro.attackMove();
 		// try to build a soldier
 		for (Direction d : Direction.values()) {
 			if (d == Direction.OMNI || d == Direction.NONE) {
@@ -288,10 +313,33 @@ public class ArchonRobotJV extends BaseRobot {
 				break;
 			}
 		}
+		// go to objective
+		micro.attackMove();
 		// distribute flux
 		fbs.manageFlux();
 		// send rally
 		rally.broadcastRally();
+	}
+	
+	/**
+	 * Build towers and G him.
+	 */
+	private void cap() throws GameActionException {
+		// set micro mode
+		micro.setNormalMode();
+		micro.toggleAvoidPowerNodes(true);
+		// set objective
+		MapLocation powerNode = mc.guessBestPowerNodeToCapture();
+		micro.setObjective(powerNode);
+		int distance = curLoc.distanceSquaredTo(powerNode);
+		// build tower if close enough, otherwise move towards power node
+		if (distance == 0) {
+			// TODO(jven): back up
+		} else if (distance <= 2) {
+			spawnUnitInDir(RobotType.TOWER, curLoc.directionTo(powerNode));
+		} else {
+			micro.attackMove();
+		}
 	}
 	
 	/**
@@ -304,12 +352,13 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 		// set micro mode
 		micro.setKiteMode(ArchonConstants.ARCHON_ENGAGE_DISTANCE);
+		micro.toggleAvoidPowerNodes(true);
 		// set objective
 		micro.setObjective(dc.getClosestEnemy().location);
-		// kite enemy
-		micro.attackMove();
 		// try to build a soldier in front of me
 		spawnUnitInDir(RobotType.SOLDIER, curDir);
+		// kite enemy
+		micro.attackMove();
 		// distribute flux
 		fbs.manageFlux();
 		// send rally
