@@ -6,7 +6,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 
 public class MovementStateMachine {
-	private static final int TURNS_STUCK_UNTIL_ROBOT_STARTS_RANDOMLY = 16;
+	private static final int TURNS_STUCK_UNTIL_ROBOT_STARTS_MOVING_RANDOMLY = 16;
 	MovementState curState;
 	final BaseRobot br;
 	final RobotController rc;
@@ -29,7 +29,8 @@ public class MovementStateMachine {
 		switch(curState) {
 		case ABOUT_TO_SPAWN:
 			boolean spawningAir = nextMove.robotType.isAirborne();
-			if((spawningAir && (rc.senseObjectAtLocation(br.curLocInFront, RobotLevel.IN_AIR)==null)) || 
+			if(rc.getFlux() >= nextMove.robotType.spawnCost && 
+					(spawningAir && (rc.senseObjectAtLocation(br.curLocInFront, RobotLevel.IN_AIR)==null)) || 
 					(!spawningAir && rc.canMove(br.curDir))) {
 				rc.spawn(nextMove.robotType);
 				return MovementState.IDLE;
@@ -79,25 +80,43 @@ public class MovementStateMachine {
 					dirToSense = dir;
 					return MovementState.JUST_MOVED;
 				} 
-				rc.setDirection(dir);
+				rc.setDirection(dir.opposite());
 				turnsStuck = 0;
 				return MovementState.ABOUT_TO_MOVE;
 			} 
 			rc.setDirection(nextMove.dir);
 			return MovementState.IDLE;
 		case ABOUT_TO_MOVE:
-			if(rc.canMove(br.curDir)) {
-				rc.moveForward();
-				dirToSense = br.curDir;
-				return MovementState.JUST_MOVED;
-			}
-			Direction dir = nav.wiggleToMovableDirection(nextMove.dir);
-			if(dir!=null) {
-				rc.setDirection(dir);
-			} else {
-				turnsStuck++;
-				if(turnsStuck>=TURNS_STUCK_UNTIL_ROBOT_STARTS_RANDOMLY) 
-					rc.setDirection(nav.navigateCompletelyRandomly());
+			if(rc.getFlux()<br.myType.moveCost)
+				return MovementState.IDLE;
+			if(nextMove.moveForward) {
+				if(rc.canMove(br.curDir)) {
+					rc.moveForward();
+					dirToSense = br.curDir;
+					return MovementState.JUST_MOVED;
+				}
+				Direction dir = nav.wiggleToMovableDirection(nextMove.dir);
+				if(dir!=null) {
+					rc.setDirection(dir);
+				} else {
+					turnsStuck++;
+					if(turnsStuck>=TURNS_STUCK_UNTIL_ROBOT_STARTS_MOVING_RANDOMLY) 
+						rc.setDirection(nav.navigateCompletelyRandomly());
+				}
+			} else if(nextMove.moveBackward) { 
+				if(rc.canMove(br.curDir.opposite())) {
+					rc.moveBackward();
+					dirToSense = br.curDir.opposite();
+					return MovementState.JUST_MOVED;
+				}
+				Direction dir = nav.wiggleToMovableDirection(nextMove.dir);
+				if(dir!=null) {
+					rc.setDirection(dir.opposite());
+				} else {
+					turnsStuck++;
+					if(turnsStuck>=TURNS_STUCK_UNTIL_ROBOT_STARTS_MOVING_RANDOMLY) 
+						rc.setDirection(nav.navigateCompletelyRandomly().opposite());
+				}
 			}
 			return MovementState.ABOUT_TO_MOVE;
 		case JUST_MOVED:
