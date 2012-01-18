@@ -23,6 +23,7 @@ public abstract class BaseRobot {
 	public final RadarSystem radar;
 	public final EnemyArchonKillCache eakc;
 	public final ArchonOwnership ao;
+	public final RallySystem rally;
 	
 	// Robot Statistics - Permanent
 	public final RobotType myType;
@@ -69,6 +70,7 @@ public abstract class BaseRobot {
 		radar = new RadarSystem(this);
 		eakc = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
+		rally = new RallySystem(this);
 		
 		updateRoundVariables();
 	}
