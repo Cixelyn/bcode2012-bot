@@ -1,6 +1,7 @@
 package ducks;
 
 import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 /**
@@ -16,6 +17,7 @@ public class SoldierRobotJV extends BaseRobot {
 	 */
 	private static class SoldierConstants {
 		public static final double MIN_SOLDIER_FLUX = 1.0;
+		public static final int SWARM_RADIUS = 16;
 	}
 	
 	/**
@@ -25,8 +27,9 @@ public class SoldierRobotJV extends BaseRobot {
 	 */
 	private enum SoldierState {
 		INITIALIZE,
-		DIZZY,
-		SUICIDE,
+		WAIT_FOR_RALLY,
+		RUSH,
+		ENGAGE,
 		LOW_FLUX
 	}
 	
@@ -38,6 +41,9 @@ public class SoldierRobotJV extends BaseRobot {
 	
 	/** Whether the Soldier has been rallied. */
 	private boolean rallied = false;
+	
+	/** The objective of the Soldier. */
+	private MapLocation objective;
 
 	public SoldierRobotJV(RobotController myRC) {
 		super(myRC);
@@ -56,8 +62,14 @@ public class SoldierRobotJV extends BaseRobot {
 			case INITIALIZE:
 				initialize();
 				break;
-			case DIZZY:
-				dizzy();
+			case WAIT_FOR_RALLY:
+				waitForRally();
+				break;
+			case RUSH:
+				rush();
+				break;
+			case ENGAGE:
+				engage();
 				break;
 			case LOW_FLUX:
 				return;
@@ -74,6 +86,7 @@ public class SoldierRobotJV extends BaseRobot {
 		switch (msgType) {
 			case 'r':
 				rallied = true;
+				objective = BroadcastSystem.decodeMapLoc(sb);
 				break;
 			default:
 				break;
@@ -95,12 +108,24 @@ public class SoldierRobotJV extends BaseRobot {
 			case INITIALIZE:
 				// if we're done initializing, start spinning
 				if (initialized) {
-					return SoldierState.DIZZY;
+					return SoldierState.WAIT_FOR_RALLY;
 				}
 				break;
-			case DIZZY:
+			case WAIT_FOR_RALLY:
 				if (rallied) {
-					return SoldierState.SUICIDE;
+					return SoldierState.RUSH;
+				}
+				break;
+			case RUSH:
+				// if an enemy is nearby, engage
+				if (dc.getClosestEnemy() != null) {
+					return SoldierState.ENGAGE;
+				}
+				break;
+			case ENGAGE:
+				// if no enemy nearby, go back to rushing
+				if (dc.getClosestEnemy() == null) {
+					return SoldierState.RUSH;
 				}
 				break;
 			default:
@@ -122,17 +147,52 @@ public class SoldierRobotJV extends BaseRobot {
 		nav.setDestination(myHome);
 		// initialize broadcast system
 		io.setAddresses(new String[] {"#x", "#s"});
+		// set an initial objective
+		objective = myHome;
 		// done initializing
 		initialized = true;
 	}
 
 	/**
-	 * Weeeeeee!!!!
+	 * Wait for rally. The Soldier should only ever enter this state right after
+	 * initialization.
 	 */
-	private void dizzy() throws GameActionException {
+	private void waitForRally() throws GameActionException {
 		// spin around!
 		micro.setHoldPositionMode();
 		micro.attackMove();
 	}
-
+	
+	/**
+	 * Rush the enemy. The Soldier can enter this state at any time.
+	 */
+	private void rush() throws GameActionException {
+		// set micro mode
+		micro.setSwarmMode(SoldierConstants.SWARM_RADIUS);
+		// set objective
+		micro.setObjective(objective);
+		// swarm towards objective
+		micro.attackMove();
+	}
+	
+	/**
+	 * Engage the enemy forces. The Soldier should only enter this state if an
+	 * enemy is nearby.
+	 */
+	private void engage() throws GameActionException {
+		// abort if no enemy nearby
+		if (dc.getClosestEnemy() == null) {
+			return;
+		}
+		// set micro mode
+		micro.setChargeMode();
+		// set objective
+		micro.setObjective(dc.getClosestEnemy().location);
+		// kite enemy
+		micro.attackMove();
+		// distribute flux
+		fbs.manageFlux();
+		// send rally
+		rally.broadcastRally();
+	}
 }
