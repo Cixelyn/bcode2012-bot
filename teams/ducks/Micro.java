@@ -221,7 +221,7 @@ public class Micro {
 				microDistance) {
 			return normalTowards();
 		} else {
-			return chargeTowards(br.dc.getClosestArchon());
+			return kiteTowards(br.dc.getClosestArchon());
 		}
 	}
 	
@@ -241,11 +241,15 @@ public class Micro {
 				dir.rotateRight()
 		};
 		int distanceSquared = br.curLoc.distanceSquaredTo(target);
+		int minDistance = ((int)Math.sqrt(microDistance)) *
+				((int)Math.sqrt(microDistance));
+		int maxDistance = ((int)Math.sqrt(microDistance) + 1) *
+				((int)Math.sqrt(microDistance) + 1);
 		for (Direction d : targetDirs) {
 			if (avoidPowerNodes) {
 				d = avoidPowerNode(d);
 			}
-			if (distanceSquared < microDistance) {
+			if (distanceSquared < minDistance) {
 				// move backwards
 				if (rc.canMove(d.opposite())) {
 					if (br.curDir != d) {
@@ -257,7 +261,7 @@ public class Micro {
 					}
 					return true;
 				}
-			} else {
+			} else if (distanceSquared >= maxDistance) {
 				// move forwards
 				if (rc.canMove(d)) {
 					if (br.curDir != d) {
