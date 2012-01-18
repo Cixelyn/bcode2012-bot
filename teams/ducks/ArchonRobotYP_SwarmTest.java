@@ -1,5 +1,7 @@
 package ducks;
 
+import com.sun.org.apache.bcel.internal.generic.LAND;
+
 import sun.org.mozilla.javascript.internal.EvaluatorException;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -29,9 +31,9 @@ interface MapLocEval{
 }
 
 
-public class ArchonRobotYP extends StrategyRobotExtended {
+public class ArchonRobotYP_SwarmTest extends StrategyRobotExtended {
 
-	public ArchonRobotYP(RobotController myRC) {
+	public ArchonRobotYP_SwarmTest(RobotController myRC) {
 		super(myRC, RobotState.INITIALIZE);
 		initialized = false;
 		formation = FormationType.FLEXIBLE_LINE;
@@ -118,7 +120,7 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 			case SUICIDE:
 			{
 //				this unit just became a leader
-				nav.setNavigationMode(NavigationMode.BUG);
+				nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 				micro.setNormalMode();
 				return RobotState.EXPLORE;
 			}
@@ -152,14 +154,14 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb)
 			throws GameActionException {
-//		switch (msgType) {
-//		case 'a' :
-//		{
-//			if (!isLeader) {
-//				expdir = Constants.directions[BroadcastSystem.decodeShort(sb)];
-//			}
-//		} break;
-//		}
+		switch (msgType) {
+		case SWARM_DETAILS :
+		{
+			if (!isLeader) {
+				expdir = Constants.directions[BroadcastSystem.decodeShort(sb)];
+			}
+		} break;
+		}
 	}
 	
 	@Override
@@ -229,7 +231,7 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		
 		if (isLeader)
 		{
-			nav.setNavigationMode(NavigationMode.BUG);
+			nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 			micro.setNormalMode();
 		} else
 		{
@@ -516,7 +518,7 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		
 		MapLocation[] archons = dc.getAlliedArchons();
 		MapLocation leader = archons[0];
-		
+//		expdir=null;
 		if (expdir==null) 
 		{
 			if (rc.canSenseSquare(leader))
@@ -597,6 +599,11 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 		case 4:
 			target = leader.add(dir.opposite(),4);
 			break;
+		}
+		
+		if (rc.senseTerrainTile(target)!=TerrainTile.LAND)
+		{
+			target = leader;
 		}
 		
 		micro.setObjective(target);
@@ -750,6 +757,6 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	
 	private void sendSwarmInfo(Direction dir)
 	{
-//		io.sendShort("#aa", dir.ordinal());
+		io.sendShort(BroadcastChannel.ARCHONS, BroadcastType.SWARM_DETAILS, dir.ordinal());
 	}
 }
