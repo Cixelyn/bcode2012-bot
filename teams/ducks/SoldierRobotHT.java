@@ -13,6 +13,7 @@ public class SoldierRobotHT extends BaseRobot {
 	public SoldierRobotHT(RobotController myRC) {
 		super(myRC);
 		nav.setNavigationMode(NavigationMode.GREEDY);
+		io.setAddresses(new String[] {"#x", "#s"});
 		fbs.setBattleMode();
 	}
 
@@ -28,7 +29,20 @@ public class SoldierRobotHT extends BaseRobot {
 			}
 		} 
 	}
-	
+	@Override
+	public void processMessage(char msgType, StringBuilder sb) {
+		int[] data = null;
+		if(msgType=='e') {
+			data = BroadcastSystem.decodeShorts(sb);
+			ses.receiveMapEdges(data);
+		} else if(msgType=='m') {
+			data = BroadcastSystem.decodeInts(sb);
+			ses.receiveMapFragment(data);
+		} else if(msgType=='p') {
+			data = BroadcastSystem.decodeInts(sb);
+			ses.receivePowerNodeFragment(data);
+		} 
+	}
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux()<1) return null;

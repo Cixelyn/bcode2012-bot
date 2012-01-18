@@ -24,7 +24,7 @@ public class ArchonRobotHT extends BaseRobot{
 				break;
 			}
 		}
-		io.setAddresses(new String[] {"#e"});
+		io.setAddresses(new String[] {"#e", "#x", "#a"});
 		fbs.setBattleMode();
 		nav.setNavigationMode(NavigationMode.RANDOM);
 	}
@@ -68,7 +68,6 @@ public class ArchonRobotHT extends BaseRobot{
 			ses.receivePowerNodeFragment(data);
 		} 
 	}
-	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.canMove(curDir) && curLocInFront.equals(nav.getDestination())) {
