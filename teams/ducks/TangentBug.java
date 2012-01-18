@@ -254,8 +254,8 @@ public class TangentBug {
 			return new int[] {tx-sx, ty-sy};
 		}
 		
-		 if(tracing) {StringBuilder sb = new StringBuilder(); for(int y=0; y<ymax; y++) { for(int x=0; x<xmax; x++) sb.append((wallCache[x][y]==curWallCacheID*BUFFER_LENGTH)?'#':(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH)?'o':'.'); sb.append("\n"); } System.out.print(sb);}
-		 if(tracing) for(int i=BUFFER_START-30; i<=BUFFER_START+30; i++) System.out.println("  "+i+" "+buffer[i][0]+","+buffer[i][1]);
+//		 if(tracing) {StringBuilder sb = new StringBuilder(); for(int y=0; y<ymax; y++) { for(int x=0; x<xmax; x++) sb.append((wallCache[x][y]==curWallCacheID*BUFFER_LENGTH)?'#':(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH)?'o':'.'); sb.append("\n"); } System.out.print(sb);}
+//		 if(tracing) for(int i=BUFFER_START-30; i<=BUFFER_START+30; i++) System.out.println("  "+i+" "+buffer[i][0]+","+buffer[i][1]);
 		
 		if(!tracing) {
 			int[] ret = d[getDirTowards(tx-sx, ty-sy)];
@@ -267,8 +267,8 @@ public class TangentBug {
 			return map[sx+ret[0]][sy+ret[1]] ? null : ret;
 		}
 		
-		System.out.println("tracedirlocked: "+traceDirLocked);
-		System.out.println("hitWallPos: "+hitWallPos);
+//		System.out.println("tracedirlocked: "+traceDirLocked);
+//		System.out.println("hitWallPos: "+hitWallPos);
 		
 		//find better direction by taking smaller heuristic value
 		int bestTraceDir =  heuristicValue[0]<heuristicValue[1]?0:1;
@@ -286,11 +286,11 @@ public class TangentBug {
 		tangentPosLastTurn = bpos[bestTraceDir];
 		int finalDir = bdir[bestTraceDir];
 		
-		System.out.println(" currently at: "+sx+","+sy);
-		System.out.println(" startedTracingDuringCurrentPrepCycle: "+startedTracingDuringCurrentPrepCycle);
-		System.out.println(" last trace dir: "+traceDirLastTurn);
-		System.out.println(" finalDir: "+finalDir);
-		System.out.println(" tangent point: "+buffer[bpos[bestTraceDir]][0]+","+buffer[bpos[bestTraceDir]][1]);
+//		System.out.println(" currently at: "+sx+","+sy);
+//		System.out.println(" startedTracingDuringCurrentPrepCycle: "+startedTracingDuringCurrentPrepCycle);
+//		System.out.println(" last trace dir: "+traceDirLastTurn);
+//		System.out.println(" finalDir: "+finalDir);
+//		System.out.println(" tangent point: "+buffer[bpos[bestTraceDir]][0]+","+buffer[bpos[bestTraceDir]][1]);
 		if(finalDir==-1) {
 			// this happens when there were no valid tangent points found
 			resetWallTrace();
@@ -337,7 +337,7 @@ public class TangentBug {
 				} else {
 					for(int wx=-1, wy=-1, ti=0; ti<d.length; ti++) {
 						int i = ((traceDirLastTurn==0?1:-1)*ti + directionalBugWallDir + 8) % 8;
-						System.out.println(" round of directional bugging, i="+i);
+//						System.out.println(" round of directional bugging, i="+i);
 						x = sx+d[i][0];
 						y = sy+d[i][1];
 						if(map[x][y]) {
@@ -357,7 +357,7 @@ public class TangentBug {
 				}
 			}
 		}
-		System.out.println(" directional bugging: "+directionalBugging);
+//		System.out.println(" directional bugging: "+directionalBugging);
 		
 		if(doneTracingClockwise && doneTracingCounterclockwise || hitMapEdge[0] || hitMapEdge[1])
 			traceDirLocked = true;
@@ -522,7 +522,7 @@ public class TangentBug {
 			if(dDir-lastdDir[traceDir]>4) crossedMLine[traceDir] = true;
 			if(lastdDir[traceDir]-dDir>4) crossedMLine[traceDir] = false;
 		}
-		System.out.println("  checking tangent: "+pos+" "+buffer[pos][0]+","+buffer[pos][1]+" "+dirStoC+" "+crossedMLine[traceDir]);
+//		System.out.println("  checking tangent: "+pos+" "+buffer[pos][0]+","+buffer[pos][1]+" "+dirStoC+" "+crossedMLine[traceDir]);
 		if(!crossedMLine[traceDir] && dDir>bestdDir[traceDir]) {
 			bestdDir[traceDir] = dDir;
 			bpos[traceDir] = pos;

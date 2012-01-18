@@ -77,7 +77,7 @@ public class BroadcastSystem {
 	
 
 	/**
-	 * Adds a particular chanell to the robot's active ports.
+	 * Adds a particular channel to the robot's active ports.
 	 * Internally checks whether the address is already bound or not
 	 * @param chn
 	 * @return whether address was bound or not
