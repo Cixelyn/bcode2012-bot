@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 
 /**
@@ -16,13 +17,20 @@ public class RallySystem {
 		timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 	}
 	
-	public MapLocation getCurrentObjective() {
-		return br.mc.guessEnemyPowerCoreLocation();
+	public MapLocation getCurrentObjective() throws GameActionException {
+		if (br.dc.getClosestEnemy() != null) {
+			return br.dc.getClosestEnemy().location;
+		} else {
+			return br.mc.guessEnemyPowerCoreLocation();
+		}
 	}
 	
-	public void broadcastRally() {
+	public void broadcastRally() throws GameActionException {
 		if (--timeUntilBroadcast <= 0) {
-			br.io.sendShort("#xr", 0);
+			// share exploration information
+			br.ses.broadcastMapEdges();
+			// send objective
+			br.io.sendMapLoc("#xr", getCurrentObjective());
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
 	}
