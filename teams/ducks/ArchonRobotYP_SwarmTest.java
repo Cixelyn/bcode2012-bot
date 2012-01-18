@@ -30,7 +30,7 @@ interface MapLocEval{
 
 public class ArchonRobotYP_SwarmTest extends StrategyRobotExtended {
 
-	public ArchonRobotYP_SwarmTest(RobotController myRC) {
+	public ArchonRobotYP_SwarmTest(RobotController myRC) throws GameActionException {
 		super(myRC, RobotState.INITIALIZE);
 		initialized = false;
 		formation = FormationType.FLEXIBLE_LINE;

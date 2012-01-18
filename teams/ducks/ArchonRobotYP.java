@@ -38,7 +38,7 @@ public class ArchonRobotYP extends BaseRobot {
 	MapLocation movetarget;
 	Direction movedirection;
 	
-	public ArchonRobotYP(RobotController myRC)
+	public ArchonRobotYP(RobotController myRC) throws GameActionException 
 	{
 		super(myRC);
 		

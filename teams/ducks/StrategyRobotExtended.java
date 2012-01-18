@@ -11,7 +11,7 @@ public abstract class StrategyRobotExtended extends BaseRobot {
 	private int stack_size;
 	private RobotState curState;
 	
-	public StrategyRobotExtended(RobotController myRC, RobotState initialState) {
+	public StrategyRobotExtended(RobotController myRC, RobotState initialState) throws GameActionException {
 		super(myRC);
 		stateStack = new RobotState[MAX_STATE_STACK_SIZE];
 		stack_size = 0;

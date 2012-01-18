@@ -45,7 +45,7 @@ public class SoldierRobotJV extends BaseRobot {
 	/** The objective of the Soldier. */
 	private MapLocation objective;
 
-	public SoldierRobotJV(RobotController myRC) {
+	public SoldierRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
 		// set initial state
 		curState = SoldierState.INITIALIZE;

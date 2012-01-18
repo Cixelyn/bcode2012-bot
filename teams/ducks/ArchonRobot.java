@@ -54,7 +54,7 @@ public class ArchonRobot extends StrategyRobot {
 	private MapLocation nextNodeToCapture;
 	
 	
-	public ArchonRobot(RobotController myRC) {
+	public ArchonRobot(RobotController myRC) throws GameActionException {
 		super(myRC, RobotState.INITIALIZE);
 	
 		// calculate true archon ID

@@ -34,7 +34,7 @@ public class SoldierRobot extends StrategyRobot {
 	private int lastScanRound;
 	
 	
-	public SoldierRobot(RobotController myRC) {
+	public SoldierRobot(RobotController myRC) throws GameActionException {
 		super(myRC, RobotState.INITIALIZE);
 		hbe = new HibernationSystem(this);
 		initialized = false;

@@ -5,7 +5,7 @@ import battlecode.common.RobotController;
 
 public class SoldierRobotYP extends BaseRobot {
 
-	public SoldierRobotYP(RobotController myRC) {
+	public SoldierRobotYP(RobotController myRC) throws GameActionException {
 		super(myRC);
 	}
 
