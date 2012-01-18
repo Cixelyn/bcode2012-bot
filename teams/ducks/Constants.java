@@ -52,7 +52,7 @@ public final class Constants {
 	/** Robots must have this amount of flux in order to distribute. */
 	public static final double MIN_ROBOT_FLUX = 0.5;
 	/** Archons try to maintain this ratio of max flux on other units. */
-	public static final double MIN_UNIT_BATTLE_FLUX_RATIO = 0.20;
+	public static final double MIN_UNIT_BATTLE_FLUX_RATIO = 0.5;
 	
 	
 	/** The frequency with which units broadcast information. */

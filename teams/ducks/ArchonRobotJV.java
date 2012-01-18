@@ -22,10 +22,9 @@ public class ArchonRobotJV extends BaseRobot {
 	 */
 	private static class ArchonConstants {
 		public static final int ROUND_TO_STOP_EXPLORING = 100;
+		public static final int ROUND_TO_STOP_BUILDING = 617;
 		public static final int HOME_RADIUS = 9;
 		public static final int ARCHON_SPLIT_DISTANCE = 16;
-		public static final int NUM_INITIAL_SOLDIERS = 5;
-		public static final double MIN_ARCHON_FLUX = 5;
 		public static final int ARCHON_ENGAGE_DISTANCE = 26;
 	}
 	
@@ -41,7 +40,6 @@ public class ArchonRobotJV extends BaseRobot {
 		SPLIT,
 		BUILD_INITIAL_ARMY,
 		RUSH,
-		CAP,
 		ENGAGE
 	}
 	
@@ -53,11 +51,6 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	/** Whether the Archon has been rallied. */
 	private boolean rallied = false;
-	
-	/** The number of soldiers currently built during the build_initial_army
-	 * state.
-	 */
-	private int initialSoldiersBuilt;
 
 	public ArchonRobotJV(RobotController myRC) {
 		super(myRC);
@@ -95,9 +88,6 @@ public class ArchonRobotJV extends BaseRobot {
 				break;
 			case RUSH:
 				rush();
-				break;
-			case CAP:
-				cap();
 				break;
 			case ENGAGE:
 				engage();
@@ -170,8 +160,7 @@ public class ArchonRobotJV extends BaseRobot {
 				// if we've built enough soldiers or an enemy is nearby, start
 				// the rush
 				if (rallied ||
-						initialSoldiersBuilt >= ArchonConstants.NUM_INITIAL_SOLDIERS &&
-						rc.getFlux() >= ArchonConstants.MIN_ARCHON_FLUX ||
+						curRound >= ArchonConstants.ROUND_TO_STOP_BUILDING ||
 						dc.getClosestEnemy() != null) {
 					rallied = true;
 					return ArchonState.RUSH;
@@ -182,29 +171,11 @@ public class ArchonRobotJV extends BaseRobot {
 				if (dc.getClosestEnemy() != null) {
 					return ArchonState.ENGAGE;
 				}
-				// if we've seen the enemy base, start tower capping
-				if (mc.getEnemyPowerCoreLocation() != null) {
-					return ArchonState.CAP;
-				}
-				break;
-			case CAP:
-				// if we've never seen the enemy base, rush
-				if (mc.getEnemyPowerCoreLocation() == null) {
-					return ArchonState.RUSH;
-				}
-				// if an enemy is nearby, engage
-				if (dc.getClosestEnemy() != null) {
-					return ArchonState.ENGAGE;
-				}
 				break;
 			case ENGAGE:
-				// if no enemy nearby, go back to rushing or tower capping
+				// if no enemy nearby, go back to rushing
 				if (dc.getClosestEnemy() == null) {
-					if (mc.getEnemyPowerCoreLocation() == null) {
-						return ArchonState.RUSH;
-					} else {
-						return ArchonState.CAP;
-					}
+					return ArchonState.RUSH;
 				}
 				break;
 			default:
@@ -286,7 +257,6 @@ public class ArchonRobotJV extends BaseRobot {
 				continue;
 			}
 			if (spawnUnitInDir(RobotType.SOLDIER, d)) {
-				initialSoldiersBuilt++;
 				break;
 			}
 		}
@@ -296,50 +266,34 @@ public class ArchonRobotJV extends BaseRobot {
 	}
 	
 	/**
-	 * Rush across the map and pwn some n00bs.
-	 */
-	private void rush() throws GameActionException {
-		// set micro mode
-		micro.setMoonwalkMode();
-		micro.toggleAvoidPowerNodes(false);
-		// set objective
-		micro.setObjective(rally.getCurrentObjective());
-		// try to build a soldier
-		for (Direction d : Direction.values()) {
-			if (d == Direction.OMNI || d == Direction.NONE) {
-				continue;
-			}
-			if (spawnUnitInDir(RobotType.SOLDIER, d)) {
-				break;
-			}
-		}
-		// go to objective
-		micro.attackMove();
-		// distribute flux
-		fbs.manageFlux();
-		// send rally
-		rally.broadcastRally();
-	}
-	
-	/**
 	 * Build towers and G him.
 	 */
-	private void cap() throws GameActionException {
-		// set micro mode
-		micro.setNormalMode();
-		micro.toggleAvoidPowerNodes(true);
+	private void rush() throws GameActionException {
+		
 		// set objective
 		MapLocation powerNode = mc.guessBestPowerNodeToCapture();
-		micro.setObjective(powerNode);
 		int distance = curLoc.distanceSquaredTo(powerNode);
 		// build tower if close enough, otherwise move towards power node
 		if (distance == 0) {
-			// TODO(jven): back up
+			// back off
+			micro.setNormalMode();
+			micro.setObjective(myHome);
+			micro.attackMove();
 		} else if (distance <= 2) {
 			spawnUnitInDir(RobotType.TOWER, curLoc.directionTo(powerNode));
 		} else {
+			// go towards power core
+			micro.setNormalMode();
+			micro.setObjective(powerNode);
+			micro.toggleAvoidPowerNodes(true);
+			// try to build a soldier in front of me
+			spawnUnitInDir(RobotType.SOLDIER, curDir);
 			micro.attackMove();
+			// distribute flux
+			fbs.manageFlux();
 		}
+		// send rally
+		rally.broadcastRally();
 	}
 	
 	/**

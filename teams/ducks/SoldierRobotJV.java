@@ -128,6 +128,8 @@ public class SoldierRobotJV extends BaseRobot {
 					return SoldierState.RUSH;
 				}
 				break;
+			case LOW_FLUX:
+				break;
 			default:
 				// we got g'd
 				rc.suicide();
