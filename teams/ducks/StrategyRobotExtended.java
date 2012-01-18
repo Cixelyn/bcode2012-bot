@@ -93,7 +93,7 @@ public abstract class StrategyRobotExtended extends BaseRobot {
 	/**
 	 * do any special things you need to do at the beginning at a new round
 	 */
-	public abstract void initializeForRound();
+	public abstract void initializeForRound() throws GameActionException;
 	
 	/**
 	 * set up fields for transitionoing from oldstate to newstate
