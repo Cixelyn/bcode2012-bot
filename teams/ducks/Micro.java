@@ -28,8 +28,7 @@ public class Micro {
 	private MicroMode mode;
 	private MapLocation objective;
 	
-	private int tooFarDistance;
-	private int tooCloseDistance;
+	private int microDistance;
 	private Direction dirAboutToMoveIn; 
 	
 	public Micro(BaseRobot myBR) {
@@ -69,10 +68,9 @@ public class Micro {
 	 * archon.
 	 * @param mySwarmRadius The distance to maintain from the closest archon
 	 */
-	public void setSwarmMode(int tooFarDistance, int tooCloseDistance) {
+	public void setSwarmMode(int swarmRadius) {
 		mode = MicroMode.SWARM;
-		this.tooFarDistance = tooFarDistance;
-		this.tooCloseDistance = tooCloseDistance;
+		microDistance = swarmRadius;
 	}
 	
 	/**
@@ -81,9 +79,7 @@ public class Micro {
 	 */
 	public void setKiteMode(int kiteDistance) {
 		mode = MicroMode.KITE;
-		double sqrt = Math.sqrt(kiteDistance);
-		tooFarDistance = (int)((sqrt+1)*(sqrt+1))+1;
-		tooCloseDistance = (int)((sqrt-1)*(sqrt-1));
+		microDistance = kiteDistance;
 	}
 	
 	/**
@@ -206,25 +202,14 @@ public class Micro {
 		
 		return true;
 	}
+	
 	private boolean swarmTowards() throws GameActionException {
-		System.out.println("WTFFF     FFFFFFFFFFFFFFF");
-		// step towards closest archon if too far away, navigate normally otherwise
-		MapLocation closestArchon = br.dc.getClosestArchon();
-		if (closestArchon != null) {
-			System.out.println("GGGGGGGGGGGGGGGGGGGGGGGGGGGF");
-			if(br.curLoc.distanceSquaredTo(closestArchon) >= tooFarDistance) {
-				br.debug.setIndicatorString(2, "Going to archon", Owner.YP);
-				return randomTowards(closestArchon);
-			} else if (br.curLoc.distanceSquaredTo(closestArchon) <= tooCloseDistance) {
-				br.debug.setIndicatorString(2, "backing to archon", Owner.YP);
-				MapLocation locAwayFromArchon = br.curLoc.add(closestArchon.directionTo(br.curLoc), 5);
-				return randomTowards(locAwayFromArchon);
-			}
+		if (br.curLoc.distanceSquaredTo(br.dc.getClosestArchon()) <=
+				microDistance) {
+			return normalTowards();
+		} else {
+			return chargeTowards(br.dc.getClosestArchon());
 		}
-		System.out.println("eawwwwwwwwwwwwwwwwwwwwwww");
-		normalTowards();
-		br.debug.setIndicatorString(2, "normal towards", Owner.YP);
-		return false;
 	}
 	
 	private boolean kiteTowards(MapLocation target) throws GameActionException {
@@ -244,7 +229,7 @@ public class Micro {
 		};
 		int distanceSquared = br.curLoc.distanceSquaredTo(target);
 		for (Direction d : targetDirs) {
-			if (distanceSquared < tooFarDistance) {
+			if (distanceSquared < microDistance) {
 				// move backwards
 				if (rc.canMove(d.opposite())) {
 					if (br.curDir != d) {
@@ -276,28 +261,6 @@ public class Micro {
 	private boolean chargeTowards(MapLocation target) throws GameActionException {
 		if(dirAboutToMoveIn == null) {
 			Direction dir = br.nav.navigateGreedy(target);
-			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
-				return false;
-			dirAboutToMoveIn = dir;
-		}
-		
-		Direction dir = br.nav.wiggleToMovableDirection(dirAboutToMoveIn);
-		if(dir==null) 
-			return false;
-		if(dir == br.curDir) {
-			rc.moveForward();
-			br.directionToSenseIn = dir;
-			dirAboutToMoveIn = null;
-		} else {
-			rc.setDirection(dir);
-		}
-		
-		return true;
-	}
-	
-	private boolean randomTowards(MapLocation target) throws GameActionException {
-		if(dirAboutToMoveIn == null) {
-			Direction dir = br.nav.navigateRandomly(target);
 			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
 				return false;
 			dirAboutToMoveIn = dir;

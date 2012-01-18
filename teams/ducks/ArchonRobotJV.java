@@ -25,6 +25,7 @@ public class ArchonRobotJV extends BaseRobot {
 		public static final int ARCHON_SPLIT_DISTANCE = 16;
 		public static final int NUM_INITIAL_SOLDIERS = 5;
 		public static final double MIN_ARCHON_FLUX = 5;
+		public static final int ARCHON_ENGAGE_DISTANCE = 26;
 	}
 	
 	/**
@@ -38,7 +39,8 @@ public class ArchonRobotJV extends BaseRobot {
 		RETURN_HOME,
 		SPLIT,
 		BUILD_INITIAL_ARMY,
-		RUSH
+		RUSH,
+		ENGAGE
 	}
 	
 	/** The current state of the Archon. */
@@ -91,6 +93,9 @@ public class ArchonRobotJV extends BaseRobot {
 				break;
 			case RUSH:
 				rush();
+				break;
+			case ENGAGE:
+				engage();
 				break;
 			default:
 				// we got g'd
@@ -168,6 +173,16 @@ public class ArchonRobotJV extends BaseRobot {
 				}
 				break;
 			case RUSH:
+				// if an enemy is nearby, engage
+				if (dc.getClosestEnemy() != null) {
+					return ArchonState.ENGAGE;
+				}
+				break;
+			case ENGAGE:
+				// if no enemy nearby, go back to rushing
+				if (dc.getClosestEnemy() == null) {
+					return ArchonState.RUSH;
+				}
 				break;
 			default:
 				// we got g'd
@@ -252,8 +267,6 @@ public class ArchonRobotJV extends BaseRobot {
 		// distribute flux
 		fbs.setBattleMode();
 		fbs.manageFlux();
-		// share exploration information
-		ses.broadcastMapEdges();
 	}
 	
 	/**
@@ -266,8 +279,39 @@ public class ArchonRobotJV extends BaseRobot {
 		micro.setObjective(rally.getCurrentObjective());
 		// go to objective
 		micro.attackMove();
-		// share exploration information
-		ses.broadcastMapEdges();
+		// try to build a soldier
+		for (Direction d : Direction.values()) {
+			if (d == Direction.OMNI || d == Direction.NONE) {
+				continue;
+			}
+			if (spawnUnitInDir(RobotType.SOLDIER, d)) {
+				break;
+			}
+		}
+		// distribute flux
+		fbs.manageFlux();
+		// send rally
+		rally.broadcastRally();
+	}
+	
+	/**
+	 * Engage the enemy forces.
+	 */
+	private void engage() throws GameActionException {
+		// abort if no enemy nearby
+		if (dc.getClosestEnemy() == null) {
+			return;
+		}
+		// set micro mode
+		micro.setKiteMode(ArchonConstants.ARCHON_ENGAGE_DISTANCE);
+		// set objective
+		micro.setObjective(dc.getClosestEnemy().location);
+		// kite enemy
+		micro.attackMove();
+		// try to build a soldier in front of me
+		spawnUnitInDir(RobotType.SOLDIER, curDir);
+		// distribute flux
+		fbs.manageFlux();
 		// send rally
 		rally.broadcastRally();
 	}

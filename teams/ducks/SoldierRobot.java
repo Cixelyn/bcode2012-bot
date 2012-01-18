@@ -107,7 +107,7 @@ public class SoldierRobot extends StrategyRobot {
 		case SWARM:
 		{
 			// set micro mode
-			micro.setSwarmMode(2, 36);
+			//micro.setSwarmMode(2, 36);
 			// set flux management mode
 			fbs.setBatteryMode();
 		} break;
@@ -282,7 +282,7 @@ public class SoldierRobot extends StrategyRobot {
 			if (swarmObjective == null)
 			{
 				findArchon();
-				micro.setSwarmMode(2, 36);
+				//micro.setSwarmMode(2, 36);
 				micro.setObjective(archonOVERLORD);
 				micro.attackMove();
 			} else
@@ -297,12 +297,12 @@ public class SoldierRobot extends StrategyRobot {
 			if (fromObjective == null)
 			{
 				findArchon();
-				micro.setSwarmMode(2, 36);
+				//micro.setSwarmMode(2, 36);
 				micro.setObjective(archonOVERLORD);
 				micro.attackMove();
 			} else
 			{
-				micro.setSwarmMode(2, 36);
+				//micro.setSwarmMode(2, 36);
 				micro.setObjective(fromObjective);
 				micro.attackMove();
 			}
