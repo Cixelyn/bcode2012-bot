@@ -242,6 +242,22 @@ public class RadarSystem {
 		}
 	}
 	
+	/**
+	 * Check if we have scanned enemies this round
+	 */
+	public boolean hasScannedEnemies()
+	{
+		return (lastscanround == br.curRound && !needToScanEnemies);
+	}
+	
+	/**
+	 * Check if we have scanned allies this round
+	 */
+	public boolean hasScannedAllies()
+	{
+		return (lastscanround == br.curRound && !needToScanAllies);
+	}
+	
 //	/**
 //	 * Get the robot info for given enemy robot id.
 //	 */
