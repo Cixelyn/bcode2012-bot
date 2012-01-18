@@ -26,7 +26,7 @@ public class NavigationSystem {
 	
 	/** Resets the navigator, clearing it of any state. */
 	public void reset() {
-		tangentBug.reset(1, 0);
+		tangentBug.reset();
 		normalBug.reset();
 	}
 	
@@ -113,7 +113,7 @@ public class NavigationSystem {
 			if(movesOnSameTarget % expectedMovesToReachTarget == 0) {
 				int n = movesOnSameTarget / expectedMovesToReachTarget;
 				if(n>=2) {
-					tangentBug.reset(Math.min(4*n, 50), 0.4);
+					tangentBug.resetWallTrace(Math.min(4*n, 50), 0.4);
 				}
 			}
 		} else if(mode==NavigationMode.DSTAR) {
@@ -130,6 +130,8 @@ public class NavigationSystem {
 	 * hemicircle of the given direction is movable.
 	 */
 	public Direction wiggleToMovableDirection(Direction dir) {
+		if(dir==null) 
+			return null;
 		boolean[] movable = baseRobot.dc.getMovableDirections();
 		int multiplier = ((int)(Math.random()*2))*2-1; // 1 or -1 with equal probability
 		int ord = dir.ordinal();

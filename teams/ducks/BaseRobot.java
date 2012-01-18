@@ -23,6 +23,7 @@ public abstract class BaseRobot {
 	public final RadarSystem radar;
 	public final EnemyArchonKillCache eakc;
 	public final ArchonOwnership ao;
+	public final MovementStateMachine msm;
 	
 	// Robot Statistics - Permanent
 	public final RobotType myType;
@@ -69,6 +70,7 @@ public abstract class BaseRobot {
 		radar = new RadarSystem(this);
 		eakc = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
+		msm = new MovementStateMachine(this);
 		
 		updateRoundVariables();
 	}
@@ -89,10 +91,9 @@ public abstract class BaseRobot {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
 			}
-			
 		
 			// Main Run Call
-			try{
+			try {
 				run();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -148,6 +149,11 @@ public abstract class BaseRobot {
             int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
             System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
         }  
+	}
+	
+	/** Should be overridden by any robot that wants to do movements. */
+	public MoveInfo computeNextMove() {
+		return null;
 	}
 	
 }
