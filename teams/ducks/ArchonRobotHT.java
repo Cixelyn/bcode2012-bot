@@ -43,17 +43,24 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 	}
 	@Override
-	public void processMessage(char msgType, StringBuilder sb) {
+	public void processMessage(MessageType msgType, StringBuilder sb) throws GameActionException {
 		int[] data = null;
-		if(msgType=='e') {
-			data = BroadcastSystem.decodeShorts(sb);
+		switch(msgType) {
+		case MAP_EDGES:
+			data = BroadcastSystem.decodeUShorts(sb);
 			ses.receiveMapEdges(data);
-		} else if(msgType=='m') {
+			break;
+		case MAP_FRAGMENTS:
 			data = BroadcastSystem.decodeInts(sb);
 			ses.receiveMapFragment(data);
-		} else if(msgType=='p') {
+			break;
+		case POWERNODE_FRAGMENTS:
 			data = BroadcastSystem.decodeInts(sb);
 			ses.receivePowerNodeFragment(data);
+			break;
+		default:
+			super.processMessage(msgType, sb);
+				
 		} 
 	}
 	@Override

@@ -119,7 +119,7 @@ public class SoldierRobot extends StrategyRobot {
 		} break;
 		case DEFEND_BASE:
 		{
-			io.addAddress("#d");
+			io.addChannel("#d");
 			micro.setObjective(myHome);
 			micro.setNormalMode();
 		} break;
@@ -147,8 +147,8 @@ public class SoldierRobot extends StrategyRobot {
 				hbe.run(); //this call will halt until wakeup
 				gotoState(RobotState.DEFEND_BASE);
 				
-				io.sendWakeupCall();
-				io.sendShort("#zz", 0);
+//				io.sendWakeupCall();
+//				io.sendShort("#zz", 0);
 				break;
 			case DEFEND_BASE:
 				defendBase();
@@ -169,69 +169,12 @@ public class SoldierRobot extends StrategyRobot {
 	
 	@Override
 	public void processMessage(
-			char msgType, StringBuilder sb) throws GameActionException {
+			MessageType msgType, StringBuilder sb) throws GameActionException {
 		
 		swarmPriority = 999;
 		int closest = 999;
 		MapLocation temp;
 		
-		switch(msgType) {
-			case 'd':
-			{
-				eakc.reportEnemyArchonKills(BroadcastSystem.decodeShorts(sb));
-			} break;
-			case 'o':
-			{
-				ao.processOwnership(BroadcastSystem.decodeShorts(sb));
-				if (ao.getArchonOwnerID()==5)
-					isDefender = true;
-				else
-					isDefender = false;
-				
-				ownerTrueID = ao.getArchonOwnerID();
-//				ownerRobotID = ao.getArchonRobotID();
-				
-				findArchon();
-				
-			} break;
-			case 'w':
-			{
-				if (getCurrentState() == RobotState.HOLD_POSITION) {
-					if (isDefender)
-						gotoState(RobotState.DEFEND_BASE);
-					else
-						gotoState(RobotState.SWARM);
-				}
-			} break;
-			case 's':
-			{
-				if (getCurrentState() == RobotState.HOLD_POSITION) {
-					if (isDefender)
-						gotoState(RobotState.DEFEND_BASE);
-					else
-						gotoState(RobotState.SWARM);
-				}
-				if (!isDefender)
-				{
-					int[] msg = BroadcastSystem.decodeShorts(sb);
-//					swarmDirection = Constants.directions[msg[1]];
-					temp = new MapLocation(msg[4],msg[5]);
-					int dist = temp.distanceSquaredTo(curLoc);
-					if (dist < closest)
-					{
-						enemydiff = msg[3]-100;
-						swarmObjective = new MapLocation(msg[1],msg[2]);
-						fromObjective = temp;
-					}
-				}
-			} break;
-			case 'z':
-			{
-				gotoState(RobotState.HIBERNATE);
-			} break;
-			default:
-				super.processMessage(msgType, sb);
-		}
 	}
 	
 	public void initialize() throws GameActionException {

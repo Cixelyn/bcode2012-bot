@@ -150,18 +150,16 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	}
 	
 	@Override
-	public void processMessage(char msgType, StringBuilder sb)
+	public void processMessage(MessageType msgType, StringBuilder sb)
 			throws GameActionException {
-		switch (msgType) {
-		case 'a' :
-		{
-			if (!isLeader) {
-				int[] msg = BroadcastSystem.decodeShorts(sb);
-				expdir = Constants.directions[msg[0]];
-				formation = formationvals[msg[1]];
-			}
-		} break;
-		}
+//		switch (msgType) {
+//		case 'a' :
+//		{
+//			if (!isLeader) {
+//				expdir = Constants.directions[BroadcastSystem.decodeShort(sb)];
+//			}
+//		} break;
+//		}
 	}
 	
 	@Override
@@ -227,7 +225,7 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	}
 
 	private void initialize() {
-		io.addAddress("#a");
+		io.addChannel("#a");
 		
 		if (isLeader)
 		{
@@ -752,6 +750,6 @@ public class ArchonRobotYP extends StrategyRobotExtended {
 	
 	private void sendSwarmInfo(Direction dir)
 	{
-		io.sendShorts("#aa", new int[] {dir.ordinal(), formation.ordinal()});
+//		io.sendShort("#aa", dir.ordinal());
 	}
 }

@@ -40,7 +40,7 @@ import battlecode.common.Team;
  */
 public class BroadcastSystem {
 
-	private String[] listenAddrs;
+	private String[] boundChannels;
 	private BaseRobot br;
 	public int teamkey;
 	
@@ -58,7 +58,7 @@ public class BroadcastSystem {
 	
 	public BroadcastSystem(BaseRobot br) {
 		this.br = br;
-		listenAddrs = new String[]{};
+		boundChannels = new String[]{};
 		teamkey = (br.myTeam == Team.A ?
 				Constants.RADIO_TEAM_KEYS[0] : Constants.RADIO_TEAM_KEYS[1]);
 		msgContainer = new StringBuilder();
@@ -73,7 +73,7 @@ public class BroadcastSystem {
 	 * @param addrs
 	 */
 	public void setAddresses(String[] addrs) {
-		listenAddrs = addrs;
+		boundChannels = addrs;
 	}
 
 
@@ -84,12 +84,12 @@ public class BroadcastSystem {
 	 * @return
 	 */
 	public boolean hasAddress(String addr) {
-		return findAddress(addr)!=-1;
+		return findChannel(addr)!=-1;
 	}
 	
-	private int findAddress(String addr) {
-		for(int i=listenAddrs.length; --i>=0;) {
-			if(listenAddrs[i] == addr) {
+	private int findChannel(String addr) {
+		for(int i=boundChannels.length; --i>=0;) {
+			if(boundChannels[i] == addr) {
 				return i;
 			}
 		}
@@ -100,18 +100,18 @@ public class BroadcastSystem {
 	/**
 	 * Adds a particular address to the robot's active ports.
 	 * Internally checks whether the address is already bound or not
-	 * @param addr
+	 * @param chn
 	 * @return whether address was bound or not
 	 */
-	public boolean addAddress(String addr) {
-		if(!hasAddress(addr)) {
+	public boolean addChannel(String chn) {
+		if(!hasAddress(chn)) {
 			
-			int oldlen = listenAddrs.length;
+			int oldlen = boundChannels.length;
 			
 			String[] newAddrs = new String[oldlen + 1];
-			System.arraycopy(listenAddrs, 0, newAddrs, 0, oldlen);
-			newAddrs[oldlen] = addr;
-			listenAddrs = newAddrs;
+			System.arraycopy(boundChannels, 0, newAddrs, 0, oldlen);
+			newAddrs[oldlen] = chn;
+			boundChannels = newAddrs;
 			
 			return true;
 		} else {
@@ -121,18 +121,18 @@ public class BroadcastSystem {
 	
 	
 	/**
-	 * Removes a robot's binding to an address
+	 * Removes a robot's binding to a channel
 	 * Internally checks whether the address is already bound or not
-	 * @param addr
+	 * @param channel
 	 */
-	public boolean removeAddress(String addr) {
-		int pos=findAddress(addr);
+	public boolean removeChannel(String channel) {
+		int pos=findChannel(channel);
 		if(pos >= 0) {
-			int oldlen = listenAddrs.length;
-			String[] newAddrs = new String[oldlen - 1];
-			System.arraycopy(listenAddrs, 0, newAddrs, 0, pos);
-			System.arraycopy(listenAddrs, pos+1, newAddrs, pos, oldlen - pos -1);
-			listenAddrs = newAddrs;
+			int oldlen = boundChannels.length;
+			String[] newChans = new String[oldlen - 1];
+			System.arraycopy(boundChannels, 0, newChans, 0, pos);
+			System.arraycopy(boundChannels, pos+1, newChans, pos, oldlen - pos -1);
+			boundChannels = newChans;
 			return true;
 			
 		} else {
@@ -155,10 +155,11 @@ public class BroadcastSystem {
 	 * Headers are an address followed by a message type
 	 * eg: #xy, where the address to send it to is ^x and the
 	 * type of the message is y.
-	 * @param header
-	 * @param data
 	 */
-	public void sendShort(String header, int data) {
+	public void sendShort(MessageChannel chan, MessageType mtype, int data) {
+		sendShort(chan.chanName + mtype.header, data);
+	}
+	private void sendShort(String header, int data) {
 		msgContainer.append(header);
 		msgContainer.append((char) (data + 0x100));
 	}
@@ -175,10 +176,12 @@ public class BroadcastSystem {
 
 	/**
 	 * Sends a single map location to a unit
-	 * @param header
-	 * @param loc
 	 */
-	public void sendMapLoc(String header, MapLocation loc) {
+	public void sendMapLoc(MessageChannel chan, MessageType msgType, MapLocation loc) {
+		sendMapLoc(chan.chanName + msgType.header, loc);
+	}
+	
+	private void sendMapLoc(String header, MapLocation loc) {
 		msgContainer.append(header);
 		msgContainer.append((char) (loc.x + 0x100));
 		msgContainer.append((char) (loc.y + 0x100));
@@ -191,16 +194,20 @@ public class BroadcastSystem {
 		);
 	}
 	
-
+	
 	/**
 	 * Send a variable-sized array of unsigned 15-bit integers.
 	 * Make sure each element in the array is LESS THAN 32000,
 	 * otherwise deserialization will fail
-	 * @param header - "#[addr][type]"
+	 * @param chan - broadcast channel
+	 * @param msgType - message type
 	 * @param ints - array of 15-bit ints
 	 * @see BroadcastSystem#sendShort(String, int)
 	 */
-	public void sendShorts(String header, int[] ints) {
+	public void sendUShorts(MessageChannel chan, MessageType msgType, int[] ints) {
+		sendUShort(chan.chanName + msgType.header, ints);
+	}
+	private void sendUShort(String header, int[] ints) {
 		msgContainer.append(header);
 		for (int i : ints) {
 			msgContainer.append((char)( i + 0x100));
@@ -213,7 +220,7 @@ public class BroadcastSystem {
 	 * @param msg - the message
 	 * @return deserialized array
 	 */
-	public static int[] decodeShorts(StringBuilder msg) {
+	public static int[] decodeUShorts(StringBuilder msg) {
 		int end = msg.indexOf("!");
 		int[] ints = new int[end];
 		
@@ -231,11 +238,17 @@ public class BroadcastSystem {
 	 * <br/>
 	 * If your number is only 15-bits long, consider sending
 	 * a short instead, as it's much cheaper
-	 * @param header - "#[addr][type]"
+	 * @param chan - channel to braodcast
+	 * @param msgType - type of message
 	 * @param ints - array of 31-bit ints
-	 * @see BroadcastSystem#sendShorts(String, int[])
+	 * @see BroadcastSystem#sendUShort(String, int[])
 	 */
-	public void sendInts(String header, int[] ints) {
+	
+	public void sendUInts(MessageChannel chan, MessageType msgType, int[] ints) {
+		sendUInts(chan.chanName + msgType.header, ints);
+	}
+	
+	private void sendUInts(String header, int[] ints) {
 		msgContainer.append(header);
 		for (int i : ints ) {
 			
@@ -363,7 +376,7 @@ public class BroadcastSystem {
 	public void receive() throws GameActionException {
 		
 		// check for active listeners
-		if(listenAddrs.length > 0) { 
+		if(boundChannels.length > 0) { 
 			
 			//Message Receive Loop
 			StringBuilder sb = new StringBuilder();
@@ -389,10 +402,10 @@ public class BroadcastSystem {
 			
 			//Message Process Loop
 			int i=0;
-			for(String addr: listenAddrs) {
+			for(String addr: boundChannels) {
 			    while((i = sb.indexOf(addr, i)) != -1) {
 			        br.processMessage(
-			        	sb.charAt(i+addr.length()),
+			        	MessageType.decode(sb.charAt(i+addr.length())),
 			        	new StringBuilder(sb.substring(i + addr.length() + 1))
 			        );
 			        i++;
@@ -411,11 +424,11 @@ public class BroadcastSystem {
 		int[] a;
 		a = new int[]{555,10000,20000,30000,40000,500000,1073741823};
 		
-		io.sendShorts("",a);
-		System.out.println((Arrays.toString(BroadcastSystem.decodeShorts(io.msgContainer))));
+		io.sendUShort("",a);
+		System.out.println((Arrays.toString(BroadcastSystem.decodeUShorts(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
 		
-		io.sendInts("",a);
+		io.sendUInts("",a);
 		System.out.println((Arrays.toString(BroadcastSystem.decodeInts(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
 		
@@ -427,18 +440,21 @@ public class BroadcastSystem {
 		io.msgContainer = new StringBuilder();
 
 		io.setAddresses(new String[]{"#aa", "#bb"});
-		System.out.println((Arrays.toString(io.listenAddrs)));
-		io.addAddress("#cc");
-		io.addAddress("#dd");
-		io.addAddress("#ee");
-		io.addAddress("#dd");
-		System.out.println((Arrays.toString(io.listenAddrs)));
-		io.removeAddress("#bb");
-		io.removeAddress("#ee");
-		io.removeAddress("#ee");
-		io.removeAddress("#aa");
-		io.addAddress("#ff");
-		System.out.println((Arrays.toString(io.listenAddrs)));
+		System.out.println((Arrays.toString(io.boundChannels)));
+		io.addChannel("#cc");
+		io.addChannel("#dd");
+		io.addChannel("#ee");
+		io.addChannel("#dd");
+		System.out.println((Arrays.toString(io.boundChannels)));
+		io.removeChannel("#bb");
+		io.removeChannel("#ee");
+		io.removeChannel("#ee");
+		io.removeChannel("#aa");
+		io.addChannel("#ff");
+		System.out.println((Arrays.toString(io.boundChannels)));
+		
+		
+		System.out.println(MessageType.decode(MessageType.ENEMY_ARCHON_KILL.header).toString());
 	}
 	
 	

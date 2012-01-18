@@ -24,7 +24,6 @@ public class RobotPlayer {
 				else br = new SoldierRobot(myRC);
 				break;
 			case SCOUT:
-				br = new ScoutRobot(myRC);
 				break;
 			case DISRUPTER:
 				break;
