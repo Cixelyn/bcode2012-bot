@@ -95,14 +95,6 @@ public abstract class BaseRobot {
 				rc.addMatchObservation(e.toString());
 			}
 			
-			// Call Movement State Machine
-			try {
-				msm.step();
-			} catch (Exception e) {
-				e.printStackTrace();
-				rc.addMatchObservation(e.toString());
-			}
-			
 			// Main Run Call
 			try{
 				run();
@@ -110,7 +102,14 @@ public abstract class BaseRobot {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
 			}
-				
+			
+			// Call Movement State Machine
+			try {
+				msm.step();
+			} catch (Exception e) {
+				e.printStackTrace();
+				rc.addMatchObservation(e.toString());
+			}			
 			
 			// Broadcast Queued Messages
 			try {
