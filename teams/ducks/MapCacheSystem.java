@@ -201,11 +201,10 @@ public class MapCacheSystem {
 		if(baseRobot.myType == RobotType.SOLDIER)
 			return;
 		if(lastMoved==null || lastMoved==Direction.NONE || lastMoved==Direction.OMNI) {
-			senseAll();
 			return;
 		}
 		senseTilesOptimized(lastMoved);
-		senseMapEdges(lastMoved);
+		senseMapEdgesOptimized(lastMoved);
 		sensePowerNodes();
 	}
 	
@@ -273,7 +272,6 @@ public class MapCacheSystem {
 		if(packedSensed[xblock][yblock]!=packedSensedInfo) {
 			packedDataUpdated.add(block);
 			packedIsWall[xblock][yblock] |= packedIsWallInfo;
-			if(xblock==32 && yblock==32) System.out.println(" AOPOEAHKEWO "+Integer.toBinaryString(packedIsWall[32][32]));
 			packedSensed[xblock][yblock] |= packedSensedInfo;
 		}
 	}
@@ -342,11 +340,13 @@ public class MapCacheSystem {
 	 *  
 	 * For example, if we just moved NORTH, we only need to check to the north of us for a new wall,
 	 * since a wall could not have appeared in any other direction. */
-	private void senseMapEdges(Direction lastMoved) {
+	private void senseMapEdgesOptimized(Direction lastMoved) {
 		MapLocation myLoc = baseRobot.curLoc;
 		if(edgeXMin==0 && lastMoved.dx==-1 && 
 				baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, senseRadius))==TerrainTile.OFF_MAP) {
 			int d = senseRadius;
+			// Note that some of this code is not necessary if we use the system properly
+			// But it adds a little bit of robustness
 			while(baseRobot.rc.senseTerrainTile(myLoc.add(Direction.WEST, d-1))==TerrainTile.OFF_MAP) {
 				d--;
 			}
@@ -418,7 +418,6 @@ public class MapCacheSystem {
 		if(powerNodeGraph.enemyPowerCoreID==0 && data[0]!=32001) {
 			int coreX = data[0] >> 15;
 			int coreY = data[0] & mask;
-			System.out.println(coreX+" "+coreY);
 			short coreID = powerNodeID[worldToCacheX(coreX)][worldToCacheY(coreY)];
 			if(coreID==0) {
 				powerNodeGraph.nodeCount++;
@@ -486,6 +485,10 @@ public class MapCacheSystem {
 	 */
 	private short getPowerNodeID(MapLocation loc) {
 		return powerNodeID[worldToCacheX(loc.x)][worldToCacheY(loc.y)];
+	}
+	/** Returns true iff the robot knows of a power node at the given location. */
+	public boolean isPowerNode(MapLocation loc) {
+		return powerNodeID[worldToCacheX(loc.x)][worldToCacheY(loc.y)]!=0;
 	}
 	
 	/** Converts from world x coordinates to cache x coordinates. */

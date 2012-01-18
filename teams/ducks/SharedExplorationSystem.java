@@ -46,7 +46,7 @@ public class SharedExplorationSystem {
 			startCol = 0;
 			numColBlocks = 64;
 		}
-		int xb = startCol + (Clock.getRoundNum() % numColBlocks);
+		int xb = startCol + (Clock.getRoundNum()/6 % numColBlocks);
 		
 		int[] buffer = new int[32];
 		int c=0;
@@ -75,7 +75,7 @@ public class SharedExplorationSystem {
 	/** Broadcasts data about one node in the power node graph and its neighbors. */
 	public void broadcastPowerNodeFragment() {
 		PowerNodeGraph png = baseRobot.mc.powerNodeGraph;
-		int id = (Clock.getRoundNum() % (png.nodeCount-1)) + 2;
+		int id = (Clock.getRoundNum()/6 % (png.nodeCount-1)) + 2;
 		if(!png.nodeSensed[id]) return;
 		int degree = png.degreeCount[id];
 		int[] ints = new int[degree+2];

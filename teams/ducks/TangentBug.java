@@ -13,6 +13,8 @@ public class TangentBug {
 	/** Look this many steps in each way to find the tangent in one turn. */
 	final static int FIND_TANGENT_STEPS_PER_TURN = 4;
 	
+	/** Default number of turns we have to prepare before we have a reasonable notion of where to go. */
+	final static int DEFAULT_MIN_PREP_TURNS = 3;
 	/** We approximate that it will take an average of this*d squares to navigate a distance of d. */
 	public final static double MAP_UGLINESS_WEIGHT = 1.5;
 	
@@ -30,7 +32,7 @@ public class TangentBug {
 	public int edgeXMin, edgeXMax, edgeYMin, edgeYMax;
 	
 	// Target variables - cleared every time we get a new target
-	int minPrepRounds = 1; // The amount of times we have to prepare before we can compute
+	int minPrepRounds = 3; // The amount of times we have to prepare before we can compute
 	double chanceGoLongWay = 0; // The chance that we pick the longer way to trace around walls
 	
 	// Wall variables - cleared every time we start tracing a new wall
@@ -86,10 +88,23 @@ public class TangentBug {
 		wallCache = new int[xmax][ymax];
 		reset();
 	}
+	/** Completely clears the tangent bug of any state. */
 	public void reset() {
-		reset(minPrepRounds, chanceGoLongWay);
+		resetWallTrace(DEFAULT_MIN_PREP_TURNS, 0);
 	}
-	public void reset(int minPrepRounds, double chanceGoLongWay) {
+	/** Resets the tangent bug of any state tracing a wall, but keeps the state that helps it
+	 * get around difficult obstacles.
+	 */
+	public void resetWallTrace() {
+		resetWallTrace(minPrepRounds, chanceGoLongWay);
+	}
+	/** Resets the tangent bug of any state tracing a wall, and sets a state that helps it
+	 * get around difficult obstacles.
+	 * @param minPrepRounds the minimum rounds we have to prepare before computing
+	 * @param chanceGoLongWay the probability that when we heuristically pick which direction
+	 * 	to trace the wall (CW or CCW), we go the opposite way.
+	 */
+	public void resetWallTrace(int minPrepRounds, double chanceGoLongWay) {
 		tracing = false;
 		curWallCacheID++;
 		clearPreparatoryVariables();
@@ -99,7 +114,7 @@ public class TangentBug {
 	public void setTarget(int tx, int ty) {
 		if(this.tx==tx && this.ty==ty) return;
 		
-		reset(1, 0);
+		reset();
 		this.tx = tx; 
 		this.ty = ty;
 	}
@@ -241,7 +256,7 @@ public class TangentBug {
 			clearPreparatoryVariables();
 			return map[sx+ret[0]][sy+ret[1]] ? null : ret;
 		} else if(!hitWallCache && !startedTracingDuringCurrentPrepCycle) {
-			reset();
+			resetWallTrace();
 			int[] ret = d[getDirTowards(tx-sx, ty-sy)];
 			return map[sx+ret[0]][sy+ret[1]] ? null : ret;
 		}
@@ -271,14 +286,14 @@ public class TangentBug {
 //		System.out.println(" tangent point: "+buffer[bpos[bestTraceDir]][0]+","+buffer[bpos[bestTraceDir]][1]);
 		if(finalDir==-1) {
 			// this happens when there were no valid tangent points found
-			reset();
+			resetWallTrace();
 			return null;
 		}
 		int x = sx+d[finalDir][0];
 		int y = sy+d[finalDir][1];
 		if(map[x][y] && wallCache[x][y]>curWallCacheID*BUFFER_LENGTH) {
 			// our wall cache is out of date due to newly sensed walls
-			reset();
+			resetWallTrace();
 			return null;
 		}
 			
