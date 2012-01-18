@@ -32,7 +32,7 @@ public class RallySystem {
 			// share exploration information
 			br.ses.broadcastMapEdges();
 			// send objective
-			br.io.sendMapLoc(MessageChannel.ALL, MessageType.RALLY, getCurrentObjective());
+			br.io.sendMapLoc(BroadcastChannel.ALL, BroadcastType.RALLY, getCurrentObjective());
 			timeUntilBroadcast = Constants.ARCHON_BROADCAST_FREQUENCY;
 		}
 	}

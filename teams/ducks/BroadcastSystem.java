@@ -13,34 +13,10 @@ import battlecode.common.Team;
  * The radio class encapsulates the sending of messages between robots
  * TODO: defend against message replay DoS attacks
  * 
- * 
- * <h1>Channel List</h1>
- * <ul>
- *   <li> #x - everyone
- *   <li> #s - soldiers
- *   <li> #a - archons
- *   <li> #e - shared exploration messages 
- *   <li> #d - defender channel
- *   <li> #0-5 - trueArchonID Channel
- * </ul>
- * 
- * <h1>Message Types</h1>
- * <ul>
- *   <li> e - map edges
- *   <li> m - map terrain tile fragments
- *   <li> p - power node fragments
- * 
- *   <li> d - announce dead archons
- *   <li> a,s,z,x - reserved for swarm
- *   
- *   <li> z - power down
- * </ul>
- * 
- *
  */
 public class BroadcastSystem {
 
-	private String[] boundChannels;
+	private String[] boundChannelHeaders;
 	private BaseRobot br;
 	public int teamkey;
 	
@@ -58,7 +34,7 @@ public class BroadcastSystem {
 	
 	public BroadcastSystem(BaseRobot br) {
 		this.br = br;
-		boundChannels = new String[]{};
+		boundChannelHeaders = new String[0];
 		teamkey = (br.myTeam == Team.A ?
 				Constants.RADIO_TEAM_KEYS[0] : Constants.RADIO_TEAM_KEYS[1]);
 		msgContainer = new StringBuilder();
@@ -72,24 +48,27 @@ public class BroadcastSystem {
 	 * string which you wish to listen on
 	 * @param addrs
 	 */
-	public void setAddresses(String[] addrs) {
-		boundChannels = addrs;
+	public void setChannels(BroadcastChannel[] channels) {
+		boundChannelHeaders = new String[channels.length];
+		for(int i=0; i < channels.length; i++) {
+			boundChannelHeaders[i] = channels[i].chanHeader;
+		}
 	}
 
 
 	/**
 	 * Returns whether a robot is already bound
 	 * to a particular address
-	 * @param addr
+	 * @param chn
 	 * @return
 	 */
-	public boolean hasAddress(String addr) {
-		return findChannel(addr)!=-1;
+	public boolean hasChannel(BroadcastChannel chn) {
+		return findChannel(chn)!=-1;
 	}
 	
-	private int findChannel(String addr) {
-		for(int i=boundChannels.length; --i>=0;) {
-			if(boundChannels[i] == addr) {
+	private int findChannel(BroadcastChannel chn) {
+		for(int i=boundChannelHeaders.length; --i>=0;) {
+			if(boundChannelHeaders[i] == chn.chanHeader) {
 				return i;
 			}
 		}
@@ -98,20 +77,20 @@ public class BroadcastSystem {
 	
 
 	/**
-	 * Adds a particular address to the robot's active ports.
+	 * Adds a particular chanell to the robot's active ports.
 	 * Internally checks whether the address is already bound or not
 	 * @param chn
 	 * @return whether address was bound or not
 	 */
-	public boolean addChannel(String chn) {
-		if(!hasAddress(chn)) {
+	public boolean addChannel(BroadcastChannel chn) {
+		if(!hasChannel(chn)) {
 			
-			int oldlen = boundChannels.length;
+			int oldlen = boundChannelHeaders.length;
 			
 			String[] newAddrs = new String[oldlen + 1];
-			System.arraycopy(boundChannels, 0, newAddrs, 0, oldlen);
-			newAddrs[oldlen] = chn;
-			boundChannels = newAddrs;
+			System.arraycopy(boundChannelHeaders, 0, newAddrs, 0, oldlen);
+			newAddrs[oldlen] = chn.chanHeader;
+			boundChannelHeaders = newAddrs;
 			
 			return true;
 		} else {
@@ -125,14 +104,14 @@ public class BroadcastSystem {
 	 * Internally checks whether the address is already bound or not
 	 * @param channel
 	 */
-	public boolean removeChannel(String channel) {
-		int pos=findChannel(channel);
+	public boolean removeChannel(BroadcastChannel chn) {
+		int pos=findChannel(chn);
 		if(pos >= 0) {
-			int oldlen = boundChannels.length;
+			int oldlen = boundChannelHeaders.length;
 			String[] newChans = new String[oldlen - 1];
-			System.arraycopy(boundChannels, 0, newChans, 0, pos);
-			System.arraycopy(boundChannels, pos+1, newChans, pos, oldlen - pos -1);
-			boundChannels = newChans;
+			System.arraycopy(boundChannelHeaders, 0, newChans, 0, pos);
+			System.arraycopy(boundChannelHeaders, pos+1, newChans, pos, oldlen - pos -1);
+			boundChannelHeaders = newChans;
 			return true;
 			
 		} else {
@@ -156,8 +135,8 @@ public class BroadcastSystem {
 	 * eg: #xy, where the address to send it to is ^x and the
 	 * type of the message is y.
 	 */
-	public void sendShort(MessageChannel chan, MessageType mtype, int data) {
-		sendShort(chan.chanName + mtype.header, data);
+	public void sendShort(BroadcastChannel chan, BroadcastType mtype, int data) {
+		sendShort(chan.chanHeader + mtype.header, data);
 	}
 	private void sendShort(String header, int data) {
 		msgContainer.append(header);
@@ -177,8 +156,8 @@ public class BroadcastSystem {
 	/**
 	 * Sends a single map location to a unit
 	 */
-	public void sendMapLoc(MessageChannel chan, MessageType msgType, MapLocation loc) {
-		sendMapLoc(chan.chanName + msgType.header, loc);
+	public void sendMapLoc(BroadcastChannel chan, BroadcastType msgType, MapLocation loc) {
+		sendMapLoc(chan.chanHeader + msgType.header, loc);
 	}
 	
 	private void sendMapLoc(String header, MapLocation loc) {
@@ -204,8 +183,8 @@ public class BroadcastSystem {
 	 * @param ints - array of 15-bit ints
 	 * @see BroadcastSystem#sendShort(String, int)
 	 */
-	public void sendUShorts(MessageChannel chan, MessageType msgType, int[] ints) {
-		sendUShort(chan.chanName + msgType.header, ints);
+	public void sendUShorts(BroadcastChannel chan, BroadcastType msgType, int[] ints) {
+		sendUShort(chan.chanHeader + msgType.header, ints);
 	}
 	private void sendUShort(String header, int[] ints) {
 		msgContainer.append(header);
@@ -244,8 +223,8 @@ public class BroadcastSystem {
 	 * @see BroadcastSystem#sendUShort(String, int[])
 	 */
 	
-	public void sendUInts(MessageChannel chan, MessageType msgType, int[] ints) {
-		sendUInts(chan.chanName + msgType.header, ints);
+	public void sendUInts(BroadcastChannel chan, BroadcastType msgType, int[] ints) {
+		sendUInts(chan.chanHeader + msgType.header, ints);
 	}
 	
 	private void sendUInts(String header, int[] ints) {
@@ -376,7 +355,7 @@ public class BroadcastSystem {
 	public void receive() throws GameActionException {
 		
 		// check for active listeners
-		if(boundChannels.length > 0) { 
+		if(boundChannelHeaders.length > 0) { 
 			
 			//Message Receive Loop
 			StringBuilder sb = new StringBuilder();
@@ -402,10 +381,10 @@ public class BroadcastSystem {
 			
 			//Message Process Loop
 			int i=0;
-			for(String addr: boundChannels) {
+			for(String addr: boundChannelHeaders) {
 			    while((i = sb.indexOf(addr, i)) != -1) {
 			        br.processMessage(
-			        	MessageType.decode(sb.charAt(i+addr.length())),
+			        	BroadcastType.decode(sb.charAt(i+addr.length())),
 			        	new StringBuilder(sb.substring(i + addr.length() + 1))
 			        );
 			        i++;
@@ -439,22 +418,13 @@ public class BroadcastSystem {
 		System.out.println((Arrays.toString(BroadcastSystem.decodeMapLocs(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
 
-		io.setAddresses(new String[]{"#aa", "#bb"});
-		System.out.println((Arrays.toString(io.boundChannels)));
-		io.addChannel("#cc");
-		io.addChannel("#dd");
-		io.addChannel("#ee");
-		io.addChannel("#dd");
-		System.out.println((Arrays.toString(io.boundChannels)));
-		io.removeChannel("#bb");
-		io.removeChannel("#ee");
-		io.removeChannel("#ee");
-		io.removeChannel("#aa");
-		io.addChannel("#ff");
-		System.out.println((Arrays.toString(io.boundChannels)));
+		io.setChannels(new BroadcastChannel[] {});
+		System.out.println((Arrays.toString(io.boundChannelHeaders)));
+		io.addChannel(BroadcastChannel.ALL);
+		System.out.println((Arrays.toString(io.boundChannelHeaders)));
 		
 		
-		System.out.println(MessageType.decode(MessageType.ENEMY_ARCHON_KILL.header).toString());
+		System.out.println(BroadcastType.decode(BroadcastType.ENEMY_ARCHON_KILL.header).toString());
 	}
 	
 	

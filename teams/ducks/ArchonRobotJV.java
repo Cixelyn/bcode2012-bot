@@ -100,7 +100,7 @@ public class ArchonRobotJV extends BaseRobot {
 	}
 	
 	@Override
-	public void processMessage(MessageType msgType, StringBuilder sb)
+	public void processMessage(BroadcastType msgType, StringBuilder sb)
 			throws GameActionException {
 		switch (msgType) {
 			case MAP_EDGES:
@@ -197,7 +197,11 @@ public class ArchonRobotJV extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		nav.setDestination(myHome);
 		// initialize broadcast system
-		io.setAddresses(new String[] {"#x", "#a", "#e"});
+		io.setChannels(new BroadcastChannel[] {
+				BroadcastChannel.ALL,
+				BroadcastChannel.ARCHONS,
+				BroadcastChannel.EXPLORERS
+		});
 		// initialize map cache
 		mc.senseAll();
 		// done initializing

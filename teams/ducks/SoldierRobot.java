@@ -119,7 +119,6 @@ public class SoldierRobot extends StrategyRobot {
 		} break;
 		case DEFEND_BASE:
 		{
-			io.addChannel("#d");
 			micro.setObjective(myHome);
 			micro.setNormalMode();
 		} break;
@@ -169,7 +168,7 @@ public class SoldierRobot extends StrategyRobot {
 	
 	@Override
 	public void processMessage(
-			MessageType msgType, StringBuilder sb) throws GameActionException {
+			BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		
 		swarmPriority = 999;
 		int closest = 999;
@@ -181,7 +180,7 @@ public class SoldierRobot extends StrategyRobot {
 		// set navigation mode
 		nav.setNavigationMode(NavigationMode.BUG);
 		// set radio addresses
-		io.setAddresses(new String[] {"#x", "#s"});
+		io.setChannels(new BroadcastChannel[] {BroadcastChannel.ALL, BroadcastChannel.SOLDIERS});
 		// sense all
 		mc.senseAll();
 		
