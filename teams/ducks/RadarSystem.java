@@ -59,12 +59,11 @@ public class RadarSystem {
 
 	public int lastscanround;
 
-	public MapLocation closestEnemyLoc;
-	public RobotInfo closetEnemy;
+	public RobotInfo closestEnemy;
 	public double closestEnemyDist;
 
 	private void resetEnemyStats() {
-		closetEnemy = null;
+		closestEnemy = null;
 		closestEnemyDist = 999;
 		numEnemyRobots = 0;
 		numEnemyArchons = 0;
@@ -86,7 +85,10 @@ public class RadarSystem {
 		numAllyDamaged = 0;
 	}
 
-	private void addEnemy(RobotInfo rinfo) {
+	private void addEnemy(RobotInfo rinfo) throws GameActionException {
+		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
+			return;
+		
 		int pos = rinfo.robot.getID() % MAX_ROBOTS;
 		enemyInfos[pos] = rinfo;
 		enemyTimes[pos] = Clock.getRoundNum();
@@ -125,7 +127,7 @@ public class RadarSystem {
 
 		int dist = eloc.distanceSquaredTo(br.curLoc);
 		if (dist < closestEnemyDist) {
-			closetEnemy = rinfo;
+			closestEnemy = rinfo;
 			closestEnemyDist = dist;
 		}
 	}
@@ -148,7 +150,7 @@ public class RadarSystem {
 
 	/**
 	 * Call scan to populate radar information. Ally and Enemy information is
-	 * guarenteed only to be correct if scanAllies and/or scanEnemies is set to
+	 * guaranteed only to be correct if scanAllies and/or scanEnemies is set to
 	 * true.
 	 * 
 	 * @param scanAllies

@@ -309,7 +309,7 @@ public class SoldierRobot extends StrategyRobot {
 			roundsSinceSeenEnemy = 0;
 			
 			micro.setKiteMode(3);
-			micro.setObjective(radar.closetEnemy.location);
+			micro.setObjective(radar.closestEnemy.location);
 			micro.attackMove();
 			
 		}
