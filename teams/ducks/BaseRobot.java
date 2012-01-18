@@ -49,7 +49,7 @@ public abstract class BaseRobot {
 	private int executeStartByte;
 	
 	
-	public BaseRobot(RobotController myRC) {
+	public BaseRobot(RobotController myRC) throws GameActionException {
 		rc = myRC;
 		
 		myType = rc.getType();
@@ -60,6 +60,22 @@ public abstract class BaseRobot {
 		myHome = rc.sensePowerCore().getLocation();
 		birthday = Clock.getRoundNum();
 		birthplace = rc.getLocation();
+		updateRoundVariables();
+		
+		if(myType==RobotType.ARCHON) {
+			Direction dir = curLoc.directionTo(myHome).opposite();
+			System.out.println(dir);
+			rc.setIndicatorString(0, dir+"");
+			if(rc.canMove(dir)) {
+				if(curDir==dir) rc.moveForward();
+				else if(curDir==dir.opposite()) rc.moveBackward();
+				else {
+					rc.setDirection(dir);
+					rc.yield();
+					rc.moveForward();
+				}
+			}
+		}
 		
 		dc = new DataCache(this);
 		mc = new MapCacheSystem(this);
@@ -74,12 +90,12 @@ public abstract class BaseRobot {
 		rally = new RallySystem(this);
 		msm = new MovementStateMachine(this);
 		
-		updateRoundVariables();
 		mc.senseAll();
 	}
 	
 	public abstract void run() throws GameActionException;
 	
+	int lastcalled = -1;
 	public void loop() {
 		while(true) {
 			
@@ -105,24 +121,33 @@ public abstract class BaseRobot {
 			
 			// Call Movement State Machine
 			try {
+				int called = Clock.getRoundNum();
+				if(called==lastcalled) throw new RuntimeException("GET GD");
+				lastcalled = called;
 				msm.step();
 			} catch (Exception e) {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
-			}			
+			}
 			
-			// Broadcast Queued Messages
+			if(stopClock()) {
+				rc.yield();
+				System.out.println("We went over bytecodes before calling useExtraBytecodes().");
+	            continue;
+			}
+			
+			// Use excess bytecodes
 			try {
-				io.sendAll();
+				useExtraBytecodes();
 			} catch (Exception e) {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
 			}
 		
 			// End of Turn
-			stopClock();
-			rc.yield();
-			
+			if(!stopClock()) {
+				rc.yield();
+			}
 		}
 	}
 	
@@ -153,12 +178,15 @@ public abstract class BaseRobot {
 		executeStartTime = Clock.getRoundNum();
 		executeStartByte = Clock.getBytecodeNum();
 	}
-	private void stopClock() {
+	/** Returns whether we went over bytecodes. */
+	private boolean stopClock() {
         if(executeStartTime!=Clock.getRoundNum()) {
             int currRound = Clock.getRoundNum();
             int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
             System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+            return true;
         }  
+        return false;
 	}
 	
 	/** Should be overridden by any robot that wants to do movements. 
@@ -168,4 +196,13 @@ public abstract class BaseRobot {
 		return null;
 	}
 	
+	/** If there are bytecodes left to use this turn, will call this function
+	 * until it returns false.
+	 * @param bytecodesLeft number of bytecodes left to use this turn
+	 * @return whether anything was done in this call
+	 */
+	public void useExtraBytecodes() {
+		if(Clock.getBytecodesLeft()>1000) io.sendAll();
+		if(Clock.getBytecodesLeft()>1200) fbs.manageFlux();
+	}
 }

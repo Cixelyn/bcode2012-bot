@@ -14,7 +14,7 @@ public class SoldierRobotHT extends BaseRobot {
 	MapLocation target;
 	MapLocation previousTarget;
 	
-	public SoldierRobotHT(RobotController myRC) {
+	public SoldierRobotHT(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		keepTargetTurns = -1;

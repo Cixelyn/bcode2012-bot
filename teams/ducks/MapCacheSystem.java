@@ -2,6 +2,7 @@ package ducks;
 
 import java.util.HashSet;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;

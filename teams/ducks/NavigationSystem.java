@@ -113,7 +113,8 @@ public class NavigationSystem {
 			if(movesOnSameTarget % expectedMovesToReachTarget == 0) {
 				int n = movesOnSameTarget / expectedMovesToReachTarget;
 				if(n>=2) {
-					tangentBug.resetWallTrace(Math.min(4*n, 50), 0.4);
+					tangentBug.resetWallTrace(Math.min(
+							TangentBug.DEFAULT_MIN_PREP_TURNS*n, 200), 0.4);
 				}
 			}
 		} else if(mode==NavigationMode.DSTAR) {
@@ -180,6 +181,7 @@ public class NavigationSystem {
 	 * destination. May be useful for getting unstuck.
 	 * This method only considers walls as blocked movement, not units so it
 	 * may return a direction that moves towards another robot. <br>
+	 * Returns Direction.NONE if it gets unlucky.
 	 */
 	public Direction navigateCompletelyRandomly() {
 		for(int tries=0; tries<32; tries++) {

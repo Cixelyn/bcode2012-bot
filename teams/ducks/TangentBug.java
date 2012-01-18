@@ -7,14 +7,14 @@ public class TangentBug {
 		{1,1}, {0,1}, {-1,1}, {-1,0}};
 	
 	/** Scan this many times every turn to see if there is a wall in our way. */
-	final static int MLINE_SCAN_STEPS_PER_TURN_TRACING = 3, MLINE_SCAN_STEPS_PER_TURN_NOT_TRACING = 5;
+	final static int MLINE_SCAN_STEPS_PER_TURN_TRACING = 1, MLINE_SCAN_STEPS_PER_TURN_NOT_TRACING = 1;
 	/** Trace down the obstructing wall this many times in one turn. */
-	final static int WALL_SCAN_STEPS_PER_TURN = 3;
+	final static int WALL_SCAN_STEPS_PER_TURN = 1;
 	/** Look this many steps in each way to find the tangent in one turn. */
-	final static int FIND_TANGENT_STEPS_PER_TURN = 4;
+	final static int FIND_TANGENT_STEPS_PER_TURN = 1;
 	
 	/** Default number of turns we have to prepare before we have a reasonable notion of where to go. */
-	final static int DEFAULT_MIN_PREP_TURNS = 3;
+	final static int DEFAULT_MIN_PREP_TURNS = 10;
 	/** We approximate that it will take an average of this*d squares to navigate a distance of d. */
 	public final static double MAP_UGLINESS_WEIGHT = 1.5;
 	
