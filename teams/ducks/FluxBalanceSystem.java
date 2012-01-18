@@ -16,6 +16,10 @@ import battlecode.common.RobotType;
  */
 public class FluxBalanceSystem {
 	
+	private class FluxConstants {
+		public static final double BATTLE_FLUX_RATIO = 0.47;
+	}
+	
 	private enum FluxManagerMode {
 		BATTERY,
 		BATTLE
@@ -190,7 +194,7 @@ public class FluxBalanceSystem {
 					}
 					if (rInfo.flux < rInfo.type.maxFlux) {
 						double fluxToTransfer = Math.min(rInfo.type.maxFlux - rInfo.flux,
-								br.rc.getFlux() - Constants.MIN_UNIT_BATTLE_FLUX_RATIO *
+								br.rc.getFlux() - FluxConstants.BATTLE_FLUX_RATIO *
 								br.myType.maxFlux);
 						if (fluxToTransfer > 0) {
 							rc.transferFlux(
