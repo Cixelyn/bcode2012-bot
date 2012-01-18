@@ -8,10 +8,6 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
-	boolean aboutToMove = false;
-	Direction computedMoveDir = null;
-	Direction dirToSense = null;
-	int turnsStuck = 0;
 	int myArchonID;
 	public ArchonRobotHT(RobotController myRC) {
 		super(myRC);
@@ -26,7 +22,7 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 		io.setAddresses(new String[] {"#e", "#x", "#a"});
 		fbs.setBattleMode();
-		nav.setNavigationMode(NavigationMode.RANDOM);
+		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 	}
 	
 	@Override
@@ -37,12 +33,7 @@ public class ArchonRobotHT extends BaseRobot{
 //			System.out.println(mc.guessBestPowerNodeToCapture());
 //		}
 		
-		MapLocation target = mc.guessBestPowerNodeToCapture();
-		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
-		rc.setIndicatorString(1, "aboutToMove: "+aboutToMove+", computedMoveDir: "+computedMoveDir);
-		nav.setDestination(target);
 		fbs.manageFlux();
-		
 		
 		if(Clock.getBytecodeNum()<5000 && Clock.getRoundNum()%6==myArchonID) {
 			ses.broadcastPowerNodeFragment();
@@ -50,9 +41,6 @@ public class ArchonRobotHT extends BaseRobot{
 			ses.broadcastMapEdges();
 			mc.extractUpdatedPackedDataStep();
 		}
-		
-		
-		
 	}
 	@Override
 	public void processMessage(char msgType, StringBuilder sb) {
@@ -70,6 +58,10 @@ public class ArchonRobotHT extends BaseRobot{
 	}
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
+		MapLocation target = mc.guessBestPowerNodeToCapture();
+		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
+		nav.setDestination(target);
+		
 		if(rc.canMove(curDir) && curLocInFront.equals(nav.getDestination())) {
 			if(rc.getFlux()>200) {
 				return new MoveInfo(RobotType.TOWER, curDir);
@@ -81,9 +73,12 @@ public class ArchonRobotHT extends BaseRobot{
 				return new MoveInfo(curDir.rotateLeft());
 			}
 		} else {
-			return new MoveInfo(nav.navigateToDestination(), false);
+			Direction dir = nav.navigateToDestination();
+			if(dir==null) return null;
+			if(curLoc.add(dir).equals(nav.getDestination()))
+				return new MoveInfo(dir);
+			return new MoveInfo(dir, false);
 		}
-		
 		return null;
 	}
 }

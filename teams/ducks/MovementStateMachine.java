@@ -44,9 +44,12 @@ public class MovementStateMachine {
 			// fall through, no break
 		case IDLE:
 			nextMove = br.computeNextMove();
+			rc.setIndicatorString(1, ""+nextMove);
 			if(nextMove==null || nextMove.dir==null || 
-					nextMove.dir==Direction.NONE || nextMove.dir==Direction.OMNI) 
+					nextMove.dir==Direction.NONE || nextMove.dir==Direction.OMNI) {
+				nav.prepare();
 				return MovementState.IDLE;
+			}
 			if(nextMove.robotType!=null) {
 				if(nextMove.dir==br.curDir) {
 					rc.spawn(nextMove.robotType);
@@ -58,6 +61,7 @@ public class MovementStateMachine {
 			}
 			if(nextMove.moveForward) {
 				Direction dir = nav.wiggleToMovableDirection(nextMove.dir);
+				
 				if(dir==null) {
 					turnsStuck = 0;
 					return MovementState.ABOUT_TO_MOVE;
