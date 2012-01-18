@@ -1,5 +1,6 @@
 package ducks;
 
+import ducks.Debug.Owner;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -69,6 +70,7 @@ public abstract class BaseRobot {
 		radar = new RadarSystem(this);
 		eakc = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
+		
 		
 		updateRoundVariables();
 	}
