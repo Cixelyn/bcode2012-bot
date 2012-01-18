@@ -1,8 +1,12 @@
 package ducks;
 
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.RobotController;
+import battlecode.common.RobotLevel;
+import battlecode.common.RobotType;
+import battlecode.common.TerrainTile;
 
 /**
  * ArchonRobotJV, aka MODULAR_BOT
@@ -19,6 +23,7 @@ public class ArchonRobotJV extends BaseRobot {
 		public static int ROUND_TO_STOP_EXPLORING = 100;
 		public static int HOME_RADIUS = 9;
 		public static int ARCHON_SPLIT_DISTANCE = 16;
+		public static double SOLDIER_FLUX_RATIO = 0.2;
 	}
 	
 	/**
@@ -50,6 +55,8 @@ public class ArchonRobotJV extends BaseRobot {
 	public void run() throws GameActionException {
 		// transition to a new state if necessary
 		curState = getNextState();
+		// TODO(jven): debugging
+		rc.setIndicatorString(0, myType + " - " + curState);
 		// execute
 		switch (curState) {
 			case INITIALIZE:
@@ -182,7 +189,54 @@ public class ArchonRobotJV extends BaseRobot {
 	 * initial split.
 	 */
 	private void buildInitialArmy() throws GameActionException {
-		
+		// try to build a soldier
+		for (Direction d : Direction.values()) {
+			if (d == Direction.OMNI || d == Direction.NONE) {
+				continue;
+			}
+			if (spawnUnitInDir(RobotType.SOLDIER, d)) {
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * Tries to spawn a unit of the given type in the given direction. Returns
+	 * true if successful, false otherwise. Will turn in direction if not facing
+	 * the right way.
+	 * @param type The type of robot to spawn
+	 * @param dir The direction to spawn the unit
+	 * @return Whether the method was successful
+	 */
+	private boolean spawnUnitInDir(
+			RobotType type, Direction dir) throws GameActionException {
+		// wait if movement is active
+		if (rc.isMovementActive()) {	
+			return false;
+		}
+		// return if not enough flux
+		if (rc.getFlux() < type.spawnCost) {
+			return false;
+		}
+		// return if terrain tile is bad
+		if ((type.level == RobotLevel.ON_GROUND &&
+				!rc.canMove(dir)) ||
+				(type.level == RobotLevel.IN_AIR &&
+				rc.senseTerrainTile(curLoc.add(dir)) == TerrainTile.OFF_MAP)) {
+			return false;
+		}
+		// return if unit is in the way
+		if (dc.getAdjacentGameObject(dir, type.level) != null) {
+			return false;
+		}
+		// turn in direction to spawn
+		if (curDir != dir) {
+			rc.setDirection(dir);
+			return false;
+		}
+		// spawn unit
+		rc.spawn(type);
+		return true;
 	}
 
 }

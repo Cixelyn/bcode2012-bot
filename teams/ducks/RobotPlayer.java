@@ -14,7 +14,8 @@ public class RobotPlayer {
 //				br = new ArchonRobot(myRC);
 				break;
 			case SOLDIER:
-				br = new SoldierRobot(myRC);
+//				br = new SoldierRobot(myRC);
+				br = new SoldierRobotJV(myRC);
 				break;
 			case SCOUT:
 				br = new ScoutRobot(myRC);
