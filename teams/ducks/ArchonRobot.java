@@ -234,11 +234,6 @@ public class ArchonRobot extends StrategyRobot {
 				2, "Unack ownerships: " + ao.getNumUnacknowledgedOwnerships(),
 				Owner.JVEN);
 		
-		if(directionToSenseIn!=null) {
-			mc.senseAfterMove(directionToSenseIn);
-			directionToSenseIn = null;
-		}
-		
 		switch (state) {
 		case INITIALIZE:
 			initialize();

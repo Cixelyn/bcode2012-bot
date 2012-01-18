@@ -6,6 +6,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 
 public class MovementStateMachine {
+	private static final int TURNS_STUCK_UNTIL_ROBOT_STARTS_RANDOMLY = 16;
 	MovementState curState;
 	final BaseRobot br;
 	final RobotController rc;
@@ -17,29 +18,29 @@ public class MovementStateMachine {
 		this.br = br;
 		this.rc = br.rc;
 		this.nav = br.nav;
-		curState = MovementState.IDLE;
+		curState = MovementState.COOLDOWN;
 	}
 
-	
 	public void step() throws GameActionException {
 		curState = execute();
 	}
-	public MovementState execute() throws GameActionException {
+	private MovementState execute() throws GameActionException {
+		rc.setIndicatorString(2, curState+"");
 		switch(curState) {
 		case ABOUT_TO_SPAWN:
 			boolean spawningAir = nextMove.robotType.isAirborne();
-			if(spawningAir && rc.senseObjectAtLocation(br.curLocInFront, RobotLevel.IN_AIR)==null || 
-					!spawningAir && rc.canMove(br.curDir)) {
+			if((spawningAir && (rc.senseObjectAtLocation(br.curLocInFront, RobotLevel.IN_AIR)==null)) || 
+					(!spawningAir && rc.canMove(br.curDir))) {
 				rc.spawn(nextMove.robotType);
 				return MovementState.IDLE;
 			}
-			//fall through, no break
+			// fall through, no break
 		case COOLDOWN:
-			if(!rc.isMovementActive()) {
+			if(rc.isMovementActive()) {
 				nav.prepare();
 				return MovementState.COOLDOWN;
 			}
-			//fall through, no break
+			// fall through, no break
 		case IDLE:
 			nextMove = br.computeNextMove();
 			if(nextMove==null || nextMove.dir==null || 
@@ -63,12 +64,12 @@ public class MovementStateMachine {
 					rc.moveForward();
 					dirToSense = dir;
 					return MovementState.JUST_MOVED;
-				} 
-				rc.setDirection(dir);
-				turnsStuck = 0;
-				return MovementState.ABOUT_TO_MOVE;
-			}
-			if(nextMove.moveBackward) {
+				} else {
+					rc.setDirection(dir);
+					turnsStuck = 0;
+					return MovementState.ABOUT_TO_MOVE;
+				}
+			} else if(nextMove.moveBackward) {
 				Direction dir = nav.wiggleToMovableDirection(nextMove.dir);
 				if(dir==null) {
 					turnsStuck = 0;
@@ -81,7 +82,7 @@ public class MovementStateMachine {
 				rc.setDirection(dir);
 				turnsStuck = 0;
 				return MovementState.ABOUT_TO_MOVE;
-			}
+			} 
 			rc.setDirection(nextMove.dir);
 			return MovementState.IDLE;
 		case ABOUT_TO_MOVE:
@@ -95,7 +96,7 @@ public class MovementStateMachine {
 				rc.setDirection(dir);
 			} else {
 				turnsStuck++;
-				if(turnsStuck>10) 
+				if(turnsStuck>=TURNS_STUCK_UNTIL_ROBOT_STARTS_RANDOMLY) 
 					rc.setDirection(nav.navigateCompletelyRandomly());
 			}
 			return MovementState.ABOUT_TO_MOVE;

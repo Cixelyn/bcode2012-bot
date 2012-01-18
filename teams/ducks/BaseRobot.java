@@ -41,10 +41,6 @@ public abstract class BaseRobot {
 	public Direction curDir;
 	public int curRound;
 	
-	// TODO(jven): temporary?
-	// Robot State - left over from previous turns
-	public Direction directionToSenseIn;
-	
 	// Internal Statistics
 	private int executeStartTime;
 	private int executeStartByte;
@@ -91,6 +87,14 @@ public abstract class BaseRobot {
 			try {
 				io.receive();
 			} catch(Exception e) {
+				e.printStackTrace();
+				rc.addMatchObservation(e.toString());
+			}
+			
+			// Call Movement State Machine
+			try {
+				msm.step();
+			} catch (Exception e) {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
 			}
@@ -154,8 +158,10 @@ public abstract class BaseRobot {
         }  
 	}
 	
-	/** Should be overridden by any robot that wants to do movements. */
-	public MoveInfo computeNextMove() {
+	/** Should be overridden by any robot that wants to do movements. 
+	 * @return a new MoveInfo structure that either represents a spawn, a move, or a turn
+	 */
+	public MoveInfo computeNextMove() throws GameActionException {
 		return null;
 	}
 	
