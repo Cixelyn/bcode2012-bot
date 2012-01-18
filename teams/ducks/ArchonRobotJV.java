@@ -23,7 +23,7 @@ public class ArchonRobotJV extends BaseRobot {
 		public static int ROUND_TO_STOP_EXPLORING = 100;
 		public static int HOME_RADIUS = 9;
 		public static int ARCHON_SPLIT_DISTANCE = 16;
-		public static double SOLDIER_FLUX_RATIO = 0.2;
+		//public static double SOLDIER_FLUX_RATIO = 0.2;
 	}
 	
 	/**
