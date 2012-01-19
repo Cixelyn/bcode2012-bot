@@ -9,6 +9,8 @@ import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
 	enum StrategyState {
+		/** Initial split. */
+		SPLIT,
 		/** Seek and destroy towards a target. */
 		RUSH, 
 		/** Hold a position. */
@@ -17,6 +19,8 @@ public class ArchonRobotHT extends BaseRobot{
 		CAP;
 	}
 	enum BehaviorState {
+		/** No enemies to deal with. */
+		SWARM,
 		/** Run away from enemy forces. */
 		RETREAT, 
 		/** Fight the enemy forces. Micro. */
@@ -27,7 +31,7 @@ public class ArchonRobotHT extends BaseRobot{
 	int myArchonID;
 	int keepTargetTurns;
 	MapLocation target;
-	StrategyState strat;
+	StrategyState strategy;
 	BehaviorState behavior;
 	public ArchonRobotHT(RobotController myRC) throws GameActionException {
 		super(myRC);
@@ -48,15 +52,38 @@ public class ArchonRobotHT extends BaseRobot{
 		});
 		fbs.setBattleMode();
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
-		strat = StrategyState.RUSH;
+		strategy = StrategyState.SPLIT;
 		behavior = BehaviorState.BATTLE;
 	}
 	
 	@Override
 	public void run() throws GameActionException {
+		if(Clock.getRoundNum()>1200) {
+			strategy = StrategyState.CAP;
+		} else if(Clock.getRoundNum()>1000) {
+			strategy = StrategyState.DEFEND;
+		} else if(Clock.getRoundNum()>50) {
+			strategy = StrategyState.RUSH;
+		}
+		radar.scan(true, true);
+		if(radar.closestEnemy != null) {
+			target = radar.closestEnemy.location;
+			keepTargetTurns = 30;
+		} else {
+			keepTargetTurns--;
+		}
 		
-		
-		
+		if(keepTargetTurns<0) {
+			if(strategy == StrategyState.DEFEND) {
+				target = myHome;
+			} else if(strategy == StrategyState.RUSH) {
+				target = mc.guessEnemyPowerCoreLocation();
+			} else {
+				target = mc.guessBestPowerNodeToCapture();
+			}
+		}
+		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
+		nav.setDestination(target);
 		
 	}
 	
@@ -79,36 +106,23 @@ public class ArchonRobotHT extends BaseRobot{
 	}
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		boolean startCapping = Clock.getRoundNum()>1000;
-		radar.scan(false, true);
-		if(radar.closestEnemy != null) {
-			target = radar.closestEnemy.location;
-			keepTargetTurns = 30;
-		} else {
-			keepTargetTurns--;
-		}
 		
-		if(keepTargetTurns<0) 
-			target = startCapping ? (myArchonID==1 ? myHome : 
-				mc.guessBestPowerNodeToCapture()) : 
-				mc.guessEnemyPowerCoreLocation();
-		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
-		nav.setDestination(target);
+		int fluxToMakeSoldierAt = (strategy==StrategyState.CAP) ? 210 : 150;
 		
-		
-		
-		if(Clock.getRoundNum() < 60) {
+		if(strategy == StrategyState.SPLIT) {
 			return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
 		}
 		if(radar.closestEnemyDist <= 20) {
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
-		if(rc.canMove(curDir) && curLocInFront.equals(nav.getDestination()) && 
+		if(strategy == StrategyState.CAP && 
+				rc.canMove(curDir) && 
+				curLocInFront.equals(nav.getDestination()) && 
 				mc.isPowerNode(curLocInFront)) {
-			if(startCapping && rc.getFlux() > 200) {
+			if(rc.getFlux() > 200) {
 				return new MoveInfo(RobotType.TOWER, curDir);
 			}
-		} else if(rc.getFlux()> (startCapping ? 210 : 200)) {
+		} else if(rc.getFlux() > fluxToMakeSoldierAt) {
 			if(rc.canMove(curDir)) {
 				return new MoveInfo(RobotType.SOLDIER, curDir);
 			} else {
