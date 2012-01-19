@@ -16,11 +16,28 @@ enum ArchonState {
 }
 
 class ArchonConstants {
-	public static final int ROUNDS_TO_CHASE = 40;
 	public static final int ROUNDS_TO_ATACK_BASE = 1500;
 	
+	public static final int CHASE_ROUNDS = 40;
+	public static final int RETREAT_ROUNDS = 40;
+	
 	public static final int RETREAT_THRESHOLD = -4;
+	public static final int RETREAT_STABILIIZE = 0;
 	public static final int ROUND_ALLOWANCE = -2;
+	
+	public static final int ATTACK_CLOSEST_DIST = 18;
+	public static final int CHASE_CLOSEST_DIST = 20;
+	public static final int RETREAT_CLOSEST_DIST = 15;
+	
+	public static final double ATTACK_SPAWN_SOLDIER = 130;
+	public static final double CAPTURE_SPAWN_SOLDIER = 215;
+	public static final double CHASE_SPAWN_SOLDIER = 140;
+	public static final double RETREAT_SPAWN_SOLDIER = 150;
+
+	public static final double ATTACK_SPAWN_SCOUT = 130;
+	public static final double CAPTURE_SPAWN_SCOUT = 215;
+	public static final double CHASE_SPAWN_SCOUT = 140;
+	public static final double RETREAT_SPAWN_SCOUT = 150;
 }
 
 public class ArchonRobotYP extends BaseRobot {
@@ -34,6 +51,10 @@ public class ArchonRobotYP extends BaseRobot {
 	private RobotInfo chaseTarget;
 	private Direction chaseDir;
 	private int chaseRounds;
+	
+	private int retreatRounds;
+	private Direction retreatDir;
+	private MapLocation retreatLoc;
 	
 	MapLocation movetarget;
 	Direction movedirection;
@@ -58,23 +79,54 @@ public class ArchonRobotYP extends BaseRobot {
 			}
 		}
 		
+		archonIndex = origAID;
+		
 		curstate = ArchonState.ATTACKBASE;
+		prevstate = ArchonState.ATTACKBASE;
 		
 		chaseDir = null;
-		chaseRounds = ArchonConstants.ROUNDS_TO_CHASE;
+		chaseRounds = ArchonConstants.CHASE_ROUNDS;
 		
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		fbs.setBattleMode();
 	}
 
+	private void calculateArchonPosition() throws GameActionException
+	{
+		if (archonIndex != 0)
+		{
+			MapLocation[] archons = dc.getAlliedArchons();
+			if (archonIndex >= archons.length) archonIndex = archons.length;
+			while (!archons[archonIndex].equals(curLoc)) archonIndex--;
+		}
+	}
+	
 	@Override
 	public void run() throws GameActionException
 	{
 		radar.scan(true, true);
 		
+		calculateArchonPosition();
+		
 		execute(curstate);
 		
-		sendMapInfo();
+		switch (curstate)
+		{
+		case ATTACKBASE:
+			rc.setIndicatorString(0, "state:"+curstate+" "+movetarget);
+			break;
+		case CAPTURE:
+			rc.setIndicatorString(0, "state:"+curstate+" "+movetarget);
+			break;
+		case CHASE:
+			rc.setIndicatorString(0, "state:"+curstate+" "+chaseTarget+" "+chaseDir+" "+chaseRounds);
+			break;
+		case RETREAT:
+			rc.setIndicatorString(0, "state:"+curstate+" "+retreatRounds+" "+retreatDir);
+			break;
+		}
+		
+		
 		
 		fbs.manageFlux();
 	}
@@ -91,6 +143,9 @@ public class ArchonRobotYP extends BaseRobot {
 			break;
 		case CHASE:
 			chase();
+			break;
+		case RETREAT:
+			retreat();
 			break;
 		}
 	}
@@ -119,14 +174,35 @@ public class ArchonRobotYP extends BaseRobot {
 	{
 		if (curstate != state)
 		{
+			switch (curstate)
+			{
+			case CHASE:
+			case RETREAT:
+				curstate = state;
+				execute(state);
+				return;
+			default:
+				break;
+			}
 			prevstate = curstate;
 			curstate = state;
 			execute(state);
+		} else
+		{
+			System.out.println("transitioning from "+state+" to "+curstate);
 		}
 	}
 	
 	public void attackbase() throws GameActionException 
 	{
+		radar.scan(true, true);
+		
+		if (radar.getArmyDifference() <= ArchonConstants.RETREAT_THRESHOLD)
+		{
+			gotoStateAndExecute(ArchonState.RETREAT);
+			return;
+		}
+		
 		if (radar.closestEnemy != null)
 		{
 			gotoStateAndExecute(ArchonState.CHASE);
@@ -145,6 +221,14 @@ public class ArchonRobotYP extends BaseRobot {
 	
 	public void capture() throws GameActionException 
 	{
+		radar.scan(true, true);
+		
+		if (radar.getArmyDifference() <= ArchonConstants.RETREAT_THRESHOLD)
+		{
+			gotoStateAndExecute(ArchonState.RETREAT);
+			return;
+		}
+		
 		if (radar.closestEnemy != null)
 		{
 			gotoStateAndExecute(ArchonState.CHASE);
@@ -156,6 +240,14 @@ public class ArchonRobotYP extends BaseRobot {
 	
 	public void chase() throws GameActionException 
 	{
+		radar.scan(true, true);
+		
+		if (radar.getArmyDifference() <= ArchonConstants.RETREAT_THRESHOLD)
+		{
+			gotoStateAndExecute(ArchonState.RETREAT);
+			return;
+		}
+		
 		if (radar.numEnemyRobots == 0)
 		{
 			if (chaseRounds-- <= 0 || chaseDir==null)
@@ -165,18 +257,16 @@ public class ArchonRobotYP extends BaseRobot {
 			}
 		}
 		
-		if (radar.getArmyDifference() < ArchonConstants.RETREAT_THRESHOLD)
+		chaseRounds = ArchonConstants.CHASE_ROUNDS;
+		
+		if (chaseTarget != null)
 		{
-			gotoStateAndExecute(ArchonState.RETREAT);
-			return;
+			if (curRound > radar.enemyTimes[chaseTarget.robot.getID()])
+			{
+				chaseTarget = null;
+			}
 		}
 		
-		chaseRounds = ArchonConstants.ROUNDS_TO_CHASE;
-		
-		if (curRound < radar.enemyTimes[chaseTarget.robot.getID()]+ArchonConstants.ROUND_ALLOWANCE)
-		{
-			chaseTarget = null;
-		}
 		
 		if (chaseTarget == null)
 		{
@@ -207,26 +297,125 @@ public class ArchonRobotYP extends BaseRobot {
 				chaseTarget = radar.enemyInfos[radar.enemyArchons[0]];
 			} else chaseTarget = radar.closestEnemy;
 		}
+		
+		if (chaseTarget != null)
+		{
+			chaseDir = curLoc.directionTo(chaseTarget.location);
+		} else gotoStateAndExecute(prevstate);
+	}
+	
+	public void retreat() throws GameActionException
+	{
+		radar.scan(true, true);
+		
+		if (radar.getArmyDifference() >= ArchonConstants.RETREAT_STABILIIZE)
+		{
+			gotoStateAndExecute(prevstate);
+			return;
+		}
+		
+		if (radar.numEnemyRobots == 0)
+		{
+			if (retreatRounds-- <= 0 || retreatDir==null)
+			{
+				gotoStateAndExecute(prevstate);
+				return;
+			}
+			return;
+		} else retreatRounds = ArchonConstants.RETREAT_ROUNDS;
+		
+		retreatDir = radar.getEnemySwarmTarget().directionTo(curLoc);
+		return;
 	}
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException
 	{
-		
-		
-		
+		switch (curstate)
+		{
+		case ATTACKBASE:
+		{
+			if (rc.canMove(curDir) && rc.getFlux() > ArchonConstants.ATTACK_SPAWN_SOLDIER)
+				return new MoveInfo(RobotType.SOLDIER, curDir);
+			
+			nav.setDestination(movetarget);
+			return new MoveInfo(nav.navigateToDestination(), false);
+		}
+		case CAPTURE:
+		{
+			if (curLoc.isAdjacentTo(movetarget))
+			{
+				Direction dir = curLoc.directionTo(movetarget);
+				
+				if (rc.getFlux() < RobotType.TOWER.spawnCost) return null;
+				if (rc.canMove(dir))
+				{
+					return new MoveInfo(RobotType.TOWER, dir);
+				} else return null;
+			} else if (curLoc.equals(movetarget))
+			{
+				return new MoveInfo(nav.navigateCompletelyRandomly(),true);
+			} else
+			{
+				if (rc.canMove(curDir) && rc.getFlux() > ArchonConstants.CAPTURE_SPAWN_SOLDIER)
+					return new MoveInfo(RobotType.SOLDIER, curDir);
+				
+				nav.setDestination(movetarget);
+				return new MoveInfo(nav.navigateToDestination(),true);
+			}
+		}
+		case CHASE:
+		{
+			if (rc.canMove(curDir) && rc.getFlux() > ArchonConstants.CHASE_SPAWN_SOLDIER)
+				return new MoveInfo(RobotType.SOLDIER, curDir);
+			
+			if (radar.closestEnemyDist < ArchonConstants.CHASE_CLOSEST_DIST)
+				return new MoveInfo(radar.getEnemySwarmTarget().directionTo(curLoc),true);
+			
+			return new MoveInfo(chaseDir, false);
+		}
+		case RETREAT:
+		{
+			if (rc.canMove(curDir) && rc.getFlux() > ArchonConstants.RETREAT_SPAWN_SOLDIER)
+				return new MoveInfo(RobotType.SOLDIER, curDir);
+			
+			if (retreatLoc == null || 
+					curLoc.directionTo(retreatLoc) != retreatDir ||
+					curLoc.distanceSquaredTo(retreatLoc) < 5)
+			{
+				retreatLoc = curLoc.add(retreatDir,9);
+				nav.setDestination(retreatLoc);
+			}
+			
+			return new MoveInfo(nav.navigateGreedy(retreatLoc), true);
+		}
+		}
 		return null;
 	}
-
 	
-	private void sendMapInfo()
-	{
-		if(Clock.getBytecodeNum()<5000 && Clock.getRoundNum()%6==origAID) {
-			ses.broadcastPowerNodeFragment();
-			ses.broadcastMapFragment();
-			ses.broadcastMapEdges();
-			mc.extractUpdatedPackedDataStep();
+	@Override
+	public void useExtraBytecodes() {
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2500)
+			nav.prepare(); 
+		if(Clock.getRoundNum()%8==origAID) {
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3700)
+				ses.broadcastMapFragment();
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1700)
+				ses.broadcastPowerNodeFragment();
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>450) 
+				ses.broadcastMapEdges();
 		}
+		
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1200) 
+			io.sendAll();
+		
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>800)
+			fbs.manageFlux();
+		
+		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2500) 
+			nav.prepare();
+		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1050) 
+			mc.extractUpdatedPackedDataStep();
 	}
 
 }

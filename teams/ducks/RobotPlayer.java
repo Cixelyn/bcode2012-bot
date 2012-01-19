@@ -19,8 +19,8 @@ public class RobotPlayer {
 				else if(owner.equals("yp")) 
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
-//					br = new ArchonRobotYP(myRC);
-					br = new ArchonRobotHT(myRC);
+					br = new ArchonRobotYP(myRC);
+//					br = new ArchonRobotHT(myRC);
 					if (br==null)
 					{
 						if (myRC.getTeam()==Team.A)
@@ -36,8 +36,8 @@ public class RobotPlayer {
 				else if(owner.equals("justin")) br = new SoldierRobotJV(myRC);
 				else if (owner.equals("yp"))
 				{
-//					br = new SoldierRobotYP(myRC);
-					br = new SoldierRobotHT(myRC);
+					br = new SoldierRobotYP(myRC);
+//					br = new SoldierRobotHT(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
