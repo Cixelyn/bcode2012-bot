@@ -105,7 +105,10 @@ public abstract class BaseRobot {
 			
 			// Main Radio Receive Call
 			try {
-				io.receive();
+				if(lastResetTime < executeStartTime - 10)
+					io.flushAllMessages();
+				else
+					io.receive();
 			} catch(Exception e) {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
