@@ -71,6 +71,8 @@ public class FluxBalanceSystem {
 				distributeUnitBattle();
 			}
 		} catch (GameActionException e) {
+			e.printStackTrace();
+			rc.addMatchObservation(e.toString());
 			return;
 		}
 	}

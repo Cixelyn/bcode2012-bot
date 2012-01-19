@@ -123,29 +123,24 @@ public class ArchonRobotHT extends BaseRobot{
 			return new MoveInfo(dir, false);
 		}
 		return null;
-		
-		
 	}
 	
 	@Override
 	public void useExtraBytecodes() {
-		if(Clock.getBytecodesLeft()>2300) nav.prepare(); 
-			
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2500)
+			nav.prepare(); 
 		if(Clock.getRoundNum()%6==myArchonID) {
-			if(Clock.getBytecodesLeft()>6000) {
-				int a = Clock.getBytecodeNum(); 
-				ses.broadcastPowerNodeFragment();
-				int b = Clock.getBytecodeNum(); 
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3700)
 				ses.broadcastMapFragment();
-				int c = Clock.getBytecodeNum(); 
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1700)
+				ses.broadcastPowerNodeFragment();
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>450) 
 				ses.broadcastMapEdges();
-				int d = Clock.getBytecodeNum(); 
-				int e = Clock.getBytecodeNum(); 
-//				if(e-a>2000) System.out.println("gay "+(b-a)+" "+(c-b)+" "+(d-c)+" "+(e-d));
-			}
 		}
 		super.useExtraBytecodes();
-		if(Clock.getBytecodesLeft()>3500) mc.extractUpdatedPackedDataStep();
-		while(Clock.getBytecodesLeft()>2300) { nav.prepare(); }
+		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2500) 
+			nav.prepare();
+		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1050) 
+			mc.extractUpdatedPackedDataStep();
 	}
 }
