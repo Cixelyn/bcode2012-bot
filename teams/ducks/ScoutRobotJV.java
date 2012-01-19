@@ -15,8 +15,9 @@ public class ScoutRobotJV extends BaseRobot {
 	 * TODO(jven): Move this stuff out of here
 	 * Constants used by the Scout.
 	 */
-//	private static class ScoutConstants {
-//	}
+	private static class ScoutConstants {
+		public static final double MIN_WIRE_FLUX = 15.0;
+	}
 	
 	/**
 	 * TODO(jven): Move this stuff out of here
@@ -148,16 +149,18 @@ public class ScoutRobotJV extends BaseRobot {
 			// go to my wire location
 			micro.setObjective(sws.getMyWireLocation());
 			micro.attackMove();
-			// abort after some # rounds
-			if (curRound >= 800) {
+			// abort if not enough flux
+			if (rc.getFlux() < ScoutConstants.MIN_WIRE_FLUX) {
 				sws.broadcastAbortWire();
 			}
 		} else {
-			// go to closest archon
-			if (dc.getClosestArchon() != null) {
-				micro.setObjective(myHome);
-				micro.attackMove();
-			}
+			// go to home
+			micro.setObjective(myHome);
+			micro.attackMove();
 		}
+		// share exploration information
+		ses.broadcastMapEdges();
+		ses.broadcastMapFragment();
+		ses.broadcastPowerNodeFragment();
 	}
 }

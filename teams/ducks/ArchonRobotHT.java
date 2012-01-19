@@ -8,7 +8,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
-	enum StrategyState {
+	private enum StrategyState {
 		/** Initial split. */
 		SPLIT,
 		/** Seek and destroy towards a target. */
@@ -18,7 +18,7 @@ public class ArchonRobotHT extends BaseRobot{
 		/** Take power nodes. */
 		CAP;
 	}
-	enum BehaviorState {
+	private enum BehaviorState {
 		/** No enemies to deal with. */
 		SWARM,
 		/** Run away from enemy forces. */
@@ -58,7 +58,7 @@ public class ArchonRobotHT extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()>1200) {
+		if(Clock.getRoundNum()>1700) {
 			strategy = StrategyState.CAP;
 		} else if(Clock.getRoundNum()>1000) {
 			strategy = StrategyState.DEFEND;
@@ -67,7 +67,7 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 		radar.scan(true, true);
 		if(radar.closestEnemy != null) {
-			target = radar.closestEnemy.location;
+			target = radar.getEnemySwarmTarget();
 			keepTargetTurns = 30;
 		} else {
 			keepTargetTurns--;
@@ -82,9 +82,18 @@ public class ArchonRobotHT extends BaseRobot{
 				target = mc.guessBestPowerNodeToCapture();
 			}
 		}
-		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
 		nav.setDestination(target);
 		
+		int[] shorts = new int[5];
+		shorts[0] = radar.getArmyDifference();
+		shorts[1] = target.x;
+		shorts[2] = target.y;
+		shorts[3] = curLoc.x;
+		shorts[4] = curLoc.y;
+		io.sendUShorts(BroadcastChannel.SOLDIERS, BroadcastType.SWARM_TARGET, shorts);
+		
+		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
+		rc.setIndicatorString(1, "strategy_state="+strategy+", behavior_state="+behavior);
 	}
 	
 	@Override
@@ -101,7 +110,6 @@ public class ArchonRobotHT extends BaseRobot{
 			break;
 		default:
 			super.processMessage(msgType, sb);
-				
 		} 
 	}
 	@Override
@@ -141,20 +149,20 @@ public class ArchonRobotHT extends BaseRobot{
 	
 	@Override
 	public void useExtraBytecodes() {
-		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2500)
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3000)
 			nav.prepare(); 
 		if(Clock.getRoundNum()%6==myArchonID) {
-			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3700)
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>4000)
 				ses.broadcastMapFragment();
-			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1700)
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2000)
 				ses.broadcastPowerNodeFragment();
-			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>450) 
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1000) 
 				ses.broadcastMapEdges();
 		}
 		super.useExtraBytecodes();
-		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2500) 
+		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3000) 
 			nav.prepare();
-		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1050) 
+		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1000) 
 			mc.extractUpdatedPackedDataStep();
 	}
 }
