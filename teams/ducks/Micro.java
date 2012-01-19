@@ -280,7 +280,7 @@ public class Micro {
 	
 	private boolean chargeTowards(MapLocation target) throws GameActionException {
 		if(dirAboutToMoveIn == null) {
-			Direction dir = br.nav.navigateGreedy(target);
+			Direction dir = br.curLoc.directionTo(target);
 			if(dir==null || dir == Direction.OMNI || dir == Direction.NONE)
 				return false;
 			dirAboutToMoveIn = dir;
