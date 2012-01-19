@@ -60,6 +60,8 @@ public class RadarSystem {
 
 	public RobotInfo closestEnemy;
 	public double closestEnemyDist;
+	
+	final boolean cachepositions;
 
 	public RadarSystem(BaseRobot br) {
 		this.br = br;
@@ -67,6 +69,16 @@ public class RadarSystem {
 		needToScanEnemies = true;
 		needToScanAllies = true;
 		robots = null;
+		switch (br.myType)
+		{
+		case SOLDIER:
+		case SCORCHER:
+		case DISRUPTER:
+			cachepositions = true;
+			break;
+		default:
+			cachepositions = false;
+		}
 	}
 	
 	private void resetEnemyStats() {
@@ -102,7 +114,8 @@ public class RadarSystem {
 
 		// TODO not caching this right now
 		// if this was cached, would double cost of scan loop
-		// enemyRobots[numEnemyRobots] = pos;
+		if (cachepositions)
+			enemyRobots[numEnemyRobots] = pos;
 		numEnemyRobots++;
 
 		switch (rinfo.type) {
