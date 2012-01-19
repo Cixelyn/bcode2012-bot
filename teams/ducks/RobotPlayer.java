@@ -52,6 +52,18 @@ public class RobotPlayer {
 			case SCOUT:
 				if (owner.equals("justin")) br = new ScoutRobotJV(myRC);
 				else if (owner.equals("cory")) br = new ScoutRobotCL(myRC);
+				else if (owner.equals("yp"))
+				{
+					br = new ScoutRobotYP(myRC);
+//					br = new ScoutRobotYP(myRC);
+					if (br == null)
+					{
+						if (myRC.getTeam()==Team.A)
+							br = new ScoutRobotYP(myRC);
+						else
+							br = new ScoutRobotYP(myRC);
+					}
+				}
 				break;
 			case DISRUPTER:
 				break;

@@ -77,6 +77,7 @@ public class RadarSystem {
 		case SOLDIER:
 		case SCORCHER:
 		case DISRUPTER:
+		case SCOUT:
 			cachepositions = true;
 			break;
 		default:

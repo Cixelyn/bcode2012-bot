@@ -29,15 +29,25 @@ class ArchonConstants {
 	public static final int CHASE_CLOSEST_DIST = 20;
 	public static final int RETREAT_CLOSEST_DIST = 15;
 	
-	public static final double ATTACK_SPAWN_SOLDIER = 130;
+	public static final double ATTACK_SPAWN_SOLDIER = 120+30;
 	public static final double CAPTURE_SPAWN_SOLDIER = 215;
-	public static final double CHASE_SPAWN_SOLDIER = 140;
-	public static final double RETREAT_SPAWN_SOLDIER = 150;
+	public static final double CHASE_SPAWN_SOLDIER = 120+10;
+	public static final double RETREAT_SPAWN_SOLDIER = 120+5;
 
-	public static final double ATTACK_SPAWN_SCOUT = 130;
+	public static final double ATTACK_SPAWN_SCOUT = 80+30;
 	public static final double CAPTURE_SPAWN_SCOUT = 215;
-	public static final double CHASE_SPAWN_SCOUT = 140;
-	public static final double RETREAT_SPAWN_SCOUT = 150;
+	public static final double CHASE_SPAWN_SCOUT = 80+10;
+	public static final double RETREAT_SPAWN_SCOUT = 80+5;
+	
+	public static final double ATTACK_SPAWN_SOLDIER_NUM = 399;
+	public static final double CAPTURE_SPAWN_SOLDIER_NUM = 499;
+	public static final double CHASE_SPAWN_SOLDIER_NUM = 499;
+	public static final double RETREAT_SPAWN_SOLDIER_NUM = 399;
+
+	public static final double ATTACK_SPAWN_SCOUT_NUM = 1;
+	public static final double CAPTURE_SPAWN_SCOUT_NUM = 1;
+	public static final double CHASE_SPAWN_SCOUT_NUM = 1;
+	public static final double RETREAT_SPAWN_SCOUT_NUM = 1;
 }
 
 public class ArchonRobotYP extends BaseRobot {
@@ -58,6 +68,9 @@ public class ArchonRobotYP extends BaseRobot {
 	
 	MapLocation movetarget;
 	Direction movedirection;
+
+	private RobotType spawntype;
+	private int spawned;
 	
 	public ArchonRobotYP(RobotController myRC) throws GameActionException 
 	{
@@ -87,6 +100,9 @@ public class ArchonRobotYP extends BaseRobot {
 		chaseDir = null;
 		chaseRounds = ArchonConstants.CHASE_ROUNDS;
 		
+		spawned = 0;
+		spawntype = RobotType.SOLDIER;
+		
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		fbs.setBattleMode();
 	}
@@ -110,7 +126,7 @@ public class ArchonRobotYP extends BaseRobot {
 		
 		execute(curstate);
 		
-		if ((Clock.getRoundNum()%3) == (origAID>>1))
+		if ((Clock.getRoundNum()%3) == 0)
 		{
 			switch (curstate)
 			{
@@ -127,6 +143,50 @@ public class ArchonRobotYP extends BaseRobot {
 				sendSwarmInfo(curLoc, retreatDir.opposite());
 				break;
 			}
+		}
+		
+		switch (spawntype)
+		{
+		case SOLDIER:
+			switch (curstate)
+			{
+			case ATTACKBASE:
+				if (spawned >= ArchonConstants.ATTACK_SPAWN_SOLDIER_NUM)
+				{ spawned = 0; spawntype = RobotType.SCOUT; }
+				break;
+			case CAPTURE:
+				if (spawned >= ArchonConstants.CAPTURE_SPAWN_SOLDIER_NUM)
+				{ spawned = 0; spawntype = RobotType.SCOUT; }
+				break;
+			case CHASE:
+				if (spawned >= ArchonConstants.CHASE_SPAWN_SOLDIER_NUM)
+				{ spawned = 0; spawntype = RobotType.SCOUT; }
+				break;
+			case RETREAT:
+				if (spawned >= ArchonConstants.RETREAT_SPAWN_SOLDIER_NUM)
+				{ spawned = 0; spawntype = RobotType.SCOUT; }
+				break;
+			} break;
+		case SCOUT:
+			switch (curstate)
+			{
+			case ATTACKBASE:
+				if (spawned >= ArchonConstants.ATTACK_SPAWN_SCOUT_NUM)
+				{ spawned = 0; spawntype = RobotType.SOLDIER; }
+				break;
+			case CAPTURE:
+				if (spawned >= ArchonConstants.CAPTURE_SPAWN_SCOUT_NUM)
+				{ spawned = 0; spawntype = RobotType.SOLDIER; }
+				break;
+			case CHASE:
+				if (spawned >= ArchonConstants.CHASE_SPAWN_SCOUT_NUM)
+				{ spawned = 0; spawntype = RobotType.SOLDIER; }
+				break;
+			case RETREAT:
+				if (spawned >= ArchonConstants.RETREAT_SPAWN_SCOUT_NUM)
+				{ spawned = 0; spawntype = RobotType.SOLDIER; }
+				break;
+			} break;
 		}
 		
 		switch (curstate)
@@ -173,6 +233,9 @@ public class ArchonRobotYP extends BaseRobot {
 	public void processMessage(BroadcastType msgType, StringBuilder sb)
 			throws GameActionException {
 		switch(msgType) {
+		case ENEMY_ARCHON_KILL:
+			eakc.reportEnemyArchonKills(BroadcastSystem.decodeUShorts(sb));
+			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 			break;
@@ -225,6 +288,18 @@ public class ArchonRobotYP extends BaseRobot {
 		if (radar.closestEnemy != null)
 		{
 			gotoStateAndExecute(ArchonState.CHASE);
+			return;
+		}
+		
+		if (curRound >= ArchonConstants.ROUNDS_TO_ATACK_BASE)
+		{
+			gotoStateAndExecute(ArchonState.CAPTURE);
+			return;
+		}
+		
+		if (eakc.getNumEnemyArchonsAlive() < dc.getAlliedArchons().length-2)
+		{
+			gotoStateAndExecute(ArchonState.CAPTURE);
 			return;
 		}
 		
@@ -350,12 +425,36 @@ public class ArchonRobotYP extends BaseRobot {
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException
 	{
+		if(dc.getClosestArchon()!=null) {
+			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+			if(distToNearestArchon <= 25 && Math.random() < 0.6-Math.sqrt(distToNearestArchon)/10) 
+				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
+		}
+		
 		switch (curstate)
 		{
 		case ATTACKBASE:
 		{
-			if (rc.canMove(curDir) && rc.getFlux() > ArchonConstants.ATTACK_SPAWN_SOLDIER)
-				return new MoveInfo(RobotType.SOLDIER, curDir);
+			if (rc.canMove(curDir))
+			{
+				switch (spawntype)
+				{
+				case SOLDIER:
+					if (rc.getFlux() > ArchonConstants.ATTACK_SPAWN_SOLDIER)
+					{
+						spawned++;
+						return new MoveInfo(RobotType.SOLDIER, curDir);
+					}
+					break;
+				case SCOUT:
+					if (rc.getFlux() > ArchonConstants.ATTACK_SPAWN_SCOUT)
+					{
+						spawned++;
+						return new MoveInfo(RobotType.SCOUT, curDir);
+					}
+				}
+			}
+			
 			
 			nav.setDestination(movetarget);
 			return new MoveInfo(nav.navigateToDestination(), false);
@@ -376,8 +475,25 @@ public class ArchonRobotYP extends BaseRobot {
 				return new MoveInfo(nav.navigateCompletelyRandomly(),true);
 			} else
 			{
-				if (rc.canMove(curDir) && rc.getFlux() > ArchonConstants.CAPTURE_SPAWN_SOLDIER)
-					return new MoveInfo(RobotType.SOLDIER, curDir);
+				if (rc.canMove(curDir))
+				{
+					switch (spawntype)
+					{
+					case SOLDIER:
+						if (rc.getFlux() > ArchonConstants.CAPTURE_SPAWN_SOLDIER)
+						{
+							spawned++;
+							return new MoveInfo(RobotType.SOLDIER, curDir);
+						}
+						break;
+					case SCOUT:
+						if (rc.getFlux() > ArchonConstants.CAPTURE_SPAWN_SCOUT)
+						{
+							spawned++;
+							return new MoveInfo(RobotType.SCOUT, curDir);
+						}
+					}
+				}
 				
 				nav.setDestination(movetarget);
 				return new MoveInfo(nav.navigateToDestination(),true);
@@ -385,8 +501,25 @@ public class ArchonRobotYP extends BaseRobot {
 		}
 		case CHASE:
 		{
-			if (rc.canMove(curDir) && rc.getFlux() > ArchonConstants.CHASE_SPAWN_SOLDIER)
-				return new MoveInfo(RobotType.SOLDIER, curDir);
+			if (rc.canMove(curDir))
+			{
+				switch (spawntype)
+				{
+				case SOLDIER:
+					if (rc.getFlux() > ArchonConstants.CHASE_SPAWN_SOLDIER)
+					{
+						spawned++;
+						return new MoveInfo(RobotType.SOLDIER, curDir);
+					}
+					break;
+				case SCOUT:
+					if (rc.getFlux() > ArchonConstants.CHASE_SPAWN_SCOUT)
+					{
+						spawned++;
+						return new MoveInfo(RobotType.SCOUT, curDir);
+					}
+				}
+			}
 			
 			if (radar.closestEnemyDist < ArchonConstants.CHASE_CLOSEST_DIST)
 				return new MoveInfo(radar.getEnemySwarmTarget().directionTo(curLoc),true);
@@ -395,8 +528,25 @@ public class ArchonRobotYP extends BaseRobot {
 		}
 		case RETREAT:
 		{
-			if (rc.canMove(curDir) && rc.getFlux() > ArchonConstants.RETREAT_SPAWN_SOLDIER)
-				return new MoveInfo(RobotType.SOLDIER, curDir);
+			if (rc.canMove(curDir))
+			{
+				switch (spawntype)
+				{
+				case SOLDIER:
+					if (rc.getFlux() > ArchonConstants.RETREAT_SPAWN_SOLDIER)
+					{
+						spawned++;
+						return new MoveInfo(RobotType.SOLDIER, curDir);
+					}
+					break;
+				case SCOUT:
+					if (rc.getFlux() > ArchonConstants.RETREAT_SPAWN_SCOUT)
+					{
+						spawned++;
+						return new MoveInfo(RobotType.SCOUT, curDir);
+					}
+				}
+			}
 			
 			if (retreatLoc == null || 
 					curLoc.directionTo(retreatLoc) != retreatDir ||
