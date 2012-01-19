@@ -42,9 +42,11 @@ public class SoldierRobotCL extends BaseRobot {
 		case RUSH:
 			nav.setNavigationMode(NavigationMode.GREEDY);
 			radar.scan(false, true);
-			
-			if (dc.getClosestArchon().distanceSquaredTo(curLoc) > DISTANCE_UNTIL_LOST) {
-				behavior = BehaviorState.LOST;
+
+			if (dc.getClosestArchon() != null) {
+				if (dc.getClosestArchon().distanceSquaredTo(curLoc) > DISTANCE_UNTIL_LOST) {
+					behavior = BehaviorState.LOST;
+				}
 			}
 			
 			if(radar.closestEnemy == null) break;
@@ -98,7 +100,6 @@ public class SoldierRobotCL extends BaseRobot {
 			rushLoc = BroadcastSystem.decodeMapLoc(sb);
 			nav.setDestination(rushLoc);
 			behavior = BehaviorState.RUSH;
-			io.sendMapLoc(BroadcastChannel.ALL, BroadcastType.RALLY, rushLoc);
 			break;
 		case HIBERNATE:
 			behavior = BehaviorState.HIBERNATE;

@@ -1,14 +1,16 @@
 package ducks;
 
-import battlecode.common.Clock;
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
-import battlecode.common.RobotType;
+import battlecode.common.*;
 
 public class ArchonRobotCL extends BaseRobot {
 	
-	private enum BehaviorState{SPLIT,DEFEND,RUSH,CAP}
+	private enum BehaviorState{
+		SPLIT,  //initial state, only for the split
+		DEFEND, //normal state. chilling around the power core, defending
+		SEEK,   //locked onto a sensed target. homing in for the kill
+		ASSIST, //heard about a target. going for the assist
+		CAP     //going to cap towers for fun
+	}
 	BehaviorState behavior;
 	int myArchonID;
 	
@@ -16,11 +18,13 @@ public class ArchonRobotCL extends BaseRobot {
 		super(myRC);
 		MapLocation[] alliedArchons = this.dc.getAlliedArchons();
 		for(int i=alliedArchons.length; --i>=0; ) {
-			if(alliedArchons[i].equals(this.curLoc)) {
+			if(alliedArchons[i].equals(myRC.getLocation())) {
 				myArchonID = i;
 				break;
 			}
 		}
+		
+		System.out.println(myArchonID);
 		
 		behavior = BehaviorState.SPLIT;
 		
@@ -29,7 +33,11 @@ public class ArchonRobotCL extends BaseRobot {
 	}
 	
 	
-	MapLocation target;
+	RobotInfo ownTargetInfo;
+	int roundsSinceTargetSeen = 0;
+	MapLocation receivedTargetLoc;
+	
+	
 	
 
 	@Override
@@ -44,16 +52,35 @@ public class ArchonRobotCL extends BaseRobot {
 			break;
 		case DEFEND:
 			radar.scan(false, true);
-			if(radar.closestEnemy != null) {
-				if(radar.closestEnemyDist < 16) {
-					target = radar.closestEnemy.location;
-					behavior = BehaviorState.RUSH;
+			
+			// Seek out an enemy if we sense anyone
+			if(radar.closestEnemy == null) {
+				break;
+			}
+			else{   
+				if(radar.closestEnemyDist <= 16) {
+					ownTargetInfo = radar.closestEnemy;
+					behavior = BehaviorState.SEEK;
 					io.sendMapLoc(BroadcastChannel.ALL, BroadcastType.RALLY, radar.closestEnemy.location);
 				}
 			}
-		case RUSH:
+		case SEEK:
 			fbs.setBattleMode();
-			break;
+			
+			if(ownTargetInfo != null) {
+				if(rc.canSenseObject((GameObject) ownTargetInfo.robot)) {
+					nav.setDestination(ownTargetInfo.location);
+					roundsSinceTargetSeen = 0;
+				} else {
+					roundsSinceTargetSeen ++;
+				}
+			}
+			else if(roundsSinceTargetSeen>5) {
+				ownTargetInfo = null;
+			}
+		case ASSIST:
+			
+			
 		case CAP:
 			break;
 		default:
@@ -69,7 +96,12 @@ public class ArchonRobotCL extends BaseRobot {
 	public MoveInfo computeNextMove() throws GameActionException {
 		switch(behavior) {
 		case SPLIT:
-			return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
+			if(myArchonID != 0) {
+				return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
+			} else {
+				return new MoveInfo(curLoc.directionTo(myHome), true);
+			}
+			
 		case DEFEND:
 			if(rc.getFlux() > 150) {
 				boolean[] openDirs = dc.getMovableDirections();
@@ -79,6 +111,13 @@ public class ArchonRobotCL extends BaseRobot {
 					}
 				}
 			}
+		case SEEK:
+			Direction dir = nav.navigateToDestination();
+			if(dir==null)
+				return null;
+			else
+				return new MoveInfo(dir,true);
+		
 			
 		default:
 			return null;
@@ -89,9 +128,13 @@ public class ArchonRobotCL extends BaseRobot {
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
+		
 		case RALLY:
-			target = BroadcastSystem.decodeMapLoc(sb);
-			behavior = BehaviorState.RUSH;
+			if(ownTargetInfo == null) {
+				
+				
+			}
+			
 			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));

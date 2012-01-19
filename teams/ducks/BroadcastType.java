@@ -28,7 +28,9 @@ public enum BroadcastType {
 	SWARM_TARGET,
 
 	// single ushort
-	HIBERNATE
+	HIBERNATE,
+	
+	
 	
 	
 	
