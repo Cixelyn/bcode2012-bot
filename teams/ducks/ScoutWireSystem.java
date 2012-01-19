@@ -38,6 +38,9 @@ public class ScoutWireSystem {
 	/** The IDs of all of the Scouts in the current wire. -1 means no Robot. */
 	private int[] partnerIDs;
 	
+	/** The ID of the Archon requesting the wire. */
+	private int archonID;
+	
 	/** The starting location of the wire. */
 	private MapLocation startLoc;
 	/** The ending location of the wire. */
@@ -48,15 +51,8 @@ public class ScoutWireSystem {
 	
 	// ----------------- ARCHON FIELDS ---------------------
 	
-	/** Whether the Archon owns a wire. */
-	private boolean ownsWire;
 	
 	// ----------------- SCOUT FIELDS ---------------------
-	
-	/** The ID of the Archon requesting the wire that the Scout has accepted, -1
-	 * if the Scout has not accepted one.
-	 */
-	private int archonID;
 	
 	/** The ID of the last confirm rebroadcasted. */
 	private int lastConfirmID = 0;
@@ -85,7 +81,6 @@ public class ScoutWireSystem {
 		}
 		startLoc = br.myHome;
 		endLoc = br.myHome;
-		ownsWire = false;
 		archonID = -1;
 	}
 	
@@ -118,7 +113,7 @@ public class ScoutWireSystem {
 		if (br.myType != RobotType.ARCHON) {
 			return false;
 		}
-		return ownsWire;
+		return archonID == br.myID;
 	}
 	
 	//----------------- BROADCAST/PROCESSING STUFF ---------------------
@@ -130,7 +125,7 @@ public class ScoutWireSystem {
 	public void broadcastWireRequest() {
 		// make sure an Archon is calling this and that he doesn't already own
 		// a wire
-		if (br.myType != RobotType.ARCHON || ownsWire) {
+		if (br.myType != RobotType.ARCHON || ownsWire()) {
 			return;
 		}
 		// send my ID
@@ -166,7 +161,7 @@ public class ScoutWireSystem {
 	public void processWireAccept(int[] wireAccept) {
 		// make sure an Archon is calling this and that he doesn't already own
 		// a wire
-		if (br.myType != RobotType.ARCHON || ownsWire) {
+		if (br.myType != RobotType.ARCHON || ownsWire()) {
 			return;
 		}
 		// make sure the Archon is the intended recipient of the wire accept
@@ -201,7 +196,7 @@ public class ScoutWireSystem {
 			return;
 		}
 		// the Archon owns a wire
-		ownsWire = true;
+		archonID = br.myID;
 		// make wire confirm
 		int[] wireConfirm = new int[6 + partnerIDs.length];
 		wireConfirm[0] = br.myID;
@@ -268,7 +263,7 @@ public class ScoutWireSystem {
 	 */
 	public void setWireStartLoc(MapLocation loc) {
 		// make sure an Archon is calling this who owns a wire
-		if (br.myType != RobotType.ARCHON || !ownsWire) {
+		if (br.myType != RobotType.ARCHON || !ownsWire()) {
 			return;
 		}
 		startLoc = loc;
@@ -280,7 +275,7 @@ public class ScoutWireSystem {
 	 */
 	public void setWireEndLoc(MapLocation loc) {
 		// make sure an Archon is calling this who owns a wire
-		if (br.myType != RobotType.ARCHON || !ownsWire) {
+		if (br.myType != RobotType.ARCHON || !ownsWire()) {
 			return;
 		}
 		endLoc = loc;
@@ -291,7 +286,38 @@ public class ScoutWireSystem {
 	 * Scout already on a wire.
 	 */
 	public void broadcastAbortWire() {
-		// TODO(jven): broadcast periodically and only finitely many times
+		// make sure a Scout is calling this and that he is already on a wire
+		// or an Archon is calling this and he owns a wire
+		if ((br.myType != RobotType.SCOUT &&
+				br.myType != RobotType.ARCHON) ||
+				archonID == -1) {
+			return;
+		}
+		// reset
+		reset();
+		// send abort
+		br.io.sendShort(
+				BroadcastChannel.ALL, BroadcastType.WIRE_ABORT, archonID);
+	}
+	
+	/**
+	 * Processes a wire abort message. Should be called only by the owner of a
+	 * wire or a Scout already on a wire in their processMessages.
+	 */
+	public void processAbortWire(int msgArchonID) {
+		// make sure a Scout is calling this and that he is already on a wire
+		// or an Archon is calling this and he owns a wire
+		if (br.myType != RobotType.SCOUT ||
+				br.myType != RobotType.ARCHON ||
+				archonID == -1) {
+			return;
+		}
+		// check that this message is about this unit's wire
+		if (msgArchonID != archonID) {
+			return;
+		}
+		// send abort
+		broadcastAbortWire();
 	}
 	
 	/**
