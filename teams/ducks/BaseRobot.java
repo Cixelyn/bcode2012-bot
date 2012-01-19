@@ -132,23 +132,25 @@ public abstract class BaseRobot {
 			
 			// Check if we've already run out of bytecodes
 			if(stopClock()) {
-				System.out.println("We went over bytecodes before calling useExtraBytecodes().");
-	            rc.yield();
+				rc.yield();
 				continue;
 			}
 			
 			// Use excess bytecodes
 			try {
-				useExtraBytecodes();
+				if(Clock.getRoundNum()==executeStartTime && 
+						Clock.getBytecodesLeft()>1000)
+					useExtraBytecodes();
 			} catch (Exception e) {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
 			}
 		
 			// End of Turn
-			if(!stopClock()) {
-				rc.yield();
-			}
+			if(stopClock())
+				System.out.println("Very bad! useExcessBytecodes() ran over the bytecode limit. " +
+						"You must fix this so it only uses the available bytecodes and no more.");
+			rc.yield();
 		}
 	}
 	
@@ -168,27 +170,26 @@ public abstract class BaseRobot {
 	 */
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {}
 
-	/**
-	 * @return The age of the robot in rounds
-	 */
+	/** @return The age of the robot in rounds */
 	public int getAge() { 
 		return birthday - curRound; 
 	}
-
+	/** Resets the internal bytecode counter. */
 	public void resetClock() {
 		lastResetTime = executeStartTime;
 		executeStartTime = Clock.getRoundNum();
 		executeStartByte = Clock.getBytecodeNum();
 	}
-	/** Returns whether we went over bytecodes. */
+	/** Prints a warning if we ran over bytecodes. 
+	 * @return whether we run out of bytecodes this round.
+	 */
 	private boolean stopClock() {
-        if(executeStartTime!=Clock.getRoundNum()) {
-            int currRound = Clock.getRoundNum();
-            int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
-            System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
-            return true;
-        }  
-        return false;
+        if(executeStartTime==Clock.getRoundNum())
+        	return false;
+        int currRound = Clock.getRoundNum();
+        int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
+        System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+        return true;
 	}
 	
 	/** Should be overridden by any robot that wants to do movements. 
@@ -199,15 +200,13 @@ public abstract class BaseRobot {
 	}
 	
 	/** If there are bytecodes left to use this turn, will call this function
-	 * until it returns false.
-	 * @param bytecodesLeft number of bytecodes left to use this turn
-	 * @return whether anything was done in this call
+	 * a single time. Function should very hard not to run over bytecodes.
 	 */
 	public void useExtraBytecodes() {
-		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1200) 
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2000) 
 			io.sendAll();
 		
-		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>4200)
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>4000)
 			fbs.manageFlux();
 	}
 }
