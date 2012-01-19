@@ -47,7 +47,7 @@ public abstract class BaseRobot {
 	
 	// Internal Statistics
 	private int lastResetTime = 50;
-	private int executeStartTime;
+	private int executeStartTime = 50;
 	private int executeStartByte;
 	
 	
@@ -176,6 +176,7 @@ public abstract class BaseRobot {
 	}
 
 	public void resetClock() {
+		lastResetTime = executeStartTime;
 		executeStartTime = Clock.getRoundNum();
 		executeStartByte = Clock.getBytecodeNum();
 	}
