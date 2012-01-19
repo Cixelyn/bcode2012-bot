@@ -85,6 +85,9 @@ public class ScoutRobotJV extends BaseRobot {
 			case WIRE_CONFIRM:
 				sws.rebroadcastWireConfirm(BroadcastSystem.decodeUShorts(sb));
 				break;
+			case WIRE_ABORT:
+				sws.processAbortWire(BroadcastSystem.decodeShort(sb));
+				break;
 			default:
 				this.processMessage(msgType, sb);
 				break;
@@ -145,6 +148,10 @@ public class ScoutRobotJV extends BaseRobot {
 			// go to my wire location
 			micro.setObjective(sws.getMyWireLocation());
 			micro.attackMove();
+			// abort after some # rounds
+			if (curRound >= 800) {
+				sws.broadcastAbortWire();
+			}
 		} else {
 			// go to closest archon
 			if (dc.getClosestArchon() != null) {
