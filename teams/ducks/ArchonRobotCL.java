@@ -4,6 +4,7 @@ import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotType;
 
 public class ArchonRobotCL extends BaseRobot {
 	
@@ -31,7 +32,67 @@ public class ArchonRobotCL extends BaseRobot {
 	public void run() throws GameActionException {
 		rc.setIndicatorString(0,behavior.toString());
 		
-
+		switch(behavior) {
+		case SPLIT:
+			if(dc.getClosestArchon().distanceSquaredTo(curLoc) >= 16) {
+				behavior = BehaviorState.DEFEND;
+			}
+			break;
+		case DEFEND:
+			radar.scan(false, true);
+			if(radar.closestEnemy != null) {
+				behavior = BehaviorState.RUSH;
+			}
+		case RUSH:
+			fbs.setBatteryMode();
+			break;
+		case CAP:
+			break;
+		default:
+			break;
+		}
+		
+	}
+	
+	
+	
+	
+	@Override
+	public MoveInfo computeNextMove() throws GameActionException {
+		switch(behavior) {
+		case SPLIT:
+			return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
+		case DEFEND:
+			if(rc.getFlux() > 150) {
+				boolean[] openDirs = dc.getMovableDirections();
+				for(int i=0; i<openDirs.length; i++) {
+					if(openDirs[i]) {
+						return new MoveInfo(RobotType.SOLDIER,Constants.directions[i]);
+					}
+				}
+			}
+			
+		default:
+			return null;
+		}
+	}
+	
+	
+	@Override
+	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
+		switch(msgType) {
+		case MAP_EDGES:
+			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
+			break;
+		case MAP_FRAGMENTS:
+			ses.receiveMapFragment(BroadcastSystem.decodeInts(sb));
+			break;
+		case POWERNODE_FRAGMENTS:
+			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
+			break;
+		default:
+			super.processMessage(msgType, sb);
+		} 
 	}
 	
 	

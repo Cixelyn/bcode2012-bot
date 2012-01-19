@@ -32,19 +32,21 @@ public class FluxBalanceSystem {
 		rc = myBR.rc;
 	}
 	
-	/**
-	 * Non-archon units should be kept filled.
-	 */
+	/** Non-archon units should be kept filled. */
 	public void setBatteryMode() {
 		mode = FluxManagerMode.BATTERY;
 	}
 	
-	/**
-	 * Non-archon units should be kept at very low capacity.
-	 */
+	/** Non-archon units should be kept at very low capacity. */
 	public void setBattleMode() {
 		mode = FluxManagerMode.BATTLE;
 	}
+
+	/** Disables running the flux balance management each turn */
+	public void disable() {
+		mode = null;
+	}
+	
 	
 	/**
 	 * Distribute flux depending on unit type and flux manager mode.
@@ -52,28 +54,30 @@ public class FluxBalanceSystem {
 	public void manageFlux() {
 		// we catch GameActionException to avoid trying to manage flux with stale
 		// information
-		if (radar==null)
-			radar = br.radar;
-		try {
-			radar.scan(true, false);
-			
-			if (mode == FluxManagerMode.BATTERY &&
-					br.myType == RobotType.ARCHON) {
-				distributeArchonBattery();
-			} else if (mode == FluxManagerMode.BATTERY &&
-					br.myType != RobotType.ARCHON) {
-				distributeUnitBattery();
-			} else if (mode == FluxManagerMode.BATTLE &&
-					br.myType == RobotType.ARCHON) {
-				distributeArchonBattle();
-			} else if (mode == FluxManagerMode.BATTLE &&
-					br.myType != RobotType.ARCHON) {
-				distributeUnitBattle();
+		if(mode != null) {
+			if (radar==null)
+				radar = br.radar;
+			try {
+				radar.scan(true, false);
+				
+				if (mode == FluxManagerMode.BATTERY &&
+						br.myType == RobotType.ARCHON) {
+					distributeArchonBattery();
+				} else if (mode == FluxManagerMode.BATTERY &&
+						br.myType != RobotType.ARCHON) {
+					distributeUnitBattery();
+				} else if (mode == FluxManagerMode.BATTLE &&
+						br.myType == RobotType.ARCHON) {
+					distributeArchonBattle();
+				} else if (mode == FluxManagerMode.BATTLE &&
+						br.myType != RobotType.ARCHON) {
+					distributeUnitBattle();
+				}
+			} catch (GameActionException e) {
+				e.printStackTrace();
+				rc.addMatchObservation(e.toString());
+				return;
 			}
-		} catch (GameActionException e) {
-			e.printStackTrace();
-			rc.addMatchObservation(e.toString());
-			return;
 		}
 	}
 	

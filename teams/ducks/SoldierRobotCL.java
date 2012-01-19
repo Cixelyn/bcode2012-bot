@@ -15,16 +15,16 @@ public class SoldierRobotCL extends BaseRobot {
 		super(myRC);
 		
 		hbs = new HibernationSystem(this);
-		
 		io.addChannel(BroadcastChannel.ALL);
 		io.addChannel(BroadcastChannel.SOLDIERS);
 		fbs.setBattleMode();
+		behavior = BehaviorState.DEFEND;
+		
 	}
 
 	@Override
 	public void run() throws GameActionException {
 		rc.setIndicatorString(0,behavior.toString());
-		
 		
 		switch(behavior) {
 		case HIBERNATE:
