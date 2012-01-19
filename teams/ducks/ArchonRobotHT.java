@@ -19,8 +19,6 @@ public class ArchonRobotHT extends BaseRobot{
 		CAP;
 	}
 	private enum BehaviorState {
-		/** No enemies around, already at target. */
-		WAITING,
 		/** No enemies to deal with. */
 		SWARM,
 		/** Run away from enemy forces. */
@@ -32,21 +30,23 @@ public class ArchonRobotHT extends BaseRobot{
 	}
 	int myArchonID;
 	int roundLockTarget;
+	int roundStartWakeupMode;
 	MapLocation target;
 	StrategyState strategy;
 	BehaviorState behavior;
 	int closestSenderDist;
 	boolean senderSwarming;
 	MapLocation closestArchonTarget;
+	MapLocation previousWakeupTarget;
 	
 	public ArchonRobotHT(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		roundLockTarget = -Integer.MAX_VALUE;
 		// compute archon ID
-		MapLocation[] alliedArchons = this.dc.getAlliedArchons();
+		MapLocation[] alliedArchons = dc.getAlliedArchons();
 		for(int i=alliedArchons.length; --i>=0; ) {
-			if(alliedArchons[i].equals(this.curLoc)) {
+			if(alliedArchons[i].equals(curLoc)) {
 				myArchonID = i;
 				break;
 			}
@@ -67,7 +67,7 @@ public class ArchonRobotHT extends BaseRobot{
 	@Override
 	public void run() throws GameActionException {
 		// Currently the strategy transition is based on hard-coded turn numbers
-		if(Clock.getRoundNum()>1700) {
+		if(Clock.getRoundNum()>1700 && myArchonID!=0) {
 			strategy = StrategyState.CAP;
 		} else if(Clock.getRoundNum()>1000 || mc.powerNodeGraph.enemyPowerCoreID != 0) {
 			strategy = StrategyState.DEFEND;
@@ -90,7 +90,7 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 		
 		// If we haven't seen anyone for 30 turns, go to swarm mode and reset target
-		if(curRound > roundLockTarget + 30) {
+		else if(curRound > roundLockTarget + 30) {
 			behavior = BehaviorState.SWARM;
 			if(closestSenderDist != Integer.MAX_VALUE && !senderSwarming) {
 				target = closestArchonTarget;
@@ -102,6 +102,18 @@ public class ArchonRobotHT extends BaseRobot{
 				target = mc.guessBestPowerNodeToCapture();
 			}
 		}
+		
+		// If we change to a new target, wake up hibernating allies
+		if(behavior == BehaviorState.SWARM && (previousWakeupTarget == null ||
+				target.distanceSquaredTo(previousWakeupTarget) > 25)) {
+			roundStartWakeupMode = curRound;
+			previousWakeupTarget = target;
+		}
+		if(curRound < roundStartWakeupMode + 10) {
+			io.sendWakeupCall();
+		}
+			
+		// Set the target for the navigator 
 		nav.setDestination(target);
 		
 		// Broadcast my target info to the soldier swarm
@@ -112,6 +124,7 @@ public class ArchonRobotHT extends BaseRobot{
 		shorts[3] = curLoc.x;
 		shorts[4] = curLoc.y;
 		io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+		
 		
 		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
 		rc.setIndicatorString(1, "strategy_state="+strategy+", behavior_state="+behavior);

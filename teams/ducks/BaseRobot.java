@@ -75,6 +75,8 @@ public abstract class BaseRobot {
 					rc.yield();
 					rc.moveForward();
 				}
+				rc.yield();
+				updateRoundVariables();
 			}
 		}
 		
@@ -93,6 +95,7 @@ public abstract class BaseRobot {
 		sws = new ScoutWireSystem(this);
 		
 		mc.senseAll();
+		
 	}
 	
 	public abstract void run() throws GameActionException;
