@@ -4,23 +4,22 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
-import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
-enum SoldierState {
+enum ScoutState {
 	CHASE,
 	SWARM,
 	RETREAT,
 }
 
-class SoldierConstants {
+class ScoutConstants {
 	public static final int SWARM_ROUNDS_UNTIL_STALE = 20;
 	public static final int CHASE_ROUNDS = 40;
 	
-	public static final int CHASE_CLOSE_DISTANCE = 2;
+	public static final int CHASE_CLOSE_DISTANCE = 4;
 	
 	public static final int RETREAT_ROUNDS = 20;
 	
@@ -33,12 +32,15 @@ class SoldierConstants {
 	
 	public static double SHUTDOWN_THRESHOLD = 1.0;
 	
-	public static double ATTACK = RobotType.SOLDIER.attackPower;
+	public static double HEAL_THRESHOLD_FLUX = 4.0;
+	public static double HEAL_THRESHOLD_NUM = 2;
+	
+	public static double ATTACK = RobotType.SCOUT.attackPower+0.1;
 }
 
-public class SoldierRobotYP extends BaseRobot {
+public class ScoutRobotYP extends BaseRobot {
 	
-	private SoldierState curstate;
+	private ScoutState curstate;
 	
 	private RobotInfo chaseTarget;
 	private Direction chaseDir;
@@ -54,19 +56,13 @@ public class SoldierRobotYP extends BaseRobot {
 	private int swarmUpdateRounds;
 	private int closestmsg;
 	
-	
 	MapLocation movetarget;
 	Direction movedirection;
 	
-	public SoldierRobotYP(RobotController myRC) throws GameActionException {
+	public ScoutRobotYP(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
-		curstate = SoldierState.SWARM;
-		
-		io.setChannels(new BroadcastChannel[] {
-				BroadcastChannel.ALL,
-				BroadcastChannel.SOLDIERS,
-		});
+		curstate = ScoutState.SWARM;
 	}
 
 	@Override
@@ -81,11 +77,14 @@ public class SoldierRobotYP extends BaseRobot {
 		
 		execute(curstate);
 		
+		int numdmg = radar.numAllyDamaged+(curEnergon<myMaxEnergon?1:0);
+		
+		if (rc.getFlux() > ScoutConstants.HEAL_THRESHOLD_FLUX
+				&& numdmg > ScoutConstants.HEAL_THRESHOLD_NUM)
+			rc.regenerate();
+		
 		switch (curstate)
 		{
-		case SWARM:
-			rc.setIndicatorString(0, "state:"+curstate+" "+swarmLoc+" "+swarmDir+" "+swarmUpdateRounds);
-			break;
 		case CHASE:
 			rc.setIndicatorString(0, "state:"+curstate+" "+chaseTarget+" "+chaseDir+" "+chaseRounds);
 			break;
@@ -96,12 +95,10 @@ public class SoldierRobotYP extends BaseRobot {
 		
 		closestmsg = 999;
 		
-		eakc.broadcastDeadEnemyArchonIDs();
-		
 		fbs.manageFlux();
 	}
 	
-	public void execute(SoldierState state) throws GameActionException
+	public void execute(ScoutState state) throws GameActionException
 	{
 		switch (state)
 		{
@@ -137,7 +134,7 @@ public class SoldierRobotYP extends BaseRobot {
 		}
 	}
 	
-	private void gotoStateAndExecute(SoldierState state) throws GameActionException
+	private void gotoStateAndExecute(ScoutState state) throws GameActionException
 	{
 		if (curstate != state)
 		{
@@ -167,11 +164,11 @@ public class SoldierRobotYP extends BaseRobot {
 			if (best == null)
 			{
 				best = ri;
-				kill = best.energon <= SoldierConstants.ATTACK;
+				kill = best.flux <= ScoutConstants.ATTACK;
 				closest = curLoc.distanceSquaredTo(best.location);
 			} else if (kill)
 			{
-				if (ri.energon > SoldierConstants.ATTACK) continue;
+				if (ri.flux > ScoutConstants.ATTACK) continue;
 				
 				int dist = curLoc.distanceSquaredTo(ri.location);
 				if (closest > dist)
@@ -186,7 +183,7 @@ public class SoldierRobotYP extends BaseRobot {
 				{
 					best = ri;
 					closest = curLoc.distanceSquaredTo(best.location);
-					kill = best.energon <= SoldierConstants.ATTACK;
+					kill = best.flux <= ScoutConstants.ATTACK;
 				}
 			}
 		}
@@ -201,12 +198,13 @@ public class SoldierRobotYP extends BaseRobot {
 		
 		if (radar.numEnemyRobots>0)
 		{
-			gotoStateAndExecute(SoldierState.CHASE);
+			gotoStateAndExecute(ScoutState.CHASE);
 			return;
 		}
 		
 		
-		if (swarmLoc == null || swarmUpdateRounds>SoldierConstants.SWARM_ROUNDS_UNTIL_STALE)
+		
+		if (swarmLoc == null || swarmUpdateRounds>ScoutConstants.SWARM_ROUNDS_UNTIL_STALE)
 		{
 			swarmLoc = dc.getClosestArchon();
 			swarmDir = null;
@@ -217,9 +215,9 @@ public class SoldierRobotYP extends BaseRobot {
 	{
 		radar.scan(true, true);
 		
-		if (radar.getArmyDifference() <= SoldierConstants.RETREAT_THRESHOLD)
+		if (radar.getArmyDifference() <= ScoutConstants.RETREAT_THRESHOLD)
 		{
-			gotoStateAndExecute(SoldierState.RETREAT);
+			gotoStateAndExecute(ScoutState.RETREAT);
 			return;
 		}
 		
@@ -227,7 +225,7 @@ public class SoldierRobotYP extends BaseRobot {
 		{
 			if (chaseRounds--<=0 || chaseDir==null)
 			{
-				gotoStateAndExecute(SoldierState.SWARM);
+				gotoStateAndExecute(ScoutState.SWARM);
 				return;
 			}
 			return;
@@ -252,7 +250,7 @@ public class SoldierRobotYP extends BaseRobot {
 			{
 				if (chaseRounds--<=0 || chaseDir==null)
 				{
-					gotoStateAndExecute(SoldierState.SWARM);
+					gotoStateAndExecute(ScoutState.SWARM);
 					return;
 				}
 				return;
@@ -262,7 +260,7 @@ public class SoldierRobotYP extends BaseRobot {
 			chaseTarget = radar.closestEnemy;
 		}
 		
-		chaseRounds = SoldierConstants.CHASE_ROUNDS;
+		chaseRounds = ScoutConstants.CHASE_ROUNDS;
 		
 		chaseDir = curLoc.directionTo(chaseTarget.location);
 	}
@@ -271,13 +269,13 @@ public class SoldierRobotYP extends BaseRobot {
 	{
 		radar.scan(true, true);
 		
-		if (radar.getArmyDifference() >= SoldierConstants.RETREAT_CHASE)
+		if (radar.getArmyDifference() >= ScoutConstants.RETREAT_CHASE)
 		{
-			gotoStateAndExecute(SoldierState.CHASE);
+			gotoStateAndExecute(ScoutState.CHASE);
 			return;
-		} else if (radar.getArmyDifference() >= SoldierConstants.RETREAT_STABILIZE)
+		} else if (radar.getArmyDifference() >= ScoutConstants.RETREAT_STABILIZE)
 		{
-			gotoStateAndExecute(SoldierState.SWARM);
+			gotoStateAndExecute(ScoutState.SWARM);
 			return;
 		}
 		
@@ -285,11 +283,11 @@ public class SoldierRobotYP extends BaseRobot {
 		{
 			if (retreatRounds-- <= 0 || retreatDir==null)
 			{
-				gotoStateAndExecute(SoldierState.SWARM);
+				gotoStateAndExecute(ScoutState.SWARM);
 				return;
 			}
 			return;
-		} else retreatRounds = SoldierConstants.RETREAT_ROUNDS;
+		} else retreatRounds = ScoutConstants.RETREAT_ROUNDS;
 		
 		retreatDir = radar.getEnemySwarmTarget().directionTo(curLoc);
 		return;
@@ -298,7 +296,7 @@ public class SoldierRobotYP extends BaseRobot {
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException
 	{
-		if (rc.getFlux() < SoldierConstants.SHUTDOWN_THRESHOLD)
+		if (rc.getFlux() < ScoutConstants.SHUTDOWN_THRESHOLD)
 		{
 			//TODO turn around code
 			return null;
@@ -323,25 +321,24 @@ public class SoldierRobotYP extends BaseRobot {
 					return new MoveInfo(swarmDir, false);
 				}
 				
-				if (curLoc.distanceSquaredTo(swarmLoc) < SoldierConstants.SWARM_TOO_CLOSE_DISTANCE)
+				if (curLoc.distanceSquaredTo(swarmLoc) < ScoutConstants.SWARM_TOO_CLOSE_DISTANCE)
 				{
 					return new MoveInfo(swarmDir, false);
 				}
 				
-				if (curLoc.distanceSquaredTo(swarmLoc) > SoldierConstants.SWARM_TOO_FAR_DISTANCE)
+				if (curLoc.distanceSquaredTo(swarmLoc) > ScoutConstants.SWARM_TOO_FAR_DISTANCE)
 				{
 					return new MoveInfo(toSwarm, true);
 				}
 				
 				if (curDir != swarmDir)
 					return new MoveInfo(swarmDir);
-				else new MoveInfo(swarmDir, false);
+				else return null;
 			}
 			case CHASE:
 			{
-				if (radar.closestEnemyDist <= SoldierConstants.CHASE_CLOSE_DISTANCE)
+				if (curLoc.distanceSquaredTo(chaseTarget.location) <= ScoutConstants.CHASE_CLOSE_DISTANCE)
 				{
-					chaseDir = curLoc.directionTo(radar.closestEnemy.location);
 					return new MoveInfo(chaseDir.opposite(), true);
 				} else
 					return new MoveInfo(chaseDir, false);
@@ -358,7 +355,8 @@ public class SoldierRobotYP extends BaseRobot {
 					nav.setDestination(retreatLoc);
 				}
 				
-				return new MoveInfo(nav.navigateGreedy(retreatLoc), true);
+//				return new MoveInfo(nav.navigateGreedy(retreatLoc), true);
+				return new MoveInfo(retreatDir, true);
 			}
 			}
 		}
