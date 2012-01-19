@@ -36,13 +36,13 @@ public class ArchonRobotJV extends BaseRobot {
 	 * each state for details.
 	 */
 	private enum ArchonState {
-		SCOUT_TEST,
-		SUICIDE,
 		INITIALIZE,
 		EXPLORE,
 		RETURN_HOME,
 		SPLIT,
+		MAKE_SCOUT,
 		BUILD_INITIAL_ARMY,
+		DEFEND,
 		RUSH,
 		ENGAGE
 	}
@@ -56,8 +56,8 @@ public class ArchonRobotJV extends BaseRobot {
 	/** Whether the Archon has been rallied. */
 	private boolean rallied = false;
 	
-	/** TODO(jven): testing */
-	private int scoutBuiltRound = -1;
+	/** Whether the Archon made a scout. */
+	private boolean madeScout = false;
 
 	public ArchonRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
@@ -78,9 +78,6 @@ public class ArchonRobotJV extends BaseRobot {
 		rc.setIndicatorString(0, myType + " - " + curState);
 		// execute
 		switch (curState) {
-			case SCOUT_TEST:
-				scoutTest();
-				break;
 			case INITIALIZE:
 				initialize();
 				break;
@@ -93,8 +90,14 @@ public class ArchonRobotJV extends BaseRobot {
 			case SPLIT:
 				split();
 				break;
+			case MAKE_SCOUT:
+				makeScout();
+				break;
 			case BUILD_INITIAL_ARMY:
 				buildInitialArmy();
+				break;
+			case DEFEND:
+				defend();
 				break;
 			case RUSH:
 				rush();
@@ -132,7 +135,6 @@ public class ArchonRobotJV extends BaseRobot {
 				sws.processAbortWire(BroadcastSystem.decodeShort(sb));
 				break;
 			default:
-				this.processMessage(msgType, sb);
 				break;
 		}
 	}
@@ -145,8 +147,6 @@ public class ArchonRobotJV extends BaseRobot {
 	private ArchonState getNextState() throws GameActionException {
 		// check if we should transition
 		switch (curState) {
-			case SCOUT_TEST:
-				break;
 			case INITIALIZE:
 				// if we're done initializing, start exploring
 				if (initialized) {
@@ -172,8 +172,16 @@ public class ArchonRobotJV extends BaseRobot {
 						curLoc.distanceSquaredTo(dc.getClosestArchon()) >=
 						ArchonConstants.ARCHON_SPLIT_DISTANCE ||
 						rc.getFlux() == myMaxFlux) {
-//					return ArchonState.BUILD_INITIAL_ARMY;
-					return ArchonState.SCOUT_TEST;
+					return ArchonState.MAKE_SCOUT;
+				}
+				break;
+			case MAKE_SCOUT:
+				if (madeScout) {
+					if (curLoc.equals(dc.getAlliedArchons()[0])) {
+						return ArchonState.DEFEND;
+					} else {
+						return ArchonState.BUILD_INITIAL_ARMY;
+					}
 				}
 				break;
 			case BUILD_INITIAL_ARMY:
@@ -185,6 +193,8 @@ public class ArchonRobotJV extends BaseRobot {
 					rallied = true;
 					return ArchonState.RUSH;
 				}
+				break;
+			case DEFEND:
 				break;
 			case RUSH:
 				// if an enemy is nearby, engage
@@ -205,40 +215,6 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 		// if we didn't transition, stay in the current state
 		return curState;
-	}
-	
-	/**
-	 * TODO(jven): testing, Used to test scout wire behavior.
-	 */
-	private void scoutTest() throws GameActionException {
-		if (scoutBuiltRound == -1) {
-			// try to build a scout
-			for (Direction d : Direction.values()) {
-				if (d == Direction.OMNI || d == Direction.NONE) {
-					continue;
-				}
-				if (rc.getFlux() >
-						RobotType.SCOUT.spawnCost + RobotType.SCOUT.maxFlux &&
-						spawnUnitInDir(RobotType.SCOUT, d)) {
-					scoutBuiltRound = curRound;
-					break;
-				}
-			}
-		} else if (curLoc.equals(dc.getAlliedArchons()[0])) {
-			// wire stuff
-			if (!sws.ownsWire() && sws.getNumScoutsOnWire() < 6) {
-				sws.broadcastWireRequest();
-			} else {
-				sws.setWireStartLoc(myHome.add(myHome.directionTo(
-						mc.guessEnemyPowerCoreLocation()), 25).add(
-						Direction.values()[(curRound / 20) % 8], 10));
-				sws.setWireEndLoc(myHome);
-				sws.broadcastWireConfirm();
-			}
-		}
-		// distribute flux
-		fbs.setBatteryMode();
-		fbs.manageFlux();
 	}
 	
 	/**
@@ -304,6 +280,22 @@ public class ArchonRobotJV extends BaseRobot {
 	}
 	
 	/**
+	 * Make a scout.
+	 */
+	private void makeScout() throws GameActionException {
+		// try to build a scout
+		for (Direction d : Direction.values()) {
+			if (d == Direction.OMNI || d == Direction.NONE) {
+				continue;
+			}
+			if (spawnUnitInDir(RobotType.SCOUT, d)) {
+				madeScout = true;
+				break;
+			}
+		}
+	}
+	
+	/**
 	 * Build up our initial army. This state should only be called after the
 	 * initial split.
 	 */
@@ -319,6 +311,37 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 		// distribute flux
 		fbs.setBattleMode();
+		fbs.manageFlux();
+	}
+	
+	/**
+	 * Defend the main and control the scout wire.
+	 */
+	private void defend() throws GameActionException {
+		// go home
+		micro.setNormalMode();
+		micro.setObjective(myHome);
+		micro.attackMove();
+		// wire stuff
+		if (!sws.ownsWire() && sws.getNumScoutsOnWire() < 6) {
+			sws.broadcastWireRequest();
+		} else {
+			Direction d = myHome.directionTo(mc.guessEnemyPowerCoreLocation());
+			Direction[] dirs = new Direction[] {
+					d.rotateLeft(), d, d.rotateRight(), d};
+			d = dirs[(curRound / 100) % 4];
+			int range;
+			if (d.isDiagonal()) {
+				range = 30;
+			} else {
+				range = 40;
+			}
+			sws.setWireStartLoc(myHome.add(d, range));
+			sws.setWireEndLoc(curLoc);
+			sws.broadcastWireConfirm();
+		}
+		// distribute flux
+		fbs.setBatteryMode();
 		fbs.manageFlux();
 	}
 	
