@@ -110,6 +110,25 @@ public class ArchonRobotYP extends BaseRobot {
 		
 		execute(curstate);
 		
+		if ((Clock.getRoundNum()%3) == (origAID>>1))
+		{
+			switch (curstate)
+			{
+			case ATTACKBASE:
+				sendSwarmInfo(curLoc, curLoc.directionTo(movetarget));
+				break;
+			case CAPTURE:
+				sendSwarmInfo(curLoc, curLoc.directionTo(movetarget));
+				break;
+			case CHASE:
+				sendSwarmInfo(curLoc, chaseDir);
+				break;
+			case RETREAT:
+				sendSwarmInfo(curLoc, retreatDir.opposite());
+				break;
+			}
+		}
+		
 		switch (curstate)
 		{
 		case ATTACKBASE:
@@ -417,5 +436,13 @@ public class ArchonRobotYP extends BaseRobot {
 		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1050) 
 			mc.extractUpdatedPackedDataStep();
 	}
-
+	
+	public void sendSwarmInfo(MapLocation swarmloc, Direction swarmdir)
+	{
+		io.sendUShorts(BroadcastChannel.SOLDIERS, BroadcastType.SWARM_DETAILS, new int[]
+				{swarmdir.ordinal(), swarmloc.x, swarmloc.y}
+		);
+	}
+	
+	
 }
