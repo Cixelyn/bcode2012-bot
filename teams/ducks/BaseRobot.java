@@ -118,7 +118,7 @@ public abstract class BaseRobot {
 				msm.step();
 
 				// Check if we've already run out of bytecodes
-				if(stopClock()) {
+				if(checkClock()) {
 					rc.yield();
 					continue;
 				}
@@ -132,7 +132,7 @@ public abstract class BaseRobot {
 			}
 		
 			// End of Turn
-			if(stopClock())
+			if(checkClock())
 				System.out.println("Very bad! useExcessBytecodes() ran over the bytecode limit. " +
 						"You must fix this so it only uses the available bytecodes and no more.");
 			rc.yield();
@@ -170,7 +170,7 @@ public abstract class BaseRobot {
 	/** Prints a warning if we ran over bytecodes. 
 	 * @return whether we run out of bytecodes this round.
 	 */
-	private boolean stopClock() {
+	private boolean checkClock() {
         if(executeStartTime==Clock.getRoundNum())
         	return false;
         int currRound = Clock.getRoundNum();
