@@ -13,11 +13,11 @@ public final class Constants {
 	/** Archons must have this amount of flux in order to distribute. */
 	public static final double MIN_ARCHON_FLUX = 0.2;
 	/** Archons try to maintain this amount of flux on other units. */
-	public static final double MIN_UNIT_FLUX = 30;
+	public static final double MIN_UNIT_FLUX = 25;
 	/** Archons try to maintain this ratio of max flux on other units. */
-	public static final double MIN_UNIT_FLUX_RATIO = 0.75;
+	public static final double MIN_UNIT_FLUX_RATIO = 0.25;
 	/** Units below this amount of flux will not execute their run method. */
-	public static final double POWER_DOWN_FLUX = 1;
+	public static final double POWER_DOWN_FLUX = 0.4;
 	
 	/** The frequency with which units broadcast information. */
 	public static final int ARCHON_BROADCAST_FREQUENCY = 4;
