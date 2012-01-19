@@ -229,6 +229,7 @@ public class ArchonRobotJV extends BaseRobot {
 			if (!sws.ownsWire() && sws.getNumScoutsOnWire() < 6) {
 				sws.broadcastWireRequest();
 			} else {
+				System.out.println("y");
 				sws.setWireStartLoc(curLoc);
 				sws.setWireEndLoc(myHome);
 				sws.broadcastWireConfirm();
