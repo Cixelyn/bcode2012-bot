@@ -100,35 +100,52 @@ public abstract class BaseRobot {
 	public void loop() {
 		while(true) {
 			
+			// Note: We use try-catch judiciously to isolate system failures
+			// For instance, if message receiving gets dicked, we still want
+			// to be able to execute normal moves. Similarly, if the extra
+			// bytecode engine fails, we want to still make it to yield
+			
 			// Begin New Turn
 			resetClock();
 			updateRoundVariables();
 			
-			
+
+			// Message Receive Loop
 			try {
 				if(justRevived)
 					io.flushAllMessages();
 				else
 					io.receive();
-
-				// Main Run Call
+			} catch (Exception e) {
+				e.printStackTrace(); rc.addMatchObservation(e.toString()); }
+			
+			
+			// Main Run Call
+			try {
 				run();
+			} catch (Exception e) {
+				e.printStackTrace(); rc.addMatchObservation(e.toString());
+			}
 
-				// Call Movement State Machine
+			// Call Movement State Machine
+			try {
 				msm.step();
+			} catch (Exception e) {
+				e.printStackTrace(); rc.addMatchObservation(e.toString());
+			}
 
-				// Check if we've already run out of bytecodes
-				if(checkClock()) {
-					rc.yield();
-					continue;
-				}
+			// Check if we've already run out of bytecodes
+			if(checkClock()) {
+				rc.yield();
+				continue;
+			}
 				
-				// Use excess bytecodes
+			// Use excess bytecodes
+			try {
 				if(Clock.getRoundNum()==executeStartTime && Clock.getBytecodesLeft()>1000)
 					useExtraBytecodes();
 			} catch (Exception e) {
-				e.printStackTrace();
-				rc.addMatchObservation(e.toString());
+				e.printStackTrace(); rc.addMatchObservation(e.toString());
 			}
 		
 			// End of Turn
