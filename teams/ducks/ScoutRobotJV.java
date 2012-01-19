@@ -16,7 +16,7 @@ public class ScoutRobotJV extends BaseRobot {
 	 * Constants used by the Scout.
 	 */
 	private static class ScoutConstants {
-		public static final double MIN_WIRE_FLUX = 5.0;
+		public static final double MIN_WIRE_FLUX = 10.0;
 	}
 	
 	/**

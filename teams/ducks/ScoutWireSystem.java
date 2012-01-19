@@ -28,6 +28,7 @@ public class ScoutWireSystem {
 	 */
 	private class ScoutWireSystemConstants {
 		public static final int MAX_SCOUTS_PER_WIRE = 10;
+		public static final int MAX_WIRE_ID = 255;
 	}
 	
 	//----------------- COMMON FIELDS ---------------------
@@ -82,6 +83,7 @@ public class ScoutWireSystem {
 		startLoc = br.myHome;
 		endLoc = br.myHome;
 		archonID = -1;
+		lastConfirmID = 0;
 	}
 	
 	/**
@@ -220,12 +222,16 @@ public class ScoutWireSystem {
 	 * @param wireConfirm The wire confirm to process and rebroadcast
 	 */
 	public void rebroadcastWireConfirm(int[] wireConfirm) {
-		// make sure a Scout is calling this
-		if (br.myType != RobotType.SCOUT) {
+		// make sure a Scout is calling this and was requesting a wire
+		if (br.myType != RobotType.SCOUT || archonID == -1) {
 			return;
 		}
 		// ignore the message if I've already received it in the past
 		if (wireConfirm[5] <= lastConfirmID) {
+			return;
+		}
+		// ignore the message if I did not request this wire
+		if (archonID != wireConfirm[0]) {
 			return;
 		}
 		// set last confirm ID
@@ -288,16 +294,16 @@ public class ScoutWireSystem {
 	public void broadcastAbortWire() {
 		// make sure a Scout is calling this and that he is already on a wire
 		// or an Archon is calling this and he owns a wire
-		if ((br.myType != RobotType.SCOUT &&
-				br.myType != RobotType.ARCHON) ||
+		if (br.myType != RobotType.SCOUT &&
+				br.myType != RobotType.ARCHON ||
 				archonID == -1) {
 			return;
 		}
-		// reset
-		reset();
 		// send abort
 		br.io.sendShort(
 				BroadcastChannel.ALL, BroadcastType.WIRE_ABORT, archonID);
+		// reset
+		reset();
 	}
 	
 	/**
@@ -307,7 +313,7 @@ public class ScoutWireSystem {
 	public void processAbortWire(int msgArchonID) {
 		// make sure a Scout is calling this and that he is already on a wire
 		// or an Archon is calling this and he owns a wire
-		if (br.myType != RobotType.SCOUT ||
+		if (br.myType != RobotType.SCOUT &&
 				br.myType != RobotType.ARCHON ||
 				archonID == -1) {
 			return;
