@@ -26,6 +26,9 @@ public class RadarSystem {
 	public int numAllyRobots;
 	public int numAllyDamaged;
 	public final RobotInfo[] adjacentAllies = new RobotInfo[MAX_ADJACENT];
+	public int alliesOnLeft;
+	public int alliesOnRight;
+	public int alliesInFront;
 
 	public final RobotInfo[] enemyInfos = new RobotInfo[MAX_ROBOTS];
 	public final int[] enemyTimes = new int[MAX_ROBOTS];
@@ -102,6 +105,9 @@ public class RadarSystem {
 		numAdjacentAllies = 0;
 		numAllyRobots = 0;
 		numAllyDamaged = 0;
+		alliesOnLeft = 0;
+		alliesOnRight = 0;
+		alliesInFront = 0;
 	}
 
 	private void addEnemy(RobotInfo rinfo) throws GameActionException {
@@ -166,6 +172,15 @@ public class RadarSystem {
 		if (rinfo.location.isAdjacentTo(br.curLoc)) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
+		
+		int ddir = (br.curLoc.directionTo(rinfo.location).ordinal()-
+				br.curDir.ordinal()+8) % 8;
+		if(ddir >= 5)
+			alliesOnLeft++;
+		else if(ddir >= 1 && ddir <= 3)
+			alliesOnRight++;
+		if(ddir <= 1 || ddir == 7)
+			alliesInFront++;
 	}
 
 	/**

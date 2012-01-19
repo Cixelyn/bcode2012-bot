@@ -14,7 +14,6 @@ public class NavigationSystem {
 	private MapLocation destination;
 	private int movesOnSameTarget;
 	private int expectedMovesToReachTarget;
-	private final static int[] wiggleDirectionOrder = new int[] {0, 1, -1, 2, -2};
 	public NavigationSystem(BaseRobot baseRobot) {
 		this.baseRobot = baseRobot;
 		mapCache = baseRobot.mc;
@@ -131,16 +130,37 @@ public class NavigationSystem {
 	 * hemicircle of the given direction is movable.
 	 */
 	public Direction wiggleToMovableDirection(Direction dir) {
-		if(dir==null) 
+		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI) 
 			return null;
-		boolean[] movable = baseRobot.dc.getMovableDirections();
-		int multiplier = ((int)(Math.random()*2))*2-1; // 1 or -1 with equal probability
-		int ord = dir.ordinal();
-		for(int ddir : wiggleDirectionOrder) {
-			int index = (ord+multiplier*ddir+8) % 8;
-			if(movable[index]) {
-				return Constants.directions[index];
-			}	
+		if(baseRobot.rc.canMove(dir)) 
+			return dir;
+		Direction d1, d2;
+		if(Math.random()<0.5) {
+			d1 = dir.rotateLeft();
+			if(baseRobot.rc.canMove(d1))
+				return d1;
+			d2 = dir.rotateRight();
+			if(baseRobot.rc.canMove(d2))
+				return d2;
+			d1 = d1.rotateLeft();
+			if(baseRobot.rc.canMove(d1))
+				return d1;
+			d2 = d2.rotateRight();
+			if(baseRobot.rc.canMove(d2))
+				return d2;
+		} else {
+			d2 = dir.rotateRight();
+			if(baseRobot.rc.canMove(d2))
+				return d2;
+			d1 = dir.rotateLeft();
+			if(baseRobot.rc.canMove(d1))
+				return d1;
+			d2 = d2.rotateRight();
+			if(baseRobot.rc.canMove(d2))
+				return d2;
+			d1 = d1.rotateLeft();
+			if(baseRobot.rc.canMove(d1))
+				return d1;
 		}
 		return null;
 	}
@@ -180,12 +200,14 @@ public class NavigationSystem {
 	/** Goes in a completely random direction, with no bias towards the 
 	 * destination. May be useful for getting unstuck.
 	 * This method only considers walls as blocked movement, not units so it
-	 * may return a direction that moves towards another robot. <br>
-	 * Returns Direction.NONE if it gets unlucky.
+	 * may return a direction that moves towards another robot.
 	 */
 	public Direction navigateCompletelyRandomly() {
-		for(int tries=0; tries<32; tries++) {
-			Direction dir = getRandomDirection();
+		int rand = (int)(Math.random()*16);
+		int a = rand/2;
+		int b = rand%2*2+3;
+		for(int i=0; i<8; i++) {
+			Direction dir = Constants.directions[(a+i*b)%8];
 			if(!mapCache.isWall(baseRobot.curLoc.add(dir)))
 				return dir;
 		}
@@ -235,7 +257,7 @@ public class NavigationSystem {
 	}
 	
 	/** Returns a direction at random from the eight standard directions. */
-	private static Direction getRandomDirection() {
+	public static Direction getRandomDirection() {
 		return Constants.directions[(int)(Math.random()*8)];
 	}
 }

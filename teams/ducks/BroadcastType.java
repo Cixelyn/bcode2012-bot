@@ -22,8 +22,18 @@ public enum BroadcastType {
 	
 	// swarm code
 	ANNOUNCE_ENEMY,
-//	(temporary)
+	// (temporary)
 	SWARM_DETAILS,
+	
+	
+	// ushorts(15-bit), [seek_or_swarm, target_loc.x, target_loc.y, sender_loc.x, sender_loc.y]
+	SWARM_TARGET,
+	
+	
+	
+	
+	
+	
 	
 	
 //	ending semicolon
