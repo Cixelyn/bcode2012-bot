@@ -176,7 +176,7 @@ public class BroadcastSystem {
 	
 	/**
 	 * Send a variable-sized array of unsigned 15-bit integers.
-	 * Make sure each element in the array is LESS THAN 32000,
+	 * Make sure each element in the array is LESS THAN 32768,
 	 * otherwise deserialization will fail
 	 * @param chan - broadcast channel
 	 * @param msgType - message type

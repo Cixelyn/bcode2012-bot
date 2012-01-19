@@ -229,17 +229,11 @@ public class ArchonRobotJV extends BaseRobot {
 			if (!sws.ownsWire() && sws.getNumScoutsOnWire() < 6) {
 				sws.broadcastWireRequest();
 			} else {
-				sws.setWireStartLoc(curLoc);
+				sws.setWireStartLoc(myHome.add(myHome.directionTo(
+						mc.guessEnemyPowerCoreLocation()), 25).add(
+						Direction.values()[(curRound / 20) % 8], 10));
 				sws.setWireEndLoc(myHome);
 				sws.broadcastWireConfirm();
-				micro.setNormalMode();
-				if (mc.getEnemyPowerCoreLocation() == null) {
-					nav.setNavigationMode(NavigationMode.GREEDY);
-					micro.setObjective(mc.guessEnemyPowerCoreLocation());
-				} else {
-					nav.setNavigationMode(NavigationMode.RANDOM);
-				}
-				micro.attackMove();
 			}
 		}
 		// distribute flux

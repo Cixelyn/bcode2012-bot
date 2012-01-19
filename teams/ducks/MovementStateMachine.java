@@ -7,13 +7,13 @@ import battlecode.common.RobotLevel;
 
 public class MovementStateMachine {
 	private static final int TURNS_STUCK_UNTIL_ROBOT_STARTS_MOVING_RANDOMLY = 16;
-	MovementState curState;
-	final BaseRobot br;
-	final RobotController rc;
-	final NavigationSystem nav;
-	MoveInfo nextMove;
-	int turnsStuck;
-	Direction dirToSense;
+	private MovementState curState;
+	private final BaseRobot br;
+	private final RobotController rc;
+	private final NavigationSystem nav;
+	private MoveInfo nextMove;
+	private int turnsStuck;
+	private Direction dirToSense;
 	public MovementStateMachine(BaseRobot br) {
 		this.br = br;
 		this.rc = br.rc;
@@ -25,7 +25,7 @@ public class MovementStateMachine {
 		curState = execute();
 	}
 	private MovementState execute() throws GameActionException {
-		rc.setIndicatorString(2, curState+"");
+		rc.setIndicatorString(2, nextMove+", movement_state="+curState);
 		switch(curState) {
 		case ABOUT_TO_SPAWN:
 			boolean spawningAir = nextMove.robotType.isAirborne();
@@ -44,7 +44,6 @@ public class MovementStateMachine {
 			// fall through, no break
 		case IDLE:
 			nextMove = br.computeNextMove();
-			rc.setIndicatorString(1, ""+nextMove);
 			if(nextMove==null || nextMove.dir==null || 
 					nextMove.dir==Direction.NONE || nextMove.dir==Direction.OMNI) {
 				nav.prepare();
