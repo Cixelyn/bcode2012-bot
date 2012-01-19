@@ -40,6 +40,7 @@ public abstract class BaseRobot {
 	public MapLocation curLoc, curLocInFront, curLocInBack;
 	public Direction curDir;
 	public int curRound;
+	public boolean justRevived;
 	
 	// TODO(jven): temporary?      
 	// hmao: yea get rid of this shit, dont use it anymore
@@ -103,9 +104,9 @@ public abstract class BaseRobot {
 			resetClock();
 			updateRoundVariables();
 			
+			
 			try {
-				// Main Radio Receive Call
-				if(lastResetTime < executeStartTime - 10)
+				if(justRevived)
 					io.flushAllMessages();
 				else
 					io.receive();
@@ -145,6 +146,8 @@ public abstract class BaseRobot {
 		curDir = rc.getDirection();
 		curLocInFront = curLoc.add(curDir);
 		curLocInBack = curLoc.add(curDir.opposite());
+
+		justRevived = (lastResetTime < executeStartTime - 10);
 	}
 	
 	/**
