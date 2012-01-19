@@ -337,6 +337,14 @@ public class BroadcastSystem {
 			msgContainer = new StringBuilder();
 		}
 	}
+
+	/**
+	 * Completely dumps your whole message queue
+	 */
+	public void flushAllMessages() {
+		br.rc.getAllMessages();
+	}
+	
 	
 	
 	private static int hashMessage(StringBuilder msg) {
