@@ -16,7 +16,7 @@ public class ScoutRobotJV extends BaseRobot {
 	 * Constants used by the Scout.
 	 */
 	private static class ScoutConstants {
-		public static final double MIN_WIRE_FLUX = 10.0;
+		public static final double MIN_WIRE_FLUX = 15.0;
 	}
 	
 	/**
@@ -158,5 +158,9 @@ public class ScoutRobotJV extends BaseRobot {
 			micro.setObjective(myHome);
 			micro.attackMove();
 		}
+		// share exploration information
+		ses.broadcastMapEdges();
+		ses.broadcastMapFragment();
+		ses.broadcastPowerNodeFragment();
 	}
 }
