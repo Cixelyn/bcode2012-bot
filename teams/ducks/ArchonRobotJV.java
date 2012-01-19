@@ -128,6 +128,9 @@ public class ArchonRobotJV extends BaseRobot {
 			case WIRE_ACCEPT:
 				sws.processWireAccept(BroadcastSystem.decodeUShorts(sb));
 				break;
+			case WIRE_ABORT:
+				sws.processAbortWire(BroadcastSystem.decodeShort(sb));
+				break;
 			default:
 				this.processMessage(msgType, sb);
 				break;

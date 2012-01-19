@@ -15,6 +15,7 @@ public enum BroadcastType {
 	WIRE_REQUEST,
 	WIRE_ACCEPT,
 	WIRE_CONFIRM,
+	WIRE_ABORT,
 
 	// rally code
 	RALLY,
