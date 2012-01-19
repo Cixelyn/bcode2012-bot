@@ -1,8 +1,5 @@
 package ducks;
 
-import java.util.HashSet;
-
-import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
@@ -29,7 +26,7 @@ public class MapCacheSystem {
 	/** True if we have sensed the tile or been told by another robot about the tile. */
 	final boolean[][] sensed;
 	final int[][] packedSensed;
-	final HashSet<Integer> packedDataUpdated;
+	final FastUShortSet packedDataUpdated;
 	/** Stores the IDs of power nodes the robot has discovered. */
 	final short[][] powerNodeID;
 	final PowerNodeGraph powerNodeGraph;
@@ -48,7 +45,7 @@ public class MapCacheSystem {
 		sensed = new boolean[MAP_SIZE][MAP_SIZE];
 		packedIsWall = new int[PACKED_MAP_SIZE][PACKED_MAP_SIZE];
 		packedSensed = new int[PACKED_MAP_SIZE][PACKED_MAP_SIZE];
-		packedDataUpdated = new HashSet<Integer>();
+		packedDataUpdated = new FastUShortSet();
 		initPackedDataStructures();
 		powerNodeID = new short[MAP_SIZE][MAP_SIZE];
 		MapLocation loc = baseRobot.rc.sensePowerCore().getLocation();
@@ -283,7 +280,7 @@ public class MapCacheSystem {
 	 */
 	public boolean extractUpdatedPackedDataStep() {
 		if(packedDataUpdated.isEmpty()) return true;
-		int block = packedDataUpdated.iterator().next();
+		int block = packedDataUpdated.pop();
 		int xblock = block / 64;
 		int yblock = block % 64;
 		int isWallData = packedIsWall[xblock][yblock];
@@ -294,7 +291,6 @@ public class MapCacheSystem {
 			isWall[x][y] = ((isWallData & (1<<bit)) != 0);
 			sensed[x][y] = ((sensedData & (1<<bit)) != 0);
 		}
-		packedDataUpdated.remove(block);
 		return false;
 	}
 	

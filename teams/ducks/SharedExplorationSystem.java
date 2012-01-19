@@ -48,7 +48,7 @@ public class SharedExplorationSystem {
 		}
 		int xb = startCol + (Clock.getRoundNum()/6 % numColBlocks);
 		
-		int[] buffer = new int[32];
+		int[] buffer = new int[256];
 		int c=0;
 		for(int yb=startRow; yb<startRow+numRowBlocks; yb++) {
 			int data = baseRobot.mc.packedSensed[xb][yb];

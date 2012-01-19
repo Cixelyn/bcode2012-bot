@@ -46,6 +46,7 @@ public abstract class BaseRobot {
 	public Direction directionToSenseIn;
 	
 	// Internal Statistics
+	private int lastResetTime = 50;
 	private int executeStartTime;
 	private int executeStartByte;
 	
@@ -65,8 +66,6 @@ public abstract class BaseRobot {
 		
 		if(myType==RobotType.ARCHON) {
 			Direction dir = curLoc.directionTo(myHome).opposite();
-			System.out.println(dir);
-			rc.setIndicatorString(0, dir+"");
 			if(rc.canMove(dir)) {
 				if(curDir==dir) rc.moveForward();
 				else if(curDir==dir.opposite()) rc.moveBackward();
@@ -97,7 +96,6 @@ public abstract class BaseRobot {
 	
 	public abstract void run() throws GameActionException;
 	
-	int lastcalled = -1;
 	public void loop() {
 		while(true) {
 			
@@ -123,19 +121,17 @@ public abstract class BaseRobot {
 			
 			// Call Movement State Machine
 			try {
-				int called = Clock.getRoundNum();
-				if(called==lastcalled) throw new RuntimeException("GET GD");
-				lastcalled = called;
 				msm.step();
 			} catch (Exception e) {
 				e.printStackTrace();
 				rc.addMatchObservation(e.toString());
 			}
 			
+			// Check if we've already run out of bytecodes
 			if(stopClock()) {
-				rc.yield();
 				System.out.println("We went over bytecodes before calling useExtraBytecodes().");
-	            continue;
+	            rc.yield();
+				continue;
 			}
 			
 			// Use excess bytecodes
@@ -204,7 +200,10 @@ public abstract class BaseRobot {
 	 * @return whether anything was done in this call
 	 */
 	public void useExtraBytecodes() {
-		if(Clock.getBytecodesLeft()>1000) io.sendAll();
-		if(Clock.getBytecodesLeft()>1200) fbs.manageFlux();
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1200) 
+			io.sendAll();
+		
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>4200)
+			fbs.manageFlux();
 	}
 }
