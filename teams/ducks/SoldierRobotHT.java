@@ -9,6 +9,10 @@ import battlecode.common.RobotLevel;
 
 public class SoldierRobotHT extends BaseRobot {
 	private enum BehaviorState {
+		/** Want to hibernating, need to find a non-blocking place to do it. */
+		LOOKING_TO_HIBERNATE,
+		/** Hibernate until someone wakes it up. */
+		HIBERNATE,
 		/** No enemies to deal with. */
 		SWARM,
 		/** Run away from enemy forces. */
@@ -23,10 +27,11 @@ public class SoldierRobotHT extends BaseRobot {
 	int lockAcquiredRound;
 	MapLocation target;
 	MapLocation previousBugTarget;
-	boolean swarming;
+	boolean senderSwarming;
 	int closestSenderDist;
 	MapLocation archonTarget;
 	BehaviorState behavior;
+	MapLocation hibernateTarget;
 	
 	public SoldierRobotHT(RobotController myRC) throws GameActionException {
 		super(myRC);
@@ -40,7 +45,7 @@ public class SoldierRobotHT extends BaseRobot {
 		});
 		fbs.setBattleMode();
 		behavior = BehaviorState.SWARM;
-		swarming = true;
+		senderSwarming = true;
 	}
 
 	@Override
@@ -56,7 +61,7 @@ public class SoldierRobotHT extends BaseRobot {
 		} else if(behavior != BehaviorState.TARGET_LOCKED || 
 				curRound > lockAcquiredRound + 12) {
 			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if(behavior==BehaviorState.LOST && distToClosestArchon>36 || 
+			if(behavior==BehaviorState.LOST && distToClosestArchon>25 || 
 					distToClosestArchon>64) {
 				// Really far from all allied archons, move to closest one
 				behavior = BehaviorState.LOST;
@@ -67,18 +72,34 @@ public class SoldierRobotHT extends BaseRobot {
 					nav.setDestination(target);
 				previousBugTarget = target;
 			} else {	
-				if(closestSenderDist == Integer.MAX_VALUE) { 
+				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && senderSwarming && 
+						archonTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
+					// Hibernate once we're no longer adjacent to any allies
+					if(radar.numAdjacentAllies==0) 
+						behavior = BehaviorState.HIBERNATE;
+				} else if(closestSenderDist == Integer.MAX_VALUE) { 
 					// We did not receive any targeting broadcasts from our archons
 					behavior = BehaviorState.SWARM;
 					target = dc.getClosestArchon();
 				} else {
 					// Follow target of closest archon's broadcast
-					behavior = swarming ? BehaviorState.SWARM : BehaviorState.SEEK;
+					behavior = senderSwarming ? BehaviorState.SWARM : BehaviorState.SEEK;
 					target = archonTarget;
 				}
+				
+				if(behavior == BehaviorState.SWARM && 
+						closestSenderDist <= 10 && 
+						curLoc.distanceSquaredTo(target) <= 10) { 
+					// Close enough to swarm target, look for a place to hibernate
+					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
+					hibernateTarget = target;
+				} 
+				nav.setNavigationMode(NavigationMode.GREEDY);
 				nav.setDestination(target);
 				previousBugTarget = null;
 			}
+			
+			
 		}
 		
 		if(!rc.isAttackActive() && closestEnemy != null && 
@@ -89,8 +110,15 @@ public class SoldierRobotHT extends BaseRobot {
 		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
 		rc.setIndicatorString(1, "behavior_state="+behavior);
 		
-		
 		closestSenderDist = Integer.MAX_VALUE;
+		senderSwarming = true;
+		
+		if(behavior == BehaviorState.HIBERNATE) {
+			HibernationSystem hsys = new HibernationSystem(this);
+			hsys.run();
+		}
+		
+			
 	}
 	
 	@Override
@@ -101,11 +129,11 @@ public class SoldierRobotHT extends BaseRobot {
 			MapLocation senderLoc = new MapLocation(shorts[3], shorts[4]);
 			int dist = curLoc.distanceSquaredTo(senderLoc);
 			boolean wantToSwarm = shorts[0]==0;
-			if(swarming&&!wantToSwarm || 
-					(swarming==wantToSwarm)&&dist<closestSenderDist) {
+			if(senderSwarming&&!wantToSwarm || 
+					(senderSwarming==wantToSwarm)&&dist<closestSenderDist) {
 				closestSenderDist = dist;
 				archonTarget = new MapLocation(shorts[1], shorts[2]);
-				swarming = wantToSwarm;
+				senderSwarming = wantToSwarm;
 			}
 			break;
 		default:
@@ -116,12 +144,15 @@ public class SoldierRobotHT extends BaseRobot {
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux()<1) return null;
+		if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
+			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
+		}
 		int enemiesInFront = radar.numEnemyDisruptors + radar.numEnemySoldiers 
 				+ radar.numEnemyScorchers * 2;
 		int tooClose = behavior==BehaviorState.TARGET_LOCKED ? 
-				(radar.numAllyRobots > enemiesInFront ? -1 : 2) : 1;
+				(radar.numAllyRobots >= enemiesInFront ? -1 : 2) : 1;
 		int tooFar = behavior==BehaviorState.TARGET_LOCKED ? 
-				(radar.numAllyRobots > enemiesInFront ? 4 : 14) : 14;
+				(radar.numAllyRobots >= enemiesInFront ? 4 : 14) : 11;
 		
 		if(curLoc.equals(target) && 
 				rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)!=null) {
