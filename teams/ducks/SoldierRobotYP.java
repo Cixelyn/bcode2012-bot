@@ -51,6 +51,7 @@ public class SoldierRobotYP extends BaseRobot {
 	private MapLocation swarmLoc;
 	private Direction swarmDir;
 	private int swarmUpdateRounds;
+	private int closestmsg;
 	
 	MapLocation movetarget;
 	Direction movedirection;
@@ -83,6 +84,7 @@ public class SoldierRobotYP extends BaseRobot {
 			break;
 		}
 		
+		closestmsg = 999;
 		
 		fbs.manageFlux();
 	}
@@ -100,6 +102,26 @@ public class SoldierRobotYP extends BaseRobot {
 		case RETREAT:
 			retreat();
 			break;
+		}
+	}
+	
+	@Override
+	public void processMessage(BroadcastType msgType, StringBuilder sb)
+			throws GameActionException {
+		switch (msgType)
+		{
+		case SWARM_DETAILS:
+		{
+			int[] msg = BroadcastSystem.decodeUShorts(sb);
+			MapLocation loc = new MapLocation(msg[1], msg[2]);
+			int dist = loc.distanceSquaredTo(curLoc);
+			if (dist < closestmsg)
+			{
+				swarmLoc = loc;
+				swarmDir = Constants.directions[msg[0]];
+				swarmUpdateRounds = 0;
+			}
+		} break;
 		}
 	}
 	
