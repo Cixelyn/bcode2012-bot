@@ -26,7 +26,7 @@ public enum BroadcastType {
 	SWARM_DETAILS,
 	
 	
-	// ushorts(15-bit), [army_potential_difference, target_loc.x, target_loc.y, sender_loc.x, sender_loc.y]
+	// ushorts(15-bit), [seek_or_swarm, target_loc.x, target_loc.y, sender_loc.x, sender_loc.y]
 	SWARM_TARGET,
 	
 	
