@@ -19,6 +19,8 @@ public class ArchonRobotHT extends BaseRobot{
 		CAP;
 	}
 	private enum BehaviorState {
+		/** No enemies around, already at target. */
+		WAITING,
 		/** No enemies to deal with. */
 		SWARM,
 		/** Run away from enemy forces. */
