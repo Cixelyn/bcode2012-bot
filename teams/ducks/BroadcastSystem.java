@@ -25,7 +25,7 @@ public class BroadcastSystem {
 	StringBuilder msgContainer;
 	
 
-	public BroadcastSystem() {
+	private BroadcastSystem() {
 		System.out.println("WARNING: RADIO NOT BOUND TO BASEROBOT");
 		msgContainer = new StringBuilder();
 	}
@@ -135,8 +135,8 @@ public class BroadcastSystem {
 	 * eg: #xy, where the address to send it to is ^x and the
 	 * type of the message is y.
 	 */
-	public void sendShort(BroadcastChannel chan, BroadcastType mtype, int data) {
-		sendShort(chan.chanHeader + mtype.header, data);
+	public void sendShort(BroadcastChannel bChan, BroadcastType bType, int data) {
+		sendShort(bChan.chanHeader + bType.header, data);
 	}
 	private void sendShort(String header, int data) {
 		msgContainer.append(header);
@@ -148,16 +148,16 @@ public class BroadcastSystem {
 	 * @param message data stream
 	 * @return short value
 	 */
-	public static int decodeShort(StringBuilder s) {
-		return s.charAt(0) - 0x100;
+	public static int decodeShort(StringBuilder msg) {
+		return msg.charAt(0) - 0x100;
 	}
 	
 
 	/**
 	 * Sends a single map location to a unit
 	 */
-	public void sendMapLoc(BroadcastChannel chan, BroadcastType msgType, MapLocation loc) {
-		sendMapLoc(chan.chanHeader + msgType.header, loc);
+	public void sendMapLoc(BroadcastChannel bChan, BroadcastType bType, MapLocation loc) {
+		sendMapLoc(bChan.chanHeader + bType.header, loc);
 	}
 	
 	private void sendMapLoc(String header, MapLocation loc) {
@@ -166,10 +166,10 @@ public class BroadcastSystem {
 		msgContainer.append((char) (loc.y + 0x100));
 	}
 	
-	public static MapLocation decodeMapLoc(StringBuilder s) {
+	public static MapLocation decodeMapLoc(StringBuilder msg) {
 		return new MapLocation(
-			s.charAt(0) - 0x100,
-			s.charAt(1) - 0x100
+			msg.charAt(0) - 0x100,
+			msg.charAt(1) - 0x100
 		);
 	}
 	
@@ -178,13 +178,13 @@ public class BroadcastSystem {
 	 * Send a variable-sized array of unsigned 15-bit integers.
 	 * Make sure each element in the array is LESS THAN 32768,
 	 * otherwise deserialization will fail
-	 * @param chan - broadcast channel
-	 * @param msgType - message type
+	 * @param bChan - broadcast channel
+	 * @param bType - message type
 	 * @param ints - array of 15-bit ints
 	 * @see BroadcastSystem#sendShort(String, int)
 	 */
-	public void sendUShorts(BroadcastChannel chan, BroadcastType msgType, int[] ints) {
-		sendUShort(chan.chanHeader + msgType.header, ints);
+	public void sendUShorts(BroadcastChannel bChan, BroadcastType bType, int[] ints) {
+		sendUShort(bChan.chanHeader + bType.header, ints);
 	}
 	private void sendUShort(String header, int[] ints) {
 		msgContainer.append(header);
@@ -217,14 +217,14 @@ public class BroadcastSystem {
 	 * <br/>
 	 * If your number is only 15-bits long, consider sending
 	 * a short instead, as it's much cheaper
-	 * @param chan - channel to braodcast
-	 * @param msgType - type of message
+	 * @param bChan - channel to braodcast
+	 * @param bType - type of message
 	 * @param ints - array of 31-bit ints
 	 * @see BroadcastSystem#sendUShort(String, int[])
 	 */
 	
-	public void sendUInts(BroadcastChannel chan, BroadcastType msgType, int[] ints) {
-		sendUInts(chan.chanHeader + msgType.header, ints);
+	public void sendUInts(BroadcastChannel bChan, BroadcastType bType, int[] ints) {
+		sendUInts(bChan.chanHeader + bType.header, ints);
 	}
 	
 	private void sendUInts(String header, int[] ints) {
@@ -263,11 +263,17 @@ public class BroadcastSystem {
 
 	/**
 	 * Queue a list of MapLocations
-	 * @param header
-	 * @param locs
+	 * @param bChan - channel to use
+	 * @param bType - type of message
+	 * @param locs - Locations to send
 	 * @see BroadcastSystem#sendShort(String, int) sendInt
 	 */
-	public void sendMapLocs(String header, MapLocation[] locs) {
+	public void sendMapLocs(BroadcastChannel bChan, BroadcastType bType, MapLocation[] locs) {
+		sendMapLocs(bChan.chanHeader + bType.header, locs);
+	}
+	
+	
+	private void sendMapLocs(String header, MapLocation[] locs) {
 		msgContainer.append(header);
 		
 		for (MapLocation l : locs) {
