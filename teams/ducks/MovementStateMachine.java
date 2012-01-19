@@ -23,9 +23,9 @@ public class MovementStateMachine {
 
 	public void step() throws GameActionException {
 		curState = execute();
+		rc.setIndicatorString(2, nextMove+", movement_state="+curState);
 	}
 	private MovementState execute() throws GameActionException {
-		rc.setIndicatorString(2, nextMove+", movement_state="+curState);
 		switch(curState) {
 		case ABOUT_TO_SPAWN:
 			boolean spawningAir = nextMove.robotType.isAirborne();
@@ -38,7 +38,6 @@ public class MovementStateMachine {
 			// fall through, no break
 		case COOLDOWN:
 			if(rc.isMovementActive()) {
-				nav.prepare();
 				return MovementState.COOLDOWN;
 			}
 			// fall through, no break
@@ -46,7 +45,6 @@ public class MovementStateMachine {
 			nextMove = br.computeNextMove();
 			if(nextMove==null || nextMove.dir==null || 
 					nextMove.dir==Direction.NONE || nextMove.dir==Direction.OMNI) {
-				nav.prepare();
 				return MovementState.IDLE;
 			}
 			if(nextMove.robotType!=null) {
@@ -60,7 +58,6 @@ public class MovementStateMachine {
 			}
 			if(nextMove.moveForward) {
 				Direction dir = nav.wiggleToMovableDirection(nextMove.dir);
-				
 				if(dir==null) {
 					turnsStuck = 0;
 					return MovementState.ABOUT_TO_MOVE;

@@ -15,15 +15,17 @@ public class SoldierRobotHT extends BaseRobot {
 		RETREAT, 
 		/** Fight the enemy forces. Micro. */
 		SEEK, 
+		/** Far from target. Use bug to navigate. */
+		LOST,
 		/** Track enemy's last position and keep following them. */
 		TARGET_LOCKED;
 	}
 	int lockAcquiredRound;
 	int closestSenderDist;
 	MapLocation target;
-	MapLocation previousTarget;
-	int potential;
-	MapLocation swarmTarget;
+	MapLocation previousBugTarget;
+	boolean swarming;
+	MapLocation archonTarget;
 	BehaviorState behavior;
 	
 	public SoldierRobotHT(RobotController myRC) throws GameActionException {
@@ -38,6 +40,7 @@ public class SoldierRobotHT extends BaseRobot {
 		});
 		fbs.setBattleMode();
 		behavior = BehaviorState.SWARM;
+		swarming = true;
 	}
 
 	@Override
@@ -52,27 +55,31 @@ public class SoldierRobotHT extends BaseRobot {
 			lockAcquiredRound = curRound;
 		} else if(behavior != BehaviorState.TARGET_LOCKED || 
 				curRound > lockAcquiredRound + 12) {
-			if(closestSenderDist == Integer.MAX_VALUE) { 
-				// We did not receive any targeting broadcasts from our archons
-				behavior = BehaviorState.SWARM;
+			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+			if(behavior==BehaviorState.LOST && distToClosestArchon>36 || 
+					distToClosestArchon>64) {
+				// Really far from all allied archons, move to closest one
+				behavior = BehaviorState.LOST;
+				nav.setNavigationMode(NavigationMode.BUG);
 				target = dc.getClosestArchon();
-				
-			} else {
-				// Follow target of closest archon's broadcast
-				behavior = BehaviorState.SEEK;
-				target = swarmTarget;
+				if(previousBugTarget==null || 
+						target.distanceSquaredTo(previousBugTarget)>25)
+					nav.setDestination(target);
+				previousBugTarget = target;
+			} else {	
+				if(closestSenderDist == Integer.MAX_VALUE) { 
+					// We did not receive any targeting broadcasts from our archons
+					behavior = BehaviorState.SWARM;
+					target = dc.getClosestArchon();
+				} else {
+					// Follow target of closest archon's broadcast
+					behavior = swarming ? BehaviorState.SWARM : BehaviorState.SEEK;
+					target = archonTarget;
+				}
+				nav.setDestination(target);
+				previousBugTarget = null;
 			}
 		}
-		
-		if(curLoc.distanceSquaredTo(target)>49) {
-			nav.setNavigationMode(NavigationMode.BUG);
-			if(target.distanceSquaredTo(previousTarget)>25)
-				nav.setDestination(target);
-		} else {
-			nav.setNavigationMode(NavigationMode.GREEDY);
-			nav.setDestination(target);
-		}
-		previousTarget = target;
 		
 		if(!rc.isAttackActive() && closestEnemy != null && 
 				rc.canAttackSquare(closestEnemy.location)) {
@@ -93,10 +100,12 @@ public class SoldierRobotHT extends BaseRobot {
 			int[] shorts = BroadcastSystem.decodeUShorts(sb);
 			MapLocation senderLoc = new MapLocation(shorts[3], shorts[4]);
 			int dist = curLoc.distanceSquaredTo(senderLoc);
-			if(dist<closestSenderDist) {
+			boolean wantToSwarm = shorts[0]==0;
+			if(swarming&&!wantToSwarm || 
+					(swarming==wantToSwarm)&&dist<closestSenderDist) {
 				closestSenderDist = dist;
-				swarmTarget = new MapLocation(shorts[1], shorts[2]);
-				potential = shorts[0];
+				archonTarget = new MapLocation(shorts[1], shorts[2]);
+				swarming = wantToSwarm;
 			}
 			break;
 		default:
@@ -107,24 +116,37 @@ public class SoldierRobotHT extends BaseRobot {
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux()<1) return null;
+		int enemiesInFront = radar.numEnemyDisruptors + radar.numEnemySoldiers 
+				+ radar.numEnemyScorchers * 2;
+		int tooClose = behavior==BehaviorState.TARGET_LOCKED ? 
+				(radar.numAllyRobots > enemiesInFront ? -1 : 2) : 1;
+		int tooFar = behavior==BehaviorState.TARGET_LOCKED ? 
+				(radar.numAllyRobots > enemiesInFront ? 4 : 14) : 14;
 		
 		if(curLoc.equals(target) && 
 				rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)!=null) {
-			return new MoveInfo(nav.navigateCompletelyRandomly(), true);
+			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 		}
-		if(curLoc.distanceSquaredTo(target) <= 2) {
-			return new MoveInfo(curLoc.directionTo(target).opposite(), false);
-		} else if(curLoc.distanceSquaredTo(target) > 5) {
+		if(curLoc.distanceSquaredTo(target) <= tooClose) {
+			return new MoveInfo(curLoc.directionTo(target).opposite(), true);
+		} else if(curLoc.distanceSquaredTo(target) >= tooFar) {
 			Direction dir = nav.navigateToDestination();
-			if(dir==null) return null;
-			for(int i=0; i<8; i++) {
-				MapLocation loc = curLoc.add(dir);
-				if(rc.canMove(dir) && !(rc.canSenseSquare(loc) && 
-						rc.senseObjectAtLocation(loc, RobotLevel.POWER_NODE)!=null))
-					break;
-				dir = dir.rotateRight();
+			if(behavior == BehaviorState.SWARM) {
+				if(radar.alliesInFront==0 && Math.random()<0.75) 
+					return null;
+				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+					dir = nav.navigateCompletelyRandomly();
+				if(radar.alliesOnLeft > radar.alliesOnRight && Math.random()<0.3) 
+					dir = dir.rotateRight();
+				else if(radar.alliesOnLeft < radar.alliesOnRight && Math.random()<0.3) 
+					dir = dir.rotateLeft();
 			}
 			return new MoveInfo(dir, false);
+		} else {
+			if(behavior == BehaviorState.SWARM) {
+				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
+			}
 		}
 		
 		
