@@ -230,7 +230,8 @@ public class RadarSystem {
 			if (scanAllies)
 				resetAllyStats();
 
-			for (Robot r : robots) {
+			for (int idx = robots.length; --idx >= 0;) {
+				Robot r = robots[idx];
 				try {
 					if (br.myTeam == r.getTeam()) {
 						if (scanAllies) {
