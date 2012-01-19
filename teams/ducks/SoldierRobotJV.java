@@ -89,7 +89,7 @@ public class SoldierRobotJV extends BaseRobot {
 				objective = BroadcastSystem.decodeMapLoc(sb);
 				break;
 			default:
-				super.processMessage(msgType, sb);
+				break;
 		}
 	}
 	

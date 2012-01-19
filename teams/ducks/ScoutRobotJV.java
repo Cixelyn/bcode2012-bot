@@ -17,6 +17,7 @@ public class ScoutRobotJV extends BaseRobot {
 	 */
 	private static class ScoutConstants {
 		public static final double MIN_WIRE_FLUX = 15.0;
+		public static final int SES_FREQUENCY = 10;
 	}
 	
 	/**
@@ -34,6 +35,9 @@ public class ScoutRobotJV extends BaseRobot {
 	
 	/** Whether the Scout is done initializing. */
 	private boolean initialized;
+	
+	/** Shared exploration frequency. */
+	private int timeUntilBroadcast = ScoutConstants.SES_FREQUENCY;
 
 	public ScoutRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
@@ -90,7 +94,6 @@ public class ScoutRobotJV extends BaseRobot {
 				sws.processAbortWire(BroadcastSystem.decodeShort(sb));
 				break;
 			default:
-				this.processMessage(msgType, sb);
 				break;
 		}
 	}
@@ -155,12 +158,17 @@ public class ScoutRobotJV extends BaseRobot {
 			}
 		} else {
 			// go to home
-			micro.setObjective(myHome);
-			micro.attackMove();
+			if (dc.getAlliedArchons().length >= 1) {
+				micro.setObjective(dc.getAlliedArchons()[0]);
+				micro.attackMove();
+			}
 		}
 		// share exploration information
-		ses.broadcastMapEdges();
-		ses.broadcastMapFragment();
-		ses.broadcastPowerNodeFragment();
+		if (--timeUntilBroadcast <= 0) {
+			ses.broadcastMapEdges();
+			ses.broadcastMapFragment();
+			ses.broadcastPowerNodeFragment();
+			timeUntilBroadcast = ScoutConstants.SES_FREQUENCY;
+		}
 	}
 }
