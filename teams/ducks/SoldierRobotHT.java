@@ -21,10 +21,10 @@ public class SoldierRobotHT extends BaseRobot {
 		TARGET_LOCKED;
 	}
 	int lockAcquiredRound;
-	int closestSenderDist;
 	MapLocation target;
 	MapLocation previousBugTarget;
 	boolean swarming;
+	int closestSenderDist;
 	MapLocation archonTarget;
 	BehaviorState behavior;
 	
