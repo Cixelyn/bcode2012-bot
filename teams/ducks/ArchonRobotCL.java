@@ -27,6 +27,10 @@ public class ArchonRobotCL extends BaseRobot {
 		io.addChannel(BroadcastChannel.ALL);
 		io.addChannel(BroadcastChannel.ARCHONS);
 	}
+	
+	
+	MapLocation target;
+	
 
 	@Override
 	public void run() throws GameActionException {
@@ -41,10 +45,14 @@ public class ArchonRobotCL extends BaseRobot {
 		case DEFEND:
 			radar.scan(false, true);
 			if(radar.closestEnemy != null) {
-				behavior = BehaviorState.RUSH;
+				if(radar.closestEnemyDist < 16) {
+					target = radar.closestEnemy.location;
+					behavior = BehaviorState.RUSH;
+					io.sendMapLoc(BroadcastChannel.ALL, BroadcastType.RALLY, radar.closestEnemy.location);
+				}
 			}
 		case RUSH:
-			fbs.setBatteryMode();
+			fbs.setBattleMode();
 			break;
 		case CAP:
 			break;
@@ -81,6 +89,10 @@ public class ArchonRobotCL extends BaseRobot {
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
+		case RALLY:
+			target = BroadcastSystem.decodeMapLoc(sb);
+			behavior = BehaviorState.RUSH;
+			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 			break;
