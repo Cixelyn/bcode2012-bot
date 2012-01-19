@@ -16,6 +16,7 @@ public class RobotPlayer {
 			case ARCHON:
 				if(owner.equals("haitao")) br = new ArchonRobotHT(myRC);
 				else if(owner.equals("justin"))  br = new ArchonRobotJV(myRC);
+				else if(owner.equals("cory")) br = new ArchonRobotCL(myRC);
 				else if(owner.equals("yp")) 
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
@@ -34,6 +35,7 @@ public class RobotPlayer {
 			case SOLDIER:
 				if(owner.equals("haitao")) br = new SoldierRobotHT(myRC);
 				else if(owner.equals("justin")) br = new SoldierRobotJV(myRC);
+				else if(owner.equals("cory")) br = new SoldierRobotCL(myRC);
 				else if (owner.equals("yp"))
 				{
 					br = new SoldierRobotYP(myRC);
@@ -49,6 +51,7 @@ public class RobotPlayer {
 				break;
 			case SCOUT:
 				if (owner.equals("justin")) br = new ScoutRobotJV(myRC);
+				else if (owner.equals("cory")) br = new ScoutRobotCL(myRC);
 				break;
 			case DISRUPTER:
 				break;
