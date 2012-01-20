@@ -132,7 +132,7 @@ public class ScoutWireSystem {
 		}
 		// send my ID
 		int msgArchonID = br.myID;
-		br.io.sendShort(
+		br.io.sendUShort(
 				BroadcastChannel.SCOUTS, BroadcastType.WIRE_REQUEST, msgArchonID);
 	}
 	
@@ -300,7 +300,7 @@ public class ScoutWireSystem {
 			return;
 		}
 		// send abort
-		br.io.sendShort(
+		br.io.sendUShort(
 				BroadcastChannel.ALL, BroadcastType.WIRE_ABORT, archonID);
 		// reset
 		reset();
