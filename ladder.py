@@ -107,9 +107,9 @@ def run():
     sleep(FREQUENCY_TO_CHECK)
     new_ratings = get_ratings(get_page())
     was_change, changes = get_changes(old_ratings, new_ratings)
-    print changes
-    print get_pretty_ratings(new_ratings)
     if was_change:
+      print changes
+      print get_pretty_ratings(new_ratings)
       output = open(OUTPUT_FILE, 'a')
       output.write(changes)
       output.write(get_pretty_ratings(new_ratings))
