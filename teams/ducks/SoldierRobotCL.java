@@ -7,7 +7,7 @@ public class SoldierRobotCL extends BaseRobot {
 	
 	public static int DISTANCE_UNTIL_LOST = 100;
 	
-	private enum BehaviorState { HIBERNATE, RUSH, SEEK, LOST}
+	private enum BehaviorState { HIBERNATE, DEFEND, SEEK, ASSIST, LOST}
 
 
 	final HibernationSystem hbs;
@@ -20,43 +20,52 @@ public class SoldierRobotCL extends BaseRobot {
 		io.addChannel(BroadcastChannel.ALL);
 		io.addChannel(BroadcastChannel.SOLDIERS);
 		fbs.setBattleMode();
-		behavior = BehaviorState.RUSH;
-		
-		
+		behavior = BehaviorState.DEFEND;
 	}
 	
-	MapLocation rushLoc = curLoc;
 	RobotInfo targetEnemy = null;
+	MapLocation defendLoc = null;
 	
 	@Override
 	public void run() throws GameActionException {
 		rc.setIndicatorString(0,behavior.toString());
 		
-		if(justRevived) behavior = BehaviorState.RUSH;
 		
 		
-		switch(behavior) {
-		case HIBERNATE:
+		radar.scan(false, true);
+		
+		if(justRevived) behavior = BehaviorState.DEFEND;
+		
+	
+		if(behavior == BehaviorState.HIBERNATE) {
 			hbs.run();
-			break;
-		case RUSH:
+		}
+		
+		if(behavior == BehaviorState.DEFEND) {
 			nav.setNavigationMode(NavigationMode.GREEDY);
-			radar.scan(false, true);
-
-			if (dc.getClosestArchon() != null) {
-				if (dc.getClosestArchon().distanceSquaredTo(curLoc) > DISTANCE_UNTIL_LOST) {
-					behavior = BehaviorState.LOST;
+			
+			if (radar.closestEnemy != null) {
+				behavior = BehaviorState.SEEK;
+				targetEnemy = radar.closestEnemy;
+			} else {
+				if (dc.getClosestArchon() != null) {
+					if (dc.getClosestArchon().distanceSquaredTo(curLoc) > DISTANCE_UNTIL_LOST) {
+						behavior = BehaviorState.LOST;
+					}
 				}
+				
+				if (defendLoc == null && curLoc.distanceSquaredTo(myHome) <=8) {
+					behavior = BehaviorState.HIBERNATE;
+				}
+			} 
+		}
+		
+		if(behavior == BehaviorState.SEEK) {
+			
+			if(radar.roundsSinceEnemySighted > 10) {
+				behavior = BehaviorState.DEFEND;
 			}
 			
-			if(radar.closestEnemy == null) break;
-			behavior = BehaviorState.SEEK;
-			targetEnemy = radar.closestEnemy;
-			//intentional fallthrough
-		case SEEK:
-			if(radar.roundsSinceEnemySighted > 10) {
-				behavior = BehaviorState.LOST;
-			}
 			nav.setNavigationMode(NavigationMode.GREEDY);
 			if(rc.canSenseObject((GameObject) targetEnemy.robot)) {
 				targetEnemy = rc.senseRobotInfo(targetEnemy.robot);
@@ -64,23 +73,26 @@ public class SoldierRobotCL extends BaseRobot {
 					rc.attackSquare(targetEnemy.location, targetEnemy.robot.getRobotLevel());
 				}
 			} else {
-				behavior = BehaviorState.RUSH;
+				behavior = BehaviorState.DEFEND;
 			}
-			break;
-		case LOST:
+		}
+		
+		if(behavior == BehaviorState.LOST) {
 			nav.setNavigationMode(NavigationMode.BUG);
-			break;
 		}
 	}
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		switch(behavior) {
-		case RUSH:
-			return new MoveInfo(curLoc.directionTo(rushLoc), false);
+		case DEFEND:
+			if(defendLoc == null) {
+				return new MoveInfo(curLoc.directionTo(myHome), false);
+			} else {
+				return new MoveInfo(curLoc.directionTo(defendLoc), false);
+			}
 		case SEEK:
 			return new MoveInfo(curLoc.directionTo(targetEnemy.location), false);
 		case LOST:
-		default:
 			nav.setDestination(dc.getClosestArchon());
 			Direction dir = nav.navigateToDestination();
 			if(dir == null)
@@ -89,6 +101,8 @@ public class SoldierRobotCL extends BaseRobot {
 				return new MoveInfo(dir);
 			else
 				return new MoveInfo(dir, false);
+		default:
+			return null;
 		}
 		
 	}
@@ -97,9 +111,11 @@ public class SoldierRobotCL extends BaseRobot {
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
 		case RALLY:
-			rushLoc = BroadcastSystem.decodeMapLoc(sb);
-			nav.setDestination(rushLoc);
-			behavior = BehaviorState.RUSH;
+			if(targetEnemy == null) {
+				defendLoc = BroadcastSystem.decodeMapLoc(sb);
+				nav.setDestination(defendLoc);
+				behavior = BehaviorState.DEFEND;
+			}
 			break;
 		case HIBERNATE:
 			behavior = BehaviorState.HIBERNATE;
