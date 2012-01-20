@@ -310,7 +310,7 @@ public class ArchonRobotJV extends BaseRobot {
 			}
 		}
 		// distribute flux
-		fbs.setBattleMode();
+		fbs.setPoolMode();
 		fbs.manageFlux();
 	}
 	

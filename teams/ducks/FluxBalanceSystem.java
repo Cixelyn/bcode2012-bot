@@ -5,17 +5,22 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
-/**
- * Handles the distribution of flux amongst units.
- * 
- * @author jven
+/** Handles the distribution of flux amongst units. <br>
+ * <br>
+ * Goals: <br>
+ *   - never waste archon flux income (archons sitting at 300 flux). <br>
+ * 	 - do not waste too much upkeep swarming large armies across the map. <br>
+ *   - dying units waste as little flux as possible. <br>
  */
 public class FluxBalanceSystem {
 	
 	private enum FluxManagerMode {
+		/** No flux transfer happens here. This mode is not recommended. */
 		NO_TRANSFER,
+		/** Archons try to give swarm units their flux. Good for low upkeep. */
 		BATTERY,
-		BATTLE
+		/** Units give their flux back to archon so it can build stuff. */
+		POOL_ARCHON
 	}
 	
 	private final BaseRobot br;
@@ -28,17 +33,17 @@ public class FluxBalanceSystem {
 		br = myBR;
 		rc = myBR.rc;
 		radar = br.radar;
-		mode = FluxManagerMode.BATTLE;
+		mode = FluxManagerMode.POOL_ARCHON;
 	}
 	
-	/** Non-archon units should be kept filled. */
+	/** Set the robot to manage its flux in battery mode. */
 	public void setBatteryMode() {
 		mode = FluxManagerMode.BATTERY;
 	}
 	
-	/** Non-archon units should be kept at very low capacity. */
-	public void setBattleMode() {
-		mode = FluxManagerMode.BATTLE;
+	/** Set the robot to pool the archons all their excess flux. */
+	public void setPoolMode() {
+		mode = FluxManagerMode.POOL_ARCHON;
 	}
 
 	/** Disables running the flux balance management each turn */
@@ -52,111 +57,114 @@ public class FluxBalanceSystem {
 	 * @throws GameActionException 
 	 */
 	public void manageFlux() throws GameActionException {
-		if(mode == FluxManagerMode.NO_TRANSFER)
-			return;
-		
-		br.radar.scan(true, false);
-		
-		if (mode == FluxManagerMode.BATTERY &&
-				br.myType == RobotType.ARCHON) {
-			distributeArchonBattery();
-		} else if (mode == FluxManagerMode.BATTERY &&
-				br.myType != RobotType.ARCHON) {
-			distributeUnitBattery();
-		} else if (mode == FluxManagerMode.BATTLE &&
-				br.myType == RobotType.ARCHON) {
-			distributeArchonBattle();
-		} else if (mode == FluxManagerMode.BATTLE &&
-				br.myType != RobotType.ARCHON) {
-			distributeUnitBattle();
+		switch (mode) {
+		case BATTERY:
+			if(br.myType == RobotType.ARCHON) {
+				distributeArchonBattery();
+			}
+			break;
+		case POOL_ARCHON:
+			if(br.myType == RobotType.ARCHON) {
+				distributeArchonPool();
+			} else if(br.myType == RobotType.SCOUT) {
+				distributeScoutPool();
+			} else {
+				distributeUnitPool();
+			}
+			break;
+		default:
+			break;
 		}
 	}
 	
 	private void distributeArchonBattery() throws GameActionException {
-		
-		if (br.rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
+		if(rc.getFlux() <= 150) 
 			return;
-		}
-		
-		for (int x=0; x<radar.numAdjacentAllies; x++)
-		{
-			RobotInfo ri = radar.adjacentAllies[x];
-			
-			//TODO we might want to give flux to archons
-			if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON) {
+		double fluxToTransfer = rc.getFlux()-0.1;
+		for(int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
+			RobotInfo ri = radar.adjacentAllies[n];
+			if (ri.type == RobotType.TOWER)
 				continue;
-			}
 			
-			//TODO in the future, perhaps don't use greedy method
-			if (ri.flux < ri.type.maxFlux) {
-				double fluxToTransfer = Math.min(ri.type.maxFlux - ri.flux,
-						br.rc.getFlux() - Constants.MIN_ROBOT_FLUX);
-				if (fluxToTransfer > 0) {
-					rc.transferFlux(
-							ri.location, ri.robot.getRobotLevel(), fluxToTransfer);
+			double canHold = ri.type.maxFlux - ri.flux;
+			if (ri.type == RobotType.ARCHON) 
+				canHold -= 200;
+			if (canHold > 1) {
+				double x = Math.min(canHold, fluxToTransfer);
+				rc.transferFlux(ri.location, ri.type.level, x);
+				fluxToTransfer -= x;
+			}
+		}
+	}
+	
+	private void distributeArchonPool() throws GameActionException {
+		if (rc.getFlux() > 10)
+			distributeFluxBattle(rc.getFlux()-0.1); // Save 0.1 flux for messaging
+	}
+	
+	private void distributeScoutPool() throws GameActionException {
+		// TODO implement moving to low flux units and giving them flux
+		
+		double myUpperFluxThreshold = br.curEnergon < br.myMaxEnergon ? 
+				br.curEnergon/2 : br.curEnergon*2/3;
+			
+		distributeFluxBattle(rc.getFlux()-myUpperFluxThreshold);
+	}
+	
+	private void distributeUnitPool() throws GameActionException {
+		double myUpperFluxThreshold = br.curEnergon < br.myMaxEnergon ? 
+				br.curEnergon/2 : br.curEnergon*2/3;
+			
+		distributeFluxBattle(rc.getFlux()-myUpperFluxThreshold);
+	}
+	
+	private void distributeFluxBattle(double fluxToTransfer) throws GameActionException {
+		rc.setIndicatorString(0, fluxToTransfer<=0 ? "No flux to distribute" : 
+			"Trying to distribute "+String.format("%.1f", fluxToTransfer)+" flux");
+		if(fluxToTransfer<=0) return;
+		
+		br.radar.scan(true, false);
+		
+		double amountBelowLowerThreshold = 0;
+		for (int n=0; n<radar.numAdjacentAllies; n++) {
+			RobotInfo ri = radar.adjacentAllies[n];
+			if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON)
+				continue;
+			double lowerFluxThreshold = ri.energon < ri.type.maxEnergon ? 
+					ri.energon/4 : ri.energon/3;
+			if(ri.flux < lowerFluxThreshold)
+				amountBelowLowerThreshold += lowerFluxThreshold - ri.flux;
+		}
+		if(amountBelowLowerThreshold == 0) {
+			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
+				RobotInfo ri = radar.adjacentAllies[n];
+				if (ri.type == RobotType.ARCHON && ri.flux < 280) {
+					double x = Math.min(fluxToTransfer, 280-ri.flux);
+					rc.transferFlux(ri.location, ri.type.level, x);
+					fluxToTransfer -= x;
 				}
 			}
-		}
-	}
-	
-	private void distributeArchonBattle() throws GameActionException {
-		
-		if (br.rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
-			return;
-		}
-		
-		for (int x=0; x<radar.numAdjacentAllies; x++)
-		{
-			RobotInfo ri = radar.adjacentAllies[x];
-			
-			//TODO we might want to give flux to archons
-			if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON) {
-				continue;
-			}
-			
-			//TODO in the future, perhaps don't use greedy method
-			//TODO may want to consider energon of units
-			if (ri.flux < Constants.MIN_UNIT_BATTLE_FLUX_RATIO *
-					ri.type.maxFlux) {
-				double fluxToTransfer = Math.min(
-						Constants.MIN_UNIT_BATTLE_FLUX_RATIO *
-						ri.type.maxFlux - ri.flux,
-						br.rc.getFlux() - Constants.MIN_ROBOT_FLUX);
-				if (fluxToTransfer > 0) {
-					rc.transferFlux(
-							ri.location, ri.robot.getRobotLevel(), fluxToTransfer);
+			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
+				RobotInfo ri = radar.adjacentAllies[n];
+				if (ri.type == RobotType.SCOUT) {
+					double x = Math.min(fluxToTransfer, 50-ri.flux);
+					rc.transferFlux(ri.location, ri.type.level, x);
+					fluxToTransfer -= x;
 				}
 			}
-		}
-	}
-	
-	private void distributeUnitBattery() throws GameActionException {
-		// don't do anything
-		return;
-	}
-	
-	private void distributeUnitBattle() throws GameActionException {
-		
-		if (br.rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
-			return;
-		}
-		
-		for (int x=0; x<radar.numAdjacentAllies; x++)
-		{
-			RobotInfo ri = radar.adjacentAllies[x];
-			
-			//TODO we might want to give flux to archons
-			if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON) {
-				continue;
-			}
-			
-			//TODO in the future, perhaps don't use greedy method
-			//TODO may want to consider energon of units
-			if (ri.flux < ri.type.maxFlux) {
-				double fluxToTransfer = Math.min(ri.type.maxFlux - ri.flux,
-						br.rc.getFlux() - 0.47 * br.myType.maxFlux);
-				if (fluxToTransfer > 0) {
-					rc.transferFlux(ri.location, ri.robot.getRobotLevel(), fluxToTransfer);
+		} else {
+			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
+				RobotInfo ri = radar.adjacentAllies[n];
+				if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON)
+					continue;
+				double lowerFluxThreshold = ri.energon < ri.type.maxEnergon ? 
+						ri.energon/4 : ri.energon/3;
+				if(ri.flux < lowerFluxThreshold) {
+					double upperFluxThreshold = ri.energon < ri.type.maxEnergon ? 
+							ri.energon/2 : ri.energon*2/3;
+					double x = Math.min(fluxToTransfer, upperFluxThreshold - ri.flux);
+					rc.transferFlux(ri.location, ri.type.level, x);
+					fluxToTransfer -= x;
 				}
 			}
 		}

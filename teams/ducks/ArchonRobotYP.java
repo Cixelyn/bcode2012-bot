@@ -110,7 +110,7 @@ public class ArchonRobotYP extends BaseRobot {
 		spawntype = RobotType.SOLDIER;
 		
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
-		fbs.setBattleMode();
+		fbs.setPoolMode();
 	}
 
 	private void calculateArchonPosition() throws GameActionException

@@ -50,7 +50,7 @@ public class ArchonRobotCL extends BaseRobot {
 			}
 			break;
 		case DEFEND:
-			fbs.setBattleMode();
+			fbs.setPoolMode();
 			radar.scan(false, true);
 			
 			// Seek out an enemy if we sense anyone
@@ -66,7 +66,7 @@ public class ArchonRobotCL extends BaseRobot {
 				}
 			}
 		case SEEK:
-			fbs.setBattleMode();
+			fbs.setPoolMode();
 			
 			if(ownTargetInfo != null) {
 				if(rc.canSenseObject((GameObject) ownTargetInfo.robot)) {
