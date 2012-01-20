@@ -92,7 +92,7 @@ public class FunBot extends BaseRobot {
 		}
 	}
 	
-	public void lolzors()
+	public void lolzors() throws GameActionException
 	{
 		if (target==null)
 		{
