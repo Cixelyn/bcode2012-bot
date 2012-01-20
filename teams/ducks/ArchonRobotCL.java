@@ -34,12 +34,11 @@ public class ArchonRobotCL extends BaseRobot {
 	
 	
 	RobotInfo ownTargetInfo;
+	MapLocation assistTargetLoc;
 	int roundsSinceTargetSeen = 0;
 	MapLocation receivedTargetLoc;
 	
 	
-	
-
 	@Override
 	public void run() throws GameActionException {
 		rc.setIndicatorString(0,behavior.toString());
@@ -51,6 +50,7 @@ public class ArchonRobotCL extends BaseRobot {
 			}
 			break;
 		case DEFEND:
+			fbs.setBattleMode();
 			radar.scan(false, true);
 			
 			// Seek out an enemy if we sense anyone
@@ -62,6 +62,7 @@ public class ArchonRobotCL extends BaseRobot {
 					ownTargetInfo = radar.closestEnemy;
 					behavior = BehaviorState.SEEK;
 					io.sendMapLoc(BroadcastChannel.ALL, BroadcastType.RALLY, radar.closestEnemy.location);
+					io.sendWakeupCall();
 				}
 			}
 		case SEEK:
@@ -77,10 +78,13 @@ public class ArchonRobotCL extends BaseRobot {
 			}
 			else if(roundsSinceTargetSeen>5) {
 				ownTargetInfo = null;
+				behavior = BehaviorState.DEFEND;
 			}
 		case ASSIST:
-			
-			
+			if(roundsSinceTargetSeen > 10) {
+				behavior = BehaviorState.DEFEND;
+				assistTargetLoc = null;
+			}
 		case CAP:
 			break;
 		default:
@@ -101,7 +105,6 @@ public class ArchonRobotCL extends BaseRobot {
 			} else {
 				return new MoveInfo(curLoc.directionTo(myHome), true);
 			}
-			
 		case DEFEND:
 			if(rc.getFlux() > 150) {
 				boolean[] openDirs = dc.getMovableDirections();
@@ -111,17 +114,23 @@ public class ArchonRobotCL extends BaseRobot {
 					}
 				}
 			}
+			break;
 		case SEEK:
+			io.sendWakeupCall();
 			Direction dir = nav.navigateToDestination();
 			if(dir==null)
 				return null;
 			else
 				return new MoveInfo(dir,true);
-		
-			
+		case ASSIST:
+			io.sendWakeupCall();
+			Direction dir1 = nav.navigateToDestination();
+			if (dir1 == null) return null;
+			else return new MoveInfo(dir1,true);
 		default:
 			return null;
 		}
+		return null;
 	}
 	
 	
@@ -131,8 +140,8 @@ public class ArchonRobotCL extends BaseRobot {
 		
 		case RALLY:
 			if(ownTargetInfo == null) {
-				
-				
+				assistTargetLoc = BroadcastSystem.decodeMapLoc(sb);
+				behavior = BehaviorState.ASSIST;
 			}
 			
 			break;
