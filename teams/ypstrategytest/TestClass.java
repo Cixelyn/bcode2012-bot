@@ -11,13 +11,24 @@ import java.io.PipedOutputStream;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 import battlecode.common.Clock;
 
+
 public class TestClass {
+	
+	
 	
 	@SuppressWarnings("unused")
 	public static void run() throws Exception
+	{
+		int aaaa;
+		
+	}
+	
+	@SuppressWarnings("unused")
+	public static void run2() throws Exception
 	{
 		int t1,t2;
 		t1 = Clock.getBytecodeNum();

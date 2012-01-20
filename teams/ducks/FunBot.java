@@ -74,7 +74,7 @@ public class FunBot extends BaseRobot {
 	{
 		super(myRC);
 		nav.setNavigationMode(NavigationMode.GREEDY);
-		fbs.setBattleMode();
+		fbs.setPoolMode();
 	}
 
 	@Override
@@ -103,7 +103,7 @@ public class FunBot extends BaseRobot {
 			for (int y=0; y<lol[aid].length; y++)
 				for (int x=0; x<lol[aid][y].length; x++)
 					if (lol[aid][y][x]>spawned) spawned = lol[aid][y][x];
-			fbs.setBattleMode();
+			fbs.setPoolMode();
 		}
 		rc.setIndicatorString(0, ""+spawned);
 		if (rc.getFlux()>80) fbs.manageFlux();

@@ -5,328 +5,202 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
 
-public class SoldierRobot extends StrategyRobot {
-	
-	private boolean initialized;
-	private final HibernationSystem hbe;
-	
-	private int ownerTrueID;
-//	private int ownerRobotID;
-	
-	private boolean isDefender;
-	private MapLocation swarmObjective;
-	private Direction swarmDirection;
-	private int swarmPriority;
-	private MapLocation archonOVERLORD;
-	
-	private RobotInfo target;
-	private MapLocation targetLoc;
-	private RobotInfo target2;
-	private MapLocation target2Loc;
-	
-	private MapLocation fromObjective;
-	private int enemydiff;
-	
-	private int roundsSinceSeenEnemy;
-	private Direction lastChaseDirection;
-	
-	private int lastScanRound;
-	
+public class SoldierRobot extends BaseRobot {
+	private enum BehaviorState {
+		/** Want to hibernating, need to find a non-blocking place to do it. */
+		LOOKING_TO_HIBERNATE,
+		/** Hibernate until someone wakes it up. */
+		HIBERNATE,
+		/** Has too much flux (from being a battery), needs to give it back to archon. */
+		POOL,
+		/** No enemies to deal with. */
+		SWARM,
+		/** Run away from enemy forces. */
+		RETREAT, 
+		/** Fight the enemy forces. Micro. */
+		SEEK, 
+		/** Far from target. Use bug to navigate. */
+		LOST,
+		/** Track enemy's last position and keep following them. */
+		TARGET_LOCKED;
+	}
+	int lockAcquiredRound;
+	MapLocation target;
+	MapLocation previousBugTarget;
+	boolean senderSwarming;
+	int closestSenderDist;
+	MapLocation archonTarget;
+	BehaviorState behavior;
+	MapLocation hibernateTarget;
 	
 	public SoldierRobot(RobotController myRC) throws GameActionException {
-		super(myRC, RobotState.INITIALIZE);
-		hbe = new HibernationSystem(this);
-		initialized = false;
-		lastScanRound = -1;
-		ownerTrueID = -1;
-//		ownerRobotID = -1;
-	}
-
-
-	@Override
-	public RobotState processTransitions(RobotState state)
-			throws GameActionException {
+		super(myRC);
 		
-		switch (state) 
-		{
-		case INITIALIZE:
-		{
-			if (initialized) {
-				if (curRound < Constants.BUILD_ARMY_ROUND_THRESHOLD)
-					return RobotState.HOLD_POSITION;
-				else
-					return RobotState.SWARM;
-			} 
-		} break;
-		case SWARM:
-		{
-			scanForEnemies();
-			if (radar.numEnemyRobots>0 && enemydiff>=0)
-				return RobotState.CHASE;
-		} break;
-		case CHASE:
-		{
-			if (roundsSinceSeenEnemy > Constants.SOLDIER_CHASE_ROUNDS)
-				return RobotState.SWARM;
-			else if (curLoc.distanceSquaredTo(archonOVERLORD) > Constants.SOLDIER_CHASE_DISTANCE_SQUARED)
-				return RobotState.SWARM;
-			
-		} break;
-		case HOLD_POSITION:
-		{
-			if(ao.getArchonOwnerID()==5) {
-				return RobotState.DEFEND_BASE;
-			}
-		} break;
-		case HIBERNATE:
-		{}
-		default:
-			break;
-		}
-		return state;
+		lockAcquiredRound = -1;
+		closestSenderDist = Integer.MAX_VALUE;
+		nav.setNavigationMode(NavigationMode.GREEDY);
+		io.setChannels(new BroadcastChannel[] {
+				BroadcastChannel.ALL, 
+				BroadcastChannel.SOLDIERS
+		});
+		fbs.setPoolMode();
+		behavior = BehaviorState.SWARM;
+		senderSwarming = true;
 	}
 
 	@Override
-	public void prepareTransition(RobotState newstate, RobotState oldstate)
-			throws GameActionException {
-		switch (newstate)
-		{
-		case INITIALIZE:
-		{
-			initialized = false;
-		} break;
-		case HOLD_POSITION:
-		{
-			// set micro mode
-			micro.setHoldPositionMode();
-			// set flux management mode
-			fbs.setBatteryMode();
-		} break;
-		case SWARM:
-		{
-			// set micro mode
-			//micro.setSwarmMode(2, 36);
-			// set flux management mode
-			fbs.setBatteryMode();
-		} break;
-		case CHASE:
-		{
-			// set micro mode
-			micro.setChargeMode();
-			// set flux management mode
-			fbs.setBattleMode();
-		} break;
-		case DEFEND_BASE:
-		{
-			micro.setObjective(myHome);
-			micro.setNormalMode();
-		} break;
-		default:
-			break;
-		}
-	}
-
-	@Override
-	public void execute(RobotState state) throws GameActionException {
-		// TODO(jven): use hibernation engine instead
-		// power down if not enough flux
-		if (rc.getFlux() < Constants.MIN_ROBOT_FLUX) {
-			return;
-		}
-		// TODO(jven): debug, archon ownership stuff
-		switch (state) {
-			case INITIALIZE:
-				initialize();
-				break;
-			case HOLD_POSITION:
-				holdPosition();
-				break;
-			case HIBERNATE:
-				hbe.run(); //this call will halt until wakeup
-				gotoState(RobotState.DEFEND_BASE);
+	public void run() throws GameActionException {
+		
+		// Scan everything every turn
+		radar.scan(true, true);
+		
+		RobotInfo closestEnemy = radar.closestEnemy;
+		boolean shouldSetNavTarget = true;
+		if(closestEnemy != null) {
+			// If we scanned an enemy, lock onto it
+			behavior = BehaviorState.TARGET_LOCKED;
+			target = closestEnemy.location;
+			nav.setNavigationMode(NavigationMode.GREEDY);
+			lockAcquiredRound = curRound;
+		} else if(behavior != BehaviorState.TARGET_LOCKED || 
+				curRound > lockAcquiredRound + 12) {
+			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+			if(behavior==BehaviorState.LOST && distToClosestArchon>25 || 
+					distToClosestArchon>64) {
+				// If all allied archons are far away, move to closest one
+				behavior = BehaviorState.LOST;
+				nav.setNavigationMode(NavigationMode.BUG);
+				target = dc.getClosestArchon();
+				if(previousBugTarget!=null && target.distanceSquaredTo(previousBugTarget)<=25)
+					shouldSetNavTarget = false;
+				previousBugTarget = target;
+			} else {	
+				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && senderSwarming && 
+						archonTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
+					// Hibernate once we're no longer adjacent to any allies
+					if(radar.numAdjacentAllies==0) 
+						behavior = BehaviorState.HIBERNATE;
+				} else if(closestSenderDist == Integer.MAX_VALUE) { 
+					// We did not receive any targeting broadcasts from our archons
+					behavior = BehaviorState.SWARM;
+					target = dc.getClosestArchon();
+				} else if(!senderSwarming && rc.getFlux() > myMaxFlux*2/3) {
+					// Would be seeking enemy, but needs to dump flux first
+					behavior = BehaviorState.POOL;
+					target = dc.getClosestArchon();
+				} else {
+					// Follow target of closest archon's broadcast
+					behavior = senderSwarming ? BehaviorState.SWARM : BehaviorState.SEEK;
+					target = archonTarget;
+				}
 				
-//				io.sendWakeupCall();
-//				io.sendShort("#zz", 0);
-				break;
-			case DEFEND_BASE:
-				defendBase();
-				break;
-			case SUICIDE:
-				rc.suicide();
-				break;
-			case SWARM:
-				swarm();
-				break;
-			case CHASE:
-				chase();
-				break;
-			default:
-				break;
+				if(behavior == BehaviorState.SWARM && 
+						closestSenderDist <= 10 && 
+						curLoc.distanceSquaredTo(target) <= 10) { 
+					// Close enough to swarm target, look for a place to hibernate
+					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
+					hibernateTarget = target;
+				} 
+				nav.setNavigationMode(NavigationMode.GREEDY);
+				previousBugTarget = null;
+			}
+			
+			
 		}
+		if(shouldSetNavTarget)
+			nav.setDestination(target);
+		
+		// Attack an enemy if we can
+		if(!rc.isAttackActive() && closestEnemy != null && 
+				rc.canAttackSquare(closestEnemy.location)) {
+			rc.attackSquare(closestEnemy.location, closestEnemy.robot.getRobotLevel());
+		}
+		
+		// Set the flux balance mode
+		if(behavior == BehaviorState.SWARM)
+			fbs.setBatteryMode();
+		else
+			fbs.setPoolMode();
+		
+		// Set debug string
+		rc.setIndicatorString(1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
+		
+		// Reset messaging variables
+		closestSenderDist = Integer.MAX_VALUE;
+		senderSwarming = true;
+		
+		// Enter hibernation if desired
+		if(behavior == BehaviorState.HIBERNATE) {
+			HibernationSystem hsys = new HibernationSystem(this);
+			hsys.run();
+		}
+		
+			
 	}
 	
 	@Override
-	public void processMessage(
-			BroadcastType msgType, StringBuilder sb) throws GameActionException {
-		
-		swarmPriority = 999;
-		int closest = 999;
-		MapLocation temp;
-		
-	}
-	
-	public void initialize() throws GameActionException {
-		// set navigation mode
-		nav.setNavigationMode(NavigationMode.BUG);
-		// set radio addresses
-		io.setChannels(new BroadcastChannel[] {BroadcastChannel.ALL, BroadcastChannel.SOLDIERS});
-		// sense all
-		mc.senseAll();
-		
-		// just get closest for now
-		findArchon();
-		
-		// done
-		initialized = true;
-	}
-	
-	private void findArchon() throws GameActionException {
-		if (ownerTrueID >= 0)
-		{
-			MapLocation[] archons = dc.getAlliedArchons();
-			archonOVERLORD = archons[(ownerTrueID)%archons.length];
-		} else
-		{
-			archonOVERLORD = dc.getClosestArchon();
-		}
-	}
-	
-	public void holdPosition() throws GameActionException {
-		// hold position
-		micro.attackMove();
-		// distribute flux
-		fbs.manageFlux();
-		// send dead enemy archon info
-		eakc.broadcastDeadEnemyArchonIDs();
-	}
-	
-	public void swarm() throws GameActionException {
-		
-		
-		
-		if (enemydiff>=0)
-		{
-			if (swarmObjective == null)
-			{
-				findArchon();
-				//micro.setSwarmMode(2, 36);
-				micro.setObjective(archonOVERLORD);
-				micro.attackMove();
-			} else
-			{
-				micro.setChargeMode();
-				micro.setObjective(swarmObjective);
-				micro.attackMove();
+	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
+		switch(msgType) {
+		case SWARM_TARGET:
+			int[] shorts = BroadcastSystem.decodeUShorts(sb);
+			MapLocation senderLoc = new MapLocation(shorts[3], shorts[4]);
+			int dist = curLoc.distanceSquaredTo(senderLoc);
+			boolean wantToSwarm = shorts[0]==0;
+			if(senderSwarming&&!wantToSwarm || 
+					(senderSwarming==wantToSwarm)&&dist<closestSenderDist) {
+				closestSenderDist = dist;
+				archonTarget = new MapLocation(shorts[1], shorts[2]);
+				senderSwarming = wantToSwarm;
 			}
-			
-		} else
-		{
-			if (fromObjective == null)
-			{
-				findArchon();
-				//micro.setSwarmMode(2, 36);
-				micro.setObjective(archonOVERLORD);
-				micro.attackMove();
-			} else
-			{
-				//micro.setSwarmMode(2, 36);
-				micro.setObjective(fromObjective);
-				micro.attackMove();
+			break;
+		default:
+			super.processMessage(msgType, sb);
+		} 
+	}
+	
+	@Override
+	public MoveInfo computeNextMove() throws GameActionException {
+		if(rc.getFlux()<1) return null;
+		if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
+			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
+		}
+		int enemiesInFront = radar.numEnemyDisruptors + radar.numEnemySoldiers 
+				+ radar.numEnemyScorchers * 2;
+		int tooClose = behavior==BehaviorState.TARGET_LOCKED ? 
+				(radar.numAllyRobots >= enemiesInFront ? -1 : 2) : 1;
+		int tooFar = behavior==BehaviorState.TARGET_LOCKED ? 
+				(radar.numAllyRobots >= enemiesInFront ? 4 : 14) : 11;
+		
+		if(curLoc.equals(target) && 
+				rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)!=null) {
+			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
+		}
+		if(curLoc.distanceSquaredTo(target) <= tooClose) {
+			return new MoveInfo(curLoc.directionTo(target).opposite(), true);
+		} else if(curLoc.distanceSquaredTo(target) >= tooFar) {
+			Direction dir = nav.navigateToDestination();
+			if(behavior == BehaviorState.SWARM) {
+				if(radar.alliesInFront==0 && Math.random()<0.75) 
+					return null;
+				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+					dir = nav.navigateCompletelyRandomly();
+				if(radar.alliesOnLeft > radar.alliesOnRight && Math.random()<0.3) 
+					dir = dir.rotateRight();
+				else if(radar.alliesOnLeft < radar.alliesOnRight && Math.random()<0.3) 
+					dir = dir.rotateLeft();
+			}
+			return new MoveInfo(dir, false);
+		} else {
+			if(behavior == BehaviorState.SWARM) {
+				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
 		}
 		
-		fbs.manageFlux();
 		
-		return;
 		
-//		if (!rc.isMovementActive())
-//		{
-//			findArchon();
-//			
-//			if (swarmObjective==null)
-//			{
-//				mi.setObjective(archonOVERLORD);
-//				mi.attackMove();
-//			} else
-//			{
-//				MapLocation[] archons = dc.getAlliedArchons();
-////				MapLocation loc = archons[0];
-//				MapLocation loc = archonOVERLORD;
-//				loc.add(swarmDirection, Constants.SOLDIER_SWARM_IN_FRONT);
-//				
-//				mi.setObjective(loc);
-//				mi.attackMove();
-//				
-////				int dist = currLoc.distanceSquaredTo(loc);
-////				if (dist <= Constants.SOLDIER_SWARM_DISTANCE)
-////				{
-////					if (currDir == swarmDirection)
-////					{
-////						
-////					} else
-////					{
-////						rc.setDirection(swarmDirection);
-////					}
-////				} else
-////				{
-////					mi.setObjective(loc);
-////					mi.attackMove();
-////				}
-//			}
-//		}
-	}
-	
-	
-	
-	
-	public void chase() throws GameActionException {
-		scanForEnemies();
-		if (radar.numEnemyRobots-radar.numEnemyTowers==0)
-		{
-			roundsSinceSeenEnemy++;
-			if (lastChaseDirection!=null)
-			{
-				MapLocation chaseLoc = curLoc.add(lastChaseDirection,Constants.SOLDIER_CHASE_DISTANCE_MULTIPLIER);
-				micro.setChargeMode();
-				micro.setObjective(chaseLoc);
-				micro.attackMove();
-			} else {
-				roundsSinceSeenEnemy += 9999;
-			}
-		} else
-		{
-			roundsSinceSeenEnemy = 0;
-			
-			micro.setKiteMode(3);
-			micro.setObjective(radar.closestEnemy.location);
-			micro.attackMove();
-			
-		}
-		fbs.manageFlux();
-	}
-	
-	public void scanForEnemies() throws GameActionException {
-		if (curRound>lastScanRound)
-		{
-			radar.scan(false, true);
-			lastScanRound = curRound;
-		}
-	}
-	
-	public void defendBase() throws GameActionException {
-		micro.attackMove();
-		fbs.manageFlux();
-		eakc.broadcastDeadEnemyArchonIDs();
+		return new MoveInfo(curLoc.directionTo(target));
 	}
 }
