@@ -95,7 +95,6 @@ public class ScoutRobotYP extends BaseRobot {
 		
 		closestmsg = 999;
 		
-		fbs.manageFlux();
 	}
 	
 	public void execute(ScoutState state) throws GameActionException
@@ -302,6 +301,12 @@ public class ScoutRobotYP extends BaseRobot {
 			return null;
 		} else
 		{
+			MapLocation closest = dc.getClosestArchon();
+			if (closest != null)
+			{
+				return new MoveInfo(curLoc.directionTo(closest),false);
+			}
+			
 			switch (curstate)
 			{
 			case SWARM:
