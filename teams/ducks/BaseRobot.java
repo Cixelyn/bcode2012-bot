@@ -85,9 +85,9 @@ public abstract class BaseRobot {
 		nav = new NavigationSystem(this);
 		micro = new Micro(this);
 		io = new BroadcastSystem(this);
+		radar = new RadarSystem(this);
 		fbs = new FluxBalanceSystem(this);
 		ses = new SharedExplorationSystem(this);
-		radar = new RadarSystem(this);
 		eakc = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
 		rally = new RallySystem(this);

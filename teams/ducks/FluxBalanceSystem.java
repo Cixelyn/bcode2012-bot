@@ -12,24 +12,23 @@ import battlecode.common.RobotType;
  */
 public class FluxBalanceSystem {
 	
-	private class FluxConstants {
-		public static final double BATTLE_FLUX_RATIO = 0.47;
-	}
-	
 	private enum FluxManagerMode {
+		NO_TRANSFER,
 		BATTERY,
 		BATTLE
 	}
 	
-	private BaseRobot br;
-	private RobotController rc;
-	private RadarSystem radar;
+	private final BaseRobot br;
+	private final RobotController rc;
+	private final RadarSystem radar;
 	
 	private FluxManagerMode mode;
 	
 	public FluxBalanceSystem(BaseRobot myBR) {
 		br = myBR;
 		rc = myBR.rc;
+		radar = br.radar;
+		mode = FluxManagerMode.BATTLE;
 	}
 	
 	/** Non-archon units should be kept filled. */
@@ -44,7 +43,7 @@ public class FluxBalanceSystem {
 
 	/** Disables running the flux balance management each turn */
 	public void disable() {
-		mode = null;
+		mode = FluxManagerMode.NO_TRANSFER;
 	}
 	
 	
@@ -53,28 +52,23 @@ public class FluxBalanceSystem {
 	 * @throws GameActionException 
 	 */
 	public void manageFlux() throws GameActionException {
-		// we catch GameActionException to avoid trying to manage flux with stale
-		// information
-		if(mode != null) {
-			if (radar==null)
-				radar = br.radar;
-
-				radar.scan(true, false);
-				
-				if (mode == FluxManagerMode.BATTERY &&
-						br.myType == RobotType.ARCHON) {
-					distributeArchonBattery();
-				} else if (mode == FluxManagerMode.BATTERY &&
-						br.myType != RobotType.ARCHON) {
-					distributeUnitBattery();
-				} else if (mode == FluxManagerMode.BATTLE &&
-						br.myType == RobotType.ARCHON) {
-					distributeArchonBattle();
-				} else if (mode == FluxManagerMode.BATTLE &&
-						br.myType != RobotType.ARCHON) {
-					distributeUnitBattle();
-				}
-
+		if(mode == FluxManagerMode.NO_TRANSFER)
+			return;
+		
+		br.radar.scan(true, false);
+		
+		if (mode == FluxManagerMode.BATTERY &&
+				br.myType == RobotType.ARCHON) {
+			distributeArchonBattery();
+		} else if (mode == FluxManagerMode.BATTERY &&
+				br.myType != RobotType.ARCHON) {
+			distributeUnitBattery();
+		} else if (mode == FluxManagerMode.BATTLE &&
+				br.myType == RobotType.ARCHON) {
+			distributeArchonBattle();
+		} else if (mode == FluxManagerMode.BATTLE &&
+				br.myType != RobotType.ARCHON) {
+			distributeUnitBattle();
 		}
 	}
 	
@@ -160,11 +154,9 @@ public class FluxBalanceSystem {
 			//TODO may want to consider energon of units
 			if (ri.flux < ri.type.maxFlux) {
 				double fluxToTransfer = Math.min(ri.type.maxFlux - ri.flux,
-						br.rc.getFlux() - FluxConstants.BATTLE_FLUX_RATIO *
-						br.myType.maxFlux);
+						br.rc.getFlux() - 0.47 * br.myType.maxFlux);
 				if (fluxToTransfer > 0) {
-					rc.transferFlux(
-							ri.location, ri.robot.getRobotLevel(), fluxToTransfer);
+					rc.transferFlux(ri.location, ri.robot.getRobotLevel(), fluxToTransfer);
 				}
 			}
 		}
