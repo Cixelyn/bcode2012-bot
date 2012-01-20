@@ -212,25 +212,34 @@ public class BroadcastSystem {
 
 	/**
 	 * @param msg
-	 * @return MapLocation of message origin
+	 * @return timestamp of the current message
 	 */
-//	public static MapLocation decodeSenderLoc(StringBuilder msg) {
-//		int metaidx = msg.indexOf(":");
-//		return new MapLocation(
-//				
-//				
-//				
-//				)
-//		
-//		
-//	}
-//	
-//	public static int decodeSenderID(StringBuilder msg) {
-//		int metaidx = msg.indexOf(":");
-//		
-//		
-//		
-//	}
+	public static int decodeSenderTimestamp(StringBuilder msg) {
+		return msg.charAt(msg.indexOf(":") + 1) - 0x100;
+	}
+
+	
+	/**
+	 * @param msg
+	 * @return robot id of the of the current message's sender
+	 */
+	public static int decodeSenderID(StringBuilder msg) {
+		return msg.charAt(msg.indexOf(":") + 2) - 0x100;
+	}
+	
+	/**
+	 * @param msg
+	 * @return MapLocation of message's origin
+	 */
+	public static MapLocation decodeSenderLoc(StringBuilder msg) {
+		int metaIdx = msg.indexOf(":");
+		return new MapLocation(
+				msg.charAt(metaIdx+3) - 0x100,
+				msg.charAt(metaIdx+4) - 0x100
+		);
+	}
+	
+	
 	
 	
 	/**
