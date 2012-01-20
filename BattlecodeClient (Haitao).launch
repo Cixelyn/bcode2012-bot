@@ -8,5 +8,5 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="battlecode.client.Main"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="bcode2012-bot"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx512m -Dbc.testing.strategy=haitao"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx512m -XX:MaxPermSize=256m -Dbc.testing.strategy=haitao"/>
 </launchConfiguration>
