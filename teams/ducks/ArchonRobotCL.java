@@ -109,7 +109,7 @@ public class ArchonRobotCL extends BaseRobot {
 	
 	
 	@Override
-	public void useExtraBytecodes() {
+	public void useExtraBytecodes() throws GameActionException {
 		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3000)
 			nav.prepare(); 
 		if(Clock.getRoundNum()%6==myArchonID) {
