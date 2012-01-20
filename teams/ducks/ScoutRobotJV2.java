@@ -1,36 +1,34 @@
 package ducks;
 
 import battlecode.common.Clock;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 public class ScoutRobotJV2 extends BaseRobot {
 	
-	private enum StrategyState {
-		RUSH,
-	}
-	
-	private enum BehaviorState {
-		CHARGE,
-		KITE
-	}
-	
 //	private static class MyConstants {
 //	}
-	
-	private StrategyState strategy;
-	private BehaviorState behavior;
 
 	public ScoutRobotJV2(RobotController myRC) throws GameActionException {
 		super(myRC);
-		// set initial states
-		strategy = StrategyState.RUSH;
-		behavior = BehaviorState.CHARGE;
 	}
 
 	@Override
 	public void run() throws GameActionException {
+		// suicide if you're out of flux
+		if (rc.getFlux() < 0.5) {
+			rc.suicide();
+		}
+		// scan
+		radar.scan(false, true);
+		// attack if you can
+		if (!rc.isAttackActive() && radar.closestEnemy != null &&
+				rc.canAttackSquare(radar.closestEnemy.location)) {
+			rc.attackSquare(radar.closestEnemy.location,
+					radar.closestEnemy.robot.getRobotLevel());
+		}
 	}
 	
 	@Override
@@ -53,7 +51,20 @@ public class ScoutRobotJV2 extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		return null;
+		if (radar.closestEnemy == null) {
+			return new MoveInfo(
+					curLoc.directionTo(mc.guessEnemyPowerCoreLocation()), false);
+		} else {
+			Direction dirToEnemy = curLoc.directionTo(radar.closestEnemy.location);
+			if (radar.closestEnemyDist <= 8) {
+				return new MoveInfo(dirToEnemy.opposite(), true);
+			} else if (curLoc.add(dirToEnemy).distanceSquaredTo(
+					radar.closestEnemy.location) > 8) {
+				return new MoveInfo(dirToEnemy, false);
+			} else {
+				return null;
+			}
+		}
 	}
 	
 	@Override

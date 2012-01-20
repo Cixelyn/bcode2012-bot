@@ -21,10 +21,8 @@ public class ArchonRobotJV2 extends BaseRobot {
 		CHASE
 	}
 	
-	private static class MyConstants {
-		public static final int ROUND_TO_STOP_SPLIT = 20;
-		public static final int SPLIT_DISTANCE = 20;
-	}
+	public static final int ROUND_TO_STOP_SPLIT = 20;
+	public static final int SPLIT_DISTANCE = 20;
 	
 	private StrategyState strategy;
 	private BehaviorState behavior;
@@ -37,12 +35,16 @@ public class ArchonRobotJV2 extends BaseRobot {
 		// set navigation mode
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		nav.setDestination(myHome);
+		// set flux balance mode
+		fbs.setBattleMode();
 	}
 
 	@Override
 	public void run() throws GameActionException {
+		// scan
+		radar.scan(true, true);
 		// check strategy state
-		if (curRound > MyConstants.ROUND_TO_STOP_SPLIT) {
+		if (curRound > ROUND_TO_STOP_SPLIT) {
 			strategy = StrategyState.RUSH;
 		}
 		// set target
@@ -88,8 +90,8 @@ public class ArchonRobotJV2 extends BaseRobot {
 			MapLocation closestArchon = dc.getClosestArchon();
 			if (closestArchon != null) {
 				int distance = curLoc.distanceSquaredTo(closestArchon);
-				if (Math.random() < 0.6 * (MyConstants.SPLIT_DISTANCE - distance) /
-						MyConstants.SPLIT_DISTANCE) {
+				if (Math.random() < 0.6 * (SPLIT_DISTANCE - distance) /
+						SPLIT_DISTANCE) {
 					return new MoveInfo(
 							curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
 				}
@@ -101,7 +103,8 @@ public class ArchonRobotJV2 extends BaseRobot {
 	}
 	
 	@Override
-	public void useExtraBytecodes() {
+	public void useExtraBytecodes() throws GameActionException {
+		super.useExtraBytecodes();
 		// TODO(jven): check we didn't go over bytecodes within the method
 		// think about where to move
 		while (Clock.getBytecodesLeft() > 3000) {
