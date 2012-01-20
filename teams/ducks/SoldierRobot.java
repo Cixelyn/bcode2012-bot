@@ -115,7 +115,7 @@ public class SoldierRobot extends StrategyRobot {
 			// set micro mode
 			micro.setChargeMode();
 			// set flux management mode
-			fbs.setBattleMode();
+			fbs.setPoolMode();
 		} break;
 		case DEFEND_BASE:
 		{

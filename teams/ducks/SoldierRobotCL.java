@@ -19,7 +19,7 @@ public class SoldierRobotCL extends BaseRobot {
 		hbs = new HibernationSystem(this);
 		io.addChannel(BroadcastChannel.ALL);
 		io.addChannel(BroadcastChannel.SOLDIERS);
-		fbs.setBattleMode();
+		fbs.setPoolMode();
 		behavior = BehaviorState.DEFEND;
 	}
 	

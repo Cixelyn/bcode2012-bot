@@ -197,14 +197,14 @@ public class ArchonRobot extends StrategyRobot {
 			roundsToChase = Constants.ARCHON_CHASE_ROUNDS;
 			micro.setNormalMode();
 			// set flux management mode
-			fbs.setBattleMode();
+			fbs.setPoolMode();
 		} break;
 		case DEFEND_BASE:
 		{
 			numDefenders = 0;
 			micro.setObjective(myHome);
 			micro.setMoonwalkMode();
-			fbs.setBattleMode();
+			fbs.setPoolMode();
 			
 		} break;
 		case POWER_CAP:

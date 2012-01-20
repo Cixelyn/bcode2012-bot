@@ -197,14 +197,17 @@ public abstract class BaseRobot {
 	
 	/** If there are bytecodes left to use this turn, will call this function
 	 * a single time. Function should very hard not to run over bytecodes.
+	 * Overriding functions should make sure to call super.
 	 * @throws GameActionException 
 	 */
 	public void useExtraBytecodes() throws GameActionException {
 		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2000 &&
-				rc.getFlux() > 0.05) 
+				rc.getFlux() > 0.1) 
 			io.sendAll();
 		
-		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>4000)
+		if(Clock.getRoundNum()==curRound && (Clock.getBytecodesLeft()>4000 ||
+				radar.hasScannedAllies() && Clock.getBytecodesLeft()>1000)) {
 			fbs.manageFlux();
+		}
 	}
 }
