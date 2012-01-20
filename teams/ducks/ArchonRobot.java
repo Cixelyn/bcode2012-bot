@@ -17,7 +17,9 @@ public class ArchonRobot extends BaseRobot{
 		/** Hold a position. */
 		DEFEND,
 		/** Take power nodes. */
-		CAP;
+		CAP,
+		
+		
 	}
 	private enum BehaviorState {
 		/** No enemies to deal with. */
