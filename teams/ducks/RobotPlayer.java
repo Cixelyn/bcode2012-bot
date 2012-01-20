@@ -15,7 +15,7 @@ public class RobotPlayer {
 			switch (myRC.getType()) {
 			case ARCHON:
 				if(owner.equals("haitao")) br = new ArchonRobotHT(myRC);
-				else if(owner.equals("justin"))  br = new ArchonRobotJV(myRC);
+				else if(owner.equals("justin"))  br = new ArchonRobotJV2(myRC);
 				else if(owner.equals("cory")) br = new ArchonRobotCL(myRC);
 				else if(owner.equals("yp")) 
 				{
@@ -50,7 +50,7 @@ public class RobotPlayer {
 				} else br = new SoldierRobot(myRC);
 				break;
 			case SCOUT:
-				if (owner.equals("justin")) br = new ScoutRobotJV(myRC);
+				if (owner.equals("justin")) br = new ScoutRobotJV2(myRC);
 				else if (owner.equals("cory")) br = new ScoutRobotCL(myRC);
 				else if (owner.equals("yp"))
 				{
