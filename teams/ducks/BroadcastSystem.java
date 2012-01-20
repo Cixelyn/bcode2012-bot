@@ -135,10 +135,10 @@ public class BroadcastSystem {
 	 * eg: #xy, where the address to send it to is ^x and the
 	 * type of the message is y.
 	 */
-	public void sendShort(BroadcastChannel bChan, BroadcastType bType, int data) {
-		sendShort(bChan.chanHeader + bType.header, data);
+	public void sendUShort(BroadcastChannel bChan, BroadcastType bType, int data) {
+		sendUShort(bChan.chanHeader + bType.header, data);
 	}
-	private void sendShort(String header, int data) {
+	private void sendUShort(String header, int data) {
 		msgContainer.append(header);
 		msgContainer.append((char) (data + 0x100));
 	}
@@ -181,12 +181,12 @@ public class BroadcastSystem {
 	 * @param bChan - broadcast channel
 	 * @param bType - message type
 	 * @param ints - array of 15-bit ints
-	 * @see BroadcastSystem#sendShort(String, int)
+	 * @see BroadcastSystem#sendUShort(String, int)
 	 */
 	public void sendUShorts(BroadcastChannel bChan, BroadcastType bType, int[] ints) {
-		sendUShort(bChan.chanHeader + bType.header, ints);
+		sendUShorts(bChan.chanHeader + bType.header, ints);
 	}
-	private void sendUShort(String header, int[] ints) {
+	private void sendUShorts(String header, int[] ints) {
 		msgContainer.append(header);
 		for (int i : ints) {
 			msgContainer.append((char)( i + 0x100));
@@ -209,6 +209,29 @@ public class BroadcastSystem {
 		return ints;
 	}
 	
+
+	/**
+	 * @param msg
+	 * @return MapLocation of message origin
+	 */
+//	public static MapLocation decodeSenderLoc(StringBuilder msg) {
+//		int metaidx = msg.indexOf(":");
+//		return new MapLocation(
+//				
+//				
+//				
+//				)
+//		
+//		
+//	}
+//	
+//	public static int decodeSenderID(StringBuilder msg) {
+//		int metaidx = msg.indexOf(":");
+//		
+//		
+//		
+//	}
+	
 	
 	/**
 	 * Send a variable-sized array of unsigned 30-bit integers.
@@ -220,7 +243,7 @@ public class BroadcastSystem {
 	 * @param bChan - channel to braodcast
 	 * @param bType - type of message
 	 * @param ints - array of 31-bit ints
-	 * @see BroadcastSystem#sendUShort(String, int[])
+	 * @see BroadcastSystem#sendUShorts(String, int[])
 	 */
 	
 	public void sendUInts(BroadcastChannel bChan, BroadcastType bType, int[] ints) {
@@ -266,7 +289,7 @@ public class BroadcastSystem {
 	 * @param bChan - channel to use
 	 * @param bType - type of message
 	 * @param locs - Locations to send
-	 * @see BroadcastSystem#sendShort(String, int) sendInt
+	 * @see BroadcastSystem#sendUShort(String, int) sendInt
 	 */
 	public void sendMapLocs(BroadcastChannel bChan, BroadcastType bType, MapLocation[] locs) {
 		sendMapLocs(bChan.chanHeader + bType.header, locs);
@@ -309,10 +332,15 @@ public class BroadcastSystem {
 
 	public void sendAll() {
 		
+		// normal message sending
 		if(msgContainer.length() > 0) {
 		
-			// timestamp outgoing
-			msgContainer.append((char)Clock.getRoundNum());
+			// append message metadata
+			msgContainer.append(':');
+			msgContainer.append((char)(Clock.getRoundNum() + 0x100));
+			msgContainer.append((char)(br.myID + 0x100));
+			msgContainer.append((char)(br.curLoc.x + 0x100));
+			msgContainer.append((char)(br.curLoc.y + 0x100));
 			
 			// build message
 			Message m = new Message();
@@ -341,7 +369,18 @@ public class BroadcastSystem {
 		
 			// wipe container
 			msgContainer = new StringBuilder();
+			
+			return;
 		}
+		
+		// build a pure wakeup call if we have nothign to send
+		if(shouldSendWakeup) {
+			Message m = new Message();
+			m.ints = new int[3];
+			m.ints[0] = teamkey;
+			m.ints[2] = Clock.getRoundNum();
+		}
+		
 	}
 
 	/**
@@ -417,7 +456,7 @@ public class BroadcastSystem {
 		int[] a;
 		a = new int[]{555,10000,20000,30000,40000,500000,1073741823};
 		
-		io.sendUShort("",a);
+		io.sendUShorts("",a);
 		System.out.println((Arrays.toString(BroadcastSystem.decodeUShorts(io.msgContainer))));
 		io.msgContainer = new StringBuilder();
 		
