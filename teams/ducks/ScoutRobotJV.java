@@ -1,80 +1,40 @@
 package ducks;
 
-
+import battlecode.common.Clock;
 import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
-/**
- * ScoutRobotJV
- * 
- * @author jven
- */
 public class ScoutRobotJV extends BaseRobot {
 	
-	/**
-	 * TODO(jven): Move this stuff out of here
-	 * Constants used by the Scout.
-	 */
-	private static class ScoutConstants {
-		public static final double MIN_WIRE_FLUX = 15.0;
-		public static final int SES_FREQUENCY = 10;
-	}
+	private MapLocation objective;
 	
-	/**
-	 * TODO(jven): Move this stuff out of here
-	 * All possible states for the Scout. See the private void methods for
-	 * each state for details.
-	 */
-	private enum ScoutState {
-		INITIALIZE,
-		WIRE
-	}
-	
-	/** The current state of the Scout. */
-	private ScoutState curState;
-	
-	/** Whether the Scout is done initializing. */
-	private boolean initialized;
-	
-	/** Shared exploration frequency. */
-	private int timeUntilBroadcast = ScoutConstants.SES_FREQUENCY;
-
 	public ScoutRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
-		// set initial state
-		curState = ScoutState.INITIALIZE;
 	}
 
 	@Override
 	public void run() throws GameActionException {
-		// TODO(jven): temporary
-		if (directionToSenseIn != null) {
-			mc.senseAfterMove(directionToSenseIn);
-			directionToSenseIn = null;
+		// scan
+		radar.scan(true, true);
+		// set objective
+		objective = mc.guessEnemyPowerCoreLocation();
+		// attack if you can
+		if (!rc.isAttackActive() && radar.closestEnemy != null &&
+				rc.canAttackSquare(radar.closestEnemy.location)) {
+			rc.attackSquare(radar.closestEnemy.location,
+					radar.closestEnemy.robot.getRobotLevel());
 		}
-		// transition to a new state if necessary
-		curState = getNextState();
-		// TODO(jven): debugging
-		rc.setIndicatorString(0, myType + " - " + curState);
-		// execute
-		switch (curState) {
-			case INITIALIZE:
-				initialize();
-				break;
-			case WIRE:
-				wire();
-				break;
-			default:
-				// we got g'd
-				rc.suicide();
-				break;
+		// heal if you should
+		if (radar.numAllyDamaged > 0) {
+			rc.regenerate();
 		}
 	}
 	
 	@Override
-	public void processMessage(BroadcastType msgType, StringBuilder sb)
-			throws GameActionException {
-		switch (msgType) {
+	public void processMessage(
+			BroadcastType type, StringBuilder sb) throws GameActionException {
+		switch (type) {
 			case MAP_EDGES:
 				ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 				break;
@@ -84,91 +44,45 @@ public class ScoutRobotJV extends BaseRobot {
 			case POWERNODE_FRAGMENTS:
 				ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 				break;
-			case WIRE_REQUEST:
-				sws.broadcastWireAccept(BroadcastSystem.decodeShort(sb));
-				break;
-			case WIRE_CONFIRM:
-				sws.rebroadcastWireConfirm(BroadcastSystem.decodeUShorts(sb));
-				break;
-			case WIRE_ABORT:
-				sws.processAbortWire(BroadcastSystem.decodeShort(sb));
-				break;
 			default:
-				break;
+				super.processMessage(type, sb);
 		}
 	}
 	
-	/** Returns the state the Scout should execute this turn, using the current
-	 * state.
-	 * @modifies Must not modify the state of the Scout in any way!
-	 * @returns The state to execute this turn.
-	 */
-	private ScoutState getNextState() throws GameActionException {
-		// check if we should transition
-		switch (curState) {
-			case INITIALIZE:
-				// if we're done initializing, start exploring
-				if (initialized) {
-					return ScoutState.WIRE;
-				}
-				break;
-			case WIRE:
-				break;
-			default:
-				// we got g'd
-				rc.suicide();
-				break;
-		}
-		// if we didn't transition, stay in the current state
-		return curState;
-	}
-	
-	/**
-	 * Initializes the Scout. The Scout should only ever enter this state once:
-	 * when it is born
-	 */
-	private void initialize() throws GameActionException {
-		// set navigation mode
-		nav.setNavigationMode(NavigationMode.GREEDY);
-		// initialize broadcast system
-		io.setChannels(new BroadcastChannel[] {
-				BroadcastChannel.ALL,
-				BroadcastChannel.SCOUTS,
-				BroadcastChannel.EXPLORERS
-		});
-		// initialize map cache
-		mc.senseAll();
-		// done initializing
-		initialized = true;
-	}
-	
-	/**
-	 * Form a wire.
-	 */
-	private void wire() throws GameActionException {
-		// set micro mode
-		micro.setChargeMode();
-		if (sws.isOnWire()) {
-			// go to my wire location
-			micro.setObjective(sws.getMyWireLocation());
-			micro.attackMove();
-			// abort if not enough flux
-			if (rc.getFlux() < ScoutConstants.MIN_WIRE_FLUX) {
-				sws.broadcastAbortWire();
+	@Override
+	public MoveInfo computeNextMove() throws GameActionException {
+		if (radar.closestEnemy != null) {
+			// if an enemy is nearby, stay in (8, 18] range
+			if (radar.closestEnemyDist <= 8) {
+				return new MoveInfo(curLoc.directionTo(objective).opposite(), true);
+			} else if (radar.closestEnemyDist <= 18) {
+				return new MoveInfo(curLoc.directionTo(objective));
+			} else {
+				return new MoveInfo(curLoc.directionTo(objective), false);
 			}
 		} else {
-			// go to home
-			if (dc.getAlliedArchons().length >= 1) {
-				micro.setObjective(dc.getAlliedArchons()[0]);
-				micro.attackMove();
-			}
+			// if no enemy is nearby, go to objective
+			return new MoveInfo(curLoc.directionTo(objective), false);
 		}
-		// share exploration information
-		if (--timeUntilBroadcast <= 0) {
-			ses.broadcastMapEdges();
+	}
+	
+	@Override
+	public void useExtraBytecodes() throws GameActionException {
+		// TODO(jven): check we didn't go over bytecodes within the method
+		// share exploration
+		super.useExtraBytecodes();
+		if (Clock.getBytecodesLeft() > 3000 && Math.random() < 0.3) {
 			ses.broadcastMapFragment();
+		}
+		if (Clock.getBytecodesLeft() > 1000 && Math.random() < 0.3) {
 			ses.broadcastPowerNodeFragment();
-			timeUntilBroadcast = ScoutConstants.SES_FREQUENCY;
+		}
+		if (Clock.getBytecodesLeft() > 1000 && Math.random() < 0.3) {
+			ses.broadcastMapEdges();
+		}
+		// process shared exploration
+		while (Clock.getBytecodesLeft() > 7000) {
+			mc.extractUpdatedPackedDataStep();
 		}
 	}
 }
