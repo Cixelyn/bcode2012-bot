@@ -42,8 +42,6 @@ public class HibernationSystem {
 				time = Clock.getRoundNum();
 				if (mints[2] <= time && mints[2] > time - 10) {
 					br.resetClock();
-					br.io.sendShort(BroadcastChannel.SOLDIERS, BroadcastType.MAP_EDGES, 
-							5); // dummy message, should never be processed
 					br.io.sendWakeupCall();
 					return; // our exit point
 				}

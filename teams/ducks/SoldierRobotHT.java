@@ -13,6 +13,8 @@ public class SoldierRobotHT extends BaseRobot {
 		LOOKING_TO_HIBERNATE,
 		/** Hibernate until someone wakes it up. */
 		HIBERNATE,
+		/** Has too much flux (from being a battery), needs to give it back to archon. */
+		POOL,
 		/** No enemies to deal with. */
 		SWARM,
 		/** Run away from enemy forces. */
@@ -43,17 +45,21 @@ public class SoldierRobotHT extends BaseRobot {
 				BroadcastChannel.ALL, 
 				BroadcastChannel.SOLDIERS
 		});
-		fbs.setBattleMode();
+		fbs.setPoolMode();
 		behavior = BehaviorState.SWARM;
 		senderSwarming = true;
 	}
 
 	@Override
 	public void run() throws GameActionException {
+		
+		// Scan everything every turn
 		radar.scan(true, true);
+		
 		RobotInfo closestEnemy = radar.closestEnemy;
+		boolean shouldSetNavTarget = true;
 		if(closestEnemy != null) {
-			// Scanned an enemy, lock onto it
+			// If we scanned an enemy, lock onto it
 			behavior = BehaviorState.TARGET_LOCKED;
 			target = closestEnemy.location;
 			nav.setNavigationMode(NavigationMode.GREEDY);
@@ -63,13 +69,12 @@ public class SoldierRobotHT extends BaseRobot {
 			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 			if(behavior==BehaviorState.LOST && distToClosestArchon>25 || 
 					distToClosestArchon>64) {
-				// Really far from all allied archons, move to closest one
+				// If all allied archons are far away, move to closest one
 				behavior = BehaviorState.LOST;
 				nav.setNavigationMode(NavigationMode.BUG);
 				target = dc.getClosestArchon();
-				if(previousBugTarget==null || 
-						target.distanceSquaredTo(previousBugTarget)>25)
-					nav.setDestination(target);
+				if(previousBugTarget!=null && target.distanceSquaredTo(previousBugTarget)<=25)
+					shouldSetNavTarget = false;
 				previousBugTarget = target;
 			} else {	
 				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && senderSwarming && 
@@ -80,6 +85,10 @@ public class SoldierRobotHT extends BaseRobot {
 				} else if(closestSenderDist == Integer.MAX_VALUE) { 
 					// We did not receive any targeting broadcasts from our archons
 					behavior = BehaviorState.SWARM;
+					target = dc.getClosestArchon();
+				} else if(!senderSwarming && rc.getFlux() > myMaxFlux*2/3) {
+					// Would be seeking enemy, but needs to dump flux first
+					behavior = BehaviorState.POOL;
 					target = dc.getClosestArchon();
 				} else {
 					// Follow target of closest archon's broadcast
@@ -95,24 +104,34 @@ public class SoldierRobotHT extends BaseRobot {
 					hibernateTarget = target;
 				} 
 				nav.setNavigationMode(NavigationMode.GREEDY);
-				nav.setDestination(target);
 				previousBugTarget = null;
 			}
 			
 			
 		}
+		if(shouldSetNavTarget)
+			nav.setDestination(target);
 		
+		// Attack an enemy if we can
 		if(!rc.isAttackActive() && closestEnemy != null && 
 				rc.canAttackSquare(closestEnemy.location)) {
 			rc.attackSquare(closestEnemy.location, closestEnemy.robot.getRobotLevel());
 		}
 		
-		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
-		rc.setIndicatorString(1, "behavior_state="+behavior);
+		// Set the flux balance mode
+		if(behavior == BehaviorState.SWARM)
+			fbs.setBatteryMode();
+		else
+			fbs.setPoolMode();
 		
+		// Set debug string
+		rc.setIndicatorString(1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
+		
+		// Reset messaging variables
 		closestSenderDist = Integer.MAX_VALUE;
 		senderSwarming = true;
 		
+		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE) {
 			HibernationSystem hsys = new HibernationSystem(this);
 			hsys.run();

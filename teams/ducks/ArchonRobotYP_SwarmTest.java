@@ -754,6 +754,6 @@ public class ArchonRobotYP_SwarmTest extends StrategyRobotExtended {
 	
 	private void sendSwarmInfo(Direction dir)
 	{
-		io.sendShort(BroadcastChannel.ARCHONS, BroadcastType.SWARM_DETAILS, dir.ordinal());
+		io.sendUShort(BroadcastChannel.ARCHONS, BroadcastType.SWARM_DETAILS, dir.ordinal());
 	}
 }

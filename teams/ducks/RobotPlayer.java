@@ -20,15 +20,20 @@ public class RobotPlayer {
 				else if(owner.equals("yp")) 
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
-					br = new ArchonRobotYP(myRC);
+//					br = new ArchonRobotYP(myRC);
 //					br = new ArchonRobotHT(myRC);
 //					br = new FunBot(myRC);
 					if (br==null)
 					{
 						if (myRC.getTeam()==Team.A)
-							br = new ArchonRobotHT(myRC);
+							br = new ArchonRobotYP(myRC);
+//							br = new ArchonRobotHT(myRC);
+//							br = new ArchonRobotJV(myRC);
+//							br = new ArchonRobotCL(myRC);
+						
 						else
-							br = new ArchonRobotJV(myRC);
+							br = new ArchonRobotHT(myRC);
+//							br = new ArchonRobotJV(myRC);
 					}
 					
 				} else br = new ArchonRobot(myRC);
@@ -39,15 +44,19 @@ public class RobotPlayer {
 				else if(owner.equals("cory")) br = new SoldierRobotCL(myRC);
 				else if (owner.equals("yp"))
 				{
-					br = new SoldierRobotYP(myRC);
+//					br = new SoldierRobotYP(myRC);
 //					br = new SoldierRobotHT(myRC);
 //					br = new FunBot(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
-							br = new SoldierRobotHT(myRC);
+							br = new SoldierRobotYP(myRC);
+//							br = new SoldierRobotHT(myRC);
+//							br = new SoldierRobotJV(myRC);
+//							br = new SoldierRobotCL(myRC);
 						else
-							br = new SoldierRobotJV(myRC);
+							br = new SoldierRobotHT(myRC);
+//							br = new SoldierRobotJV(myRC);
 					}
 				} else br = new SoldierRobot(myRC);
 				break;
@@ -57,14 +66,16 @@ public class RobotPlayer {
 				else if (owner.equals("yp"))
 				{
 //					br = new ScoutRobotYP(myRC);
-					br = new ScoutRobotYP(myRC);
+//					br = new ScoutRobotYP(myRC);
 //					br = new FunBot(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
 							br = new ScoutRobotYP(myRC);
+//							br = new ScoutRobotCL(myRC);
 						else
 							br = new ScoutRobotYP(myRC);
+//							br = new ScoutRobotJV(myRC);
 					}
 				}
 				break;

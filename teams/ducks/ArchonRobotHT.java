@@ -5,6 +5,7 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
 public class ArchonRobotHT extends BaseRobot{
@@ -56,7 +57,7 @@ public class ArchonRobotHT extends BaseRobot{
 				BroadcastChannel.ARCHONS,
 				BroadcastChannel.EXPLORERS
 		});
-		fbs.setBattleMode();
+		fbs.setPoolMode();
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		strategy = StrategyState.SPLIT;
 		behavior = BehaviorState.BATTLE;
@@ -117,6 +118,12 @@ public class ArchonRobotHT extends BaseRobot{
 		// Set the target for the navigator 
 		nav.setDestination(target);
 		
+		// Set the flux balance mode
+		if(behavior == BehaviorState.SWARM)
+			fbs.setBatteryMode();
+		else
+			fbs.setPoolMode();
+		
 		// Broadcast my target info to the soldier swarm
 		int[] shorts = new int[5];
 		shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
@@ -127,8 +134,7 @@ public class ArchonRobotHT extends BaseRobot{
 		io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
 		
 		
-		rc.setIndicatorString(0, "Target: <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">");
-		rc.setIndicatorString(1, "strategy_state="+strategy+", behavior_state="+behavior);
+		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
 	
 		closestSenderDist = Integer.MAX_VALUE;
 	}
@@ -163,8 +169,8 @@ public class ArchonRobotHT extends BaseRobot{
 	}
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		int fluxToMakeSoldierAt = (strategy==StrategyState.CAP) ? 
-				((behavior==BehaviorState.SWARM) ? 301 : 210) : 150;
+		int fluxToMakeSoldierAt = (behavior==BehaviorState.SWARM) ? 280 : 
+			(strategy==StrategyState.CAP) ? 225 : 150;
 		
 		if(strategy == StrategyState.SPLIT) {
 			return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
@@ -176,8 +182,11 @@ public class ArchonRobotHT extends BaseRobot{
 		
 		if(dc.getClosestArchon()!=null) {
 			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if(distToNearestArchon <= 25 && Math.random() < 0.6-Math.sqrt(distToNearestArchon)/10) 
+			if(distToNearestArchon <= 36 &&
+					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
+					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
 				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
+			}
 		}
 		
 		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.9)
@@ -215,14 +224,14 @@ public class ArchonRobotHT extends BaseRobot{
 	
 	@Override
 	public void useExtraBytecodes() throws GameActionException {
-		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3000)
+		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>5000)
 			nav.prepare(); 
 		if(Clock.getRoundNum()%6==myArchonID) {
-			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>4000)
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>5000)
 				ses.broadcastMapFragment();
-			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2000)
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3000)
 				ses.broadcastPowerNodeFragment();
-			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1000) 
+			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2000) 
 				ses.broadcastMapEdges();
 		}
 		super.useExtraBytecodes();
