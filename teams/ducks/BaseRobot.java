@@ -103,17 +103,12 @@ public abstract class BaseRobot {
 	public void loop() {
 		while(true) {
 			
-			// Note: We use try-catch judiciously to isolate system failures
-			// For instance, if message receiving gets dicked, we still want
-			// to be able to execute normal moves. Similarly, if the extra
-			// bytecode engine fails, we want to still make it to yield
-			
 			// Begin New Turn
 			resetClock();
 			updateRoundVariables();
 			
 
-			// Message Receive Loop
+			// Message Receive Loop - in its own try-catch to protect against messaging attacks
 			try {
 				if(justRevived)
 					io.flushAllMessages();
@@ -123,30 +118,24 @@ public abstract class BaseRobot {
 				e.printStackTrace(); rc.addMatchObservation(e.toString()); }
 			
 			
-			// Main Run Call
 			try {
-				run();
-			} catch (Exception e) {
-				e.printStackTrace(); rc.addMatchObservation(e.toString());
-			}
-
-			// Call Movement State Machine
-			try {
-				msm.step();
-			} catch (Exception e) {
-				e.printStackTrace(); rc.addMatchObservation(e.toString());
-			}
-
-			// Check if we've already run out of bytecodes
-			if(checkClock()) {
-				rc.yield();
-				continue;
-			}
 				
-			// Use excess bytecodes
-			try {
+				// Main Run Call
+				run();
+				
+				// Call Movement State Machine
+				msm.step();
+
+				// Check if we've already run out of bytecodes
+				if(checkClock()) {
+					rc.yield();
+					continue;
+				}
+				
+				// Use excess bytecodes
 				if(Clock.getRoundNum()==executeStartTime && Clock.getBytecodesLeft()>1000)
 					useExtraBytecodes();
+				
 			} catch (Exception e) {
 				e.printStackTrace(); rc.addMatchObservation(e.toString());
 			}
@@ -208,8 +197,9 @@ public abstract class BaseRobot {
 	
 	/** If there are bytecodes left to use this turn, will call this function
 	 * a single time. Function should very hard not to run over bytecodes.
+	 * @throws GameActionException 
 	 */
-	public void useExtraBytecodes() {
+	public void useExtraBytecodes() throws GameActionException {
 		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2000 &&
 				rc.getFlux() > 0.05) 
 			io.sendAll();

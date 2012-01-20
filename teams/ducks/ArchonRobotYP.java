@@ -7,6 +7,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
+import battlecode.common.TerrainTile;
 
 enum ArchonState {
 	ATTACKBASE,
@@ -20,6 +21,8 @@ class ArchonConstants {
 	
 	public static final int CHASE_ROUNDS = 40;
 	public static final int RETREAT_ROUNDS = 40;
+	
+	public static final int SWARM_IN_FRONT_REQUIRED = 2;
 	
 	public static final int RETREAT_THRESHOLD = -4;
 	public static final int RETREAT_STABILIIZE = 0;
@@ -35,7 +38,7 @@ class ArchonConstants {
 	public static final double RETREAT_SPAWN_SOLDIER = 120+5;
 
 	public static final double ATTACK_SPAWN_SCOUT = 80+30;
-	public static final double CAPTURE_SPAWN_SCOUT = 215;
+	public static final double CAPTURE_SPAWN_SCOUT = 210;
 	public static final double CHASE_SPAWN_SCOUT = 80+10;
 	public static final double RETREAT_SPAWN_SCOUT = 80+5;
 	
@@ -48,6 +51,9 @@ class ArchonConstants {
 	public static final double CAPTURE_SPAWN_SCOUT_NUM = 1;
 	public static final double CHASE_SPAWN_SCOUT_NUM = 1;
 	public static final double RETREAT_SPAWN_SCOUT_NUM = 1;
+	
+	public static final int DAMAGED_ALLIED_THRESHOLD = 4;
+	public static final double DAMAGED_HEAL_THRESHOLD = 80.0;
 }
 
 public class ArchonRobotYP extends BaseRobot {
@@ -112,7 +118,7 @@ public class ArchonRobotYP extends BaseRobot {
 		if (archonIndex != 0)
 		{
 			MapLocation[] archons = dc.getAlliedArchons();
-			if (archonIndex >= archons.length) archonIndex = archons.length;
+			if (archonIndex >= archons.length) archonIndex = archons.length-1;
 			while (!archons[archonIndex].equals(curLoc)) archonIndex--;
 		}
 	}
@@ -205,9 +211,6 @@ public class ArchonRobotYP extends BaseRobot {
 			break;
 		}
 		
-		
-		
-		fbs.manageFlux();
 	}
 	
 	public void execute(ArchonState state) throws GameActionException
@@ -455,6 +458,15 @@ public class ArchonRobotYP extends BaseRobot {
 				}
 			}
 			
+			if ((	radar.numAllyDamaged > ArchonConstants.DAMAGED_ALLIED_THRESHOLD || 
+					curEnergon < ArchonConstants.DAMAGED_HEAL_THRESHOLD) &&
+					rc.senseTerrainTile(curLocInFront) != TerrainTile.OFF_MAP)
+			{
+				if (rc.getFlux() > ArchonConstants.ATTACK_SPAWN_SCOUT)
+				{
+					return new MoveInfo(RobotType.SCOUT, curDir);
+				}
+			}
 			
 			nav.setDestination(movetarget);
 			return new MoveInfo(nav.navigateToDestination(), false);
@@ -495,6 +507,16 @@ public class ArchonRobotYP extends BaseRobot {
 					}
 				}
 				
+				if ((	radar.numAllyDamaged > ArchonConstants.DAMAGED_ALLIED_THRESHOLD || 
+						curEnergon < ArchonConstants.DAMAGED_HEAL_THRESHOLD) &&
+						rc.senseTerrainTile(curLocInFront) != TerrainTile.OFF_MAP)
+				{
+					if (rc.getFlux() > ArchonConstants.CAPTURE_SPAWN_SCOUT)
+					{
+						return new MoveInfo(RobotType.SCOUT, curDir);
+					}
+				}
+				
 				nav.setDestination(movetarget);
 				return new MoveInfo(nav.navigateToDestination(),true);
 			}
@@ -521,7 +543,8 @@ public class ArchonRobotYP extends BaseRobot {
 				}
 			}
 			
-			if (radar.closestEnemyDist < ArchonConstants.CHASE_CLOSEST_DIST)
+			if (radar.closestEnemyDist < ArchonConstants.CHASE_CLOSEST_DIST ||
+					radar.alliesInFront < ArchonConstants.SWARM_IN_FRONT_REQUIRED)
 				return new MoveInfo(radar.getEnemySwarmTarget().directionTo(curLoc),true);
 			
 			return new MoveInfo(chaseDir, false);
@@ -563,7 +586,7 @@ public class ArchonRobotYP extends BaseRobot {
 	}
 	
 	@Override
-	public void useExtraBytecodes() {
+	public void useExtraBytecodes() throws GameActionException {
 		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2500)
 			nav.prepare(); 
 		if(Clock.getRoundNum()%8==origAID) {

@@ -4,7 +4,6 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
-import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
@@ -20,7 +19,7 @@ class SoldierConstants {
 	public static final int SWARM_ROUNDS_UNTIL_STALE = 20;
 	public static final int CHASE_ROUNDS = 40;
 	
-	public static final int CHASE_CLOSE_DISTANCE = 2;
+	public static final int CHASE_CLOSE_DISTANCE = 3;
 	
 	public static final int RETREAT_ROUNDS = 20;
 	
@@ -30,6 +29,7 @@ class SoldierConstants {
 	
 	public static int SWARM_TOO_CLOSE_DISTANCE = 3;
 	public static int SWARM_TOO_FAR_DISTANCE = 30;
+	public static int SWARM_ACCEPTABLE_DISTANCE = 30;
 	
 	public static double SHUTDOWN_THRESHOLD = 1.0;
 	
@@ -51,6 +51,8 @@ public class SoldierRobotYP extends BaseRobot {
 //	private MapLocation closestArchon;
 	private MapLocation swarmLoc;
 	private Direction swarmDir;
+	private MapLocation newswarmLoc;
+	private Direction newswarmDir;
 	private int swarmUpdateRounds;
 	private int closestmsg;
 	
@@ -95,10 +97,12 @@ public class SoldierRobotYP extends BaseRobot {
 		}
 		
 		closestmsg = 999;
+		newswarmLoc = null;
+		newswarmDir = null;
 		
 		eakc.broadcastDeadEnemyArchonIDs();
 		
-		fbs.manageFlux();
+//		fbs.manageFlux();
 	}
 	
 	public void execute(SoldierState state) throws GameActionException
@@ -133,6 +137,19 @@ public class SoldierRobotYP extends BaseRobot {
 				swarmDir = Constants.directions[msg[0]];
 				swarmUpdateRounds = 0;
 			}
+//			if (swarmDir != null)
+//			{
+//				
+//			} else 
+//			{
+//				if (dist < closestmsg)
+//				{
+//					newswarmLoc = loc;
+//					newswarmDir = Constants.directions[msg[0]];
+//					swarmUpdateRounds = 0;
+//				}
+//			}
+			
 		} break;
 		}
 	}
@@ -335,7 +352,7 @@ public class SoldierRobotYP extends BaseRobot {
 				
 				if (curDir != swarmDir)
 					return new MoveInfo(swarmDir);
-				else new MoveInfo(swarmDir, false);
+				else return new MoveInfo(swarmDir, false);
 			}
 			case CHASE:
 			{

@@ -50,14 +50,15 @@ public class FluxBalanceSystem {
 	
 	/**
 	 * Distribute flux depending on unit type and flux manager mode.
+	 * @throws GameActionException 
 	 */
-	public void manageFlux() {
+	public void manageFlux() throws GameActionException {
 		// we catch GameActionException to avoid trying to manage flux with stale
 		// information
 		if(mode != null) {
 			if (radar==null)
 				radar = br.radar;
-			try {
+
 				radar.scan(true, false);
 				
 				if (mode == FluxManagerMode.BATTERY &&
@@ -73,11 +74,7 @@ public class FluxBalanceSystem {
 						br.myType != RobotType.ARCHON) {
 					distributeUnitBattle();
 				}
-			} catch (GameActionException e) {
-				e.printStackTrace();
-				rc.addMatchObservation(e.toString());
-				return;
-			}
+
 		}
 	}
 	

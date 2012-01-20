@@ -104,8 +104,9 @@ public class ArchonRobotHT extends BaseRobot{
 		}
 		
 		// If we change to a new target, wake up hibernating allies
-		if(behavior == BehaviorState.SWARM && (previousWakeupTarget == null ||
-				target.distanceSquaredTo(previousWakeupTarget) > 25)) {
+		if(previousWakeupTarget == null ||
+				target.distanceSquaredTo(previousWakeupTarget) > 25 ||
+				behavior != BehaviorState.SWARM) {
 			roundStartWakeupMode = curRound;
 			previousWakeupTarget = target;
 		}
@@ -213,7 +214,7 @@ public class ArchonRobotHT extends BaseRobot{
 	}
 	
 	@Override
-	public void useExtraBytecodes() {
+	public void useExtraBytecodes() throws GameActionException {
 		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3000)
 			nav.prepare(); 
 		if(Clock.getRoundNum()%6==myArchonID) {
