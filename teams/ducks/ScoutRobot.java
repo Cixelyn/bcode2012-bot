@@ -9,13 +9,11 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
-enum ScoutState {
-	CHASE,
-	SWARM,
-	RETREAT,
-}
 
-class ScoutConstants {
+
+
+public class ScoutRobot extends BaseRobot {
+	
 	public static final int SWARM_ROUNDS_UNTIL_STALE = 20;
 	public static final int CHASE_ROUNDS = 40;
 	
@@ -27,18 +25,21 @@ class ScoutConstants {
 	public static final int RETREAT_STABILIZE = -2;
 	public static final int RETREAT_CHASE = -1;
 	
-	public static int SWARM_TOO_CLOSE_DISTANCE = 3;
-	public static int SWARM_TOO_FAR_DISTANCE = 30;
+	public static final int SWARM_TOO_CLOSE_DISTANCE = 3;
+	public static final int SWARM_TOO_FAR_DISTANCE = 30;
 	
-	public static double SHUTDOWN_THRESHOLD = 1.0;
+	public static final double SHUTDOWN_THRESHOLD = 1.0;
 	
-	public static double HEAL_THRESHOLD_FLUX = 4.0;
-	public static double HEAL_THRESHOLD_NUM = 2;
+	public static final double HEAL_THRESHOLD_FLUX = 4.0;
+	public static final double HEAL_THRESHOLD_NUM = 2;
 	
-	public static double ATTACK = RobotType.SCOUT.attackPower+0.1;
-}
-
-public class ScoutRobot extends BaseRobot {
+	public static final double ATTACK = RobotType.SCOUT.attackPower+0.1;
+	
+	private enum ScoutState {
+		CHASE,
+		SWARM,
+		RETREAT,
+	};
 	
 	private ScoutState curstate;
 	
@@ -79,8 +80,8 @@ public class ScoutRobot extends BaseRobot {
 		
 		int numdmg = radar.numAllyDamaged+(curEnergon<myMaxEnergon?1:0);
 		
-		if (rc.getFlux() > ScoutConstants.HEAL_THRESHOLD_FLUX
-				&& numdmg > ScoutConstants.HEAL_THRESHOLD_NUM)
+		if (rc.getFlux() > HEAL_THRESHOLD_FLUX
+				&& numdmg > HEAL_THRESHOLD_NUM)
 			rc.regenerate();
 		
 		switch (curstate)
@@ -163,11 +164,11 @@ public class ScoutRobot extends BaseRobot {
 			if (best == null)
 			{
 				best = ri;
-				kill = best.flux <= ScoutConstants.ATTACK;
+				kill = best.flux <= ATTACK;
 				closest = curLoc.distanceSquaredTo(best.location);
 			} else if (kill)
 			{
-				if (ri.flux > ScoutConstants.ATTACK) continue;
+				if (ri.flux > ATTACK) continue;
 				
 				int dist = curLoc.distanceSquaredTo(ri.location);
 				if (closest > dist)
@@ -182,7 +183,7 @@ public class ScoutRobot extends BaseRobot {
 				{
 					best = ri;
 					closest = curLoc.distanceSquaredTo(best.location);
-					kill = best.flux <= ScoutConstants.ATTACK;
+					kill = best.flux <= ATTACK;
 				}
 			}
 		}
@@ -203,7 +204,7 @@ public class ScoutRobot extends BaseRobot {
 		
 		
 		
-		if (swarmLoc == null || swarmUpdateRounds>ScoutConstants.SWARM_ROUNDS_UNTIL_STALE)
+		if (swarmLoc == null || swarmUpdateRounds>SWARM_ROUNDS_UNTIL_STALE)
 		{
 			swarmLoc = dc.getClosestArchon();
 			swarmDir = null;
@@ -214,7 +215,7 @@ public class ScoutRobot extends BaseRobot {
 	{
 		radar.scan(true, true);
 		
-		if (radar.getArmyDifference() <= ScoutConstants.RETREAT_THRESHOLD)
+		if (radar.getArmyDifference() <= RETREAT_THRESHOLD)
 		{
 			gotoStateAndExecute(ScoutState.RETREAT);
 			return;
@@ -259,7 +260,7 @@ public class ScoutRobot extends BaseRobot {
 			chaseTarget = radar.closestEnemy;
 		}
 		
-		chaseRounds = ScoutConstants.CHASE_ROUNDS;
+		chaseRounds = CHASE_ROUNDS;
 		
 		chaseDir = curLoc.directionTo(chaseTarget.location);
 	}
@@ -268,11 +269,11 @@ public class ScoutRobot extends BaseRobot {
 	{
 		radar.scan(true, true);
 		
-		if (radar.getArmyDifference() >= ScoutConstants.RETREAT_CHASE)
+		if (radar.getArmyDifference() >= RETREAT_CHASE)
 		{
 			gotoStateAndExecute(ScoutState.CHASE);
 			return;
-		} else if (radar.getArmyDifference() >= ScoutConstants.RETREAT_STABILIZE)
+		} else if (radar.getArmyDifference() >= RETREAT_STABILIZE)
 		{
 			gotoStateAndExecute(ScoutState.SWARM);
 			return;
@@ -286,7 +287,7 @@ public class ScoutRobot extends BaseRobot {
 				return;
 			}
 			return;
-		} else retreatRounds = ScoutConstants.RETREAT_ROUNDS;
+		} else retreatRounds = RETREAT_ROUNDS;
 		
 		retreatDir = radar.getEnemySwarmTarget().directionTo(curLoc);
 		return;
@@ -295,7 +296,7 @@ public class ScoutRobot extends BaseRobot {
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException
 	{
-		if (rc.getFlux() < ScoutConstants.SHUTDOWN_THRESHOLD)
+		if (rc.getFlux() < SHUTDOWN_THRESHOLD)
 		{
 			//TODO turn around code
 			return null;
@@ -326,12 +327,12 @@ public class ScoutRobot extends BaseRobot {
 					return new MoveInfo(swarmDir, false);
 				}
 				
-				if (curLoc.distanceSquaredTo(swarmLoc) < ScoutConstants.SWARM_TOO_CLOSE_DISTANCE)
+				if (curLoc.distanceSquaredTo(swarmLoc) < SWARM_TOO_CLOSE_DISTANCE)
 				{
 					return new MoveInfo(swarmDir, false);
 				}
 				
-				if (curLoc.distanceSquaredTo(swarmLoc) > ScoutConstants.SWARM_TOO_FAR_DISTANCE)
+				if (curLoc.distanceSquaredTo(swarmLoc) > SWARM_TOO_FAR_DISTANCE)
 				{
 					return new MoveInfo(toSwarm, true);
 				}
@@ -342,7 +343,7 @@ public class ScoutRobot extends BaseRobot {
 			}
 			case CHASE:
 			{
-				if (curLoc.distanceSquaredTo(chaseTarget.location) <= ScoutConstants.CHASE_CLOSE_DISTANCE)
+				if (curLoc.distanceSquaredTo(chaseTarget.location) <= CHASE_CLOSE_DISTANCE)
 				{
 					return new MoveInfo(chaseDir.opposite(), true);
 				} else
