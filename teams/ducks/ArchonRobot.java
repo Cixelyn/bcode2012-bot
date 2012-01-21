@@ -158,24 +158,21 @@ public class ArchonRobot extends BaseRobot{
 		if (behavior == BehaviorState.RETREAT)
 		{
 			// Broadcast my target info to the soldier swarm
-			int[] shorts = new int[5];
-			shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
+			int[] shorts = new int[3];
+			shorts[0] = 55555;
 			shorts[1] = curLoc.x;
 			shorts[2] = curLoc.y;
-			shorts[3] = curLoc.x;
-			shorts[4] = curLoc.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
 		} else
 		{
 			// Broadcast my target info to the soldier swarm
-			int[] shorts = new int[5];
-			shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
+			int[] shorts = new int[3];
+			shorts[0] = 55555;
 			shorts[1] = target.x;
 			shorts[2] = target.y;
-			shorts[3] = curLoc.x;
-			shorts[4] = curLoc.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
 		}
+		
 		
 		
 		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
