@@ -32,6 +32,8 @@ public class ArchonRobot extends BaseRobot{
 		CHASE;
 	}
 	int myArchonID;
+	
+	/** round we are releasing our lock */
 	int roundLockTarget;
 	int roundStartWakeupMode;
 	MapLocation target;
@@ -40,6 +42,7 @@ public class ArchonRobot extends BaseRobot{
 	BehaviorState behavior;
 	MapLocation previousWakeupTarget;
 	
+	static final int RETREAT_RADIUS = 5;
 	MapLocation lastPowerNodeGuess;
 	
 	public ArchonRobot(RobotController myRC) throws GameActionException {
@@ -88,18 +91,21 @@ public class ArchonRobot extends BaseRobot{
 		if(curRound%3 == myArchonID%3)
 			radar.broadcastEnemyInfo();
 		
-//		if (behavior == BehaviorState.RETREAT)
-//		{
-//			if (radar.alliesInFront - radar.numEnemyRobots+radar.numEnemyArchons == 0)
-//				roundLockTarget = 0;
-//		}
+		if (behavior == BehaviorState.RETREAT)
+		{
+			if (radar.getArmyDifference() > 2)
+			{
+				roundLockTarget = 0;
+			}
+		}
 		
 		// If there is an enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null) {
-			roundLockTarget = curRound;
+			roundLockTarget = curRound+30;
 			if (radar.getArmyDifference() < -2 ||
 					(radar.alliesInFront==0 && radar.numEnemyRobots-radar.numEnemyArchons>0))
 			{
+				roundLockTarget = curRound+30;
 				behavior = BehaviorState.RETREAT;
 //				int b1 = Clock.getBytecodeNum();
 				String ret = computeRetreatTarget();
@@ -120,7 +126,7 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		// If we haven't seen anyone for 30 turns, go to swarm mode and reset target
-		else if(curRound > roundLockTarget + 30 || targetDir==null) {
+		else if(curRound > roundLockTarget || targetDir==null) {
 			behavior = BehaviorState.SWARM;
 			if(strategy == StrategyState.DEFEND) {
 				target = myHome;
@@ -200,6 +206,7 @@ public class ArchonRobot extends BaseRobot{
 	
 	private String computeRetreatTarget()
 	{
+		lastPowerNodeGuess = null;
 //		7 0 1
 //		6   2
 //		5 4 3
@@ -207,13 +214,13 @@ public class ArchonRobot extends BaseRobot{
 		int[] wall_in_dir = new int[8];
 		
 //		now, deal with when we are close to map boundaries
-		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax)<curLoc.x+6)
+		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS)
 		{
-			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
 			{
 //				we are near the SOUTH_EAST corner
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[4] = wall_in_dir[5] = 1;
-			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
 			{
 //				we are near the NORTH_EAST corner
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[0] = wall_in_dir[7] = 1;
@@ -222,16 +229,16 @@ public class ArchonRobot extends BaseRobot{
 //				we are near the EAST edge
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = 1;
 			}
-		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin)>curLoc.x-6)
+		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS)
 		{
-			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
 			{
 //				we are near the SOUTH_WEST corner
 				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
-			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
 			{
 //				we are near the NORTH_WEST corner
-				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[0] = wall_in_dir[5] = 1;
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[0] = wall_in_dir[1] = 1;
 			} else
 			{
 //				we are near the WEST edge
@@ -239,14 +246,14 @@ public class ArchonRobot extends BaseRobot{
 			}
 		} else
 		{
-			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
 			{
 //				we are near the SOUTH edge
 				wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
-			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
 			{
 //				we are near the NORTH edge
-				wall_in_dir[7] = wall_in_dir[0] = wall_in_dir[5] = 1;
+				wall_in_dir[7] = wall_in_dir[0] = wall_in_dir[1] = 1;
 			} else
 			{
 //				we are not near any wall or corner
@@ -471,9 +478,27 @@ public class ArchonRobot extends BaseRobot{
 		{
 			fluxToMakeSoldierAt = 130;
 			
+			int d = curDir.ordinal();
+			
 			if(rc.getFlux() > fluxToMakeSoldierAt)
-				if(rc.canMove(curDir)) 
-					return new MoveInfo(RobotType.SOLDIER, curDir);
+				if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+			
+			
 			
 			Direction dir = nav.navigateToDestination();
 			if(dir==null) 
