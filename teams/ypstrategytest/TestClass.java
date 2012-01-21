@@ -70,7 +70,7 @@ int t1,t2;
 		
 		int aaaa;
 		
-		int t1,t2;
+//		int t1,t2;
 		char[] c;
 		FasterQueue fq;
 		
