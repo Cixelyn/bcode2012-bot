@@ -160,7 +160,7 @@ public class ArchonRobot extends BaseRobot{
 //		{
 			// Broadcast my target info to the soldier swarm
 			int[] shorts = new int[3];
-			shorts[0] = 55555;
+			shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
 			shorts[1] = target.x;
 			shorts[2] = target.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
@@ -168,7 +168,6 @@ public class ArchonRobot extends BaseRobot{
 		
 		
 		// Set debug string
-		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
 	}
 	
 	private void computeChaseTarget()
@@ -197,7 +196,7 @@ public class ArchonRobot extends BaseRobot{
 						+(closest_in_dir[7]==99?"o":"x");
 		dir = dir+dir;
 		int index;
-		
+		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" "+dir);
 		index = dir.indexOf("ooooooo");
 		if (index>-1)
 		{
@@ -217,7 +216,7 @@ public class ArchonRobot extends BaseRobot{
 		index = dir.indexOf("ooooo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+3)%8];
+			targetDir = Constants.directions[(index+2)%8];
 			target = curLoc.add(targetDir,5);
 			return;
 		}
@@ -225,7 +224,7 @@ public class ArchonRobot extends BaseRobot{
 		index = dir.indexOf("oooo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+3)%8];
+			targetDir = Constants.directions[(index+2)%8];
 			target = curLoc.add(targetDir,5);
 			return;
 		}
@@ -233,7 +232,7 @@ public class ArchonRobot extends BaseRobot{
 		index = dir.indexOf("ooo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+3)%8];
+			targetDir = Constants.directions[(index+1)%8];
 			target = curLoc.add(targetDir,5);
 			return;
 		}
@@ -241,7 +240,7 @@ public class ArchonRobot extends BaseRobot{
 		index = dir.indexOf("oo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+3)%8];
+			targetDir = Constants.directions[(index+1)%8];
 			target = curLoc.add(targetDir,5);
 			return;
 		}
@@ -249,7 +248,7 @@ public class ArchonRobot extends BaseRobot{
 		index = dir.indexOf("o");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+3)%8];
+			targetDir = Constants.directions[(index)%8];
 			target = curLoc.add(targetDir,5);
 			return;
 		}
