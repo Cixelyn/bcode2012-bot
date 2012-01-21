@@ -86,7 +86,7 @@ public class ArchonRobot extends BaseRobot{
 		if(radar.closestEnemy != null) {
 //			target = radar.getEnemySwarmTarget();
 			roundLockTarget = curRound;
-			if (radar.numAllyRobots < radar.numEnemyRobots-3)
+			if (radar.getArmyDifference() < -2)
 			{
 				behavior = BehaviorState.RETREAT;
 				computeRetreatTarget();
@@ -226,6 +226,22 @@ public class ArchonRobot extends BaseRobot{
 	public MoveInfo computeNextMove() throws GameActionException {
 		int fluxToMakeSoldierAt;
 		
+		if (behavior==BehaviorState.RETREAT)
+		{
+			fluxToMakeSoldierAt = 130;
+			
+			if(rc.getFlux() > fluxToMakeSoldierAt)
+				if(rc.canMove(curDir)) 
+					return new MoveInfo(RobotType.SOLDIER, curDir);
+			
+			Direction dir = nav.navigateToDestination();
+			if(dir==null) 
+				return null;
+			else 
+				return new MoveInfo(dir, true);
+		}
+		
+		
 		switch (behavior)
 		{
 		case SWARM: fluxToMakeSoldierAt = 280; break;
@@ -242,6 +258,11 @@ public class ArchonRobot extends BaseRobot{
 		if(strategy == StrategyState.SPLIT) {
 			return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
 		}
+		
+		if(rc.getFlux() > fluxToMakeSoldierAt)
+			if(rc.canMove(curDir)) 
+				return new MoveInfo(RobotType.SOLDIER, curDir);
+			
 		
 		if(radar.closestEnemyDist <= 20 && behavior != BehaviorState.CHASE) {
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);

@@ -26,15 +26,16 @@ public class RobotPlayer {
 					if (br==null)
 					{
 						if (myRC.getTeam()==Team.A)
-							br = new ArchonRobot(myRC);
-//							br = new ArchonRobotYP(myRC);
+//							br = new ArchonRobot(myRC);
+							br = new ArchonRobotYP(myRC);
 //							br = new ArchonRobotHT(myRC);
 //							br = new ArchonRobotJV(myRC);
 //							br = new ArchonRobotCL(myRC);
 						
 						else
+							br = new ArchonRobot(myRC);
 //							br = new ArchonRobotYP(myRC);
-							br = new ArchonRobotHT(myRC);
+//							br = new ArchonRobotHT(myRC);
 //							br = new ArchonRobotJV(myRC);
 					}
 					
@@ -52,13 +53,14 @@ public class RobotPlayer {
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
-							br = new SoldierRobot(myRC);
-//							br = new SoldierRobotYP(myRC);
+//							br = new SoldierRobot(myRC);
+							br = new SoldierRobotYP(myRC);
 //							br = new SoldierRobotHT(myRC);
 //							br = new SoldierRobotCL(myRC);
 						else
+							br = new SoldierRobot(myRC);
 //							br = new SoldierRobotYP(myRC);
-							br = new SoldierRobotHT(myRC);
+//							br = new SoldierRobotHT(myRC);
 					}
 				} else br = new SoldierRobot(myRC);
 				break;
