@@ -41,7 +41,6 @@ public class FastUShortSet {
 			setContainer.deleteCharAt(idx);
 		}
 	}
-	
 
 	/** @return Whether the set is empty */
 	public boolean isEmpty() {
@@ -54,8 +53,12 @@ public class FastUShortSet {
 	}
 
 	/** @return number of elements in the set */
-	public int count() {
+	public int size() {
 		return setContainer.length();
+	}
+	
+	public int get(int index) {
+		return setContainer.charAt(index);
 	}
 	
 	
