@@ -5,7 +5,6 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
@@ -39,9 +38,6 @@ public class ArchonRobot extends BaseRobot{
 	Direction targetDir;
 	StrategyState strategy;
 	BehaviorState behavior;
-	int closestSenderDist;
-	boolean senderSwarming;
-	MapLocation closestArchonTarget;
 	MapLocation previousWakeupTarget;
 	
 	public ArchonRobot(RobotController myRC) throws GameActionException {
@@ -65,8 +61,6 @@ public class ArchonRobot extends BaseRobot{
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		strategy = StrategyState.SPLIT;
 		behavior = BehaviorState.BATTLE;
-		senderSwarming = true;
-		closestSenderDist = Integer.MAX_VALUE;
 	}
 	
 	@Override
@@ -83,6 +77,8 @@ public class ArchonRobot extends BaseRobot{
 		// Scan everything every turn
 		radar.scan(true, true);
 		
+		radar.broadcastEnemyInfo();
+		
 //		if (behavior == BehaviorState.RETREAT)
 //		{
 //			if (radar.alliesInFront - radar.numEnemyRobots+radar.numEnemyArchons == 0)
@@ -91,7 +87,6 @@ public class ArchonRobot extends BaseRobot{
 		
 		// If there is an enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null) {
-//			target = radar.getEnemySwarmTarget();
 			roundLockTarget = curRound;
 			if (radar.getArmyDifference() < -2 ||
 					(radar.alliesInFront==0 && radar.numEnemyRobots-radar.numEnemyArchons>0))
@@ -113,9 +108,7 @@ public class ArchonRobot extends BaseRobot{
 		// If we haven't seen anyone for 30 turns, go to swarm mode and reset target
 		else if(curRound > roundLockTarget + 30 || targetDir==null) {
 			behavior = BehaviorState.SWARM;
-			if(closestSenderDist != Integer.MAX_VALUE && !senderSwarming) {
-				target = closestArchonTarget;
-			} else if(strategy == StrategyState.DEFEND) {
+			if(strategy == StrategyState.DEFEND) {
 				target = myHome;
 			} else if(strategy == StrategyState.RUSH) {
 				target = mc.guessEnemyPowerCoreLocation();
@@ -155,29 +148,27 @@ public class ArchonRobot extends BaseRobot{
 		else
 			fbs.setPoolMode();
 		
-		if (behavior == BehaviorState.RETREAT)
-		{
-			// Broadcast my target info to the soldier swarm
-			int[] shorts = new int[3];
-			shorts[0] = 55555;
-			shorts[1] = curLoc.x;
-			shorts[2] = curLoc.y;
-			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-		} else
-		{
+//		if (behavior == BehaviorState.RETREAT)
+//		{
+//			// Broadcast my target info to the soldier swarm
+//			int[] shorts = new int[3];
+//			shorts[0] = 55555;
+//			shorts[1] = curLoc.x;
+//			shorts[2] = curLoc.y;
+//			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+//		} else
+//		{
 			// Broadcast my target info to the soldier swarm
 			int[] shorts = new int[3];
 			shorts[0] = 55555;
 			shorts[1] = target.x;
 			shorts[2] = target.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-		}
+//		}
 		
 		
-		
+		// Set debug string
 		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
-	
-		closestSenderDist = Integer.MAX_VALUE;
 	}
 	
 	private void computeChaseTarget()
@@ -285,18 +276,6 @@ public class ArchonRobot extends BaseRobot{
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
-		case SWARM_TARGET:
-			int[] shorts = BroadcastSystem.decodeUShorts(sb);
-			MapLocation senderLoc = new MapLocation(shorts[3], shorts[4]);
-			int dist = curLoc.distanceSquaredTo(senderLoc);
-			boolean wantToSwarm = shorts[0]==0;
-			if(senderSwarming&&!wantToSwarm || 
-					(senderSwarming==wantToSwarm)&&dist<closestSenderDist) {
-				closestSenderDist = dist;
-				closestArchonTarget = new MapLocation(shorts[1], shorts[2]);
-				senderSwarming = wantToSwarm;
-			}
-			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 			break;

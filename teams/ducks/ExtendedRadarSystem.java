@@ -27,16 +27,15 @@ public class ExtendedRadarSystem {
 	 * Should only be called from processMessage().
 	 */
 	public void integrateEnemyInfo(int[] info) {
-		int senderID = info[0] % BUFFER_SIZE;
+		int senderID = info[0];
 		allyLocationInfo[senderID] = new MapLocation(info[1], info[2]);
 		allyEnergonInfo[senderID] = info[3];
 		allyKeySet.addID(senderID);
 		
 		for(int n=4; n<info.length; n+=4) {
-			int id = info[n] % BUFFER_SIZE;
+			int id = info[n];
 			enemyLocationInfo[id] = new MapLocation(info[n+1], info[n+2]);
 			enemyEnergonInfo[id] = info[n+3];
-			
 			enemyKeySet.addID(id);
 		}
 	}
@@ -45,7 +44,7 @@ public class ExtendedRadarSystem {
 	 * Should only be called from processMessage().
 	 */
 	public void integrateEnemyKill(int killID) {
-		enemyKeySet.removeID(killID % BUFFER_SIZE);
+		enemyKeySet.removeID(killID);
 	}
 	
 	/** Gets info about a kill into your own and nearby robots' extended radar. */
@@ -92,6 +91,7 @@ public class ExtendedRadarSystem {
 				bestDist = dist;
 			}
 		}
+		br.rc.setIndicatorString(0, ""+size+" "+ret);
 		return ret;
 	}
 	
