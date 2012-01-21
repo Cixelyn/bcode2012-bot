@@ -12,9 +12,11 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
+import java.util.Random;
 
 import battlecode.common.Clock;
+import battlecode.common.MapLocation;
+import battlecode.common.Message;
 
 
 public class TestClass {
@@ -24,6 +26,48 @@ public class TestClass {
 	@SuppressWarnings("unused")
 	public static void run() throws Exception
 	{
+int t1,t2;
+		
+		Random rnd = new Random();
+		
+		String s1 = "abcde";
+		String s2 = "vwxyz";
+		
+		Message m = new Message();
+		m.ints = new int[]{0,1,2,3};
+		m.locations = new MapLocation[]{new MapLocation(1,2)};
+		m.strings = new String[]{"wer"};
+		
+		t1 = Clock.getBytecodeNum();
+		System.out.println(Arrays.toString(m.ints));
+		System.out.println(Arrays.toString(m.strings));
+		System.out.println(Arrays.toString(m.locations));
+		t2 = Clock.getBytecodeNum();
+		System.out.println("random: " + (t2-t1));
+		
+		
+		StringBuilder b1 = new StringBuilder("abcde");
+		StringBuilder b2 = new StringBuilder("vwxyz");
+		
+		t1 = Clock.getBytecodeNum();
+		String a = s1 + s2;
+		t2 = Clock.getBytecodeNum();
+		
+		t1 = Clock.getBytecodeNum();
+		String b = s1.concat(s2);
+		t2 = Clock.getBytecodeNum();
+		System.out.println("random: " + (t2-t1));
+	
+		t1 = Clock.getBytecodeNum();
+		b1.append(b2);
+		t2 = Clock.getBytecodeNum();
+		System.out.println("random: " + (t2-t1));
+		
+		t1 = Clock.getBytecodeNum();
+		StringBuilder b3 = new StringBuilder(b1.toString().concat(b2.toString()));
+		t2 = Clock.getBytecodeNum();
+		System.out.println("random: " + (t2-t1));
+		
 		int aaaa;
 		
 		int t1,t2;
