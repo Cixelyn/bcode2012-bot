@@ -35,6 +35,7 @@ public class ArchonRobot extends BaseRobot{
 	int roundLockTarget;
 	int roundStartWakeupMode;
 	MapLocation target;
+	Direction targetDir;
 	StrategyState strategy;
 	BehaviorState behavior;
 	int closestSenderDist;
@@ -83,17 +84,26 @@ public class ArchonRobot extends BaseRobot{
 
 		// If there is an enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null) {
-			target = radar.getEnemySwarmTarget();
+//			target = radar.getEnemySwarmTarget();
 			roundLockTarget = curRound;
-			if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
+			if (radar.numAllyRobots < radar.numEnemyRobots-3)
+			{
+				behavior = BehaviorState.RETREAT;
+				computeRetreatTarget();
+			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
 					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons)
+			{
 				behavior = BehaviorState.CHASE;
-			else
+				computeChaseTarget();
+			} else
+			{
 				behavior = BehaviorState.BATTLE;
+				computeBattleTarget();
+			}
 		}
 		
 		// If we haven't seen anyone for 30 turns, go to swarm mode and reset target
-		else if(curRound > roundLockTarget + 30) {
+		else if(curRound > roundLockTarget + 30 || targetDir==null) {
 			behavior = BehaviorState.SWARM;
 			if(closestSenderDist != Integer.MAX_VALUE && !senderSwarming) {
 				target = closestArchonTarget;
@@ -103,6 +113,17 @@ public class ArchonRobot extends BaseRobot{
 				target = mc.guessEnemyPowerCoreLocation();
 			} else {
 				target = mc.guessBestPowerNodeToCapture();
+			}
+		}
+		
+		// otherwise, we should update the target based on the prevoius target direction
+		// if we are chasing or retreating
+		else
+		{
+			switch (behavior)
+			{
+			case CHASE: updateChaseTarget(); break;
+			case RETREAT: updateRetreatTarget(); break;
 			}
 		}
 		
@@ -141,6 +162,37 @@ public class ArchonRobot extends BaseRobot{
 		closestSenderDist = Integer.MAX_VALUE;
 	}
 	
+	private void computeChaseTarget()
+	{
+		target = radar.getEnemySwarmTarget();
+		targetDir = curLoc.directionTo(target);
+	}
+	
+	private void updateChaseTarget()
+	{
+		if (curLoc.distanceSquaredTo(target) < 10)
+			target = curLoc.add(targetDir,5);
+	}
+	
+	private void computeRetreatTarget()
+	{
+		target = radar.getEnemySwarmTarget();
+		targetDir = target.directionTo(curLoc);
+		target = curLoc.add(targetDir,5);
+	}
+	
+	private void updateRetreatTarget()
+	{
+		if (curLoc.distanceSquaredTo(target) < 10)
+			target = curLoc.add(targetDir,5);
+	}
+	
+	private void computeBattleTarget()
+	{
+		target = radar.getEnemySwarmTarget();
+		targetDir = curLoc.directionTo(target);
+	}
+	
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
@@ -169,10 +221,23 @@ public class ArchonRobot extends BaseRobot{
 			super.processMessage(msgType, sb);
 		} 
 	}
+	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		int fluxToMakeSoldierAt = (behavior==BehaviorState.SWARM) ? 280 : 
-			(strategy==StrategyState.CAP) ? 225 : 150;
+		int fluxToMakeSoldierAt;
+		
+		switch (behavior)
+		{
+		case SWARM: fluxToMakeSoldierAt = 280; break;
+		case RETREAT: fluxToMakeSoldierAt = 130; break;
+		default:
+			switch (strategy)
+			{
+			case CAP: fluxToMakeSoldierAt = 225; break;
+			default: fluxToMakeSoldierAt = 150; break;
+			}
+			break;
+		}
 		
 		if(strategy == StrategyState.SPLIT) {
 			return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
