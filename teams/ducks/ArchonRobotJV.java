@@ -28,13 +28,15 @@ public class ArchonRobotJV extends BaseRobot {
 		// set initial states
 		strategy = StrategyState.SPLIT;
 		// set flux balance mode
-		fbs.setPoolMode();
+		fbs.setBatteryMode();
 		// set broadcast channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
 				BroadcastChannel.ARCHONS,
 				BroadcastChannel.EXPLORERS
 		});
+		// set navigation mode
+		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 	}
 
 	@Override
@@ -73,7 +75,8 @@ public class ArchonRobotJV extends BaseRobot {
 			case SPLIT:
 				return new MoveInfo(myHome.directionTo(birthplace), false);
 			case MAKE_SCOUTS:
-				if (rc.getFlux() >= RobotType.SCOUT.spawnCost +
+				if (curLoc.equals(dc.getAlliedArchons()[0]) &&
+						rc.getFlux() >= RobotType.SCOUT.spawnCost +
 						RobotType.SCOUT.maxFlux) {
 					if (rc.senseTerrainTile(curLocInFront) != TerrainTile.OFF_MAP &&
 							rc.senseObjectAtLocation(
@@ -83,8 +86,12 @@ public class ArchonRobotJV extends BaseRobot {
 						return new MoveInfo(curDir.rotateLeft());
 					}
 				} else {
-					return new MoveInfo(curLoc.directionTo(
-							mc.guessEnemyPowerCoreLocation()));
+					if (Math.random() < 0.3) {
+						return new MoveInfo(curLoc.directionTo(
+								mc.guessEnemyPowerCoreLocation()), false);
+					} else {
+						return null;
+					}
 				}
 			default:
 				return null;
