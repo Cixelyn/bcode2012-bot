@@ -1,6 +1,11 @@
 package ducks;
 
-import battlecode.common.*;
+import battlecode.common.Clock;
+import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
+import battlecode.common.Robot;
+import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 
 /**
  * The goal of this class is to cache data from the expensive calls to
@@ -328,5 +333,21 @@ public class RadarSystem {
 	public MapLocation getEnemySwarmCenter() {
 		return new MapLocation(centerEnemyX, centerEnemyY);
 	}
+	
+	/** Gets the enemy info from the radar into your own and nearby robots' extended radar. */
+	public void broadcastEnemyInfo() {
+		int[] shorts = new int[numEnemyRobots*4];
+		for(int i=0; i<numEnemyRobots; i++) {
+			RobotInfo ri = enemyInfos[i];
+			shorts[4*i] = ri.robot.getID();
+			shorts[4*i+1] = ri.location.x;
+			shorts[4*i+2] = ri.location.y;
+			shorts[4*i+3] = (int)Math.ceil(ri.energon);
+		}
+		br.er.integrateEnemyInfo(shorts);
+		br.io.sendUShorts(BroadcastChannel.EXTENDED_RADAR, BroadcastType.ENEMY_INFO, shorts);
+	}
+	
+
 
 }

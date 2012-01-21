@@ -20,11 +20,17 @@ public enum BroadcastType {
 	// rally code
 	RALLY,
 	
+	// extended radar
+	/** ushorts(15-bit), [robot_ID_1, loc_1.x, loc_1.y, energon_1(rounded up), robot_ID_2, loc_2.x, etc...] */
+	ENEMY_INFO,
+	/** ushort(15-bit), robot_ID_of_robot_that_I_killed */
+	ENEMY_KILL,
+	
 	// swarm code
 	ANNOUNCE_ENEMY,
 	// (temporary)
 	SWARM_DETAILS,
-	// ushorts(15-bit), [seek_or_swarm, target_loc.x, target_loc.y, sender_loc.x, sender_loc.y]
+	/** ushorts(15-bit), [seek_or_swarm, target_loc.x, target_loc.y, sender_loc.x, sender_loc.y] */
 	SWARM_TARGET,
 
 	// single ushort

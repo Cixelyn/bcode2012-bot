@@ -9,7 +9,7 @@ import battlecode.common.RobotLevel;
 
 public class SoldierRobotHT extends BaseRobot {
 	private enum BehaviorState {
-		/** Want to hibernating, need to find a non-blocking place to do it. */
+		/** Want to hibernate, need to find a non-blocking place to do it. */
 		LOOKING_TO_HIBERNATE,
 		/** Hibernate until someone wakes it up. */
 		HIBERNATE,
@@ -43,7 +43,8 @@ public class SoldierRobotHT extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.GREEDY);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
-				BroadcastChannel.SOLDIERS
+				BroadcastChannel.SOLDIERS,
+				BroadcastChannel.EXTENDED_RADAR,
 		});
 		fbs.setPoolMode();
 		behavior = BehaviorState.SWARM;
