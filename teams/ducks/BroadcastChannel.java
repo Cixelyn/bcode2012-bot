@@ -6,6 +6,7 @@ public enum BroadcastChannel {
 	ARCHONS,
 	SOLDIERS,
 	SCOUTS,
+	EXTENDED_RADAR,
 	EXPLORERS;
 	
 	public final String chanHeader;

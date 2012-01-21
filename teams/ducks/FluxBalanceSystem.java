@@ -147,7 +147,7 @@ public class FluxBalanceSystem {
 			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
 				RobotInfo ri = radar.adjacentAllies[n];
 				if (ri.type == RobotType.SCOUT) {
-					double x = Math.min(fluxToTransfer, 50-ri.flux);
+					double x = Math.min(fluxToTransfer, 49.99-ri.flux);
 					rc.transferFlux(ri.location, ri.type.level, x);
 					fluxToTransfer -= x;
 				}

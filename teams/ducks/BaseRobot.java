@@ -20,6 +20,7 @@ public abstract class BaseRobot {
 	public final FluxBalanceSystem fbs;
 	public final SharedExplorationSystem ses;
 	public final RadarSystem radar;
+	public final ExtendedRadarSystem er;
 	public final EnemyArchonKillCache eakc;
 	public final ArchonOwnership ao;
 	public final RallySystem rally;
@@ -86,6 +87,7 @@ public abstract class BaseRobot {
 		micro = new Micro(this);
 		io = new BroadcastSystem(this);
 		radar = new RadarSystem(this);
+		er = new ExtendedRadarSystem(this);
 		fbs = new FluxBalanceSystem(this);
 		ses = new SharedExplorationSystem(this);
 		eakc = new EnemyArchonKillCache(this);
