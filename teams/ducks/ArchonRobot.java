@@ -77,7 +77,8 @@ public class ArchonRobot extends BaseRobot{
 		// Scan everything every turn
 		radar.scan(true, true);
 		
-		radar.broadcastEnemyInfo();
+		if(curRound%3 == myArchonID%3)
+			radar.broadcastEnemyInfo();
 		
 //		if (behavior == BehaviorState.RETREAT)
 //		{
