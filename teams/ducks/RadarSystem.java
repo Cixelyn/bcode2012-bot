@@ -139,8 +139,6 @@ public class RadarSystem {
 		enemyInfos[pos] = rinfo;
 		enemyTimes[pos] = Clock.getRoundNum();
 
-		// TODO is caching this right now
-		// if this wasn't cached, would halve cost of scan loop
 		enemyRobots[numEnemyRobots++] = pos;
 
 		switch (rinfo.type) {
@@ -185,9 +183,7 @@ public class RadarSystem {
 		enemyInfos[pos] = rinfo;
 		enemyTimes[pos] = Clock.getRoundNum();
 
-		// TODO not caching this right now
-		// if this was cached, would double cost of scan loop
-		numEnemyRobots++;
+		enemyRobots[numEnemyRobots++] = pos;
 
 		switch (rinfo.type) {
 		case ARCHON:
@@ -410,13 +406,19 @@ public class RadarSystem {
 	
 	/** Gets the enemy info from the radar into your own and nearby robots' extended radar. */
 	public void broadcastEnemyInfo() {
-		int[] shorts = new int[numEnemyRobots*4];
-		for(int i=0; i<numEnemyRobots; i++) {
-			RobotInfo ri = enemyInfos[i];
-			shorts[4*i] = ri.robot.getID();
-			shorts[4*i+1] = ri.location.x;
-			shorts[4*i+2] = ri.location.y;
-			shorts[4*i+3] = (int)Math.ceil(ri.energon);
+		if(numEnemyRobots==0) return;
+		
+		int[] shorts = new int[numEnemyRobots*4+4];
+		shorts[0] = br.myID;
+		shorts[1] = br.curLoc.x;
+		shorts[2] = br.curLoc.y;
+		shorts[3] = (int)Math.ceil(br.curEnergon);
+		for(int i=0, c=4; i<numEnemyRobots; i++, c+=4) {
+			RobotInfo ri = enemyInfos[enemyRobots[i]];
+			shorts[c] = ri.robot.getID();
+			shorts[c+1] = ri.location.x;
+			shorts[c+2] = ri.location.y;
+			shorts[c+3] = (int)Math.ceil(ri.energon);
 		}
 		br.er.integrateEnemyInfo(shorts);
 		br.io.sendUShorts(BroadcastChannel.EXTENDED_RADAR, BroadcastType.ENEMY_INFO, shorts);

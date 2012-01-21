@@ -116,7 +116,7 @@ public class SoldierRobot extends BaseRobot {
 			RobotLevel bestLevel = null;
 			double bestValue = Double.MAX_VALUE;
 			for(int n=0; n<radar.numEnemyRobots; n++) {
-				RobotInfo ri = radar.enemyInfos[n];
+				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
 				if(!rc.canAttackSquare(ri.location)) 
 					return;
 				if((bestValue < myType.attackPower && ri.energon < myType.attackPower) ?
@@ -158,8 +158,7 @@ public class SoldierRobot extends BaseRobot {
 		switch(msgType) {
 		case SWARM_TARGET:
 			int[] shorts = BroadcastSystem.decodeUShorts(sb);
-			MapLocation senderLoc = BroadcastSystem.decodeSenderLoc(sb);
-			int dist = curLoc.distanceSquaredTo(senderLoc);
+			int dist = curLoc.distanceSquaredTo(BroadcastSystem.decodeSenderLoc(sb));
 			if(dist<closestSenderDist) {
 				closestSenderDist = dist;
 				archonTarget = new MapLocation(shorts[1], shorts[2]);

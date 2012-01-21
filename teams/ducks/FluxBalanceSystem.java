@@ -119,8 +119,8 @@ public class FluxBalanceSystem {
 	}
 	
 	private void distributeFluxBattle(double fluxToTransfer) throws GameActionException {
-		rc.setIndicatorString(0, fluxToTransfer<=0 ? "No flux to distribute" : 
-			"Trying to distribute "+String.format("%.1f", fluxToTransfer)+" flux");
+//		rc.setIndicatorString(0, fluxToTransfer<=0 ? "No flux to distribute" : 
+//			"Trying to distribute "+String.format("%.1f", fluxToTransfer)+" flux");
 		if(fluxToTransfer<=0) return;
 		
 		br.radar.scan(true, false);
