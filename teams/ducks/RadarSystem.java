@@ -1,6 +1,7 @@
 package ducks;
 
 import battlecode.common.Clock;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
@@ -65,18 +66,24 @@ public class RadarSystem {
 	public boolean needToScanAllies;
 	
 	public Robot[] robots;
-
+	
+	public int[] closestInDir;
+	final static int[] blank_closestInDir = new int[] {99,99,99,99,99,99,99,99};
+	
 	public RobotInfo closestEnemy;
 	public double closestEnemyDist;
 	
 	final boolean cachepositions;
+	final boolean isArchon;
 
 	public RadarSystem(BaseRobot br) {
-		this.br = br;
+		this.
+		br = br;
 		lastscanround = -1;
 		needToScanEnemies = true;
 		needToScanAllies = true;
 		robots = null;
+		closestInDir = new int[8];
 		switch (br.myType)
 		{
 		case SOLDIER:
@@ -84,9 +91,15 @@ public class RadarSystem {
 		case DISRUPTER:
 		case SCOUT:
 			cachepositions = true;
+			isArchon = false;
+			break;
+		case ARCHON:
+			cachepositions = false;
+			isArchon = true;
 			break;
 		default:
 			cachepositions = false;
+			isArchon = false;
 		}
 	}
 	
@@ -105,6 +118,8 @@ public class RadarSystem {
 		vecEnemyY = 0;
 		centerEnemyX = 0;
 		centerEnemyY = 0;
+		
+		System.arraycopy(blank_closestInDir, 0, closestInDir, 0, 8);
 	}
 
 	private void resetAllyStats() {
@@ -124,11 +139,9 @@ public class RadarSystem {
 		enemyInfos[pos] = rinfo;
 		enemyTimes[pos] = Clock.getRoundNum();
 
-		// TODO not caching this right now
-		// if this was cached, would double cost of scan loop
-		if (cachepositions)
-			enemyRobots[numEnemyRobots] = pos;
-		numEnemyRobots++;
+		// TODO is caching this right now
+		// if this wasn't cached, would halve cost of scan loop
+		enemyRobots[numEnemyRobots++] = pos;
 
 		switch (rinfo.type) {
 		case ARCHON:
@@ -161,6 +174,63 @@ public class RadarSystem {
 		if (dist < closestEnemyDist) {
 			closestEnemy = rinfo;
 			closestEnemyDist = dist;
+		}
+	}
+	
+	private void addEnemyForArchon(RobotInfo rinfo) throws GameActionException {
+		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
+			return;
+		
+		int pos = rinfo.robot.getID();
+		enemyInfos[pos] = rinfo;
+		enemyTimes[pos] = Clock.getRoundNum();
+
+		// TODO not caching this right now
+		// if this was cached, would double cost of scan loop
+		numEnemyRobots++;
+
+		switch (rinfo.type) {
+		case ARCHON:
+			enemyArchons[numEnemyArchons++] = pos;
+			break;
+		case DISRUPTER:
+			enemyDisruptors[numEnemyDisruptors++] = pos;
+			break;
+		case SCORCHER:
+			enemyScorchers[numEnemyScorchers++] = pos;
+			break;
+		case SCOUT:
+			enemyScouts[numEnemyScouts++] = pos;
+			break;
+		case SOLDIER:
+			enemySoldiers[numEnemySoldiers++] = pos;
+			break;
+		case TOWER:
+			enemyTowers[numEnemyTowers++] = pos;
+			break;
+		}
+		
+		// Distance Stats
+		MapLocation eloc = rinfo.location;
+		Direction dir = br.curLoc.directionTo(eloc);
+
+		centerEnemyX += eloc.x;
+		centerEnemyY += eloc.y;
+
+		int dist = eloc.distanceSquaredTo(br.curLoc);
+		if (dist < closestEnemyDist) {
+			closestEnemy = rinfo;
+			closestEnemyDist = dist;
+		}
+		
+		switch (rinfo.type) {
+		case SOLDIER:
+		case SCORCHER:
+		case DISRUPTER:
+		{
+			if (closestInDir[dir.ordinal()] > dist)
+				closestInDir[dir.ordinal()] = dist;
+		} break;
 		}
 	}
 
@@ -234,7 +304,8 @@ public class RadarSystem {
 				resetEnemyStats();
 			if (scanAllies)
 				resetAllyStats();
-
+			
+			
 			for (int idx = robots.length; --idx >= 0;) {
 				Robot r = robots[idx];
 				try {
@@ -244,7 +315,10 @@ public class RadarSystem {
 						}
 					} else {
 						if (scanEnemies) {
-							addEnemy(br.rc.senseRobotInfo(r));
+							if (isArchon)
+								addEnemyForArchon(br.rc.senseRobotInfo(r));
+							else
+								addEnemy(br.rc.senseRobotInfo(r));
 						}
 					}
 
