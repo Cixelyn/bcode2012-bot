@@ -211,25 +211,45 @@ public class ArchonRobot extends BaseRobot{
 		{
 			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
 			{
+//				we are near the SOUTH_EAST corner
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[4] = wall_in_dir[5] = 1;
 			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
 			{
+//				we are near the NORTH_EAST corner
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[0] = wall_in_dir[7] = 1;
 			} else
 			{
+//				we are near the EAST edge
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = 1;
 			}
 		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin)>curLoc.x-6)
 		{
 			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
 			{
+//				we are near the SOUTH_WEST corner
 				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
 			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
 			{
+//				we are near the NORTH_WEST corner
 				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[0] = wall_in_dir[5] = 1;
 			} else
 			{
+//				we are near the WEST edge
 				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = 1;
+			}
+		} else
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
+			{
+//				we are near the SOUTH edge
+				wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
+			{
+//				we are near the NORTH edge
+				wall_in_dir[7] = wall_in_dir[0] = wall_in_dir[5] = 1;
+			} else
+			{
+//				we are not near any wall or corner
 			}
 		}
 		
