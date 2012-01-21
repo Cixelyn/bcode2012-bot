@@ -65,6 +65,11 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
+		if(Clock.getRoundNum()%200==0 && myArchonID==5) {
+			System.out.println(mc.toString());
+		}
+		rc.setIndicatorString(0, nav.getTurnsPrepared()+"");
+		
 		// Currently the strategy transition is based on hard-coded turn numbers
 		if(Clock.getRoundNum()>1700 && myArchonID!=0) {
 			strategy = StrategyState.CAP;
@@ -169,6 +174,8 @@ public class ArchonRobot extends BaseRobot{
 		
 		
 		// Set debug string
+		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
+		
 	}
 	
 	private void computeChaseTarget()
@@ -345,8 +352,18 @@ public class ArchonRobot extends BaseRobot{
 			}
 		}
 		
-		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.9)
-			return null;
+		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.9) {
+			boolean isClosestToTarget = true;
+			int myDist = curLoc.distanceSquaredTo(target);
+			for(MapLocation loc: rc.senseAlliedArchons()) {
+				if(loc.distanceSquaredTo(target) < myDist) {
+					isClosestToTarget = false;
+					break;
+				}
+			}
+			if(isClosestToTarget) 
+				return null;
+		}
 		
 		if(strategy == StrategyState.CAP && 
 				rc.canMove(curDir) && 

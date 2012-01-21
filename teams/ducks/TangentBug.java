@@ -144,6 +144,9 @@ public class TangentBug {
 		}
 		findTangentProgress = 0;
 	}
+	public int getTurnsPrepared() {
+		return turnsPreparedBeforeMoving;
+	}
 	public void prepare(int sx, int sy) {
 		if(!(preparingsx==sx && preparingsy==sy)) {
 			if(preparingsx != -1)
