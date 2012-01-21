@@ -27,6 +27,7 @@ public class RadarSystem {
 
 	public final RobotInfo[] allyInfos = new RobotInfo[MAX_ROBOTS];
 	public final int[] allyTimes = new int[MAX_ROBOTS];
+	public final int[] allyRobots = new int[MAX_ROBOTS];
 
 	public int numAdjacentAllies;
 	public int numAllyRobots;
@@ -234,10 +235,9 @@ public class RadarSystem {
 		if (rinfo.type == RobotType.TOWER) return;
 		
 		int pos = rinfo.robot.getID();
+		allyRobots[numAllyRobots++] = pos;
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
-
-		numAllyRobots++;
 
 		if (rinfo.energon != rinfo.type.maxEnergon) {
 			numAllyDamaged++;
@@ -453,13 +453,13 @@ public class RadarSystem {
 		shorts[0] = br.myID;
 		shorts[1] = br.curLoc.x;
 		shorts[2] = br.curLoc.y;
-		shorts[3] = (int)Math.ceil(br.curEnergon);
+		shorts[3] = br.myType==RobotType.ARCHON ? 0 : (int)Math.ceil(br.curEnergon);
 		for(int i=0, c=4; i<numEnemyRobots; i++, c+=4) {
 			RobotInfo ri = enemyInfos[enemyRobots[i]];
 			shorts[c] = ri.robot.getID();
 			shorts[c+1] = ri.location.x;
 			shorts[c+2] = ri.location.y;
-			shorts[c+3] = (int)Math.ceil(ri.energon);
+			shorts[c+3] = (ri.type==RobotType.ARCHON || ri.type==RobotType.TOWER) ? 0 : (int)Math.ceil(ri.energon);
 		}
 		br.er.integrateEnemyInfo(shorts);
 		br.io.sendUShorts(BroadcastChannel.EXTENDED_RADAR, BroadcastType.ENEMY_INFO, shorts);

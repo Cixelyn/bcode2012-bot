@@ -52,7 +52,10 @@ public class SoldierRobot extends BaseRobot {
 		
 		// Scan everything every turn
 		radar.scan(true, true);
-		radar.broadcastEnemyInfo();
+		if(curRound%5 == myID%5)
+			radar.broadcastEnemyInfo();
+		
+		rc.setIndicatorString(0, er.toString());
 		
 		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
 		boolean shouldSetNavTarget = true;
@@ -118,7 +121,7 @@ public class SoldierRobot extends BaseRobot {
 			for(int n=0; n<radar.numEnemyRobots; n++) {
 				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
 				if(!rc.canAttackSquare(ri.location)) 
-					return;
+					continue;
 				if((bestValue < myType.attackPower && ri.energon < myType.attackPower) ?
 						ri.energon > bestValue : ri.energon < bestValue) {
 					// Say a soldier does 6 damage. We prefer hitting units with less energon, but we also would rather hit a unit with 5 energon than a unit with 1 energon.
@@ -127,6 +130,7 @@ public class SoldierRobot extends BaseRobot {
 					bestValue = ri.energon;
 				}
 			}
+			
 			if(bestLoc!=null)
 				rc.attackSquare(bestLoc, bestLevel);
 		}
@@ -215,9 +219,9 @@ public class SoldierRobot extends BaseRobot {
 			// Fighting an enemy, kite target
 			boolean weHaveBiggerFront = er.getEnergonDifference(16) > 0;
 			int tooClose = behavior==BehaviorState.TARGET_LOCKED ? 
-					(weHaveBiggerFront ? -1 : 2) : 1;
+					(weHaveBiggerFront ? -1 : 5) : 1;
 			int tooFar = behavior==BehaviorState.TARGET_LOCKED ? 
-					(weHaveBiggerFront ? 4 : 14) : 11;
+					(weHaveBiggerFront ? 4 : 26) : 11;
 			
 			if(curLoc.distanceSquaredTo(target) <= tooClose) {
 				return new MoveInfo(curLoc.directionTo(target).opposite(), true);
