@@ -9,10 +9,12 @@ public class ExtendedRadarSystem {
 	private final BaseRobot br;
 	public final MapLocation[] locationInfo;
 	public final int[] energonInfo;
+	private final FastIDSet keySet;
 	public ExtendedRadarSystem(BaseRobot br) {
 		this.br = br;
 		locationInfo = new MapLocation[BUFFER_SIZE];
 		energonInfo = new int[BUFFER_SIZE];
+		keySet = new FastIDSet(5);
 	}
 	
 	/** Ally broadcasted some enemy info to us, integrate it into the system. <br>
@@ -24,7 +26,7 @@ public class ExtendedRadarSystem {
 			locationInfo[id] = new MapLocation(info[n+1], info[n+2]);
 			energonInfo[id] = info[n+3];
 			
-			// TODO add ID to ID_SET
+			keySet.addID(id);
 		}
 	}
 	
@@ -32,9 +34,7 @@ public class ExtendedRadarSystem {
 	 * Should only be called from processMessage().
 	 */
 	public void integrateEnemyKill(int killID) {
-		int id = killID % BUFFER_SIZE;
-			
-		// TODO if ID is in ID_SET, remove ID from ID_SET
+		keySet.removeID(killID % BUFFER_SIZE);
 	}
 	
 	/** Gets info about a kill into your own and nearby robots' extended radar. */
@@ -45,26 +45,53 @@ public class ExtendedRadarSystem {
 	
 	/** Adds block of enemy info from this turn and removes block that timed out. */
 	public void step() {
-		// TODO do shit in the ID_SET
+		keySet.endRound();
 	}
 	
 	/** Returns the location of this closest enemy. */
 	public MapLocation getClosestEnemyLocation() {
-		
-		return null;
+		int size = keySet.size();
+		MapLocation ret = null;
+		int bestDist = Integer.MAX_VALUE;
+		for(int i=0; i<size; i++) {
+			int id = keySet.getID(i);
+			int dist = br.curLoc.distanceSquaredTo(locationInfo[id]);
+			if(dist<bestDist) {
+				ret = locationInfo[id];
+				bestDist = dist;
+			}
+		}
+		return ret;
 	}
 	
 	/** Returns a direction to go that will most likely bring you to an enemy. */
 	public Direction getDirectionWithMostEnemies() {
-		
-		return null;
+		int[] counts = new int[8];
+		int size = keySet.size();
+		for(int i=0; i<size; i++) {
+			int id = keySet.getID(i);
+			int dirOrdinal = br.curLoc.directionTo(locationInfo[id]).ordinal();
+			if(dirOrdinal<8) {
+				counts[(dirOrdinal+1)%8]++;
+				counts[dirOrdinal]+=2;
+				counts[(dirOrdinal+7)%8]++;
+			}
+		}
+		int bestdirOrdinal = -1;
+		int bestValue = -1;
+		for(int i=0; i<8; i++) {
+			if(counts[i]>bestValue) {
+				bestdirOrdinal = i;
+				bestValue = counts[i];
+			}
+		}
+		return Constants.directions[bestdirOrdinal];
 	}
 	
 	/** Returns the average of the directions of the enemies. 
 	 * May be useful for approximating a retreat direction. 
 	 */
 	public Direction getAverageEnemyDirection() {
-		
-		return null;
+		throw new RuntimeException("ExtendedRadarSystem.getAverageEnemyDirection() not yet implemented!");
 	}
 }
