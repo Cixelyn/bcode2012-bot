@@ -1,9 +1,11 @@
 package ducks;
 
 public class FastIDSet {
-
+	
+	
 	private final FastUShortSet mergeSet;
 	private final StringBuilder rawBlockSet;
+	private StringBuilder curBlock;
 	
 	private int maxBlocks;
 	private int numBlocks;
@@ -11,42 +13,61 @@ public class FastIDSet {
 	private static final char DELIMITER_C = (char)-1;
 	private static final String DELIMITER_S = String.valueOf(DELIMITER_C);
 	
-	
 	public FastIDSet(int size) {
 		rawBlockSet = new StringBuilder();
+		curBlock = new StringBuilder();
+		
 		mergeSet = new FastUShortSet();
 		maxBlocks = size;
+		numBlocks = 0;
 	}
 	
-	public void addID(int robotID) {}
-	public void removeID(int robotID) {}
-	public void endRound() {}
-	public void size() {}
-	public void getID(int index) {}
 	
 	
-//	public void addIDBlock(int[] ids) {
-//		for(int id : ids) {
-//			
-//			
-//		}
-//	}
-//	
-//	
-//	public void addIDBlock(StringBuilder block) {
-//		
-//		// add the new block
-//		rawBlockSet.append(block);
-//		rawBlockSet.append(DELIMITER_C);
-//		
-//		// fill in the merge set
-//		for(int i=block.length(); --i>=0;) {
-//			mergeSet.add(block.charAt(i));
-//		}
-//		
-//		numBlocks++;
-//	}
-//	
+	
+	public void addID(int robotID) {
+		
+		
+		
+	}
+	
+	public void removeID(int robotID) {
+		mergeSet.remove(robotID);
+	}
+	
+	
+	public void endRound() {
+		
+		
+	}
+	
+	
+	
+	public int size() {
+		return mergeSet.count();
+	}
+	
+	public int getID(int index) {
+		return 0;
+	}
+	
+	
+	
+	
+	public void addIDBlock(StringBuilder block) {
+		
+		// add the new block
+		rawBlockSet.append(block);
+		rawBlockSet.append(DELIMITER_C);
+		
+		// fill in the merge set
+		for(int i=block.length(); --i>=0;) {
+			mergeSet.add(block.charAt(i));
+		}
+		
+		numBlocks++;
+	}
+	
 //	public void removeOldBlock() {
 //		
 //		//grab the first block
@@ -60,28 +81,19 @@ public class FastIDSet {
 //		numBlocks--;
 //		
 //	}
-//	
-//	
-//	
-//	
-//	public void removeID(int robotID) {
-//		mergeSet.remove(robotID);
-//	}
-//	
-//	
-//	public int count() {
-//		return mergeSet.count();
-//	}
-//	
-//	public String toString() {
-//		return mergeSet.toString();
-//	}
-//	
-//	
-//	public static void main(String[] args) {
-//		System.out.println("Hello World");
-//	}
-//	
-//	
+	
+	
+	
+	
+	public String toString() {
+		return mergeSet.toString();
+	}
+	
+	
+	public static void main(String[] args) {
+		System.out.println("Hello World");
+	}
+	
+	
 
 }
