@@ -19,10 +19,10 @@ public class SoldierRobotHT extends BaseRobot {
 		SWARM,
 		/** Run away from enemy forces. */
 		RETREAT, 
-		/** Far from target. Use bug to navigate. */
-		LOST,
 		/** Fight the enemy forces. Micro. */
 		SEEK, 
+		/** Far from target. Use bug to navigate. */
+		LOST,
 		/** Track enemy's last position and keep following them. */
 		TARGET_LOCKED;
 	}
@@ -56,14 +56,13 @@ public class SoldierRobotHT extends BaseRobot {
 		
 		// Scan everything every turn
 		radar.scan(true, true);
-		radar.broadcastEnemyInfo();
 		
-		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
+		RobotInfo closestEnemy = radar.closestEnemy;
 		boolean shouldSetNavTarget = true;
-		if(closestEnemyLocation != null) {
-			// If we know of an enemy, lock onto it
+		if(closestEnemy != null) {
+			// If we scanned an enemy, lock onto it
 			behavior = BehaviorState.TARGET_LOCKED;
-			target = closestEnemyLocation;
+			target = closestEnemy.location;
 			nav.setNavigationMode(NavigationMode.GREEDY);
 			lockAcquiredRound = curRound;
 		} else if(behavior != BehaviorState.TARGET_LOCKED || 
@@ -114,27 +113,11 @@ public class SoldierRobotHT extends BaseRobot {
 		if(shouldSetNavTarget)
 			nav.setDestination(target);
 		
-		// Attack an enemy if there is some unit in our attackable squares
-		if(!rc.isAttackActive()) {
-			MapLocation bestLoc = null;
-			RobotLevel bestLevel = null;
-			double bestValue = Double.MAX_VALUE;
-			for(int n=0; n<radar.numEnemyRobots; n++) {
-				RobotInfo ri = radar.enemyInfos[n];
-				if(!rc.canAttackSquare(ri.location)) 
-					return;
-				if((bestValue < myType.attackPower && ri.energon < myType.attackPower) ?
-						ri.energon > bestValue : ri.energon < bestValue) {
-					// Say a soldier does 6 damage. We prefer hitting units with less energon, but we also would rather hit a unit with 5 energon than a unit with 1 energon.
-					bestLoc = ri.location;
-					bestLevel = ri.type.level;
-					bestValue = ri.energon;
-				}
-			}
-			if(bestLoc!=null)
-				rc.attackSquare(bestLoc, bestLevel);
+		// Attack an enemy if we can
+		if(!rc.isAttackActive() && closestEnemy != null && 
+				rc.canAttackSquare(closestEnemy.location)) {
+			rc.attackSquare(closestEnemy.location, closestEnemy.robot.getRobotLevel());
 		}
-		
 		
 		// Set the flux balance mode
 		if(behavior == BehaviorState.SWARM)
@@ -172,12 +155,6 @@ public class SoldierRobotHT extends BaseRobot {
 				archonTarget = new MapLocation(shorts[1], shorts[2]);
 				senderSwarming = wantToSwarm;
 			}
-			break;
-		case ENEMY_INFO:
-			er.integrateEnemyInfo(BroadcastSystem.decodeUShorts(sb));
-			break;
-		case ENEMY_KILL:
-			er.integrateEnemyKill(BroadcastSystem.decodeShort(sb));
 			break;
 		default:
 			super.processMessage(msgType, sb);
