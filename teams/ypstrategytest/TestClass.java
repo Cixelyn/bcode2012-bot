@@ -11,6 +11,7 @@ import java.io.PipedOutputStream;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 
 import battlecode.common.Clock;
@@ -25,6 +26,36 @@ public class TestClass {
 	{
 		int aaaa;
 		
+		int t1,t2;
+		char[] c;
+		FasterQueue fq;
+		
+		t1 = Clock.getBytecodeNum();
+		fq = new FasterQueue(300);
+		t2 = Clock.getBytecodeNum();
+		System.out.println(t2-t1);
+		
+		
+		t1 = Clock.getBytecodeNum();
+		fq.insert(34);
+		t2 = Clock.getBytecodeNum();
+		System.out.println(t2-t1);
+		
+		
+		t1 = Clock.getBytecodeNum();
+		fq.insert(68);
+		t2 = Clock.getBytecodeNum();
+		System.out.println(t2-t1);
+		
+		t1 = Clock.getBytecodeNum();
+		System.out.println(fq.popLargest());
+		t2 = Clock.getBytecodeNum();
+		System.out.println(t2-t1);
+		
+		t1 = Clock.getBytecodeNum();
+		System.out.println(fq.popLargest());
+		t2 = Clock.getBytecodeNum();
+		System.out.println(t2-t1);
 	}
 	
 	@SuppressWarnings("unused")

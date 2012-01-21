@@ -5,7 +5,6 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
@@ -97,7 +96,11 @@ public class ArchonRobot extends BaseRobot{
 					(radar.alliesInFront==0 && radar.numEnemyRobots-radar.numEnemyArchons>0))
 			{
 				behavior = BehaviorState.RETREAT;
-				computeRetreatTarget();
+				int b1 = Clock.getBytecodeNum();
+				String ret = computeRetreatTarget();
+				int b2 = Clock.getBytecodeNum();
+				System.out.println("flee cost: "+(b1-b2)+" "+ret);
+				
 			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
 					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons)
 			{
@@ -163,6 +166,7 @@ public class ArchonRobot extends BaseRobot{
 			shorts[1] = curLoc.x;
 			shorts[2] = curLoc.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+			rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
 		} else
 		{
 			// Broadcast my target info to the soldier swarm
@@ -193,7 +197,7 @@ public class ArchonRobot extends BaseRobot{
 			target = curLoc.add(targetDir,5);
 	}
 	
-	private void computeRetreatTarget()
+	private String computeRetreatTarget()
 	{
 		int[] closest_in_dir = radar.closestInDir;
 		
@@ -207,13 +211,13 @@ public class ArchonRobot extends BaseRobot{
 						+(closest_in_dir[7]==99?"o":"x");
 		dir = dir+dir;
 		int index;
-		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" "+dir);
+		
 		index = dir.indexOf("ooooooo");
 		if (index>-1)
 		{
 			targetDir = Constants.directions[(index+3)%8];
 			target = curLoc.add(targetDir,5);
-			return;
+			return dir;
 		}
 		
 		index = dir.indexOf("oooooo");
@@ -221,7 +225,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 			targetDir = Constants.directions[(index+3)%8];
 			target = curLoc.add(targetDir,5);
-			return;
+			return dir;
 		}
 		
 		index = dir.indexOf("ooooo");
@@ -229,7 +233,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 			targetDir = Constants.directions[(index+2)%8];
 			target = curLoc.add(targetDir,5);
-			return;
+			return dir;
 		}
 		
 		index = dir.indexOf("oooo");
@@ -237,7 +241,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 			targetDir = Constants.directions[(index+2)%8];
 			target = curLoc.add(targetDir,5);
-			return;
+			return dir;
 		}
 		
 		index = dir.indexOf("ooo");
@@ -245,7 +249,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 			targetDir = Constants.directions[(index+1)%8];
 			target = curLoc.add(targetDir,5);
-			return;
+			return dir;
 		}
 		
 		index = dir.indexOf("oo");
@@ -253,7 +257,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 			targetDir = Constants.directions[(index+1)%8];
 			target = curLoc.add(targetDir,5);
-			return;
+			return dir;
 		}
 		
 		index = dir.indexOf("o");
@@ -261,14 +265,14 @@ public class ArchonRobot extends BaseRobot{
 		{
 			targetDir = Constants.directions[(index)%8];
 			target = curLoc.add(targetDir,5);
-			return;
+			return dir;
 		}
 		
 		System.out.println("GONNTA GET GEE'D");
 		target = radar.getEnemySwarmTarget();
 		targetDir = target.directionTo(curLoc);
 		target = curLoc.add(targetDir,5);
-		
+		return null;
 	}
 	
 	private void updateRetreatTarget()
