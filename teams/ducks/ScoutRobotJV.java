@@ -11,8 +11,10 @@ public class ScoutRobotJV extends BaseRobot {
 	/** The possible behaviors for the Scout. */
 	private enum BehaviorState {
 		WAIT_FOR_FLUX,
-		EXPLORE,
-		PET
+		FIND_ENEMY,
+		REPORT_ENEMY,
+		PET,
+		EXPLORE
 	}
 	
 	/** Defines the shape of a space filling curve, used to explore the map
@@ -54,8 +56,6 @@ public class ScoutRobotJV extends BaseRobot {
 		super(myRC);
 		// set initial state
 		behavior = BehaviorState.WAIT_FOR_FLUX;
-		// set flux balance mode
-		fbs.disable();
 		// set broadcast channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
@@ -73,12 +73,27 @@ public class ScoutRobotJV extends BaseRobot {
 	public void run() throws GameActionException {
 		rc.setIndicatorString(0, "Behavior state: " + behavior);
 		rc.setIndicatorString(1, "Scout pattern idx: " + scoutPatternIdx);
+		// suicide if not enough flux
+		if (rc.getFlux() < 3.0) {
+			rc.suicide();
+		}
+		// scan
+		radar.scan(true, true);
 		// switch states if necessary
 		switch (behavior) {
 			case WAIT_FOR_FLUX:
 				if (rc.getFlux() > myMaxFlux - 10) {
-					behavior = BehaviorState.EXPLORE;
+					behavior = BehaviorState.FIND_ENEMY;
 				}
+				break;
+			case FIND_ENEMY:
+				if (radar.closestEnemy != null) {
+					behavior = BehaviorState.REPORT_ENEMY;
+				}
+				break;
+			case REPORT_ENEMY:
+				break;
+			case PET:
 				break;
 			case EXPLORE:
 				if (curRound >= ROUND_TO_STOP_EXPLORING || scoutPatternIdx >=
@@ -86,28 +101,42 @@ public class ScoutRobotJV extends BaseRobot {
 					behavior = BehaviorState.PET;
 				}
 				break;
+			default:
+				break;
+		}
+		// set flux balance mode
+		switch (behavior) {
+			case WAIT_FOR_FLUX:
+			case FIND_ENEMY:
+			case REPORT_ENEMY:
+				fbs.disable();
+				break;
 			case PET:
+				fbs.setPoolMode();
+				break;
+			case EXPLORE:
+				fbs.setBatteryMode();
 				break;
 			default:
 				break;
 		}
-		// suicide if not enough flux
-		if (rc.getFlux() < 3.0) {
-			rc.suicide();
-		}
-		// scan
-		radar.scan(true, true);
 		// set objective based on behavior
 		switch (behavior) {
 			case WAIT_FOR_FLUX:
+				// go to nearest archon
+				objective = dc.getClosestArchon();
+				break;
+			case FIND_ENEMY:
+				objective = mc.guessEnemyPowerCoreLocation();
+				break;
+			case REPORT_ENEMY:
+			case PET:
+				// go to nearest archon
+				objective = dc.getClosestArchon();
 				break;
 			case EXPLORE:
 				// get an unexplored location
 				objective = getExplorationTarget();
-				break;
-			case PET:
-				// go to nearest archon
-				objective = dc.getClosestArchon();
 				break;
 			default:
 				break;
@@ -145,10 +174,7 @@ public class ScoutRobotJV extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		// wait for flux if necessary
-		if (behavior == BehaviorState.WAIT_FOR_FLUX) {
-			return null;
-		} else if (radar.closestEnemy != null) {
+		if (radar.closestEnemy != null) {
 			/* more aggressive kiting code
 			Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter());
 			int dist = (int)radar.closestEnemyDist;
