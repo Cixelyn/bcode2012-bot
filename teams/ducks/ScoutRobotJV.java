@@ -8,13 +8,16 @@ import battlecode.common.RobotController;
 
 public class ScoutRobotJV extends BaseRobot {
 	
+	/** The possible behaviors for the Scout. */
 	private enum BehaviorState {
 		WAIT_FOR_FLUX,
 		EXPLORE,
 		PET
 	}
 	
-	// generated with a script so it _must_ be correct
+	/** Defines the shape of a space filling curve, used to explore the map
+	 * starting from some corner.
+	 */
 	private static final int[][] SCOUT_PATTERN = new int[][] {
 		{0,0},{1,0},{1,1},{0,1},{0,2},{1,2},{2,2},{2,1},{2,0},{3,0},{3,1},{3,2},
 		{3,3},{2,3},{1,3},{0,3},{0,4},{1,4},{2,4},{3,4},{4,4},{4,3},{4,2},{4,1},
@@ -32,12 +35,20 @@ public class ScoutRobotJV extends BaseRobot {
 		{3,12},{4,12},{5,12},{6,12},{7,12},{8,12},{9,12},{10,12},{11,12},{12,12},
 		{12,11},{12,10},{12,9},{12,8},{12,7},{12,6},{12,5},{12,4},{12,3},{12,2},
 		{12,1},{12,0}};
+	
+	/** Round to stop exploring, regardless of whether you're done. */
+	private static final int ROUND_TO_STOP_EXPLORING = 1000;
+	
+	/** The Scout's current position in SCOUT_PATTERN. When this equals
+	 * SCOUT_PATTERN.length - 1, the Scout knows the whole map.
+	 */
 	private int scoutPatternIdx;
 	
+	/** The Scout's current behavior. */
 	private BehaviorState behavior;
+	
+	/** The Scout's current objective. */
 	private MapLocation objective;
-	private MapLocation lastExplorationTarget;
-	private boolean wholeMapExplored;
 	
 	public ScoutRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
@@ -48,21 +59,37 @@ public class ScoutRobotJV extends BaseRobot {
 		// set broadcast channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
-				BroadcastChannel.SCOUTS,
-				BroadcastChannel.EXPLORERS
+				BroadcastChannel.SCOUTS
 		});
+		// set navigation mode
+		nav.setNavigationMode(NavigationMode.GREEDY);
 	}
 
+	/**
+	 * In terms of bytecodes, this run method takes, as a conservative estimate,
+	 * 600 + cost of scan, which with a lot of enemies can get to 600 + 6000.
+	 */
 	@Override
 	public void run() throws GameActionException {
-		rc.setIndicatorString(1, "" + scoutPatternIdx);
-		// wait for flux if necessary
-		if (behavior == BehaviorState.WAIT_FOR_FLUX) {
-			if (rc.getFlux() < myMaxFlux - 10) {
-				return;
-			} else {
-				behavior = BehaviorState.EXPLORE;
-			}
+		rc.setIndicatorString(0, "Behavior state: " + behavior);
+		rc.setIndicatorString(1, "Scout pattern idx: " + scoutPatternIdx);
+		// switch states if necessary
+		switch (behavior) {
+			case WAIT_FOR_FLUX:
+				if (rc.getFlux() > myMaxFlux - 10) {
+					behavior = BehaviorState.EXPLORE;
+				}
+				break;
+			case EXPLORE:
+				if (curRound >= ROUND_TO_STOP_EXPLORING || scoutPatternIdx >=
+						SCOUT_PATTERN.length - 1) {
+					behavior = BehaviorState.PET;
+				}
+				break;
+			case PET:
+				break;
+			default:
+				break;
 		}
 		// suicide if not enough flux
 		if (rc.getFlux() < 3.0) {
@@ -72,6 +99,8 @@ public class ScoutRobotJV extends BaseRobot {
 		radar.scan(true, true);
 		// set objective based on behavior
 		switch (behavior) {
+			case WAIT_FOR_FLUX:
+				break;
 			case EXPLORE:
 				// get an unexplored location
 				objective = getExplorationTarget();
@@ -119,8 +148,8 @@ public class ScoutRobotJV extends BaseRobot {
 		// wait for flux if necessary
 		if (behavior == BehaviorState.WAIT_FOR_FLUX) {
 			return null;
-		}
-		if (false && radar.closestEnemy != null) {
+		} else if (radar.closestEnemy != null) {
+			/* more aggressive kiting code
 			Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter());
 			int dist = (int)radar.closestEnemyDist;
 			// if we're too close, back up
@@ -133,12 +162,15 @@ public class ScoutRobotJV extends BaseRobot {
 			}
 			// we're far away, move to target
 			return new MoveInfo(dir, false);
+			*/
+			return new MoveInfo(curLoc.directionTo(
+					radar.getEnemySwarmCenter()).opposite(), true);
 		} else {
 			// if no enemy is nearby, go to objective
 			if (objective != null) {
 				return new MoveInfo(curLoc.directionTo(objective), false);
 			} else {
-				return null;
+				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
 		}
 	}
@@ -146,18 +178,23 @@ public class ScoutRobotJV extends BaseRobot {
 	@Override
 	public void useExtraBytecodes() throws GameActionException {
 		super.useExtraBytecodes();
-		// share exploration
-		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 4000 && Math.random() < 0.1) {
-			ses.broadcastMapFragment();
-		}
-		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 2000 && Math.random() < 0.1) {
-			ses.broadcastPowerNodeFragment();
-		}
-		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 2000 && Math.random() < 0.1) {
-			ses.broadcastMapEdges();
+		// share exploration with archons
+		if (behavior == BehaviorState.PET) {
+			if (curRound == Clock.getRoundNum() &&
+					Clock.getBytecodesLeft() > 4000 && Math.random() < 0.05 /
+					(radar.numAllyRobots + 1)) {
+				ses.broadcastMapFragment();
+			}
+			if (curRound == Clock.getRoundNum() &&
+					Clock.getBytecodesLeft() > 2000 && Math.random() < 0.05 /
+					(radar.numAllyRobots + 1)) {
+				ses.broadcastPowerNodeFragment();
+			}
+			if (curRound == Clock.getRoundNum() &&
+					Clock.getBytecodesLeft() > 2000 && Math.random() < 0.05 /
+					(radar.numAllyRobots + 1)) {
+				ses.broadcastMapEdges();
+			}
 		}
 		// process shared exploration
 		while (curRound == Clock.getRoundNum() &&
@@ -170,46 +207,6 @@ public class ScoutRobotJV extends BaseRobot {
 	 * Get a location to explore.
 	 */
 	private MapLocation getExplorationTarget() {
-		/*
-		if (wholeMapExplored) {
-			return null;
-		}
-		if (lastExplorationTarget != null && !mc.isOffMap(lastExplorationTarget) &&
-				!mc.isSensed(lastExplorationTarget)) {
-			return lastExplorationTarget;
-		}
-		int[] dists = new int[] {5, 10, 20, 35, 55};
-		for (int i = 0; i < 5; i++) {
-			for (int j = 0; j < 8; j++) {
-				int idx;
-				switch (curRound % 4) {
-					case 0:
-						idx = (j + myID) % 8;
-						break;
-					case 1:
-						idx = (3 * j + myID) % 8;
-						break;
-					case 2:
-						idx = (5 * j + myID) % 8;
-						break;
-					case 3:
-						idx = (7 * j + myID) % 8;
-						break;
-					default:
-						idx = j;
-				}
-				Direction dir = Direction.values()[idx];
-				MapLocation loc = curLoc.add(dir, dists[i]);
-				if (!mc.isOffMap(loc) && !mc.isSensed(loc)) {
-					lastExplorationTarget = loc;
-					return lastExplorationTarget;
-				}
-			}
-		}
-		wholeMapExplored = true;
-		lastExplorationTarget = null;
-		return null;
-		*/
 		Direction d;
 		int sx, sy, mx, my;
 		switch (myID % 4) {
@@ -247,7 +244,13 @@ public class ScoutRobotJV extends BaseRobot {
 			// i don't know where the corner is
 			return myHome.add(d, 100);
 		}
-		for (int idx = scoutPatternIdx; idx < SCOUT_PATTERN.length; idx++) {
+		// making new map locations is very costly so advance your scout pattern by
+		// at most 3 per turn
+		// TODO(jven): might be much cheaper to access mc.sensed and check map
+		// edges directly
+		int numIterations = 0;
+		for (int idx = scoutPatternIdx; idx < SCOUT_PATTERN.length &&
+				numIterations++ < 3; idx++) {
 			int[] coords = SCOUT_PATTERN[idx];
 			MapLocation loc = new MapLocation(
 					mc.cacheToWorldX(sx + mx * (1 + coords[0]) * 7),

@@ -96,15 +96,18 @@ public class ArchonRobotJV extends BaseRobot {
 		super.useExtraBytecodes();
 		// share exploration
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 3000 && Math.random() < 0.3) {
+				Clock.getBytecodesLeft() > 3000 && Math.random() < 0.05 /
+				(radar.numAllyRobots + 1)) {
 			ses.broadcastMapFragment();
 		}
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.3) {
+				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.05 /
+				(radar.numAllyRobots + 1)) {
 			ses.broadcastPowerNodeFragment();
 		}
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.3) {
+				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.05 /
+				(radar.numAllyRobots + 1)) {
 			ses.broadcastMapEdges();
 		}
 		// process shared exploration
