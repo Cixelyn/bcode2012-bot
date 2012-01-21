@@ -40,6 +40,8 @@ public class ArchonRobot extends BaseRobot{
 	BehaviorState behavior;
 	MapLocation previousWakeupTarget;
 	
+	MapLocation lastPowerNodeGuess;
+	
 	public ArchonRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
@@ -61,6 +63,7 @@ public class ArchonRobot extends BaseRobot{
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		strategy = StrategyState.SPLIT;
 		behavior = BehaviorState.BATTLE;
+		lastPowerNodeGuess = null;
 	}
 	
 	@Override
@@ -122,7 +125,8 @@ public class ArchonRobot extends BaseRobot{
 			if(strategy == StrategyState.DEFEND) {
 				target = myHome;
 			} else if(strategy == StrategyState.RUSH) {
-				target = mc.guessEnemyPowerCoreLocation();
+				computeExploreTarget();
+//				target = mc.guessEnemyPowerCoreLocation();
 			} else {
 				target = mc.guessBestPowerNodeToCapture();
 			}
@@ -315,6 +319,116 @@ public class ArchonRobot extends BaseRobot{
 	{
 		target = radar.getEnemySwarmTarget();
 		targetDir = curLoc.directionTo(target);
+	}
+	
+	private void computeExploreTarget()
+	{
+		MapLocation t = mc.guessEnemyPowerCoreLocation();
+		if (t.equals(lastPowerNodeGuess))
+		{
+			if (curLoc.distanceSquaredTo(target) < 20 && mc.getEnemyPowerCoreLocation()==null)
+			{
+				switch (myHome.directionTo(curLoc))
+				{
+				case NORTH:
+				{
+					if (mc.edgeYMin==0)
+						target = curLoc.add(Direction.NORTH, 10);
+					else if (mc.edgeXMax==0)
+						target = curLoc.add(Direction.EAST, 10);
+					else if (mc.edgeXMin==0)
+						target = curLoc.add(Direction.WEST, 10);
+					else if (mc.edgeYMax==0)
+						target = curLoc.add(Direction.SOUTH, 10);
+				} break;
+				case NORTH_EAST:
+				{
+					if (mc.edgeYMin==0)
+						target = curLoc.add(Direction.NORTH, 10);
+					else if (mc.edgeXMax==0)
+						target = curLoc.add(Direction.EAST, 10);
+					else if (mc.edgeXMin==0)
+						target = curLoc.add(Direction.WEST, 10);
+					else if (mc.edgeYMax==0)
+						target = curLoc.add(Direction.SOUTH, 10);
+				} break;
+				case EAST:
+				{
+					if (mc.edgeXMax==0)
+						target = curLoc.add(Direction.EAST, 10);
+					else if (mc.edgeYMin==0)
+						target = curLoc.add(Direction.NORTH, 10);
+					else if (mc.edgeYMax==0)
+						target = curLoc.add(Direction.SOUTH, 10);
+					else if (mc.edgeXMin==0)
+						target = curLoc.add(Direction.WEST, 10);
+				} break;
+				case SOUTH_EAST:
+				{
+					if (mc.edgeXMax==0)
+						target = curLoc.add(Direction.EAST, 10);
+					else if (mc.edgeYMax==0)
+						target = curLoc.add(Direction.SOUTH, 10);
+					else if (mc.edgeYMin==0)
+						target = curLoc.add(Direction.NORTH, 10);
+					else if (mc.edgeXMin==0)
+						target = curLoc.add(Direction.WEST, 10);
+				} break;
+				case SOUTH:
+				{
+					if (mc.edgeYMax==0)
+						target = curLoc.add(Direction.SOUTH, 10);
+					else if (mc.edgeXMin==0)
+						target = curLoc.add(Direction.WEST, 10);
+					else if (mc.edgeXMax==0)
+						target = curLoc.add(Direction.EAST, 10);
+					else if (mc.edgeYMin==0)
+						target = curLoc.add(Direction.NORTH, 10);
+				} break;
+				case SOUTH_WEST:
+				{
+					if (mc.edgeYMax==0)
+						target = curLoc.add(Direction.SOUTH, 10);
+					else if (mc.edgeXMin==0)
+						target = curLoc.add(Direction.WEST, 10);
+					else if (mc.edgeXMax==0)
+						target = curLoc.add(Direction.EAST, 10);
+					else if (mc.edgeYMin==0)
+						target = curLoc.add(Direction.NORTH, 10);
+				} break;
+				case WEST:
+				{
+					if (mc.edgeXMin==0)
+						target = curLoc.add(Direction.WEST, 10);
+					else if (mc.edgeYMax==0)
+						target = curLoc.add(Direction.SOUTH, 10);
+					else if (mc.edgeYMin==0)
+						target = curLoc.add(Direction.NORTH, 10);
+					else if (mc.edgeXMax==0)
+						target = curLoc.add(Direction.EAST, 10);
+				} break;
+				case NORTH_WEST:
+				{
+					if (mc.edgeXMin==0)
+						target = curLoc.add(Direction.WEST, 10);
+					else if (mc.edgeYMin==0)
+						target = curLoc.add(Direction.NORTH, 10);
+					else if (mc.edgeYMax==0)
+						target = curLoc.add(Direction.SOUTH, 10);
+					else if (mc.edgeXMax==0)
+						target = curLoc.add(Direction.EAST, 10);
+				} break;
+				}
+			}
+//			else
+//			{
+//				target = t;
+//			}
+		} else
+		{
+			lastPowerNodeGuess = target = t;
+		}
+		
 	}
 	
 	@Override
