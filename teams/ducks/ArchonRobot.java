@@ -5,6 +5,7 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
@@ -81,12 +82,19 @@ public class ArchonRobot extends BaseRobot{
 		
 		// Scan everything every turn
 		radar.scan(true, true);
-
+		
+//		if (behavior == BehaviorState.RETREAT)
+//		{
+//			if (radar.alliesInFront - radar.numEnemyRobots+radar.numEnemyArchons == 0)
+//				roundLockTarget = 0;
+//		}
+		
 		// If there is an enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null) {
 //			target = radar.getEnemySwarmTarget();
 			roundLockTarget = curRound;
-			if (radar.getArmyDifference() < -2)
+			if (radar.getArmyDifference() < -2 ||
+					(radar.alliesInFront==0 && radar.numEnemyRobots-radar.numEnemyArchons>0))
 			{
 				behavior = BehaviorState.RETREAT;
 				computeRetreatTarget();
@@ -147,14 +155,27 @@ public class ArchonRobot extends BaseRobot{
 		else
 			fbs.setPoolMode();
 		
-		// Broadcast my target info to the soldier swarm
-		int[] shorts = new int[5];
-		shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
-		shorts[1] = target.x;
-		shorts[2] = target.y;
-		shorts[3] = curLoc.x;
-		shorts[4] = curLoc.y;
-		io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+		if (behavior == BehaviorState.RETREAT)
+		{
+			// Broadcast my target info to the soldier swarm
+			int[] shorts = new int[5];
+			shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
+			shorts[1] = curLoc.x;
+			shorts[2] = curLoc.y;
+			shorts[3] = curLoc.x;
+			shorts[4] = curLoc.y;
+			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+		} else
+		{
+			// Broadcast my target info to the soldier swarm
+			int[] shorts = new int[5];
+			shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
+			shorts[1] = target.x;
+			shorts[2] = target.y;
+			shorts[3] = curLoc.x;
+			shorts[4] = curLoc.y;
+			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+		}
 		
 		
 		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
@@ -176,9 +197,80 @@ public class ArchonRobot extends BaseRobot{
 	
 	private void computeRetreatTarget()
 	{
+		int[] closest_in_dir = radar.closestInDir;
+		
+		String dir = ""	+(closest_in_dir[0]==99?"o":"x")
+						+(closest_in_dir[1]==99?"o":"x")
+						+(closest_in_dir[2]==99?"o":"x")
+						+(closest_in_dir[3]==99?"o":"x")
+						+(closest_in_dir[4]==99?"o":"x")
+						+(closest_in_dir[5]==99?"o":"x")
+						+(closest_in_dir[6]==99?"o":"x")
+						+(closest_in_dir[7]==99?"o":"x");
+		dir = dir+dir;
+		int index;
+		
+		index = dir.indexOf("ooooooo");
+		if (index>-1)
+		{
+			targetDir = Constants.directions[(index+3)%8];
+			target = curLoc.add(targetDir,5);
+			return;
+		}
+		
+		index = dir.indexOf("oooooo");
+		if (index>-1)
+		{
+			targetDir = Constants.directions[(index+3)%8];
+			target = curLoc.add(targetDir,5);
+			return;
+		}
+		
+		index = dir.indexOf("ooooo");
+		if (index>-1)
+		{
+			targetDir = Constants.directions[(index+3)%8];
+			target = curLoc.add(targetDir,5);
+			return;
+		}
+		
+		index = dir.indexOf("oooo");
+		if (index>-1)
+		{
+			targetDir = Constants.directions[(index+3)%8];
+			target = curLoc.add(targetDir,5);
+			return;
+		}
+		
+		index = dir.indexOf("ooo");
+		if (index>-1)
+		{
+			targetDir = Constants.directions[(index+3)%8];
+			target = curLoc.add(targetDir,5);
+			return;
+		}
+		
+		index = dir.indexOf("oo");
+		if (index>-1)
+		{
+			targetDir = Constants.directions[(index+3)%8];
+			target = curLoc.add(targetDir,5);
+			return;
+		}
+		
+		index = dir.indexOf("o");
+		if (index>-1)
+		{
+			targetDir = Constants.directions[(index+3)%8];
+			target = curLoc.add(targetDir,5);
+			return;
+		}
+		
+		System.out.println("GONNTA GET GEE'D");
 		target = radar.getEnemySwarmTarget();
 		targetDir = target.directionTo(curLoc);
 		target = curLoc.add(targetDir,5);
+		
 	}
 	
 	private void updateRetreatTarget()
