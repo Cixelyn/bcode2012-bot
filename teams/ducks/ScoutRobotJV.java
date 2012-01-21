@@ -1,24 +1,88 @@
 package ducks;
 
 import battlecode.common.Clock;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 public class ScoutRobotJV extends BaseRobot {
 	
+	private enum BehaviorState {
+		WAIT_FOR_FLUX,
+		EXPLORE,
+		PET
+	}
+	
+	// generated with a script so it _must_ be correct
+	private static final int[][] SCOUT_PATTERN = new int[][] {
+		{0,0},{1,0},{1,1},{0,1},{0,2},{1,2},{2,2},{2,1},{2,0},{3,0},{3,1},{3,2},
+		{3,3},{2,3},{1,3},{0,3},{0,4},{1,4},{2,4},{3,4},{4,4},{4,3},{4,2},{4,1},
+		{4,0},{5,0},{5,1},{5,2},{5,3},{5,4},{5,5},{4,5},{3,5},{2,5},{1,5},{0,5},
+		{0,6},{1,6},{2,6},{3,6},{4,6},{5,6},{6,6},{6,5},{6,4},{6,3},{6,2},{6,1},
+		{6,0},{7,0},{7,1},{7,2},{7,3},{7,4},{7,5},{7,6},{7,7},{6,7},{5,7},{4,7},
+		{3,7},{2,7},{1,7},{0,7},{0,8},{1,8},{2,8},{3,8},{4,8},{5,8},{6,8},{7,8},
+		{8,8},{8,7},{8,6},{8,5},{8,4},{8,3},{8,2},{8,1},{8,0},{9,0},{9,1},{9,2},
+		{9,3},{9,4},{9,5},{9,6},{9,7},{9,8},{9,9},{8,9},{7,9},{6,9},{5,9},{4,9},
+		{3,9},{2,9},{1,9},{0,9},{0,10},{1,10},{2,10},{3,10},{4,10},{5,10},{6,10},
+		{7,10},{8,10},{9,10},{10,10},{10,9},{10,8},{10,7},{10,6},{10,5},{10,4},
+		{10,3},{10,2},{10,1},{10,0},{11,0},{11,1},{11,2},{11,3},{11,4},{11,5},
+		{11,6},{11,7},{11,8},{11,9},{11,10},{11,11},{10,11},{9,11},{8,11},{7,11},
+		{6,11},{5,11},{4,11},{3,11},{2,11},{1,11},{0,11},{0,12},{1,12},{2,12},
+		{3,12},{4,12},{5,12},{6,12},{7,12},{8,12},{9,12},{10,12},{11,12},{12,12},
+		{12,11},{12,10},{12,9},{12,8},{12,7},{12,6},{12,5},{12,4},{12,3},{12,2},
+		{12,1},{12,0}};
+	private int scoutPatternIdx;
+	
+	private BehaviorState behavior;
 	private MapLocation objective;
+	private MapLocation lastExplorationTarget;
+	private boolean wholeMapExplored;
 	
 	public ScoutRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
+		// set initial state
+		behavior = BehaviorState.WAIT_FOR_FLUX;
+		// set flux balance mode
+		fbs.disable();
+		// set broadcast channels
+		io.setChannels(new BroadcastChannel[] {
+				BroadcastChannel.ALL,
+				BroadcastChannel.SCOUTS,
+				BroadcastChannel.EXPLORERS
+		});
 	}
 
 	@Override
 	public void run() throws GameActionException {
+		rc.setIndicatorString(1, "" + scoutPatternIdx);
+		// wait for flux if necessary
+		if (behavior == BehaviorState.WAIT_FOR_FLUX) {
+			if (rc.getFlux() < myMaxFlux - 10) {
+				return;
+			} else {
+				behavior = BehaviorState.EXPLORE;
+			}
+		}
+		// suicide if not enough flux
+		if (rc.getFlux() < 3.0) {
+			rc.suicide();
+		}
 		// scan
 		radar.scan(true, true);
-		// set objective
-		objective = mc.guessEnemyPowerCoreLocation();
+		// set objective based on behavior
+		switch (behavior) {
+			case EXPLORE:
+				// get an unexplored location
+				objective = getExplorationTarget();
+				break;
+			case PET:
+				// go to nearest archon
+				objective = dc.getClosestArchon();
+				break;
+			default:
+				break;
+		}
 		// attack if you can
 		if (!rc.isAttackActive() && radar.closestEnemy != null &&
 				rc.canAttackSquare(radar.closestEnemy.location)) {
@@ -26,7 +90,8 @@ public class ScoutRobotJV extends BaseRobot {
 					radar.closestEnemy.robot.getRobotLevel());
 		}
 		// heal if you should
-		if (radar.numAllyDamaged > 0) {
+		if ((curEnergon < myMaxEnergon || radar.numAllyDamaged > 0) &&
+				Math.random() < 0.3) {
 			rc.regenerate();
 		}
 	}
@@ -51,38 +116,148 @@ public class ScoutRobotJV extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		if (radar.closestEnemy != null) {
-			// if an enemy is nearby, stay in (8, 18] range
-			if (radar.closestEnemyDist <= 8) {
-				return new MoveInfo(curLoc.directionTo(objective).opposite(), true);
-			} else if (radar.closestEnemyDist <= 18) {
-				return new MoveInfo(curLoc.directionTo(objective));
-			} else {
-				return new MoveInfo(curLoc.directionTo(objective), false);
+		// wait for flux if necessary
+		if (behavior == BehaviorState.WAIT_FOR_FLUX) {
+			return null;
+		}
+		if (false && radar.closestEnemy != null) {
+			Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter());
+			int dist = (int)radar.closestEnemyDist;
+			// if we're too close, back up
+			if (dist <= 5) {
+				return new MoveInfo(dir.opposite(), true);
 			}
+			// if we're in safe range, face target
+			if (dist <= 25) {
+				return new MoveInfo(dir);
+			}
+			// we're far away, move to target
+			return new MoveInfo(dir, false);
 		} else {
 			// if no enemy is nearby, go to objective
-			return new MoveInfo(curLoc.directionTo(objective), false);
+			if (objective != null) {
+				return new MoveInfo(curLoc.directionTo(objective), false);
+			} else {
+				return null;
+			}
 		}
 	}
 	
 	@Override
 	public void useExtraBytecodes() throws GameActionException {
-		// TODO(jven): check we didn't go over bytecodes within the method
-		// share exploration
 		super.useExtraBytecodes();
-		if (Clock.getBytecodesLeft() > 3000 && Math.random() < 0.3) {
+		// share exploration
+		if (curRound == Clock.getRoundNum() &&
+				Clock.getBytecodesLeft() > 4000 && Math.random() < 0.1) {
 			ses.broadcastMapFragment();
 		}
-		if (Clock.getBytecodesLeft() > 1000 && Math.random() < 0.3) {
+		if (curRound == Clock.getRoundNum() &&
+				Clock.getBytecodesLeft() > 2000 && Math.random() < 0.1) {
 			ses.broadcastPowerNodeFragment();
 		}
-		if (Clock.getBytecodesLeft() > 1000 && Math.random() < 0.3) {
+		if (curRound == Clock.getRoundNum() &&
+				Clock.getBytecodesLeft() > 2000 && Math.random() < 0.1) {
 			ses.broadcastMapEdges();
 		}
 		// process shared exploration
-		while (Clock.getBytecodesLeft() > 7000) {
-			mc.extractUpdatedPackedDataStep();
+		while (curRound == Clock.getRoundNum() &&
+				Clock.getBytecodesLeft() > 5000 &&
+				!mc.extractUpdatedPackedDataStep()) {
 		}
+	}
+	
+	/**
+	 * Get a location to explore.
+	 */
+	private MapLocation getExplorationTarget() {
+		/*
+		if (wholeMapExplored) {
+			return null;
+		}
+		if (lastExplorationTarget != null && !mc.isOffMap(lastExplorationTarget) &&
+				!mc.isSensed(lastExplorationTarget)) {
+			return lastExplorationTarget;
+		}
+		int[] dists = new int[] {5, 10, 20, 35, 55};
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 8; j++) {
+				int idx;
+				switch (curRound % 4) {
+					case 0:
+						idx = (j + myID) % 8;
+						break;
+					case 1:
+						idx = (3 * j + myID) % 8;
+						break;
+					case 2:
+						idx = (5 * j + myID) % 8;
+						break;
+					case 3:
+						idx = (7 * j + myID) % 8;
+						break;
+					default:
+						idx = j;
+				}
+				Direction dir = Direction.values()[idx];
+				MapLocation loc = curLoc.add(dir, dists[i]);
+				if (!mc.isOffMap(loc) && !mc.isSensed(loc)) {
+					lastExplorationTarget = loc;
+					return lastExplorationTarget;
+				}
+			}
+		}
+		wholeMapExplored = true;
+		lastExplorationTarget = null;
+		return null;
+		*/
+		Direction d;
+		int sx, sy, mx, my;
+		switch (myID % 4) {
+			case 0:
+				d = Direction.NORTH_WEST;
+				sx = mc.edgeXMin;
+				sy = mc.edgeYMin;
+				mx = 1;
+				my = 1;
+				break;
+			case 1:
+				d = Direction.NORTH_EAST;
+				sx = mc.edgeXMax;
+				sy = mc.edgeYMin;
+				mx = -1;
+				my = 1;
+				break;
+			case 2:
+				d = Direction.SOUTH_WEST;
+				sx = mc.edgeXMin;
+				sy = mc.edgeYMax;
+				mx = 1;
+				my = -1;
+				break;
+			case 3:
+			default:
+				d = Direction.SOUTH_EAST;
+				sx = mc.edgeXMax;
+				sy = mc.edgeYMax;
+				mx = -1;
+				my = -1;
+				break;
+		}
+		if (sx * sy == 0) {
+			// i don't know where the corner is
+			return myHome.add(d, 100);
+		}
+		for (int idx = scoutPatternIdx; idx < SCOUT_PATTERN.length; idx++) {
+			int[] coords = SCOUT_PATTERN[idx];
+			MapLocation loc = new MapLocation(
+					mc.cacheToWorldX(sx + mx * (1 + coords[0]) * 7),
+					mc.cacheToWorldY(sy + my * (1 + coords[1]) * 7));
+			if (!mc.isOffMap(loc) && !mc.isSensed(loc)) {
+				return loc;
+			} else {
+				scoutPatternIdx++;
+			}
+		}
+		return null;
 	}
 }
