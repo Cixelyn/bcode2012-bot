@@ -4,7 +4,7 @@ public class FastIDSet {
 	
 	
 	private final FastUShortSet mergeSet;
-	private final StringBuilder rawBlockSet;
+	private StringBuilder rawBlockSet;
 	private StringBuilder curBlock;
 	
 	private int maxBlocks;
@@ -23,38 +23,34 @@ public class FastIDSet {
 	}
 	
 	
-	
-	
 	public void addID(int robotID) {
-		
-		
-		
+		curBlock.append((char) robotID);
 	}
+	
 	
 	public void removeID(int robotID) {
 		mergeSet.remove(robotID);
 	}
 	
-	
 	public void endRound() {
-		
-		
+		addIDBlock(curBlock); //add current block
+		curBlock = new StringBuilder();  // fresh block
+		if(numBlocks > maxBlocks) {
+			removeOldBlock();
+		}
 	}
-	
 	
 	
 	public int size() {
-		return mergeSet.count();
+		return mergeSet.size();
 	}
 	
 	public int getID(int index) {
-		return 0;
+		return mergeSet.get(index);
 	}
 	
 	
-	
-	
-	public void addIDBlock(StringBuilder block) {
+	private void addIDBlock(StringBuilder block) {
 		
 		// add the new block
 		rawBlockSet.append(block);
@@ -68,22 +64,37 @@ public class FastIDSet {
 		numBlocks++;
 	}
 	
-//	public void removeOldBlock() {
-//		
-//		//grab the first block
-//		int idx = rawBlockSet.indexOf(DELIMITER_S);
-//		String oldBlock = rawBlockSet.substring(0, idx);
-//		
-//		for(int i=oldBlock.length(); --i>=0;) {
-//			int id = String.valueOf(oldBlock.charAt(i));
-//		}
-//		
-//		numBlocks--;
-//		
-//	}
+	private void removeOldBlock() {
+		System.out.println("REMOVING BLOCKCS");
+		
+		//grab the first block
+		int idx = rawBlockSet.indexOf(DELIMITER_S);
+		String oldBlock = rawBlockSet.substring(0, idx);
+		String recentBlocks =  rawBlockSet.substring(idx+1, rawBlockSet.length());
+		
+		for(int i=oldBlock.length(); --i>=0;) {
+			
+			char robotID = oldBlock.charAt(i);
+			// if the robot doesn't exist in new messages
+			System.out.println("REMOVING: " + robotID);
+			if(recentBlocks.indexOf(String.valueOf(robotID)) < 0) {
+				mergeSet.remove(robotID);
+			}
+			
+		}
+		// wipe out the first block
+		rawBlockSet = new StringBuilder(recentBlocks);
+		
+		numBlocks--;
+	}
 	
-	
-	
+	public void debug() {
+		System.out.println();
+		System.out.println("RAW: " + rawBlockSet);
+		System.out.println("SET: " + mergeSet);
+		System.out.println("NUM: " + numBlocks);
+	}
+
 	
 	public String toString() {
 		return mergeSet.toString();
@@ -91,7 +102,36 @@ public class FastIDSet {
 	
 	
 	public static void main(String[] args) {
-		System.out.println("Hello World");
+		FastIDSet a = new FastIDSet(3);
+		a.addID('a');
+		a.addID('b');
+		a.addID('c');
+		a.endRound();
+		a.debug();
+		
+		a.addID('a');
+		a.addID('e');
+		a.endRound();
+		a.debug();
+	
+		a.addID('a');
+		a.addID('e');
+		a.endRound();
+		a.debug();
+		
+		a.endRound();
+		a.debug();
+		
+		a.endRound();
+		a.debug();
+		
+		a.endRound();
+		a.debug();
+		
+		a.endRound();
+		a.debug();
+		
+		
 	}
 	
 	
