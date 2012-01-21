@@ -1,0 +1,17 @@
+package fibbyBot2;
+
+public enum RobotState {
+	ATTACK_GROUND,
+	BACK_OFF,
+	BUILD_TOWER,
+	CHASE,
+	DIZZY,
+	FOLLOW,
+	GOTO_POWER_CORE,
+	INITIALIZE,
+	MICRO,
+	POWER_SAVE,
+	RUSH,
+	SPAWN_UNIT,
+	SPLIT
+}
