@@ -49,7 +49,7 @@ public class ExtendedRadarSystem {
 	}
 	
 	/** Returns the location of this closest enemy. */
-	public MapLocation getClosestEnemy() {
+	public MapLocation getClosestEnemyLocation() {
 		
 		return null;
 	}
