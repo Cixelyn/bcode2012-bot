@@ -32,18 +32,30 @@ public class FastUShortSet {
 		return res;
 	}
 
-	/**
-	 * @return Whether the set is empty
+	/** deletes a value from the set
+	 * @param i - element to remove
 	 */
+	public void remove(int i) {
+		int idx = setContainer.indexOf(String.valueOf((char)i));
+		if(idx >= 0){
+			setContainer.deleteCharAt(idx);
+		}
+	}
+	
+
+	/** @return Whether the set is empty */
 	public boolean isEmpty() {
 		return setContainer.length() == 0;
 	}
 
-	/**
-	 * Returns the internal stringbuilder representation
-	 */
+	/** @return the internal stringbuilder representation */
 	public String toString() {
 		return setContainer.toString();
+	}
+
+	/** @return number of elements in the set */
+	public int count() {
+		return setContainer.length();
 	}
 	
 	
