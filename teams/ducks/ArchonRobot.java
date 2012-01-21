@@ -98,10 +98,11 @@ public class ArchonRobot extends BaseRobot{
 					(radar.alliesInFront==0 && radar.numEnemyRobots-radar.numEnemyArchons>0))
 			{
 				behavior = BehaviorState.RETREAT;
-				int b1 = Clock.getBytecodeNum();
+//				int b1 = Clock.getBytecodeNum();
 				String ret = computeRetreatTarget();
-				int b2 = Clock.getBytecodeNum();
-				System.out.println("flee cost: "+(b1-b2)+" "+ret);
+				rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" "+ret);
+//				int b2 = Clock.getBytecodeNum();
+//				System.out.println("flee cost: "+(b2-b1)+" "+ret);
 				
 			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
 					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons)
@@ -176,9 +177,9 @@ public class ArchonRobot extends BaseRobot{
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
 //		}
 		
-		
-		// Set debug string
-		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
+		if (behavior != BehaviorState.RETREAT)
+			// Set debug string
+			rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
 		
 	}
 	
@@ -196,16 +197,47 @@ public class ArchonRobot extends BaseRobot{
 	
 	private String computeRetreatTarget()
 	{
+//		7 0 1
+//		6   2
+//		5 4 3
 		int[] closest_in_dir = radar.closestInDir;
+		int[] wall_in_dir = new int[8];
 		
-		String dir = ""	+(closest_in_dir[0]==99?"o":"x")
-						+(closest_in_dir[1]==99?"o":"x")
-						+(closest_in_dir[2]==99?"o":"x")
-						+(closest_in_dir[3]==99?"o":"x")
-						+(closest_in_dir[4]==99?"o":"x")
-						+(closest_in_dir[5]==99?"o":"x")
-						+(closest_in_dir[6]==99?"o":"x")
-						+(closest_in_dir[7]==99?"o":"x");
+//		now, deal with when we are close to map boundaries
+		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax)<curLoc.x+6)
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
+			{
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[4] = wall_in_dir[5] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
+			{
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[0] = wall_in_dir[7] = 1;
+			} else
+			{
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = 1;
+			}
+		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin)>curLoc.x-6)
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
+			{
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
+			{
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[0] = wall_in_dir[5] = 1;
+			} else
+			{
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = 1;
+			}
+		}
+		
+		String dir = ""	+(closest_in_dir[0]==99?(wall_in_dir[0]==0?"o":"x"):"x")
+						+(closest_in_dir[1]==99?(wall_in_dir[1]==0?"o":"x"):"x")
+						+(closest_in_dir[2]==99?(wall_in_dir[2]==0?"o":"x"):"x")
+						+(closest_in_dir[3]==99?(wall_in_dir[3]==0?"o":"x"):"x")
+						+(closest_in_dir[4]==99?(wall_in_dir[4]==0?"o":"x"):"x")
+						+(closest_in_dir[5]==99?(wall_in_dir[5]==0?"o":"x"):"x")
+						+(closest_in_dir[6]==99?(wall_in_dir[6]==0?"o":"x"):"x")
+						+(closest_in_dir[7]==99?(wall_in_dir[7]==0?"o":"x"):"x");
 		dir = dir+dir;
 		int index;
 		
@@ -276,6 +308,7 @@ public class ArchonRobot extends BaseRobot{
 	{
 		if (curLoc.distanceSquaredTo(target) < 10)
 			target = curLoc.add(targetDir,5);
+		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
 	}
 	
 	private void computeBattleTarget()

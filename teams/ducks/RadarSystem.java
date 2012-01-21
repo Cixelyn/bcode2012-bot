@@ -68,8 +68,10 @@ public class RadarSystem {
 	
 	public Robot[] robots;
 	
+//	yp's variables for archon retreat code
 	public int[] closestInDir;
 	final static int[] blank_closestInDir = new int[] {99,99,99,99,99,99,99,99};
+//	public int[] allies_in_dir;
 	
 	public RobotInfo closestEnemy;
 	public double closestEnemyDist;
@@ -221,6 +223,7 @@ public class RadarSystem {
 		}
 		
 		switch (rinfo.type) {
+		case ARCHON:
 		case SOLDIER:
 		case SCORCHER:
 		case DISRUPTER:
@@ -275,14 +278,17 @@ public class RadarSystem {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
 		
-		int ddir = (br.curLoc.directionTo(rinfo.location).ordinal()-
-				br.curDir.ordinal()+8) % 8;
-		if(ddir >= 5)
-			alliesOnLeft++;
-		else if(ddir >= 1 && ddir <= 3)
-			alliesOnRight++;
-		if(ddir <= 1 || ddir == 7)
-			alliesInFront++;
+		if (rinfo.type != RobotType.ARCHON)
+		{
+			int ddir = (br.curLoc.directionTo(rinfo.location).ordinal()-
+					br.curDir.ordinal()+8) % 8;
+			if(ddir >= 5)
+				alliesOnLeft++;
+			else if(ddir >= 1 && ddir <= 3)
+				alliesOnRight++;
+			if(ddir <= 1 || ddir == 7)
+				alliesInFront++;
+		}
 	}
 
 	/**
