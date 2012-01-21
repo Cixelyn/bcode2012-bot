@@ -235,9 +235,39 @@ public class RadarSystem {
 	}
 
 	private void addAlly(RobotInfo rinfo) {
+		if (rinfo.type == RobotType.TOWER) return;
+		
 		int pos = rinfo.robot.getID();
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
+
+		numAllyRobots++;
+
+		if (rinfo.energon != rinfo.type.maxEnergon) {
+			numAllyDamaged++;
+		}
+
+		if (rinfo.location.isAdjacentTo(br.curLoc)) {
+			adjacentAllies[numAdjacentAllies++] = rinfo;
+		}
+		
+		int ddir = (br.curLoc.directionTo(rinfo.location).ordinal()-
+				br.curDir.ordinal()+8) % 8;
+		if(ddir >= 5)
+			alliesOnLeft++;
+		else if(ddir >= 1 && ddir <= 3)
+			alliesOnRight++;
+		if(ddir <= 1 || ddir == 7)
+			alliesInFront++;
+	}
+	
+	private void addAllyForArchon(RobotInfo rinfo) {
+		if (rinfo.type == RobotType.TOWER) return;
+		
+		int pos = rinfo.robot.getID();
+		allyInfos[pos] = rinfo;
+		allyTimes[pos] = Clock.getRoundNum();
+		
 
 		numAllyRobots++;
 
@@ -309,18 +339,29 @@ public class RadarSystem {
 			for (int idx = robots.length; --idx >= 0;) {
 				Robot r = robots[idx];
 				try {
-					if (br.myTeam == r.getTeam()) {
-						if (scanAllies) {
-							addAlly(br.rc.senseRobotInfo(r));
-						}
-					} else {
-						if (scanEnemies) {
-							if (isArchon)
+					if (isArchon){
+						if (br.myTeam == r.getTeam()) {
+							if (scanAllies) {
+								addAllyForArchon(br.rc.senseRobotInfo(r));
+							}
+						} else {
+							if (scanEnemies) {
 								addEnemyForArchon(br.rc.senseRobotInfo(r));
-							else
+							}
+						}
+					} else
+					{
+						if (br.myTeam == r.getTeam()) {
+							if (scanAllies) {
+								addAlly(br.rc.senseRobotInfo(r));
+							}
+						} else {
+							if (scanEnemies) {
 								addEnemy(br.rc.senseRobotInfo(r));
+							}
 						}
 					}
+					
 
 				} catch (GameActionException e) {
 					br.rc.addMatchObservation(e.toString());
@@ -413,6 +454,7 @@ public class RadarSystem {
 		int[] shorts = new int[numEnemyRobots*4];
 		for(int i=0; i<numEnemyRobots; i++) {
 			RobotInfo ri = enemyInfos[i];
+			if (ri==null) return;
 			shorts[4*i] = ri.robot.getID();
 			shorts[4*i+1] = ri.location.x;
 			shorts[4*i+2] = ri.location.y;
