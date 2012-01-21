@@ -126,7 +126,6 @@ public class ArchonRobot extends BaseRobot{
 				target = myHome;
 			} else if(strategy == StrategyState.RUSH) {
 				computeExploreTarget();
-//				target = mc.guessEnemyPowerCoreLocation();
 			} else {
 				target = mc.guessBestPowerNodeToCapture();
 			}
@@ -420,10 +419,6 @@ public class ArchonRobot extends BaseRobot{
 				} break;
 				}
 			}
-//			else
-//			{
-//				target = t;
-//			}
 		} else
 		{
 			lastPowerNodeGuess = target = t;
