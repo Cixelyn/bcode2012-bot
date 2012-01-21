@@ -65,8 +65,6 @@ public class FastIDSet {
 	}
 	
 	private void removeOldBlock() {
-		System.out.println("REMOVING BLOCKCS");
-		
 		//grab the first block
 		int idx = rawBlockSet.indexOf(DELIMITER_S);
 		String oldBlock = rawBlockSet.substring(0, idx);
@@ -76,7 +74,6 @@ public class FastIDSet {
 			
 			char robotID = oldBlock.charAt(i);
 			// if the robot doesn't exist in new messages
-			System.out.println("REMOVING: " + robotID);
 			if(recentBlocks.indexOf(String.valueOf(robotID)) < 0) {
 				mergeSet.remove(robotID);
 			}
@@ -88,35 +85,51 @@ public class FastIDSet {
 		numBlocks--;
 	}
 	
-	public void debug() {
-		System.out.println();
-		System.out.println("RAW: " + rawBlockSet);
-		System.out.println("SET: " + mergeSet);
-		System.out.println("NUM: " + numBlocks);
-	}
-
 	
 	public String toString() {
 		return mergeSet.toString();
 	}
 	
 	
+	private void debug() {
+		System.out.println();
+		System.out.println("RAW: " + rawBlockSet);
+		System.out.println("SET: " + mergeSet);
+		System.out.println("NUM: " + numBlocks);
+	}
+	
 	public static void main(String[] args) {
-		FastIDSet a = new FastIDSet(3);
+		FastIDSet a = new FastIDSet(4);
 		a.addID('a');
+		a.addID('b');
 		a.addID('b');
 		a.addID('c');
 		a.endRound();
 		a.debug();
 		
 		a.addID('a');
+		a.addID('a');
+		a.addID('e');
 		a.addID('e');
 		a.endRound();
 		a.debug();
 	
 		a.addID('a');
+		a.addID('b');
 		a.addID('e');
+		a.addID('f');
 		a.endRound();
+		a.debug();
+		
+		a.endRound();
+		a.debug();
+		
+		a.addID('f');
+		a.addID('g');
+		a.debug();
+		a.endRound();
+		
+		a.addID('a');
 		a.debug();
 		
 		a.endRound();
@@ -130,8 +143,6 @@ public class FastIDSet {
 		
 		a.endRound();
 		a.debug();
-		
-		
 	}
 	
 	
