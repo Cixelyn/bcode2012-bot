@@ -21,15 +21,12 @@ public class SoldierRobot extends BaseRobot {
 		RETREAT, 
 		/** Far from target. Use bug to navigate. */
 		LOST,
-		/** Fight the enemy forces. Micro. */
-		SEEK, 
 		/** Track enemy's last position and keep following them. */
 		TARGET_LOCKED;
 	}
 	int lockAcquiredRound;
 	MapLocation target;
 	MapLocation previousBugTarget;
-	boolean senderSwarming;
 	int closestSenderDist;
 	MapLocation archonTarget;
 	BehaviorState behavior;
@@ -48,7 +45,6 @@ public class SoldierRobot extends BaseRobot {
 		});
 		fbs.setPoolMode();
 		behavior = BehaviorState.SWARM;
-		senderSwarming = true;
 	}
 
 	@Override
@@ -56,7 +52,10 @@ public class SoldierRobot extends BaseRobot {
 		
 		// Scan everything every turn
 		radar.scan(true, true);
-		radar.broadcastEnemyInfo();
+		if(curRound%5 == myID%5)
+			radar.broadcastEnemyInfo();
+		
+		rc.setIndicatorString(0, er.toString());
 		
 		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
 		boolean shouldSetNavTarget = true;
@@ -79,7 +78,7 @@ public class SoldierRobot extends BaseRobot {
 					shouldSetNavTarget = false;
 				previousBugTarget = target;
 			} else {	
-				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && senderSwarming && 
+				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && 
 						archonTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
 					// Hibernate once we're no longer adjacent to any allies
 					if(radar.numAdjacentAllies==0) 
@@ -88,13 +87,13 @@ public class SoldierRobot extends BaseRobot {
 					// We did not receive any targeting broadcasts from our archons
 					behavior = BehaviorState.SWARM;
 					target = dc.getClosestArchon();
-				} else if(!senderSwarming && rc.getFlux() > myMaxFlux*2/3) {
-					// Would be seeking enemy, but needs to dump flux first
+				} else if(rc.getFlux() > myMaxEnergon*2/3) {
+					// Needs to dump flux to archon
 					behavior = BehaviorState.POOL;
 					target = dc.getClosestArchon();
 				} else {
 					// Follow target of closest archon's broadcast
-					behavior = senderSwarming ? BehaviorState.SWARM : BehaviorState.SEEK;
+					behavior = BehaviorState.SWARM ;
 					target = archonTarget;
 				}
 				
@@ -120,9 +119,9 @@ public class SoldierRobot extends BaseRobot {
 			RobotLevel bestLevel = null;
 			double bestValue = Double.MAX_VALUE;
 			for(int n=0; n<radar.numEnemyRobots; n++) {
-				RobotInfo ri = radar.enemyInfos[n];
+				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
 				if(!rc.canAttackSquare(ri.location)) 
-					return;
+					continue;
 				if((bestValue < myType.attackPower && ri.energon < myType.attackPower) ?
 						ri.energon > bestValue : ri.energon < bestValue) {
 					// Say a soldier does 6 damage. We prefer hitting units with less energon, but we also would rather hit a unit with 5 energon than a unit with 1 energon.
@@ -131,6 +130,7 @@ public class SoldierRobot extends BaseRobot {
 					bestValue = ri.energon;
 				}
 			}
+			
 			if(bestLoc!=null)
 				rc.attackSquare(bestLoc, bestLevel);
 		}
@@ -147,7 +147,6 @@ public class SoldierRobot extends BaseRobot {
 		
 		// Reset messaging variables
 		closestSenderDist = Integer.MAX_VALUE;
-		senderSwarming = true;
 		
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE) {
@@ -163,14 +162,10 @@ public class SoldierRobot extends BaseRobot {
 		switch(msgType) {
 		case SWARM_TARGET:
 			int[] shorts = BroadcastSystem.decodeUShorts(sb);
-			MapLocation senderLoc = BroadcastSystem.decodeSenderLoc(sb);
-			int dist = curLoc.distanceSquaredTo(senderLoc);
-			boolean wantToSwarm = shorts[0]==0;
-			if(senderSwarming&&!wantToSwarm || 
-					(senderSwarming==wantToSwarm)&&dist<closestSenderDist) {
+			int dist = curLoc.distanceSquaredTo(BroadcastSystem.decodeSenderLoc(sb));
+			if(dist<closestSenderDist) {
 				closestSenderDist = dist;
 				archonTarget = new MapLocation(shorts[1], shorts[2]);
-				senderSwarming = wantToSwarm;
 			}
 			break;
 		case ENEMY_INFO:
@@ -187,43 +182,54 @@ public class SoldierRobot extends BaseRobot {
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux()<1) return null;
+		
+		// If we're looking to hibernate, move around randomly
 		if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
 			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 		}
-		int enemiesInFront = radar.numEnemyDisruptors + radar.numEnemySoldiers 
-				+ radar.numEnemyScorchers * 2;
-		int tooClose = behavior==BehaviorState.TARGET_LOCKED ? 
-				(radar.numAllyRobots >= enemiesInFront ? -1 : 2) : 1;
-		int tooFar = behavior==BehaviorState.TARGET_LOCKED ? 
-				(radar.numAllyRobots >= enemiesInFront ? 4 : 14) : 11;
 		
-		if(curLoc.equals(target) && 
-				rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)!=null) {
-			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
-		}
-		if(curLoc.distanceSquaredTo(target) <= tooClose) {
-			return new MoveInfo(curLoc.directionTo(target).opposite(), true);
-		} else if(curLoc.distanceSquaredTo(target) >= tooFar) {
-			Direction dir = nav.navigateToDestination();
-			if(behavior == BehaviorState.SWARM) {
-				if(radar.alliesInFront==0 && Math.random()<0.75) 
-					return null;
-				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
-					dir = nav.navigateCompletelyRandomly();
-				if(radar.alliesOnLeft > radar.alliesOnRight && Math.random()<0.3) 
-					dir = dir.rotateRight();
-				else if(radar.alliesOnLeft < radar.alliesOnRight && Math.random()<0.3) 
-					dir = dir.rotateLeft();
+		if(behavior == BehaviorState.SWARM ) {
+			// If we're on top of our target power node, move around randomly
+			if(curLoc.equals(target) && 
+					rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)!=null) {
+				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
-			return new MoveInfo(dir, false);
-		} else {
-			if(behavior == BehaviorState.SWARM) {
+			// If we're far from the swarm target, follow normal swarm rules
+			if(curLoc.distanceSquaredTo(target) >= 11) {
+				Direction dir = nav.navigateToDestination();
+				if(behavior == BehaviorState.SWARM) {
+					if(radar.alliesInFront==0 && Math.random()<0.75) 
+						return null;
+					if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+						dir = nav.navigateCompletelyRandomly();
+					if(radar.alliesOnLeft > radar.alliesOnRight && Math.random()<0.3) 
+						dir = dir.rotateRight();
+					else if(radar.alliesOnLeft < radar.alliesOnRight && Math.random()<0.3) 
+						dir = dir.rotateLeft();
+				}
+				return new MoveInfo(dir, false);
+				
+			// If we're fairly close, and there's lots of allies around, move randomly
+			} else if(curLoc.distanceSquaredTo(target) >= 2) {
 				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
 					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
+		} else {
+			
+			// Fighting an enemy, kite target
+			boolean weHaveBiggerFront = er.getEnergonDifference(16) > 0;
+			int tooClose = behavior==BehaviorState.TARGET_LOCKED ? 
+					(weHaveBiggerFront ? -1 : 5) : 1;
+			int tooFar = behavior==BehaviorState.TARGET_LOCKED ? 
+					(weHaveBiggerFront ? 4 : 26) : 11;
+			
+			if(curLoc.distanceSquaredTo(target) <= tooClose) {
+				return new MoveInfo(curLoc.directionTo(target).opposite(), true);
+			} else if(curLoc.distanceSquaredTo(target) >= tooFar) {
+				Direction dir = nav.navigateToDestination();
+				return new MoveInfo(dir, false);
+			}
 		}
-		
-		
 		
 		return new MoveInfo(curLoc.directionTo(target));
 	}

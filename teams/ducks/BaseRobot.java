@@ -127,6 +127,9 @@ public abstract class BaseRobot {
 				
 				// Call Movement State Machine
 				msm.step();
+				
+				// Update Extended Radar
+				er.step();
 
 				// Check if we've already run out of bytecodes
 				if(checkClock()) {

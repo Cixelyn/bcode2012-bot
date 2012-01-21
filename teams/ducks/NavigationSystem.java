@@ -67,6 +67,12 @@ public class NavigationSystem {
 				mapCache.worldToCacheY(destination.y));
 		reset();
 	}
+	public int getTurnsPrepared() {
+		if(mode==NavigationMode.TANGENT_BUG) {
+			return tangentBug.getTurnsPrepared();
+		}
+		return 0;
+	}
 	/** Does precomputation to allow the navigationToDestination() to
 	 * return a more accurate result. Only matters for tangent bug right now.
 	 * @see NavigationSystem#navigateToDestination()

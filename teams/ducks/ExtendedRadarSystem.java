@@ -2,6 +2,7 @@ package ducks;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
+import battlecode.common.RobotInfo;
 
 public class ExtendedRadarSystem {
 	private static final int BUFFER_SIZE = 4096;
@@ -13,6 +14,8 @@ public class ExtendedRadarSystem {
 	private final MapLocation[] allyLocationInfo;
 	private final int[] allyEnergonInfo;
 	private final FastIDSet allyKeySet;
+	private final int[] flags;
+	private int flagCount;
 	public ExtendedRadarSystem(BaseRobot br) {
 		this.br = br;
 		enemyLocationInfo = new MapLocation[BUFFER_SIZE];
@@ -21,22 +24,23 @@ public class ExtendedRadarSystem {
 		allyLocationInfo = new MapLocation[BUFFER_SIZE];
 		allyEnergonInfo = new int[BUFFER_SIZE];
 		allyKeySet = new FastIDSet(5);
+		flags = new int[BUFFER_SIZE];
+		flagCount = 0;
 	}
 	
 	/** Ally broadcasted some enemy info to us, integrate it into the system. <br>
 	 * Should only be called from processMessage().
 	 */
 	public void integrateEnemyInfo(int[] info) {
-		int senderID = info[0] % BUFFER_SIZE;
+		int senderID = info[0];
 		allyLocationInfo[senderID] = new MapLocation(info[1], info[2]);
 		allyEnergonInfo[senderID] = info[3];
 		allyKeySet.addID(senderID);
 		
 		for(int n=4; n<info.length; n+=4) {
-			int id = info[n] % BUFFER_SIZE;
+			int id = info[n];
 			enemyLocationInfo[id] = new MapLocation(info[n+1], info[n+2]);
 			enemyEnergonInfo[id] = info[n+3];
-			
 			enemyKeySet.addID(id);
 		}
 	}
@@ -45,7 +49,7 @@ public class ExtendedRadarSystem {
 	 * Should only be called from processMessage().
 	 */
 	public void integrateEnemyKill(int killID) {
-		enemyKeySet.removeID(killID % BUFFER_SIZE);
+		enemyKeySet.removeID(killID);
 	}
 	
 	/** Gets info about a kill into your own and nearby robots' extended radar. */
@@ -56,6 +60,7 @@ public class ExtendedRadarSystem {
 	
 	/** Adds block of enemy info from this turn and removes block that timed out. */
 	public void step() {
+		allyKeySet.endRound();
 		enemyKeySet.endRound();
 	}
 	
@@ -63,6 +68,7 @@ public class ExtendedRadarSystem {
 	 * Returns a positive number iff we have more energon than the other team.
 	 */
 	public int getEnergonDifference(int radiusSquared) {
+		flagCount++;
 		int diff = 0;
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
@@ -73,9 +79,20 @@ public class ExtendedRadarSystem {
 		size = allyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = allyKeySet.getID(i);
-			if(br.curLoc.distanceSquaredTo(allyLocationInfo[id]) <= radiusSquared) 
+			if(br.curLoc.distanceSquaredTo(allyLocationInfo[id]) <= radiusSquared) {
+				flags[id] = flagCount;
 				diff += allyEnergonInfo[id];
+			}
 		}
+		for(int i=0; i<br.radar.numAllyRobots; i++) {
+			int id = br.radar.allyRobots[i];
+			if(flags[id]==flagCount) continue;
+			RobotInfo ri = br.radar.allyInfos[id];
+			if(br.curLoc.distanceSquaredTo(ri.location) <= radiusSquared) {
+				diff += ri.energon;
+			}
+		}
+		
 		return diff;
 	}
 	
@@ -124,5 +141,21 @@ public class ExtendedRadarSystem {
 	 */
 	public Direction getAverageEnemyDirection() {
 		throw new RuntimeException("ExtendedRadarSystem.getAverageEnemyDirection() not yet implemented!");
+	}
+	
+	@Override
+	public String toString() {
+		String ret = "";
+		int size = enemyKeySet.size();
+		for(int i=0; i<size; i++) {
+			int id = enemyKeySet.getID(i);
+			ret+="id="+id+",pos=<"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+">,hp="+enemyEnergonInfo[id]+"     ";
+		}
+		size = allyKeySet.size();
+		for(int i=0; i<size; i++) {
+			int id = allyKeySet.getID(i);
+			ret+="(ally)id="+id+",pos=<"+(allyLocationInfo[id].x-br.curLoc.x)+","+(allyLocationInfo[id].y-br.curLoc.y)+">,hp="+allyEnergonInfo[id]+"     ";
+		}
+		return ret;
 	}
 }
