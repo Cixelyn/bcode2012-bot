@@ -55,7 +55,7 @@ public class SoldierRobot extends BaseRobot {
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo();
 		
-		rc.setIndicatorString(0, er.toString());
+		dbg.setIndicatorString('h',0, er.toString());
 		
 		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
 		boolean shouldSetNavTarget = true;
@@ -81,7 +81,12 @@ public class SoldierRobot extends BaseRobot {
 				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && 
 						archonTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
 					// Hibernate once we're no longer adjacent to any allies
-					if(radar.numAdjacentAllies==0) 
+					int adjacentMovable = 0;
+					if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
+					if(!rc.canMove(Direction.EAST)) adjacentMovable++;
+					if(!rc.canMove(Direction.WEST)) adjacentMovable++;
+					if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
+					if(adjacentMovable<=1)
 						behavior = BehaviorState.HIBERNATE;
 				} else if(closestSenderDist == Integer.MAX_VALUE) { 
 					// We did not receive any targeting broadcasts from our archons
@@ -143,7 +148,7 @@ public class SoldierRobot extends BaseRobot {
 			fbs.setPoolMode();
 		
 		// Set debug string
-		rc.setIndicatorString(1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
+		dbg.setIndicatorString('h',1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
 		
 		// Reset messaging variables
 		closestSenderDist = Integer.MAX_VALUE;

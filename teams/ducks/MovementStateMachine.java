@@ -23,7 +23,7 @@ public class MovementStateMachine {
 
 	public void step() throws GameActionException {
 		curState = execute();
-		rc.setIndicatorString(2, nextMove+", movement_state="+curState);
+		br.dbg.setIndicatorString('h',2, nextMove+", movement_state="+curState);
 	}
 	private MovementState execute() throws GameActionException {
 		switch(curState) {

@@ -4,9 +4,11 @@ import battlecode.common.Clock;
 import battlecode.common.MapLocation;
 
 public class SharedExplorationSystem {
-	final BaseRobot baseRobot;
-	public SharedExplorationSystem(BaseRobot baseRobot) {
-		this.baseRobot = baseRobot;
+	final BaseRobot br;
+	final MapCacheSystem mc;
+	public SharedExplorationSystem(BaseRobot br) {
+		this.br = br;
+		this.mc = br.mc;
 	}
 	
 	/** Broadcasts robot's knowledge of one column of the map.
@@ -16,66 +18,76 @@ public class SharedExplorationSystem {
 	public void broadcastMapFragment() {
 		int startRow;
 		int numRowBlocks;
-		if(baseRobot.mc.edgeXMin!=0) {
-			startRow = (baseRobot.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
-			if(baseRobot.mc.edgeXMax!=0) {
-				numRowBlocks = baseRobot.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-(baseRobot.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
-			} else {
-				numRowBlocks = 16;
-			}
-		} else if(baseRobot.mc.edgeXMax!=0) {
-			numRowBlocks = 16;
-			startRow = baseRobot.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-numRowBlocks+1;
-		} else {
-			startRow = 0;
-			numRowBlocks = 64;
-		}
 		int startCol;
 		int numColBlocks;
-		if(baseRobot.mc.edgeYMin!=0) {
-			startCol = (baseRobot.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
-			if(baseRobot.mc.edgeYMax!=0) {
-				numColBlocks = baseRobot.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-(baseRobot.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
+		
+		if(Clock.getRoundNum()/6%2==0) {
+			if(br.mc.edgeXMin!=0) {
+				startRow = (br.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
+				if(br.mc.edgeXMax!=0) {
+					numRowBlocks = br.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-(br.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
+				} else {
+					numRowBlocks = 16;
+				}
+			} else if(br.mc.edgeXMax!=0) {
+				numRowBlocks = 16;
+				startRow = br.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-numRowBlocks+1;
 			} else {
-				numColBlocks = 16;
+				startRow = 0;
+				numRowBlocks = 64;
 			}
-		} else if(baseRobot.mc.edgeYMax!=0) {
-			numColBlocks = 16;
-			startCol = baseRobot.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-numColBlocks+1;
+			
+			if(br.mc.edgeYMin!=0) {
+				startCol = (br.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
+				if(br.mc.edgeYMax!=0) {
+					numColBlocks = br.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-(br.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
+				} else {
+					numColBlocks = 16;
+				}
+			} else if(br.mc.edgeYMax!=0) {
+				numColBlocks = 16;
+				startCol = br.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-numColBlocks+1;
+			} else {
+				startCol = 0;
+				numColBlocks = 64;
+			}
 		} else {
-			startCol = 0;
-			numColBlocks = 64;
+			int rotation = (int)(Clock.getRoundNum()/12%4);
+			startRow = br.mc.worldToCacheY(br.curLoc.y)/MapCacheSystem.MAP_BLOCK_SIZE - (rotation/2*2);
+			startCol = br.mc.worldToCacheX(br.curLoc.x)/MapCacheSystem.MAP_BLOCK_SIZE - (rotation%2*2);
+			numRowBlocks = 3;
+			numColBlocks = 3;
 		}
-		int xb = startCol + (Clock.getRoundNum()/6 % numColBlocks);
+		int xb = startCol + (Clock.getRoundNum()/12 % numColBlocks);
 		
 		int[] buffer = new int[256];
 		int c=0;
 		for(int yb=startRow; yb<startRow+numRowBlocks; yb++) {
-			int data = baseRobot.mc.packedSensed[xb][yb];
+			int data = br.mc.packedSensed[xb][yb];
 			if(data % 65536 == 0) continue;
-			buffer[c++] = baseRobot.mc.packedIsWall[xb][yb];
+			buffer[c++] = br.mc.packedIsWall[xb][yb];
 			buffer[c++] = data;
 		}
 		if(c>0) {
 			int[] ints = new int[c];
 			System.arraycopy(buffer, 0, ints, 0, c);
-			baseRobot.io.sendUInts(BroadcastChannel.EXPLORERS, BroadcastType.MAP_FRAGMENTS, ints);
+			br.io.sendUInts(BroadcastChannel.EXPLORERS, BroadcastType.MAP_FRAGMENTS, ints);
 		}
 	}
 	/** Broadcasts robot's knowledge of the four map edges. */
 	public void broadcastMapEdges() {
 		int[] edges = new int[] {
-				baseRobot.mc.edgeXMin, 
-				baseRobot.mc.edgeXMax,
-				baseRobot.mc.edgeYMin,
-				baseRobot.mc.edgeYMax
+				br.mc.edgeXMin, 
+				br.mc.edgeXMax,
+				br.mc.edgeYMin,
+				br.mc.edgeYMax
 		};
-		baseRobot.io.sendUShorts(BroadcastChannel.ALL, BroadcastType.MAP_EDGES, edges);
+		br.io.sendUShorts(BroadcastChannel.ALL, BroadcastType.MAP_EDGES, edges);
 	}
 	/** Broadcasts data about one node in the power node graph and its neighbors. */
 	public void broadcastPowerNodeFragment() {
-		PowerNodeGraph png = baseRobot.mc.powerNodeGraph;
-		int id = (Clock.getRoundNum()/6 % (png.nodeCount-1)) + 2;
+		PowerNodeGraph png = br.mc.powerNodeGraph;
+		int id = (Clock.getRoundNum() % (png.nodeCount-1)) + 2;
 		if(!png.nodeSensed[id]) return;
 		int degree = png.degreeCount[id];
 		int[] ints = new int[degree+2];
@@ -90,24 +102,24 @@ public class SharedExplorationSystem {
 			int neighborID = png.adjacencyList[id][i];
 			ints[i+2] = (png.nodeLocations[neighborID].x << 15) + png.nodeLocations[neighborID].y;
 		}
-		baseRobot.io.sendUInts(BroadcastChannel.EXPLORERS, BroadcastType.POWERNODE_FRAGMENTS, ints);
+		br.io.sendUInts(BroadcastChannel.EXPLORERS, BroadcastType.POWERNODE_FRAGMENTS, ints);
 	}
 	
 	/** Receive data equivalent to one broadcast of a map fragment. */
 	public void receiveMapFragment(int[] data) {
 		for(int i=0; i<data.length; i+=2) {
-			baseRobot.mc.integrateTerrainInfo(data[i], data[i+1]);
+			br.mc.integrateTerrainInfo(data[i], data[i+1]);
 		}
 	}
 	/** Receive data equivalent to one broadcast of the four map edges. */
 	public void receiveMapEdges(int[] data) {
-		if(baseRobot.mc.edgeXMin==0) baseRobot.mc.edgeXMin = data[0];
-		if(baseRobot.mc.edgeXMax==0) baseRobot.mc.edgeXMax = data[1];
-		if(baseRobot.mc.edgeYMin==0) baseRobot.mc.edgeYMin = data[2];
-		if(baseRobot.mc.edgeYMax==0) baseRobot.mc.edgeYMax = data[3];
+		if(br.mc.edgeXMin==0) br.mc.edgeXMin = data[0];
+		if(br.mc.edgeXMax==0) br.mc.edgeXMax = data[1];
+		if(br.mc.edgeYMin==0) br.mc.edgeYMin = data[2];
+		if(br.mc.edgeYMax==0) br.mc.edgeYMax = data[3];
 	}
 	/** Receive data equivalent to one broadcast of a power node fragment. */
 	public void receivePowerNodeFragment(int[] data) {
-		baseRobot.mc.integratePowerNodes(data);
+		br.mc.integratePowerNodes(data);
 	}
 }
