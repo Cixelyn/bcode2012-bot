@@ -76,6 +76,9 @@ public class RadarSystem {
 	public RobotInfo closestEnemy;
 	public double closestEnemyDist;
 	
+	public RobotInfo closestLowFluxAlly;
+	public double closestLowFluxAllyDist;
+	
 	final boolean cachepositions;
 	final boolean isArchon;
 
@@ -132,6 +135,8 @@ public class RadarSystem {
 		alliesOnLeft = 0;
 		alliesOnRight = 0;
 		alliesInFront = 0;
+		closestLowFluxAlly = null;
+		closestLowFluxAllyDist = 999;
 	}
 
 	private void addEnemy(RobotInfo rinfo) throws GameActionException {
@@ -258,6 +263,15 @@ public class RadarSystem {
 			alliesOnRight++;
 		if(ddir <= 1 || ddir == 7)
 			alliesInFront++;
+		
+		// TODO(jven): this stuff should be linked with fbs
+		int dist = br.curLoc.distanceSquaredTo(rinfo.location);
+		if (rinfo.type != RobotType.ARCHON && rinfo.type != RobotType.SCOUT &&
+				rinfo.flux < rinfo.energon / 3 &&
+				dist < closestLowFluxAllyDist) {
+			closestLowFluxAlly = rinfo;
+			closestLowFluxAllyDist = dist;
+		}
 	}
 	
 	private void addAllyForArchon(RobotInfo rinfo) {
