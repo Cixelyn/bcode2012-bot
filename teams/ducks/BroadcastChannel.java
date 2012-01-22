@@ -12,10 +12,6 @@ public enum BroadcastChannel {
 	public final String chanHeader;
 	
 	BroadcastChannel() {
-		chanHeader = "#" + (char)(this.ordinal() + 0x100);
-	}
-
-	public static String RobotChannel(int id) {
-		return "#" + (char)(id + 0x200);
+		chanHeader = BroadcastSystem.CHANHEADER_S + ((char)this.ordinal());
 	}
 }
