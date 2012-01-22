@@ -247,7 +247,7 @@ public class RadarSystem {
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
 
-		if (rinfo.energon != rinfo.type.maxEnergon && !rinfo.regen) {
+		if ((rinfo.energon < rinfo.type.maxEnergon - 0.2) && !rinfo.regen) {
 			numAllyToRegenerate++;
 		}
 
