@@ -34,16 +34,18 @@ public class SoldierRobot extends BaseRobot {
 	int lockAcquiredRound;
 	MapLocation target;
 	MapLocation previousBugTarget;
-	int closestSenderDist;
+	int closestSwarmTargetSenderDist;
 	MapLocation archonTarget;
 	BehaviorState behavior;
 	MapLocation hibernateTarget;
+	double energonLastTurn;
+	boolean archonTargetIsEnemy;
 	
 	public SoldierRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		lockAcquiredRound = -1;
-		closestSenderDist = Integer.MAX_VALUE;
+		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
 		nav.setNavigationMode(NavigationMode.GREEDY);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
@@ -52,6 +54,7 @@ public class SoldierRobot extends BaseRobot {
 		});
 		fbs.setPoolMode();
 		behavior = BehaviorState.SWARM;
+		archonTargetIsEnemy = false;
 	}
 
 	@Override
@@ -79,8 +82,12 @@ public class SoldierRobot extends BaseRobot {
 			target = closestEnemyLocation;
 			nav.setNavigationMode(NavigationMode.GREEDY);
 			lockAcquiredRound = curRound;
-		} else if(behavior == BehaviorState.ENEMY_DETECTED && curRound > lockAcquiredRound + 12) {
+		} else if(curEnergon < energonLastTurn) {
+			// Got hurt since last turn.. look behind you
+			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+		} else if(behavior == BehaviorState.ENEMY_DETECTED && curRound < lockAcquiredRound + 12) {
 			// Don't know of any enemies, stay chasing the last enemy we knew of
+			behavior = BehaviorState.ENEMY_DETECTED;
 		} else {
 			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 			if((behavior==BehaviorState.LOST && distToClosestArchon>25) || 
@@ -104,8 +111,8 @@ public class SoldierRobot extends BaseRobot {
 					if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
 					if(adjacentMovable<=1)
 						behavior = BehaviorState.HIBERNATE;
-				} else if(closestSenderDist == Integer.MAX_VALUE) { 
-					// We did not receive any targeting broadcasts from our archons
+				} else if(closestSwarmTargetSenderDist == Integer.MAX_VALUE) { 
+					// We did not receive any swarm target broadcasts from our archons
 					behavior = BehaviorState.SWARM;
 					target = dc.getClosestArchon();
 				} else {
@@ -115,7 +122,7 @@ public class SoldierRobot extends BaseRobot {
 				}
 				
 				if(behavior == BehaviorState.SWARM && 
-						closestSenderDist <= 10 && 
+						closestSwarmTargetSenderDist <= 10 && 
 						curLoc.distanceSquaredTo(target) <= 10) { 
 					// Close enough to swarm target, look for a place to hibernate
 					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
@@ -178,16 +185,13 @@ public class SoldierRobot extends BaseRobot {
 		
 		
 		// Set the flux balance mode
-		if(behavior == BehaviorState.SWARM)
+		if(behavior == BehaviorState.SWARM && !archonTargetIsEnemy)
 			fbs.setBatteryMode();
 		else
 			fbs.setPoolMode();
 		
 		// Set debug string
 		dbg.setIndicatorString('h', 1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
-		
-		// Reset messaging variables
-		closestSenderDist = Integer.MAX_VALUE;
 		
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE) {
@@ -212,6 +216,9 @@ public class SoldierRobot extends BaseRobot {
 			nav.setDestination(curLoc);
 		}
 		
+		// Update end of turn variables
+		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
+		energonLastTurn = curEnergon;
 			
 	}
 	
@@ -221,8 +228,9 @@ public class SoldierRobot extends BaseRobot {
 		case SWARM_TARGET:
 			int[] shorts = BroadcastSystem.decodeUShorts(sb);
 			int dist = curLoc.distanceSquaredTo(BroadcastSystem.decodeSenderLoc(sb));
-			if(dist<closestSenderDist) {
-				closestSenderDist = dist;
+			if(dist<closestSwarmTargetSenderDist) {
+				closestSwarmTargetSenderDist = dist;
+				archonTargetIsEnemy = shorts[0]==2;
 				archonTarget = new MapLocation(shorts[1], shorts[2]);
 			}
 			break;
@@ -239,9 +247,12 @@ public class SoldierRobot extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		if(rc.getFlux()<1) return null;
+		if(rc.getFlux()<0.8) return null;
 		
-		if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
+		if(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES) {
+			// Just turn around once
+			return new MoveInfo(curDir.opposite());
+		} else if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
 			// If we're looking to hibernate, move around randomly
 			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 		} else if(behavior == BehaviorState.SWARM ) {
