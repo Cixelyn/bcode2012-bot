@@ -15,6 +15,26 @@ public class RobotPlayer {
 	public static void dostuff(RobotController rc) throws Exception
 	{
 		if (!rc.getLocation().equals(rc.senseAlliedArchons()[0])) rc.suicide();
+	
+		int t1,t2,t3;
+		char c1 = 'a';
+		char c2 = 'a';
+		
+		String s1 = "a";
+		String s2 = "a";
+		StringBuilder c4 = new StringBuilder();
+		
+		t1 = Clock.getBytecodeNum();
+		s1 = s1.concat(String.valueOf(c1));
+		t2 = Clock.getBytecodeNum();
+		System.out.println("weroiu: " + (t2-t1));
+	
+		t1 = Clock.getBytecodeNum();
+		c4.append(c1);
+		t2 = Clock.getBytecodeNum();
+		System.out.println("weroiu: " + (t2-t1));
+		
+		
 		
 		
 		TestClass.run();
@@ -88,7 +108,6 @@ public class RobotPlayer {
 		StrategyFull s = new FixedStrategyFullTester();
 		System.out.println("strategy init took: "+(Clock.getBytecodeNum()-bytecode-extra));
 		
-		int t1,t2,t3;
 		long totalcost = 0;
 		for (int x=0; x<250; x++)
 		{

@@ -192,11 +192,11 @@ public class BroadcastSystem {
 		sendUShorts(bChan.chanHeader + bType.header, ints);
 	}
 	private void sendUShorts(String header, int[] ints) {
-		msgContainer.append(header);
 		for (int i : ints) {
-			msgContainer.append((char) i );
+			header = header.concat(String.valueOf((char) i ));
 		}
-		msgContainer.append(TERMINATOR_C);
+		msgContainer.append(header.concat(TERMINATOR_S));
+		
 	}
 
 	/**
@@ -265,17 +265,12 @@ public class BroadcastSystem {
 	}
 	
 	private void sendUInts(String header, int[] ints) {
-		msgContainer.append(header);
 		for (int i : ints ) {
-			
-			int lo = (i & 0x00007FFF );
-			int hi = ((i & 0x3FFF8000 )  >> 15);
-			
-			msgContainer.append((char) lo);
-			msgContainer.append((char) hi);
+			header = header.concat(
+				String.valueOf((char) ( i & 0x00007FFF ))).concat( // LO BITS
+				String.valueOf((char) ((i & 0x3FFF8000 )  >> 15))); // HI BITS
 		}
-		msgContainer.append(TERMINATOR_C);
-		
+		msgContainer.append(header.concat(TERMINATOR_S));
 	}
 	
 	/**
@@ -409,14 +404,15 @@ public class BroadcastSystem {
 	
 	
 	private static int hashMessage(StringBuilder msg) {
-		StringBuilder tmp = new StringBuilder();
+		String tmp = new String();
 	
 		int endpoint = msg.length();
 		int midpoint = endpoint / 2;
-		tmp.append(msg.substring(midpoint,endpoint));
-		tmp.append(msg.substring(0,midpoint));
 		
-		return tmp.toString().hashCode();
+		tmp.concat(msg.substring(midpoint,endpoint)).concat(
+					(msg.substring(0,midpoint)));
+		
+		return tmp.hashCode();
 	}
 	
 	
