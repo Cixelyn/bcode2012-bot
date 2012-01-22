@@ -187,13 +187,13 @@ public class ScoutRobot extends BaseRobot {
 					initialReportLoc.y});
 		}
 		// indicator strings
-		dbg.setIndicatorString('j', 0, "SCOUT - " + behavior);
+		dbg.setIndicatorString('e', 0, "SCOUT - " + behavior);
 		if (radar.closestLowFluxAlly != null) {
-			dbg.setIndicatorString('j', 1, "Closest low flux ally: " +
+			dbg.setIndicatorString('e', 1, "Closest low flux ally: " +
 					radar.closestLowFluxAlly.type + "(" + radar.closestLowFluxAllyDist +
 					")");
 		} else {
-			dbg.setIndicatorString('j', 1, "No nearby low flux allies.");
+			dbg.setIndicatorString('e', 1, "No nearby low flux allies.");
 		}
 	}
 	
