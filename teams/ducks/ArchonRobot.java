@@ -71,10 +71,11 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()%200==0 && myArchonID==5) {
+		if(Clock.getRoundNum()%100==0 && myArchonID==5) {
 			System.out.println(mc.toString());
 		}
-		rc.setIndicatorString(0, nav.getTurnsPrepared()+"");
+		
+		rc.setIndicatorString(0, ""+nav.getTurnsPrepared());
 		
 		// Currently the strategy transition is based on hard-coded turn numbers
 		if(Clock.getRoundNum()>1700 && myArchonID!=0) {
@@ -534,14 +535,14 @@ public class ArchonRobot extends BaseRobot{
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
-		if(dc.getClosestArchon()!=null) {
-			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if(distToNearestArchon <= 36 &&
-					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
-					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
-				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
-			}
-		}
+//		if(dc.getClosestArchon()!=null) {
+//			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+//			if(distToNearestArchon <= 36 &&
+//					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
+//					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
+//				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
+//			}
+//		}
 		
 		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.9) {
 			boolean isClosestToTarget = true;

@@ -7,7 +7,7 @@ import battlecode.common.TerrainTile;
 public class NavigationSystem {
 	private final BaseRobot baseRobot;
 	private final MapCacheSystem mapCache; 
-	private final TangentBug tangentBug;
+	public final TangentBug tangentBug; // public purely for optimization's sake
 	private final NormalBug normalBug;
 	private final MapLocation zeroLoc;
 	private NavigationMode mode;
@@ -126,7 +126,7 @@ public class NavigationSystem {
 			dir = navigateDStar();
 		} 
 		
-		if(dir==Direction.NONE || dir==Direction.OMNI) 
+		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI) 
 			return null; 
 		movesOnSameTarget++;
 		return dir;
