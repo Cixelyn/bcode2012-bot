@@ -41,7 +41,6 @@ public class HibernationSystem {
 			
 			// check for awaken message
 			msgs = rc.getAllMessages();
-			time = Clock.getRoundNum();
 			for (i = msgs.length; --i >= 0;) {
 
 				// validity check
@@ -53,7 +52,7 @@ public class HibernationSystem {
 				if (mints[0] != teamkey)
 					continue;
 
-				if (mints[2] <= time && mints[2] > time - 10) {
+				if ((mints[2] <= (time=Clock.getRoundNum())) && (mints[2] > time - 10)) {
 					br.resetClock();
 					br.io.sendWakeupCall();
 					return ExitCode.MESSAGED; // our exit point
