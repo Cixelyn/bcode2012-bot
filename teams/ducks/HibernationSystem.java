@@ -51,16 +51,19 @@ public class HibernationSystem {
 			// emergency wakeup conditions
 			if((curEnergon = rc.getEnergon()) < lastEnergon) {
 				br.resetClock();
+				br.updateRoundVariables();
 				br.io.sendWakeupCall();
 				return ExitCode.ATTACKED;
 			}
 			if((curFlux = rc.getFlux()) < lastFlux - 1.0) {
 				br.resetClock();
+				br.updateRoundVariables();
 				br.io.sendWakeupCall();
 				return ExitCode.ATTACKED;
 			}      
 			if(wakeOnFlux && (curFlux > lastFlux)) {
 				br.resetClock();
+				br.updateRoundVariables();
 				return ExitCode.REFUELED;
 			}
 				
@@ -82,6 +85,7 @@ public class HibernationSystem {
 
 				if ((mints[2] <= (time=Clock.getRoundNum())) && (mints[2] > time - 10)) {
 					br.resetClock();
+					br.updateRoundVariables();
 					br.io.sendWakeupCall();
 					return ExitCode.MESSAGED; // our exit point
 				}

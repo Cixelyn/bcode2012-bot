@@ -27,7 +27,9 @@ public class SoldierRobot extends BaseRobot {
 		/** Need to refuel. Go to nearest archon. */
 		REFUEL,
 		/** Tracking closest enemy, even follow them for 12 turns. */
-		ENEMY_DETECTED;
+		ENEMY_DETECTED,
+		/** Getting hit somehow, don't know from where. */
+		LOOK_AROUND_FOR_ENEMIES,
 	}
 	int lockAcquiredRound;
 	MapLocation target;
@@ -190,10 +192,24 @@ public class SoldierRobot extends BaseRobot {
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE) {
 			hsys.setMode(HibernationMode.NORMAL);
-			hsys.run();
+			HibernationSystem.ExitCode ec = hsys.run();
+			dbg.setIndicatorString('h', 0, ec+"");
+			if(ec == HibernationSystem.ExitCode.ATTACKED)
+				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+			else if(ec == HibernationSystem.ExitCode.MESSAGED)
+				behavior = BehaviorState.SWARM;
+			nav.setDestination(curLoc);
 		} else if(behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
 			hsys.setMode(HibernationMode.LOW_FLUX);
-			hsys.run();
+			HibernationSystem.ExitCode ec = hsys.run();
+			dbg.setIndicatorString('h', 0, ec+"(low)");
+			if(ec == HibernationSystem.ExitCode.ATTACKED)
+				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+			else if(ec == HibernationSystem.ExitCode.MESSAGED)
+				behavior = BehaviorState.SWARM;
+			else if(ec == HibernationSystem.ExitCode.REFUELED)
+				behavior = BehaviorState.LOST;
+			nav.setDestination(curLoc);
 		}
 		
 			

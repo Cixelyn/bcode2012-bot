@@ -160,7 +160,8 @@ public abstract class BaseRobot {
 		}
 	}
 	
-	private void updateRoundVariables() {
+	/** Resets the current round variables of the robot. */
+	public void updateRoundVariables() {
 		curRound = Clock.getRoundNum();
 		curEnergon = rc.getEnergon();
 		curLoc = rc.getLocation();

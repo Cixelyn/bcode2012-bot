@@ -27,7 +27,7 @@ public class ArchonRobot extends BaseRobot{
 		/** Fight the enemy forces. Micro, maybe kite. */
 		BATTLE, 
 		/** Track enemy's last position and keep following them. */
-		CHASE;
+		CHASE,
 	}
 	int myArchonID;
 	
