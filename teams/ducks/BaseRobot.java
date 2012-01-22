@@ -26,6 +26,7 @@ public abstract class BaseRobot {
 	public final MovementStateMachine msm;
 	public final ScoutWireSystem sws;
 	public final DebugSystem dbg;
+	public final HibernationSystem hsys;
 	
 	// Robot Statistics - Permanent
 	public final RobotType myType;
@@ -97,6 +98,7 @@ public abstract class BaseRobot {
 		ao = new ArchonOwnership(this);
 		msm = new MovementStateMachine(this);
 		sws = new ScoutWireSystem(this);
+		hsys = new HibernationSystem(this);
 		
 		mc.senseAll();
 		
