@@ -1,7 +1,5 @@
 package normalai;
 
-import java.util.Arrays;
-
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;

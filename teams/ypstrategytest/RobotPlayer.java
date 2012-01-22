@@ -18,9 +18,11 @@ public class RobotPlayer {
 	
 		int t1,t2,t3;
 		char c1 = 'a';
+		@SuppressWarnings("unused")
 		char c2 = 'a';
 		
 		String s1 = "a";
+		@SuppressWarnings("unused")
 		String s2 = "a";
 		StringBuilder c4 = new StringBuilder();
 		

@@ -22,6 +22,7 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	private StrategyState strategy;
 	
+	@SuppressWarnings("unused")
 	private RobotType nextUnit;
 
 	public ArchonRobotJV(RobotController myRC) throws GameActionException {

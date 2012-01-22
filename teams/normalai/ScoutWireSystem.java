@@ -28,6 +28,7 @@ public class ScoutWireSystem {
 	 */
 	private class ScoutWireSystemConstants {
 		public static final int MAX_SCOUTS_PER_WIRE = 10;
+		@SuppressWarnings("unused")
 		public static final int MAX_WIRE_ID = 255;
 	}
 	
