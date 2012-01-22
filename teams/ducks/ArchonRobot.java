@@ -71,11 +71,6 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()%100==0 && myArchonID==5) {
-			System.out.println(mc.toString());
-		}
-		
-		rc.setIndicatorString(0, ""+nav.getTurnsPrepared());
 		
 		// Currently the strategy transition is based on hard-coded turn numbers
 		if(Clock.getRoundNum()>1700 && myArchonID!=0) {
