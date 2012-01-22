@@ -143,24 +143,26 @@ public class SoldierRobot extends BaseRobot {
 		
 		// Attack an enemy if there is some unit in our attackable squares
 		if(!rc.isAttackActive()) {
-			MapLocation bestLoc = null;
-			RobotLevel bestLevel = null;
+			RobotInfo bestInfo = null;
 			double bestValue = Double.MAX_VALUE;
 			for(int n=0; n<radar.numEnemyRobots; n++) {
 				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
 				if(!rc.canAttackSquare(ri.location)) 
 					continue;
-				if((bestValue < myType.attackPower && ri.energon < myType.attackPower) ?
+				if((bestValue <= myType.attackPower && ri.energon <= myType.attackPower) ?
 						ri.energon > bestValue : ri.energon < bestValue) {
 					// Say a soldier does 6 damage. We prefer hitting units with less energon, but we also would rather hit a unit with 5 energon than a unit with 1 energon.
-					bestLoc = ri.location;
-					bestLevel = ri.type.level;
+					bestInfo = ri;
 					bestValue = ri.energon;
 				}
 			}
 			
-			if(bestLoc!=null)
-				rc.attackSquare(bestLoc, bestLevel);
+			if(bestInfo!=null) {
+				if(bestValue <= myType.attackPower) {
+					er.broadcastKill(bestInfo.robot.getID());
+				}
+				rc.attackSquare(bestInfo.location, bestInfo.type.level);
+			}
 		}
 		
 		// Check if we have too much flux
@@ -188,7 +190,7 @@ public class SoldierRobot extends BaseRobot {
 		if(behavior == BehaviorState.HIBERNATE) {
 			hsys.run();
 		} else if(behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
-			System.out.println("             "+hsys.lowFluxHibernation());
+			hsys.lowFluxHibernation();
 		}
 		
 			
