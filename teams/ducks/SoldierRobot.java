@@ -81,7 +81,12 @@ public class SoldierRobot extends BaseRobot {
 				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && 
 						archonTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
 					// Hibernate once we're no longer adjacent to any allies
-					if(radar.numAdjacentAllies==0) 
+					int adjacentMovable = 0;
+					if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
+					if(!rc.canMove(Direction.EAST)) adjacentMovable++;
+					if(!rc.canMove(Direction.WEST)) adjacentMovable++;
+					if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
+					if(adjacentMovable<=1)
 						behavior = BehaviorState.HIBERNATE;
 				} else if(closestSenderDist == Integer.MAX_VALUE) { 
 					// We did not receive any targeting broadcasts from our archons

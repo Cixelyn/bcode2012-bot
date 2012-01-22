@@ -82,6 +82,10 @@ public class ArchonRobot extends BaseRobot{
 			strategy = StrategyState.RUSH;
 		}
 		
+		// If insufficiently prepared, prepare
+		if(nav.getTurnsPrepared() < TangentBug.DEFAULT_MIN_PREP_TURNS)
+			nav.prepare();
+		
 		// Scan everything every turn
 		radar.scan(true, true);
 		
@@ -105,7 +109,7 @@ public class ArchonRobot extends BaseRobot{
 				roundLockTarget = curRound+30;
 				behavior = BehaviorState.RETREAT;
 				String ret = computeRetreatTarget();
-				dbg.setIndicatorString('h',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
+				dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
 					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons)
@@ -181,7 +185,7 @@ public class ArchonRobot extends BaseRobot{
 		
 		// Set debug string
 		if (behavior != BehaviorState.RETREAT)
-			dbg.setIndicatorString('y',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
+			dbg.setIndicatorString('h',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
 		
 	}
 	
@@ -607,8 +611,6 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void useExtraBytecodes() throws GameActionException {
-		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>5000)
-			nav.prepare(); 
 		if(Clock.getRoundNum()%6==myArchonID) {
 			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>5000)
 				ses.broadcastMapFragment();
