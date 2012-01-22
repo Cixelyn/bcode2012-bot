@@ -1,5 +1,6 @@
 package ducks;
 
+import ducks.HibernationSystem.HibernationMode;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -188,9 +189,11 @@ public class SoldierRobot extends BaseRobot {
 		
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE) {
+			hsys.setMode(HibernationMode.NORMAL);
 			hsys.run();
 		} else if(behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
-			hsys.lowFluxHibernation();
+			hsys.setMode(HibernationMode.LOW_FLUX);
+			hsys.run();
 		}
 		
 			
