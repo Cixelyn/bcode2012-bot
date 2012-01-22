@@ -233,7 +233,7 @@ public class ArchonRobot extends BaseRobot{
 //		7 0 1
 //		6   2
 //		5 4 3
-		int[] closest_in_dir = radar.closestInDir;
+		int[] closest_in_dir = er.getEnemiesInEachDirection();
 		int[] wall_in_dir = new int[8];
 		
 //		now, deal with when we are close to map boundaries
@@ -283,14 +283,14 @@ public class ArchonRobot extends BaseRobot{
 			}
 		}
 		
-		String dir = ""	+(closest_in_dir[0]==99?(wall_in_dir[0]==0?"o":"x"):"x")
-						+(closest_in_dir[1]==99?(wall_in_dir[1]==0?"o":"x"):"x")
-						+(closest_in_dir[2]==99?(wall_in_dir[2]==0?"o":"x"):"x")
-						+(closest_in_dir[3]==99?(wall_in_dir[3]==0?"o":"x"):"x")
-						+(closest_in_dir[4]==99?(wall_in_dir[4]==0?"o":"x"):"x")
-						+(closest_in_dir[5]==99?(wall_in_dir[5]==0?"o":"x"):"x")
-						+(closest_in_dir[6]==99?(wall_in_dir[6]==0?"o":"x"):"x")
-						+(closest_in_dir[7]==99?(wall_in_dir[7]==0?"o":"x"):"x");
+		String dir = ""	+(closest_in_dir[0]==0?(wall_in_dir[0]==0?"o":"x"):"x")
+						+(closest_in_dir[1]==0?(wall_in_dir[1]==0?"o":"x"):"x")
+						+(closest_in_dir[2]==0?(wall_in_dir[2]==0?"o":"x"):"x")
+						+(closest_in_dir[3]==0?(wall_in_dir[3]==0?"o":"x"):"x")
+						+(closest_in_dir[4]==0?(wall_in_dir[4]==0?"o":"x"):"x")
+						+(closest_in_dir[5]==0?(wall_in_dir[5]==0?"o":"x"):"x")
+						+(closest_in_dir[6]==0?(wall_in_dir[6]==0?"o":"x"):"x")
+						+(closest_in_dir[7]==0?(wall_in_dir[7]==0?"o":"x"):"x");
 		dir = dir+dir;
 		int index;
 		
@@ -351,8 +351,17 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		dbg.println('y',"GONNTA GET GEE'D");
+//		int lowest = closest_in_dir[0];
+//		int lowesti = 0;
+//		for (int x=1; x<8; x++)
+//			if (closest_in_dir[x]<lowest)
+//			{
+//				lowesti = x;
+//				lowest = closest_in_dir[x];
+//			}
 		target = radar.getEnemySwarmTarget();
-		targetDir = target.directionTo(curLoc);
+//		targetDir = target.directionTo(curLoc);
+//		targetDir = Constants.directions[lowesti];
 		target = curLoc.add(targetDir,5);
 		return null;
 	}
@@ -557,14 +566,14 @@ public class ArchonRobot extends BaseRobot{
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
-//		if(dc.getClosestArchon()!=null) {
-//			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-//			if(distToNearestArchon <= 36 &&
-//					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
-//					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
-//				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
-//			}
-//		}
+		if(dc.getClosestArchon()!=null) {
+			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+			if(distToNearestArchon <= 36 &&
+					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
+					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
+				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
+			}
+		}
 		
 		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.9) {
 			boolean isClosestToTarget = true;
