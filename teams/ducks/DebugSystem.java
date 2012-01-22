@@ -7,7 +7,7 @@ public class DebugSystem {
 	
 	public DebugSystem(BaseRobot br) {
 		this.br = br;
-		this.launch_owner = 'z';
+		this.launch_owner = 'e';
 	}
 
 	public void setOwner(char owner) {
@@ -15,11 +15,11 @@ public class DebugSystem {
 	}
 	
 	public void println(char owner, String msg) {
-		if(launch_owner == owner)
+		if(launch_owner == owner || launch_owner == 'e')
 			System.out.println(msg);
 	}
 	public void setIndicatorString(char owner, int position, String msg) {
-		if(launch_owner == owner) {
+		if(launch_owner == owner || launch_owner == 'e') {
 			br.rc.setIndicatorString(position,msg);
 		}
 	}
