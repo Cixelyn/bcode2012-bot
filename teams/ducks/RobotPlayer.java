@@ -58,9 +58,9 @@ public class RobotPlayer {
 //							br = new SoldierRobotHT(myRC);
 //							br = new SoldierRobotCL(myRC);
 						else
-//							br = new SoldierRobot(myRC);
+							br = new SoldierRobot(myRC);
 //							br = new SoldierRobotYP(myRC);
-							br = new SoldierRobotHT(myRC);
+//							br = new SoldierRobotHT(myRC);
 					}
 				} else br = new SoldierRobot(myRC);
 				break;
