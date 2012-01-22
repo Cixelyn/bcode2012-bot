@@ -201,8 +201,7 @@ public class MapCacheSystem {
 		if(lastMoved==null || lastMoved==Direction.NONE || lastMoved==Direction.OMNI) {
 			return;
 		}
-		if(senseTilesOptimized(lastMoved))
-			baseRobot.nav.reset();
+		senseTilesOptimized(lastMoved);
 		senseMapEdgesOptimized(lastMoved);
 		sensePowerNodes();
 	}
@@ -236,14 +235,13 @@ public class MapCacheSystem {
 	 * Given a direction we just moved in, senses only the tiles that are new.
 	 * Assumes that we have sensed everything we could have in the past. 
 	 * @param lastMoved the direction we just moved in
-	 * @return whether we sensed any new walls
 	 */
-	private boolean senseTilesOptimized(Direction lastMoved) {
+	private void senseTilesOptimized(Direction lastMoved) {
 		final int[][] list = optimizedSensingList[lastMoved.ordinal()];
 		MapLocation myLoc = baseRobot.curLoc;
 		int myX = worldToCacheX(myLoc.x);
 		int myY = worldToCacheY(myLoc.y);
-		boolean sensedNewWall = false;
+		TangentBug tb = baseRobot.nav.tangentBug;
 		for (int i=0; i<list.length; i++) {
 			int dx = list[i][0];
 			int dy = list[i][1];
@@ -259,13 +257,13 @@ public class MapCacheSystem {
 				isWall[x][y] = b;
 				if(b) {
 					packedIsWall[xblock][yblock] |= (1 << (x%4*4+y%4));
-					sensedNewWall = true;
+					if(tb.wallCache[x][y] > tb.curWallCacheID * TangentBug.BUFFER_LENGTH)
+						tb.reset();
 				}
 				sensed[x][y] = true;
 				packedSensed[xblock][yblock] |= (1 << (x%4*4+y%4));
 			}
 		}
-		return sensedNewWall;
 	}
 	
 	/** Combines packed terrain data with existing packed terrain data. */

@@ -81,6 +81,8 @@ public abstract class BaseRobot {
 			}
 		}
 		
+		// DO NOT CHANGE THE ORDER OF THESE DECLARATIONS
+		// SOME CONTRUCTORS NEED OTHERS TO ALREADY BE DECLARED
 		dc = new DataCache(this);
 		mc = new MapCacheSystem(this);
 		nav = new NavigationSystem(this);
