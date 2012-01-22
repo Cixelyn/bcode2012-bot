@@ -32,6 +32,8 @@ public class ArchonRobot extends BaseRobot{
 		CHASE;
 	}
 	int myArchonID;
+	
+	/** round we are releasing our lock */
 	int roundLockTarget;
 	int roundStartWakeupMode;
 	MapLocation target;
@@ -40,6 +42,8 @@ public class ArchonRobot extends BaseRobot{
 	BehaviorState behavior;
 	MapLocation previousWakeupTarget;
 	
+	static final int RETREAT_RADIUS = 5;
+	static final int CHASE_COMPUTE_RADIUS = 7;
 	MapLocation lastPowerNodeGuess;
 	
 	public ArchonRobot(RobotController myRC) throws GameActionException {
@@ -68,10 +72,6 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()%200==0 && myArchonID==5) {
-			System.out.println(mc.toString());
-		}
-		rc.setIndicatorString(0, nav.getTurnsPrepared()+"");
 		
 		// Currently the strategy transition is based on hard-coded turn numbers
 		if(Clock.getRoundNum()>1700 && myArchonID!=0) {
@@ -82,30 +82,34 @@ public class ArchonRobot extends BaseRobot{
 			strategy = StrategyState.RUSH;
 		}
 		
+		// If insufficiently prepared, prepare
+		if(nav.getTurnsPrepared() < TangentBug.DEFAULT_MIN_PREP_TURNS)
+			nav.prepare();
+		
 		// Scan everything every turn
 		radar.scan(true, true);
 		
 		if(curRound%3 == myArchonID%3)
 			radar.broadcastEnemyInfo();
 		
-//		if (behavior == BehaviorState.RETREAT)
-//		{
-//			if (radar.alliesInFront - radar.numEnemyRobots+radar.numEnemyArchons == 0)
-//				roundLockTarget = 0;
-//		}
+		if (behavior == BehaviorState.RETREAT)
+		{
+			if (radar.getArmyDifference() > 2)
+			{
+				roundLockTarget = 0;
+			}
+		}
 		
 		// If there is an enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null) {
-			roundLockTarget = curRound;
+			roundLockTarget = curRound+30;
 			if (radar.getArmyDifference() < -2 ||
 					(radar.alliesInFront==0 && radar.numEnemyRobots-radar.numEnemyArchons>0))
 			{
+				roundLockTarget = curRound+30;
 				behavior = BehaviorState.RETREAT;
-//				int b1 = Clock.getBytecodeNum();
 				String ret = computeRetreatTarget();
-				rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" "+ret);
-//				int b2 = Clock.getBytecodeNum();
-//				System.out.println("flee cost: "+(b2-b1)+" "+ret);
+				dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
 					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons)
@@ -117,10 +121,9 @@ public class ArchonRobot extends BaseRobot{
 				behavior = BehaviorState.BATTLE;
 				computeBattleTarget();
 			}
-		}
 		
 		// If we haven't seen anyone for 30 turns, go to swarm mode and reset target
-		else if(curRound > roundLockTarget + 30 || targetDir==null) {
+		} else if(curRound > roundLockTarget || targetDir==null) {
 			behavior = BehaviorState.SWARM;
 			if(strategy == StrategyState.DEFEND) {
 				target = myHome;
@@ -129,12 +132,11 @@ public class ArchonRobot extends BaseRobot{
 			} else {
 				target = mc.guessBestPowerNodeToCapture();
 			}
-		}
+		
 		
 		// otherwise, we should update the target based on the prevoius target direction
 		// if we are chasing or retreating
-		else
-		{
+		} else {
 			switch (behavior)
 			{
 			case CHASE: updateChaseTarget(); break;
@@ -162,27 +164,28 @@ public class ArchonRobot extends BaseRobot{
 		else
 			fbs.setPoolMode();
 		
-//		if (behavior == BehaviorState.RETREAT)
-//		{
-//			// Broadcast my target info to the soldier swarm
-//			int[] shorts = new int[3];
-//			shorts[0] = 55555;
-//			shorts[1] = curLoc.x;
-//			shorts[2] = curLoc.y;
-//			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-//		} else
-//		{
+		if (behavior == BehaviorState.CHASE)
+		{
+			MapLocation tar = radar.getEnemySwarmTarget();
 			// Broadcast my target info to the soldier swarm
 			int[] shorts = new int[3];
-			shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
+			shorts[0] = 1;
+			shorts[1] = tar.x;
+			shorts[2] = tar.y;
+			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+		} else
+		{
+			// Broadcast my target info to the soldier swarm
+			int[] shorts = new int[3];
+			shorts[0] = (behavior == BehaviorState.RETREAT) ? 0 : 1;
 			shorts[1] = target.x;
 			shorts[2] = target.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-//		}
+		}
 		
+		// Set debug string
 		if (behavior != BehaviorState.RETREAT)
-			// Set debug string
-			rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
+			dbg.setIndicatorString('h',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
 		
 	}
 	
@@ -190,6 +193,32 @@ public class ArchonRobot extends BaseRobot{
 	{
 		target = radar.getEnemySwarmTarget();
 		targetDir = curLoc.directionTo(target);
+		
+//		TODO not doing anything special right now about edges or corners
+////		now, deal with when we are close to map boundaries
+//		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+CHASE_COMPUTE_RADIUS)
+//		{
+//			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+CHASE_COMPUTE_RADIUS)
+//			{
+////				we are near the SOUTH_EAST corner
+//				
+//			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-CHASE_COMPUTE_RADIUS)
+//			{
+////				we are near the NORTH_EAST corner
+//				
+//			}
+//		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-CHASE_COMPUTE_RADIUS)
+//		{
+//			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+CHASE_COMPUTE_RADIUS)
+//			{
+////				we are near the SOUTH_WEST corner
+//				
+//			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-CHASE_COMPUTE_RADIUS)
+//			{
+////				we are near the NORTH_WEST corner
+//				
+//			}
+//		}
 	}
 	
 	private void updateChaseTarget()
@@ -200,6 +229,7 @@ public class ArchonRobot extends BaseRobot{
 	
 	private String computeRetreatTarget()
 	{
+		lastPowerNodeGuess = null;
 //		7 0 1
 //		6   2
 //		5 4 3
@@ -207,29 +237,49 @@ public class ArchonRobot extends BaseRobot{
 		int[] wall_in_dir = new int[8];
 		
 //		now, deal with when we are close to map boundaries
-		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax)<curLoc.x+6)
+		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS)
 		{
-			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
 			{
+//				we are near the SOUTH_EAST corner
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[4] = wall_in_dir[5] = 1;
-			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
 			{
+//				we are near the NORTH_EAST corner
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[0] = wall_in_dir[7] = 1;
 			} else
 			{
+//				we are near the EAST edge
 				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = 1;
 			}
-		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin)>curLoc.x-6)
+		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS)
 		{
-			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax)<curLoc.y+6)
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
 			{
+//				we are near the SOUTH_WEST corner
 				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
-			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin)>curLoc.y-6)
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
 			{
-				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[0] = wall_in_dir[5] = 1;
+//				we are near the NORTH_WEST corner
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[0] = wall_in_dir[1] = 1;
 			} else
 			{
+//				we are near the WEST edge
 				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = 1;
+			}
+		} else
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+			{
+//				we are near the SOUTH edge
+				wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+			{
+//				we are near the NORTH edge
+				wall_in_dir[7] = wall_in_dir[0] = wall_in_dir[1] = 1;
+			} else
+			{
+//				we are not near any wall or corner
 			}
 		}
 		
@@ -300,7 +350,7 @@ public class ArchonRobot extends BaseRobot{
 			return dir;
 		}
 		
-		System.out.println("GONNTA GET GEE'D");
+		dbg.println('y',"GONNTA GET GEE'D");
 		target = radar.getEnemySwarmTarget();
 		targetDir = target.directionTo(curLoc);
 		target = curLoc.add(targetDir,5);
@@ -311,7 +361,7 @@ public class ArchonRobot extends BaseRobot{
 	{
 		if (curLoc.distanceSquaredTo(target) < 10)
 			target = curLoc.add(targetDir,5);
-		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
+		dbg.setIndicatorString('y',1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
 	}
 	
 	private void computeBattleTarget()
@@ -451,9 +501,27 @@ public class ArchonRobot extends BaseRobot{
 		{
 			fluxToMakeSoldierAt = 130;
 			
+			int d = curDir.ordinal();
+			
 			if(rc.getFlux() > fluxToMakeSoldierAt)
-				if(rc.canMove(curDir)) 
-					return new MoveInfo(RobotType.SOLDIER, curDir);
+				if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+				else if (rc.canMove(Constants.directions[(d++)%8])) 
+					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
+			
+			
 			
 			Direction dir = nav.navigateToDestination();
 			if(dir==null) 
@@ -489,14 +557,14 @@ public class ArchonRobot extends BaseRobot{
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
-		if(dc.getClosestArchon()!=null) {
-			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if(distToNearestArchon <= 36 &&
-					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
-					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
-				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
-			}
-		}
+//		if(dc.getClosestArchon()!=null) {
+//			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+//			if(distToNearestArchon <= 36 &&
+//					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
+//					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
+//				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
+//			}
+//		}
 		
 		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.9) {
 			boolean isClosestToTarget = true;
@@ -543,8 +611,6 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void useExtraBytecodes() throws GameActionException {
-		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>5000)
-			nav.prepare(); 
 		if(Clock.getRoundNum()%6==myArchonID) {
 			if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>5000)
 				ses.broadcastMapFragment();

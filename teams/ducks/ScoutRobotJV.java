@@ -72,7 +72,7 @@ public class ScoutRobotJV extends BaseRobot {
 	 */
 	@Override
 	public void run() throws GameActionException {
-		rc.setIndicatorString(0, "SCOUT - " + behavior);
+		dbg.setIndicatorString('j', 0, "SCOUT - " + behavior);
 		// suicide if not enough flux
 		if (rc.getFlux() < 3.0) {
 			rc.suicide();
