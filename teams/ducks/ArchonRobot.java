@@ -39,6 +39,7 @@ public class ArchonRobot extends BaseRobot{
 	StrategyState strategy;
 	BehaviorState behavior;
 	MapLocation previousWakeupTarget;
+	MapLocation enemySpottedTarget;
 	
 	static final int RETREAT_RADIUS = 5;
 	static final int CHASE_COMPUTE_RADIUS = 7;
@@ -65,6 +66,7 @@ public class ArchonRobot extends BaseRobot{
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		strategy = StrategyState.SPLIT;
 		behavior = BehaviorState.BATTLE;
+		enemySpottedTarget = null;
 		lastPowerNodeGuess = null;
 	}
 	
@@ -72,10 +74,13 @@ public class ArchonRobot extends BaseRobot{
 	public void run() throws GameActionException {
 		
 		// Currently the strategy transition is based on hard-coded turn numbers
-		if(Clock.getRoundNum()>1700 && myArchonID!=0) {
+		if(Clock.getRoundNum()>2800) {
+			strategy = StrategyState.CAP;
+		} else if(Clock.getRoundNum()>1700 && myArchonID!=0) {
 			strategy = StrategyState.CAP;
 		} else if(Clock.getRoundNum()>1000 || mc.powerNodeGraph.enemyPowerCoreID != 0) {
 			strategy = StrategyState.DEFEND;
+			enemySpottedTarget = null;
 		} else if(Clock.getRoundNum()>20) {
 			strategy = StrategyState.RUSH;
 		}
@@ -87,6 +92,7 @@ public class ArchonRobot extends BaseRobot{
 		// Scan everything every turn
 		radar.scan(true, true);
 		
+		// Broadcast enemy info every 3 turns
 		if(curRound%3 == myArchonID%3)
 			radar.broadcastEnemyInfo(false);
 		
@@ -126,13 +132,19 @@ public class ArchonRobot extends BaseRobot{
 			if(strategy == StrategyState.DEFEND) {
 				target = myHome;
 			} else if(strategy == StrategyState.RUSH) {
-				computeExploreTarget();
+				if(enemySpottedTarget != null && curLoc.distanceSquaredTo(enemySpottedTarget)>36)
+					target = enemySpottedTarget;
+				else {
+					enemySpottedTarget = null;
+					computeExploreTarget();
+				}
+					
 			} else {
 				target = mc.guessBestPowerNodeToCapture();
 			}
 		
 		
-		// otherwise, we should update the target based on the prevoius target direction
+		// otherwise, we should update the target based on the previous target direction
 		// if we are chasing or retreating
 		} else {
 			switch (behavior)
@@ -157,13 +169,12 @@ public class ArchonRobot extends BaseRobot{
 		nav.setDestination(target);
 		
 		// Set the flux balance mode
-		if(behavior == BehaviorState.SWARM)
+		if(behavior == BehaviorState.SWARM && enemySpottedTarget == null)
 			fbs.setBatteryMode();
 		else
 			fbs.setPoolMode();
 		
-		if (behavior == BehaviorState.CHASE)
-		{
+		if (behavior == BehaviorState.CHASE) {
 			MapLocation tar = radar.getEnemySwarmTarget();
 			// Broadcast my target info to the soldier swarm
 			int[] shorts = new int[3];
@@ -171,11 +182,12 @@ public class ArchonRobot extends BaseRobot{
 			shorts[1] = tar.x;
 			shorts[2] = tar.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-		} else
-		{
+		} else {
 			// Broadcast my target info to the soldier swarm
+			
 			int[] shorts = new int[3];
-			shorts[0] = (behavior == BehaviorState.RETREAT) ? 0 : 1;
+			shorts[0] = enemySpottedTarget!=null ? 2 : 
+				(behavior == BehaviorState.RETREAT) ? 0 : 1;
 			shorts[1] = target.x;
 			shorts[2] = target.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
@@ -487,6 +499,12 @@ public class ArchonRobot extends BaseRobot{
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
+		case SWARM_TARGET:
+			int[] shorts = BroadcastSystem.decodeUShorts(sb);
+			if(shorts[0]==2 && enemySpottedTarget==null) {
+				enemySpottedTarget = new MapLocation(shorts[1], shorts[2]);
+			}
+			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 			break;
@@ -497,11 +515,10 @@ public class ArchonRobot extends BaseRobot{
 			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 			break;
 		case INITIAL_REPORT:
-			int[] initialReport = BroadcastSystem.decodeUShorts(sb);
-			int initialReportTime = initialReport[0];
-			MapLocation initialReportLoc = new MapLocation(initialReport[0], initialReport[1]);
-			dbg.println('e', "Scouts report: Enemy approaching from " +
-					initialReportLoc + " as of round " + initialReportTime);
+			int[] data = BroadcastSystem.decodeUShorts(sb);
+			//int initialReportTime = data[0];
+			MapLocation initialReportLoc = new MapLocation(data[1], data[2]);
+			enemySpottedTarget = initialReportLoc;
 			io.sendUShort(BroadcastChannel.SCOUTS, BroadcastType.INITIAL_REPORT_ACK, 0);
 			break;
 		default:
@@ -512,9 +529,7 @@ public class ArchonRobot extends BaseRobot{
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		
-		if (Clock.getRoundNum()<200 && myArchonID==0 && rc.getFlux()>100) {
-			return new MoveInfo(RobotType.SCOUT, curDir);
-		}
+		
 		
 		if (behavior==BehaviorState.RETREAT) {
 			if(rc.getFlux() > 130) {
@@ -540,7 +555,8 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		if(rc.getFlux() > fluxToMakeSoldierAt) {
-			if(Math.random() < 0.1 && rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
+			if(Math.random() < 0.000001 && Clock.getRoundNum() > 500 && 
+					rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
 				return new MoveInfo(RobotType.SCOUT, curDir);
 			} else if(rc.canMove(curDir)) {
 				return new MoveInfo(RobotType.SOLDIER, curDir);
@@ -553,19 +569,8 @@ public class ArchonRobot extends BaseRobot{
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
-		// If I'm too close to an allied archon, move away from him with some probability
-		if(dc.getClosestArchon()!=null) {
-			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if(distToNearestArchon <= 36 &&
-					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && 
-					rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
-					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
-				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
-			}
-		}
-		
 		// If I'm swarming and closest of all archons to my target, slow down
-		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.8) {
+		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0) {
 			boolean isClosestToTarget = true;
 			int myDist = curLoc.distanceSquaredTo(target);
 			for(MapLocation loc: rc.senseAlliedArchons()) {
@@ -574,8 +579,24 @@ public class ArchonRobot extends BaseRobot{
 					break;
 				}
 			}
-			if(isClosestToTarget) 
-				return null;
+			if(isClosestToTarget) {
+				if (Clock.getRoundNum()>=100 && Clock.getRoundNum()<=110 && rc.getFlux()>90) {
+					return new MoveInfo(RobotType.SCOUT, curDir);
+				} else if(Math.random()<0.8) {
+					return null;
+				}
+			}
+		}
+		
+		// If I'm too close to an allied archon, move away from him with some probability
+		if(dc.getClosestArchon()!=null) {
+			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+			if(distToNearestArchon <= 36 &&
+					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && 
+					rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
+					Math.random() < 0.85-Math.sqrt(distToNearestArchon)/10) {
+				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
+			}
 		}
 		
 		// If we can build a tower at our target node, do so
@@ -598,7 +619,9 @@ public class ArchonRobot extends BaseRobot{
 				return null;
 			else if(curLoc.add(dir).equals(nav.getDestination()))
 				return new MoveInfo(dir);
-			else 
+			else if(Clock.getRoundNum() < 500)
+				return new MoveInfo(dir, true);
+			else
 				return new MoveInfo(dir, false);
 			
 		}
