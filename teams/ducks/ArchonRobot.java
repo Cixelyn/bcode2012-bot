@@ -43,6 +43,7 @@ public class ArchonRobot extends BaseRobot{
 	MapLocation previousWakeupTarget;
 	
 	static final int RETREAT_RADIUS = 5;
+	static final int CHASE_COMPUTE_RADIUS = 7;
 	MapLocation lastPowerNodeGuess;
 	
 	public ArchonRobot(RobotController myRC) throws GameActionException {
@@ -168,23 +169,24 @@ public class ArchonRobot extends BaseRobot{
 		else
 			fbs.setPoolMode();
 		
-//		if (behavior == BehaviorState.RETREAT)
-//		{
-//			// Broadcast my target info to the soldier swarm
-//			int[] shorts = new int[3];
-//			shorts[0] = 55555;
-//			shorts[1] = curLoc.x;
-//			shorts[2] = curLoc.y;
-//			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-//		} else
-//		{
+		if (behavior == BehaviorState.CHASE)
+		{
+			MapLocation tar = radar.getEnemySwarmTarget();
 			// Broadcast my target info to the soldier swarm
 			int[] shorts = new int[3];
-			shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
+			shorts[0] = 1;
+			shorts[1] = tar.x;
+			shorts[2] = tar.y;
+			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+		} else
+		{
+			// Broadcast my target info to the soldier swarm
+			int[] shorts = new int[3];
+			shorts[0] = (behavior == BehaviorState.RETREAT) ? 0 : 1;
 			shorts[1] = target.x;
 			shorts[2] = target.y;
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-//		}
+		}
 		
 		if (behavior != BehaviorState.RETREAT)
 			// Set debug string
@@ -196,6 +198,32 @@ public class ArchonRobot extends BaseRobot{
 	{
 		target = radar.getEnemySwarmTarget();
 		targetDir = curLoc.directionTo(target);
+		
+//		TODO not doing anything special right now about edges or corners
+////		now, deal with when we are close to map boundaries
+//		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+CHASE_COMPUTE_RADIUS)
+//		{
+//			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+CHASE_COMPUTE_RADIUS)
+//			{
+////				we are near the SOUTH_EAST corner
+//				
+//			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-CHASE_COMPUTE_RADIUS)
+//			{
+////				we are near the NORTH_EAST corner
+//				
+//			}
+//		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-CHASE_COMPUTE_RADIUS)
+//		{
+//			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+CHASE_COMPUTE_RADIUS)
+//			{
+////				we are near the SOUTH_WEST corner
+//				
+//			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-CHASE_COMPUTE_RADIUS)
+//			{
+////				we are near the NORTH_WEST corner
+//				
+//			}
+//		}
 	}
 	
 	private void updateChaseTarget()
