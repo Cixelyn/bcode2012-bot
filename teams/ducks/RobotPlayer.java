@@ -43,7 +43,7 @@ public class RobotPlayer {
 				break;
 			case SOLDIER:
 				if(owner.equals("haitao")) br = new SoldierRobot(myRC);
-				else if(owner.equals("justin")) br = null;
+				else if(owner.equals("justin")) br = new AttackerRobotJV(myRC);
 				else if(owner.equals("cory")) br = new SoldierRobotCL(myRC);
 				else if (owner.equals("yp"))
 				{
@@ -86,6 +86,7 @@ public class RobotPlayer {
 			case DISRUPTER:
 				break;
 			case SCORCHER:
+				if (owner.equals("justin")) br = new AttackerRobotJV(myRC);
 				break;
 			default:
 				break;

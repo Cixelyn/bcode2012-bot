@@ -23,7 +23,6 @@ public abstract class BaseRobot {
 	public final ExtendedRadarSystem er;
 	public final EnemyArchonKillCache eakc;
 	public final ArchonOwnership ao;
-	public final RallySystem rally;
 	public final MovementStateMachine msm;
 	public final ScoutWireSystem sws;
 	
@@ -92,7 +91,6 @@ public abstract class BaseRobot {
 		ses = new SharedExplorationSystem(this);
 		eakc = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
-		rally = new RallySystem(this);
 		msm = new MovementStateMachine(this);
 		sws = new ScoutWireSystem(this);
 		

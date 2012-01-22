@@ -59,7 +59,8 @@ public class ScoutRobotJV extends BaseRobot {
 		// set broadcast channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
-				BroadcastChannel.SCOUTS
+				BroadcastChannel.SCOUTS,
+				BroadcastChannel.EXPLORERS
 		});
 		// set navigation mode
 		nav.setNavigationMode(NavigationMode.GREEDY);
@@ -71,8 +72,7 @@ public class ScoutRobotJV extends BaseRobot {
 	 */
 	@Override
 	public void run() throws GameActionException {
-		rc.setIndicatorString(0, "Behavior state: " + behavior);
-		rc.setIndicatorString(1, "Scout pattern idx: " + scoutPatternIdx);
+		rc.setIndicatorString(0, "SCOUT - " + behavior);
 		// suicide if not enough flux
 		if (rc.getFlux() < 3.0) {
 			rc.suicide();
@@ -82,7 +82,7 @@ public class ScoutRobotJV extends BaseRobot {
 		// switch states if necessary
 		switch (behavior) {
 			case WAIT_FOR_FLUX:
-				if (rc.getFlux() > myMaxFlux - 10) {
+				if (curRound - birthday < 50) {
 					behavior = BehaviorState.FIND_ENEMY;
 				}
 				break;
@@ -115,7 +115,7 @@ public class ScoutRobotJV extends BaseRobot {
 				fbs.setPoolMode();
 				break;
 			case EXPLORE:
-				fbs.setBatteryMode();
+				fbs.disable();
 				break;
 			default:
 				break;
