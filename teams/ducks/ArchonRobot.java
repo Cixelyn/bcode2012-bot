@@ -496,6 +496,16 @@ public class ArchonRobot extends BaseRobot{
 		case POWERNODE_FRAGMENTS:
 			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 			break;
+		case INITIAL_REPORT:
+			int[] initialReport = BroadcastSystem.decodeUShorts(sb);
+			int initialReportTime = initialReport[0];
+			MapLocation initialReportLoc = new MapLocation(
+					initialReport[0], initialReport[1]);
+			dbg.println('e', "Scouts report: Enemy approaching from " +
+					initialReportLoc + " as of round " + initialReportTime);
+			io.sendUShort(BroadcastChannel.SCOUTS,
+					BroadcastType.INITIAL_REPORT_ACK, 0);
+			break;
 		default:
 			super.processMessage(msgType, sb);
 		} 
@@ -504,6 +514,9 @@ public class ArchonRobot extends BaseRobot{
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
 		
+		if (Clock.getRoundNum()<200 && myArchonID==0 && rc.getFlux()>100) {
+			return new MoveInfo(RobotType.SCOUT, curDir);
+		}
 		
 		if (behavior==BehaviorState.RETREAT) {
 			if(rc.getFlux() > 130) {
