@@ -114,6 +114,22 @@ public class ExtendedRadarSystem {
 	
 	/** Returns a direction to go that will most likely bring you to an enemy. */
 	public Direction getDirectionWithMostEnemies() {
+		int[] counts = getEnemiesInEachDirection();
+		int bestdirOrdinal = -1;
+		int bestValue = -1;
+		for(int i=0; i<8; i++) {
+			if(counts[i]>bestValue) {
+				bestdirOrdinal = i;
+				bestValue = counts[i];
+			}
+		}
+		return Constants.directions[bestdirOrdinal];
+	}
+	
+	/**
+	 * Counts the number of enemies in each direction in our extended radar
+	 */
+	public int[] getEnemiesInEachDirection() {
 		int[] counts = new int[8];
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
@@ -125,15 +141,7 @@ public class ExtendedRadarSystem {
 				counts[(dirOrdinal+7)%8]++;
 			}
 		}
-		int bestdirOrdinal = -1;
-		int bestValue = -1;
-		for(int i=0; i<8; i++) {
-			if(counts[i]>bestValue) {
-				bestdirOrdinal = i;
-				bestValue = counts[i];
-			}
-		}
-		return Constants.directions[bestdirOrdinal];
+		return counts;
 	}
 	
 	/** Returns the average of the directions of the enemies. 
