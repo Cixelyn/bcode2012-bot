@@ -217,4 +217,8 @@ public abstract class BaseRobot {
 			fbs.manageFlux();
 		}
 	}
+	
+	public String locationToVectorString(MapLocation loc) {
+		return "<"+(loc.x-curLoc.x)+","+(loc.y-curLoc.y)+">";
+	}
 }
