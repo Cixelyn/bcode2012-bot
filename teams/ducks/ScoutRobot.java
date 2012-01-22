@@ -173,6 +173,8 @@ public class ScoutRobot extends BaseRobot {
 		// attack if you can
 		if (!rc.isAttackActive() && radar.closestEnemy != null &&
 				rc.canAttackSquare(radar.closestEnemy.location)) {
+			//TODO don't attack towers, and other shit to optimize slightly
+			
 			rc.attackSquare(radar.closestEnemy.location,
 					radar.closestEnemy.robot.getRobotLevel());
 		}
