@@ -135,7 +135,8 @@ public class FluxBalanceSystem {
 			if(ri.flux < lowerFluxThreshold)
 				amountBelowLowerThreshold += lowerFluxThreshold - ri.flux;
 		}
-		if(amountBelowLowerThreshold == 0) {
+		// scouts shouldn't transfer to archons or other scouts
+		if(br.myType != RobotType.SCOUT && amountBelowLowerThreshold == 0) {
 			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
 				RobotInfo ri = radar.adjacentAllies[n];
 				if (ri.type == RobotType.ARCHON && ri.flux < 280) {
@@ -164,6 +165,9 @@ public class FluxBalanceSystem {
 							ri.energon/2 : ri.energon*2/3;
 					double x = Math.min(fluxToTransfer, upperFluxThreshold - ri.flux);
 					rc.transferFlux(ri.location, ri.type.level, x);
+					if (br.myType == RobotType.SCOUT) {
+						br.dbg.println('j', "Giving flux.");
+					}
 					fluxToTransfer -= x;
 				}
 			}

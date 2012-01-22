@@ -120,7 +120,7 @@ public class AttackerRobotJV extends BaseRobot {
 			if (Math.random() < movementProbability) {
 				return new MoveInfo(nav.navigateToDestination(), false);
 			} else {
-				return new MoveInfo(curDir.opposite());
+				return new MoveInfo(curDir.rotateLeft().rotateLeft().rotateLeft());
 			}
 		}
 	}
