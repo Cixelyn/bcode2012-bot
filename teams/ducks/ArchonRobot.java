@@ -108,11 +108,8 @@ public class ArchonRobot extends BaseRobot{
 			{
 				roundLockTarget = curRound+30;
 				behavior = BehaviorState.RETREAT;
-//				int b1 = Clock.getBytecodeNum();
 				String ret = computeRetreatTarget();
-				rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" "+ret);
-//				int b2 = Clock.getBytecodeNum();
-//				System.out.println("flee cost: "+(b2-b1)+" "+ret);
+				rc.setIndicatorString(1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
 					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons)
@@ -124,10 +121,9 @@ public class ArchonRobot extends BaseRobot{
 				behavior = BehaviorState.BATTLE;
 				computeBattleTarget();
 			}
-		}
 		
 		// If we haven't seen anyone for 30 turns, go to swarm mode and reset target
-		else if(curRound > roundLockTarget || targetDir==null) {
+		} else if(curRound > roundLockTarget || targetDir==null) {
 			behavior = BehaviorState.SWARM;
 			if(strategy == StrategyState.DEFEND) {
 				target = myHome;
@@ -136,12 +132,11 @@ public class ArchonRobot extends BaseRobot{
 			} else {
 				target = mc.guessBestPowerNodeToCapture();
 			}
-		}
+		
 		
 		// otherwise, we should update the target based on the prevoius target direction
 		// if we are chasing or retreating
-		else
-		{
+		} else {
 			switch (behavior)
 			{
 			case CHASE: updateChaseTarget(); break;
@@ -169,27 +164,16 @@ public class ArchonRobot extends BaseRobot{
 		else
 			fbs.setPoolMode();
 		
-//		if (behavior == BehaviorState.RETREAT)
-//		{
-//			// Broadcast my target info to the soldier swarm
-//			int[] shorts = new int[3];
-//			shorts[0] = 55555;
-//			shorts[1] = curLoc.x;
-//			shorts[2] = curLoc.y;
-//			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-//		} else
-//		{
-			// Broadcast my target info to the soldier swarm
-			int[] shorts = new int[3];
-			shorts[0] = (behavior == BehaviorState.SWARM) ? 0 : 1;
-			shorts[1] = target.x;
-			shorts[2] = target.y;
-			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-//		}
+		// Broadcast my target info to the soldier swarm
+		int[] shorts = new int[3];
+		shorts[0] = 55555;
+		shorts[1] = target.x;
+		shorts[2] = target.y;
+		io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
 		
+		// Set debug string
 		if (behavior != BehaviorState.RETREAT)
-			// Set debug string
-			rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior);
+			rc.setIndicatorString(1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
 		
 	}
 	
