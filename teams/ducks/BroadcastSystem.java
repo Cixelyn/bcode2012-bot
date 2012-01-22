@@ -15,7 +15,15 @@ import battlecode.common.Team;
  * 
  */
 public class BroadcastSystem {
-
+	
+	public static char CHANHEADER_C = ((char) -1);
+	public static char TERMINATOR_C = ((char) -2);
+	public static char METADATA_C = ((char) -3);
+	
+	public static String CHANHEADER_S = String.valueOf(CHANHEADER_C);
+	public static String TERMINATOR_S = String.valueOf(TERMINATOR_C);
+	public static String METADATA_S = String.valueOf(METADATA_C);
+	
 	private String[] boundChannelHeaders;
 	private BaseRobot br;
 	public int teamkey;
@@ -139,8 +147,7 @@ public class BroadcastSystem {
 		sendUShort(bChan.chanHeader + bType.header, data);
 	}
 	private void sendUShort(String header, int data) {
-		msgContainer.append(header);
-		msgContainer.append((char) (data + 0x100));
+		msgContainer.append(header + (char)data);
 	}
 	
 	/**
@@ -149,7 +156,7 @@ public class BroadcastSystem {
 	 * @return short value
 	 */
 	public static int decodeShort(StringBuilder msg) {
-		return msg.charAt(0) - 0x100;
+		return msg.charAt(0);
 	}
 	
 
@@ -161,15 +168,13 @@ public class BroadcastSystem {
 	}
 	
 	private void sendMapLoc(String header, MapLocation loc) {
-		msgContainer.append(header);
-		msgContainer.append((char) (loc.x + 0x100));
-		msgContainer.append((char) (loc.y + 0x100));
+		msgContainer.append(header + (char)loc.x + (char)loc.y);
 	}
 	
 	public static MapLocation decodeMapLoc(StringBuilder msg) {
 		return new MapLocation(
-			msg.charAt(0) - 0x100,
-			msg.charAt(1) - 0x100
+			msg.charAt(0),
+			msg.charAt(1)
 		);
 	}
 	
@@ -189,9 +194,9 @@ public class BroadcastSystem {
 	private void sendUShorts(String header, int[] ints) {
 		msgContainer.append(header);
 		for (int i : ints) {
-			msgContainer.append((char)( i + 0x100));
+			msgContainer.append((char) i );
 		}
-		msgContainer.append('!');
+		msgContainer.append(TERMINATOR_C);
 	}
 
 	/**
@@ -200,11 +205,11 @@ public class BroadcastSystem {
 	 * @return deserialized array
 	 */
 	public static int[] decodeUShorts(StringBuilder msg) {
-		int end = msg.indexOf("!");
+		int end = msg.indexOf(TERMINATOR_S);
 		int[] ints = new int[end];
 		
 		for(int i=end; --i >= 0; ) {
-			ints[i] = msg.charAt(i) - 0x100;
+			ints[i] = msg.charAt(i);
 		}
 		return ints;
 	}
@@ -215,7 +220,7 @@ public class BroadcastSystem {
 	 * @return timestamp of the current message
 	 */
 	public static int decodeSenderTimestamp(StringBuilder msg) {
-		return msg.charAt(msg.indexOf(":") + 1) - 0x100;
+		return msg.charAt(msg.indexOf(METADATA_S) + 1);
 	}
 
 	
@@ -224,7 +229,7 @@ public class BroadcastSystem {
 	 * @return robot id of the of the current message's sender
 	 */
 	public static int decodeSenderID(StringBuilder msg) {
-		return msg.charAt(msg.indexOf(":") + 2) - 0x100;
+		return msg.charAt(msg.indexOf(METADATA_S) + 2);
 	}
 	
 	/**
@@ -232,10 +237,10 @@ public class BroadcastSystem {
 	 * @return MapLocation of message's origin
 	 */
 	public static MapLocation decodeSenderLoc(StringBuilder msg) {
-		int metaIdx = msg.indexOf(":");
+		int metaIdx = msg.indexOf(METADATA_S);
 		return new MapLocation(
-				msg.charAt(metaIdx+3) - 0x100,
-				msg.charAt(metaIdx+4) - 0x100
+				msg.charAt(metaIdx+3),
+				msg.charAt(metaIdx+4)
 		);
 	}
 	
@@ -263,13 +268,13 @@ public class BroadcastSystem {
 		msgContainer.append(header);
 		for (int i : ints ) {
 			
-			int lo = (i & 0x00007FFF )  + 0x100;
-			int hi = ((i & 0x3FFF8000 )  >> 15) + 0x100;
+			int lo = (i & 0x00007FFF );
+			int hi = ((i & 0x3FFF8000 )  >> 15);
 			
 			msgContainer.append((char) lo);
 			msgContainer.append((char) hi);
 		}
-		msgContainer.append('!');
+		msgContainer.append(TERMINATOR_C);
 		
 	}
 	
@@ -279,13 +284,13 @@ public class BroadcastSystem {
 	 * @return deserialized array
 	 */
 	public static int[] decodeInts(StringBuilder msg) {
-		int num = msg.indexOf("!") / 2;
+		int num = msg.indexOf(TERMINATOR_S) / 2;
 		int[] ints = new int[num];
 		
 		for(int i=num; --i >= 0;) {	
 			ints[i] = 
-				((msg.charAt(i*2  )      ) - 0x100) +  // lo bits
-				((msg.charAt(i*2+1) - 0x100) << 15);   // hi bits
+				(msg.charAt(i*2  )    +      // lo bits
+				(msg.charAt(i*2+1) << 15));  // hi bits
 		}
 		
 		return ints;
@@ -309,30 +314,30 @@ public class BroadcastSystem {
 		msgContainer.append(header);
 		
 		for (MapLocation l : locs) {
-			msgContainer.append((char)( l.x + 0x100));
-			msgContainer.append((char)( l.y + 0x100));
+			msgContainer.append((char) l.x );
+			msgContainer.append((char) l.y );
 		}
 		
-		msgContainer.append('!');
+		msgContainer.append(TERMINATOR_C);
 	}
 	
 	
 	/**
-	 * Untested code. Ping Cory if you're trying to use it
+	 * Sends a bunch of map locations
 	 * @param msg
 	 * @return
 	 */
 	public static MapLocation[] decodeMapLocs(StringBuilder msg) {
 		
 		// calc number of locations
-		int num = msg.indexOf("!") / 2;
+		int num = msg.indexOf(TERMINATOR_S) / 2;
 		
 		MapLocation[] locs = new MapLocation[num];
 	
 		for (int i=0; i < num; i++) {
 			locs[i] = new MapLocation(
-					msg.charAt(i*2  ) - 0x100,
-					msg.charAt(i*2+1) - 0x100
+					msg.charAt(i*2  ),
+					msg.charAt(i*2+1)
 					);
 		}
 		return locs;
@@ -345,11 +350,11 @@ public class BroadcastSystem {
 		if(msgContainer.length() > 0) {
 		
 			// append message metadata
-			msgContainer.append(':');
-			msgContainer.append((char)(Clock.getRoundNum() + 0x100));
-			msgContainer.append((char)(br.myID + 0x100));
-			msgContainer.append((char)(br.curLoc.x + 0x100));
-			msgContainer.append((char)(br.curLoc.y + 0x100));
+			msgContainer.append(METADATA_S);
+			msgContainer.append((char)Clock.getRoundNum());
+			msgContainer.append((char)br.myID);
+			msgContainer.append((char)br.curLoc.x);
+			msgContainer.append((char)br.curLoc.y);
 			
 			// build message
 			Message m = new Message();
@@ -490,7 +495,6 @@ public class BroadcastSystem {
 		
 		System.out.println(BroadcastType.decode(BroadcastType.ENEMY_ARCHON_KILL.header).toString());
 	}
-	
 	
 	
 }
