@@ -78,6 +78,8 @@ public class FluxBalanceSystem {
 	}
 	
 	private void distributeArchonBattery() throws GameActionException {
+		if(rc.getFlux() > 10)
+			distributeFluxBattle(rc.getFlux()-0.1);
 		if(rc.getFlux() <= 150) 
 			return;
 		double fluxToTransfer = rc.getFlux()-0.1;

@@ -5,7 +5,6 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
 public class ArchonRobot extends BaseRobot{
@@ -18,8 +17,6 @@ public class ArchonRobot extends BaseRobot{
 		DEFEND,
 		/** Take power nodes. */
 		CAP,
-		
-		
 	}
 	private enum BehaviorState {
 		/** No enemies to deal with. */

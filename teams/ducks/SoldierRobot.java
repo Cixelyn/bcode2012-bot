@@ -21,6 +21,8 @@ public class SoldierRobot extends BaseRobot {
 		RETREAT, 
 		/** Far from target. Use bug to navigate. */
 		LOST,
+		/** Need to refuel. Go to nearest archon. */
+		REFUEL,
 		/** Track enemy's last position and keep following them. */
 		TARGET_LOCKED;
 	}
@@ -92,10 +94,6 @@ public class SoldierRobot extends BaseRobot {
 					// We did not receive any targeting broadcasts from our archons
 					behavior = BehaviorState.SWARM;
 					target = dc.getClosestArchon();
-				} else if(rc.getFlux() > myMaxEnergon*2/3) {
-					// Needs to dump flux to archon
-					behavior = BehaviorState.POOL;
-					target = dc.getClosestArchon();
 				} else {
 					// Follow target of closest archon's broadcast
 					behavior = BehaviorState.SWARM ;
@@ -112,9 +110,28 @@ public class SoldierRobot extends BaseRobot {
 				nav.setNavigationMode(NavigationMode.GREEDY);
 				previousBugTarget = null;
 			}
-			
-			
 		}
+		
+		// Flux balance movement
+		if(behavior == BehaviorState.SWARM) {
+			if(rc.getFlux() > myMaxEnergon*2/3) {
+				// Needs to dump flux to archon
+				behavior = BehaviorState.POOL;
+				target = dc.getClosestArchon();
+			} else if(rc.getFlux() < 10) {
+				if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
+					// Too low flux, can't reach archon
+					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
+					target = dc.getClosestArchon();
+				} else {
+					// Needs to get flux from archon
+					behavior = BehaviorState.POOL;
+					target = dc.getClosestArchon();
+				}
+			}
+		}
+		
+		// Set nav target
 		if(shouldSetNavTarget)
 			nav.setDestination(target);
 		
@@ -219,8 +236,8 @@ public class SoldierRobot extends BaseRobot {
 				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
 					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
-		} else {
 			
+		} else {
 			// Fighting an enemy, kite target
 			boolean weHaveBiggerFront = er.getEnergonDifference(16) > 0;
 			int tooClose = behavior==BehaviorState.TARGET_LOCKED ? 
@@ -232,7 +249,8 @@ public class SoldierRobot extends BaseRobot {
 				return new MoveInfo(curLoc.directionTo(target).opposite(), true);
 			} else if(curLoc.distanceSquaredTo(target) >= tooFar) {
 				Direction dir = nav.navigateToDestination();
-				return new MoveInfo(dir, false);
+				if(rc.canMove(dir))
+					return new MoveInfo(dir, false);
 			}
 		}
 		
