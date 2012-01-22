@@ -31,7 +31,7 @@ public class RadarSystem {
 
 	public int numAdjacentAllies;
 	public int numAllyRobots;
-	public int numAllyDamaged;
+	public int numAllyToRegenerate;
 	public final RobotInfo[] adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	public int alliesOnLeft;
 	public int alliesOnRight;
@@ -131,7 +131,7 @@ public class RadarSystem {
 	private void resetAllyStats() {
 		numAdjacentAllies = 0;
 		numAllyRobots = 0;
-		numAllyDamaged = 0;
+		numAllyToRegenerate = 0;
 		alliesOnLeft = 0;
 		alliesOnRight = 0;
 		alliesInFront = 0;
@@ -247,8 +247,8 @@ public class RadarSystem {
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
 
-		if (rinfo.energon != rinfo.type.maxEnergon) {
-			numAllyDamaged++;
+		if (rinfo.energon != rinfo.type.maxEnergon && !rinfo.regen) {
+			numAllyToRegenerate++;
 		}
 
 		if (rinfo.location.isAdjacentTo(br.curLoc)) {
@@ -285,7 +285,7 @@ public class RadarSystem {
 		numAllyRobots++;
 
 		if (rinfo.energon != rinfo.type.maxEnergon) {
-			numAllyDamaged++;
+			numAllyToRegenerate++;
 		}
 
 		if (rinfo.location.isAdjacentTo(br.curLoc)) {

@@ -177,8 +177,7 @@ public class ScoutRobot extends BaseRobot {
 					radar.closestEnemy.robot.getRobotLevel());
 		}
 		// heal if you should
-		if ((curEnergon < myMaxEnergon || radar.numAllyDamaged > 0) &&
-				Math.random() < 0.3) {
+		if (curEnergon < myMaxEnergon || radar.numAllyToRegenerate > 0) {
 			rc.regenerate();
 		}
 		// broadcast initial report if applicable

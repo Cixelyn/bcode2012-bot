@@ -78,7 +78,7 @@ public class ScoutRobotTheBiggest extends BaseRobot {
 		
 		execute(curstate);
 		
-		int numdmg = radar.numAllyDamaged+(curEnergon<myMaxEnergon?1:0);
+		int numdmg = radar.numAllyToRegenerate+(curEnergon<myMaxEnergon?1:0);
 		
 		if (rc.getFlux() > HEAL_THRESHOLD_FLUX
 				&& numdmg > HEAL_THRESHOLD_NUM)
