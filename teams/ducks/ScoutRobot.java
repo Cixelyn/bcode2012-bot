@@ -78,10 +78,6 @@ public class ScoutRobot extends BaseRobot {
 	 */
 	@Override
 	public void run() throws GameActionException {
-		// suicide if not enough flux
-		if (rc.getFlux() < 3.0) {
-			rc.suicide();
-		}
 		// scan
 		radar.scan(true, true);
 		// switch states if necessary
@@ -179,7 +175,7 @@ public class ScoutRobot extends BaseRobot {
 					radar.closestEnemy.robot.getRobotLevel());
 		}
 		// heal if you should
-		if ((curEnergon < myMaxEnergon - 0.2) || radar.numAllyToRegenerate > 0) {
+		if (rc.getFlux() > 1.0 && ((curEnergon < myMaxEnergon - 0.2) || radar.numAllyToRegenerate > 0)) {
 			rc.regenerate();
 		}
 		// broadcast initial report if applicable
@@ -222,6 +218,8 @@ public class ScoutRobot extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
+		if(rc.getFlux() < 0.5) 
+			return null;
 		if (radar.closestEnemy != null) {
 			/* more aggressive kiting code
 			Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter());

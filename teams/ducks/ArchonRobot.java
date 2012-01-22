@@ -539,9 +539,13 @@ public class ArchonRobot extends BaseRobot{
 			break;
 		}
 		
-		if(rc.getFlux() > fluxToMakeSoldierAt)
-			if(rc.canMove(curDir)) 
+		if(rc.getFlux() > fluxToMakeSoldierAt) {
+			if(Math.random() < 0.1 && rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
+				return new MoveInfo(RobotType.SCOUT, curDir);
+			} else if(rc.canMove(curDir)) {
 				return new MoveInfo(RobotType.SOLDIER, curDir);
+			}
+		}
 			
 			
 		
