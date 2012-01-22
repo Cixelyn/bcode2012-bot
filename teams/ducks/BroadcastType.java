@@ -17,7 +17,9 @@ public enum BroadcastType {
 	WIRE_CONFIRM,
 	WIRE_ABORT,
 
-	// rally code
+	// jven
+	INITIAL_REPORT,
+	INITIAL_REPORT_ACK,
 	RALLY,
 	
 	// extended radar

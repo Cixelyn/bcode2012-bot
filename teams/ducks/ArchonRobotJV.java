@@ -76,6 +76,16 @@ public class ArchonRobotJV extends BaseRobot {
 	public void processMessage(
 			BroadcastType type, StringBuilder sb) throws GameActionException {
 		switch (type) {
+			case INITIAL_REPORT:
+				int[] initialReport = BroadcastSystem.decodeUShorts(sb);
+				int initialReportTime = initialReport[0];
+				MapLocation initialReportLoc = new MapLocation(
+						initialReport[0], initialReport[1]);
+				System.out.println("Scouts report: Enemy approaching from " +
+						initialReportLoc + " as of round " + initialReportTime);
+				io.sendUShort(BroadcastChannel.SCOUTS,
+						BroadcastType.INITIAL_REPORT_ACK, 0);
+				break;
 			case MAP_EDGES:
 				ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 				break;
@@ -108,7 +118,7 @@ public class ArchonRobotJV extends BaseRobot {
 					} else {
 						return null;
 					}
-				} else if (rc.getFlux() >= (Clock.getRoundNum() < 200 ? 110 : 299) &&
+				} else if (rc.getFlux() >= (Clock.getRoundNum() < 150 ? 110 : 299) &&
 						rc.senseTerrainTile(curLocInFront) != TerrainTile.OFF_MAP &&
 						rc.senseObjectAtLocation(
 						curLocInFront, RobotLevel.IN_AIR) == null) {
