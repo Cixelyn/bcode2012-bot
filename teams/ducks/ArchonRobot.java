@@ -88,7 +88,7 @@ public class ArchonRobot extends BaseRobot{
 		radar.scan(true, true);
 		
 		if(curRound%3 == myArchonID%3)
-			radar.broadcastEnemyInfo();
+			radar.broadcastEnemyInfo(false);
 		
 		if (behavior == BehaviorState.RETREAT)
 		{
@@ -503,78 +503,54 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		int fluxToMakeSoldierAt;
-		
-		if (behavior==BehaviorState.RETREAT)
-		{
-			fluxToMakeSoldierAt = 130;
-			
-			int d = curDir.ordinal();
-			
-			if(rc.getFlux() > fluxToMakeSoldierAt)
-				if (rc.canMove(Constants.directions[(d++)%8])) 
-					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
-				else if (rc.canMove(Constants.directions[(d++)%8])) 
-					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
-				else if (rc.canMove(Constants.directions[(d++)%8])) 
-					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
-				else if (rc.canMove(Constants.directions[(d++)%8])) 
-					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
-				else if (rc.canMove(Constants.directions[(d++)%8])) 
-					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
-				else if (rc.canMove(Constants.directions[(d++)%8])) 
-					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
-				else if (rc.canMove(Constants.directions[(d++)%8])) 
-					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
-				else if (rc.canMove(Constants.directions[(d++)%8])) 
-					return new MoveInfo(RobotType.SOLDIER, Constants.directions[(d-1)%8]);
-			
-			
-			
-			Direction dir = nav.navigateToDestination();
-			if(dir==null) 
-				return null;
-			else 
-				return new MoveInfo(dir, true);
-		}
 		
 		
-		switch (behavior)
-		{
-		case SWARM: fluxToMakeSoldierAt = 280; break;
-		case RETREAT: fluxToMakeSoldierAt = 130; break;
-		default:
-			switch (strategy)
-			{
-			case CAP: fluxToMakeSoldierAt = 225; break;
-			default: fluxToMakeSoldierAt = 150; break;
+		if (behavior==BehaviorState.RETREAT) {
+			if(rc.getFlux() > 130) {
+				for(int d=curDir.ordinal(); d<curDir.ordinal()+8; d++)
+					if (rc.canMove(Constants.directions[d%8]))
+						return new MoveInfo(RobotType.SOLDIER, Constants.directions[d%8]);
+			} else {
+				return new MoveInfo(nav.navigateToDestination(), true);
 			}
-			break;
 		}
 		
 		if(strategy == StrategyState.SPLIT) {
 			return new MoveInfo(curLoc.directionTo(myHome).opposite(), false);
 		}
 		
+		int fluxToMakeSoldierAt;
+		switch (behavior) {
+		case SWARM: fluxToMakeSoldierAt = 280; break;
+		case RETREAT: fluxToMakeSoldierAt = 130; break;
+		default:
+			fluxToMakeSoldierAt = (strategy==StrategyState.CAP) ? 225 : 150; 
+			break;
+		}
+		
 		if(rc.getFlux() > fluxToMakeSoldierAt)
 			if(rc.canMove(curDir)) 
 				return new MoveInfo(RobotType.SOLDIER, curDir);
+			
 			
 		
 		if(radar.closestEnemyDist <= 20 && behavior != BehaviorState.CHASE) {
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
+		// If I'm too close to an allied archon, move away from him with some probability
 		if(dc.getClosestArchon()!=null) {
 			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 			if(distToNearestArchon <= 36 &&
-					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
+					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && 
+					rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
 					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
 				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
 			}
 		}
 		
-		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.9) {
+		// If I'm swarming and closest of all archons to my target, slow down
+		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.8) {
 			boolean isClosestToTarget = true;
 			int myDist = curLoc.distanceSquaredTo(target);
 			for(MapLocation loc: rc.senseAlliedArchons()) {
@@ -587,23 +563,20 @@ public class ArchonRobot extends BaseRobot{
 				return null;
 		}
 		
+		// If we can build a tower at our target node, do so
 		if(strategy == StrategyState.CAP && 
 				rc.canMove(curDir) && 
 				curLocInFront.equals(target) && 
 				mc.isPowerNode(curLocInFront)) {
 			if(rc.getFlux() > 200) 
 				return new MoveInfo(RobotType.TOWER, curDir);
-			
+		
+		// If we are on top of our target node, move backwards randomly
 		} else if(strategy == StrategyState.CAP && 
 				curLoc.equals(target) && mc.isPowerNode(curLoc)) {
 			return new MoveInfo(nav.navigateCompletelyRandomly(), true);
-			
-		} else if(rc.getFlux() > fluxToMakeSoldierAt) {
-			if(rc.canMove(curDir)) 
-				return new MoveInfo(RobotType.SOLDIER, curDir);
-			else 
-				return new MoveInfo(curDir.rotateLeft());
-			
+		
+		// None of the above conditions met, move to the destination
 		} else {
 			Direction dir = nav.navigateToDestination();
 			if(dir==null) 
