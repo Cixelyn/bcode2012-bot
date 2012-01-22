@@ -103,7 +103,7 @@ public class NavigationSystem {
 	 * may return a direction that moves towards another robot. <br>
 	 */
 	public Direction navigateToDestination() {
-		if(destination==null) 
+		if(destination==null || br.curLoc.equals(destination)) 
 			return null; 
 		
 		Direction dir = Direction.NONE;
