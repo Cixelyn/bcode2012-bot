@@ -23,8 +23,8 @@ public class SoldierRobot extends BaseRobot {
 		LOST,
 		/** Need to refuel. Go to nearest archon. */
 		REFUEL,
-		/** Track enemy's last position and keep following them. */
-		TARGET_LOCKED;
+		/** Tracking closest enemy, even follow them for 12 turns. */
+		ENEMY_DETECTED;
 	}
 	int lockAcquiredRound;
 	MapLocation target;
@@ -54,20 +54,28 @@ public class SoldierRobot extends BaseRobot {
 		
 		// Scan everything every turn
 		radar.scan(true, true);
-		if(curRound%5 == myID%5)
-			radar.broadcastEnemyInfo();
 		
-		dbg.setIndicatorString('h',0, er.toString());
 		
 		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
+		if(closestEnemyLocation!=null && rc.canSenseSquare(closestEnemyLocation))
+			closestEnemyLocation = null;
+		MapLocation radarClosestEnemyLocation = radar.closestEnemy==null ? 
+				null : radar.closestEnemy.location;
+		if(closestEnemyLocation==null || (radarClosestEnemyLocation!=null && 
+				curLoc.distanceSquaredTo(closestEnemyLocation) < 
+				curLoc.distanceSquaredTo(radarClosestEnemyLocation)))
+			closestEnemyLocation = radarClosestEnemyLocation;
+		if(curRound%5 == myID%5)
+			radar.broadcastEnemyInfo(closestEnemyLocation!= null && 
+					curLoc.distanceSquaredTo(closestEnemyLocation) < 25);
 		boolean shouldSetNavTarget = true;
 		if(closestEnemyLocation != null) {
 			// If we know of an enemy, lock onto it
-			behavior = BehaviorState.TARGET_LOCKED;
+			behavior = BehaviorState.ENEMY_DETECTED;
 			target = closestEnemyLocation;
 			nav.setNavigationMode(NavigationMode.GREEDY);
 			lockAcquiredRound = curRound;
-		} else if(behavior != BehaviorState.TARGET_LOCKED || 
+		} else if(behavior != BehaviorState.ENEMY_DETECTED || 
 				curRound > lockAcquiredRound + 12) {
 			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 			if(behavior==BehaviorState.LOST && distToClosestArchon>25 || 
@@ -113,7 +121,8 @@ public class SoldierRobot extends BaseRobot {
 		}
 		
 		// Flux balance movement
-		if(behavior == BehaviorState.SWARM) {
+		if(behavior == BehaviorState.SWARM || behavior == BehaviorState.LOST ||
+				behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
 			if(rc.getFlux() > myMaxEnergon*2/3) {
 				// Needs to dump flux to archon
 				behavior = BehaviorState.POOL;
@@ -121,11 +130,10 @@ public class SoldierRobot extends BaseRobot {
 			} else if(rc.getFlux() < 10) {
 				if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
 					// Too low flux, can't reach archon
-					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
-					target = dc.getClosestArchon();
+					behavior = BehaviorState.HIBERNATE;
 				} else {
 					// Needs to get flux from archon
-					behavior = BehaviorState.POOL;
+					behavior = BehaviorState.REFUEL;
 					target = dc.getClosestArchon();
 				}
 			}
@@ -205,12 +213,10 @@ public class SoldierRobot extends BaseRobot {
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux()<1) return null;
 		
-		// If we're looking to hibernate, move around randomly
 		if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
+			// If we're looking to hibernate, move around randomly
 			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
-		}
-		
-		if(behavior == BehaviorState.SWARM ) {
+		} else if(behavior == BehaviorState.SWARM ) {
 			// If we're on top of our target power node, move around randomly
 			if(curLoc.equals(target) && 
 					rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)!=null) {
@@ -237,21 +243,21 @@ public class SoldierRobot extends BaseRobot {
 					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
 			
-		} else {
+		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
 			boolean weHaveBiggerFront = er.getEnergonDifference(16) > 0;
-			int tooClose = behavior==BehaviorState.TARGET_LOCKED ? 
-					(weHaveBiggerFront ? -1 : 5) : 1;
-			int tooFar = behavior==BehaviorState.TARGET_LOCKED ? 
-					(weHaveBiggerFront ? 4 : 26) : 11;
+			int tooClose = weHaveBiggerFront ? -1 : 5;
+			int tooFar = weHaveBiggerFront ? 4 : 25;
 			
 			if(curLoc.distanceSquaredTo(target) <= tooClose) {
-				return new MoveInfo(curLoc.directionTo(target).opposite(), true);
+				Direction dir = curLoc.directionTo(target).opposite();
+				if(rc!=null && rc.canMove(dir))
+					return new MoveInfo(dir, true);
 			} else if(curLoc.distanceSquaredTo(target) >= tooFar) {
-				Direction dir = nav.navigateToDestination();
-				if(rc.canMove(dir))
-					return new MoveInfo(dir, false);
+				return new MoveInfo(nav.navigateToDestination(), false);
 			}
+		} else {
+			return new MoveInfo(nav.navigateToDestination(), false);
 		}
 		
 		return new MoveInfo(curLoc.directionTo(target));
