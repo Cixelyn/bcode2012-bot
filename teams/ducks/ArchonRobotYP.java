@@ -458,7 +458,7 @@ public class ArchonRobotYP extends BaseRobot {
 				}
 			}
 			
-			if ((	radar.numAllyDamaged > ArchonConstants.DAMAGED_ALLIED_THRESHOLD || 
+			if ((	radar.numAllyToRegenerate > ArchonConstants.DAMAGED_ALLIED_THRESHOLD || 
 					curEnergon < ArchonConstants.DAMAGED_HEAL_THRESHOLD) &&
 					rc.senseTerrainTile(curLocInFront) != TerrainTile.OFF_MAP)
 			{
@@ -507,7 +507,7 @@ public class ArchonRobotYP extends BaseRobot {
 					}
 				}
 				
-				if ((	radar.numAllyDamaged > ArchonConstants.DAMAGED_ALLIED_THRESHOLD || 
+				if ((	radar.numAllyToRegenerate > ArchonConstants.DAMAGED_ALLIED_THRESHOLD || 
 						curEnergon < ArchonConstants.DAMAGED_HEAL_THRESHOLD) &&
 						rc.senseTerrainTile(curLocInFront) != TerrainTile.OFF_MAP)
 				{
