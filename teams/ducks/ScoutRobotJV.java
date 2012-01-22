@@ -14,6 +14,7 @@ public class ScoutRobotJV extends BaseRobot {
 		FIND_ENEMY,
 		REPORT_ENEMY,
 		PET,
+		GIVE_FLUX_TO_ALLIES,
 		EXPLORE
 	}
 	
@@ -52,6 +53,11 @@ public class ScoutRobotJV extends BaseRobot {
 	/** The Scout's current objective. */
 	private MapLocation objective;
 	
+	/** Initial enemy info report. */
+	private MapLocation initialReportLoc;
+	private int initialReportTime;
+	private boolean initialReportAck;
+	
 	public ScoutRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
 		// set initial state
@@ -72,7 +78,6 @@ public class ScoutRobotJV extends BaseRobot {
 	 */
 	@Override
 	public void run() throws GameActionException {
-		dbg.setIndicatorString('j', 0, "SCOUT - " + behavior);
 		// suicide if not enough flux
 		if (rc.getFlux() < 3.0) {
 			rc.suicide();
@@ -83,17 +88,34 @@ public class ScoutRobotJV extends BaseRobot {
 		switch (behavior) {
 			case WAIT_FOR_FLUX:
 				if (curRound - birthday < 50) {
-					behavior = BehaviorState.FIND_ENEMY;
+					if (birthday < 150) {
+						behavior = BehaviorState.FIND_ENEMY;
+					} else {
+						behavior = BehaviorState.PET;
+					}
 				}
 				break;
 			case FIND_ENEMY:
 				if (radar.closestEnemy != null) {
 					behavior = BehaviorState.REPORT_ENEMY;
+					initialReportLoc = radar.closestEnemy.location;
+					initialReportTime = curRound;
 				}
 				break;
 			case REPORT_ENEMY:
+				if (initialReportAck) {
+					behavior = BehaviorState.PET;
+				}
 				break;
 			case PET:
+				if (rc.getFlux() > 40) {
+					behavior = BehaviorState.GIVE_FLUX_TO_ALLIES;
+				}
+				break;
+			case GIVE_FLUX_TO_ALLIES:
+				if (rc.getFlux() < 15) {
+					behavior = BehaviorState.PET;
+				}
 				break;
 			case EXPLORE:
 				if (curRound >= ROUND_TO_STOP_EXPLORING || scoutPatternIdx >=
@@ -109,13 +131,12 @@ public class ScoutRobotJV extends BaseRobot {
 			case WAIT_FOR_FLUX:
 			case FIND_ENEMY:
 			case REPORT_ENEMY:
-				fbs.disable();
-				break;
 			case PET:
-				fbs.setPoolMode();
-				break;
 			case EXPLORE:
 				fbs.disable();
+				break;
+			case GIVE_FLUX_TO_ALLIES:
+				fbs.setPoolMode();
 				break;
 			default:
 				break;
@@ -133,6 +154,14 @@ public class ScoutRobotJV extends BaseRobot {
 			case PET:
 				// go to nearest archon
 				objective = dc.getClosestArchon();
+				break;
+			case GIVE_FLUX_TO_ALLIES:
+				// find a friend
+				if (radar.closestLowFluxAlly != null) {
+					objective = radar.closestLowFluxAlly.location;
+				} else {
+					objective = dc.getClosestArchon();
+				}
 				break;
 			case EXPLORE:
 				// get an unexplored location
@@ -152,12 +181,30 @@ public class ScoutRobotJV extends BaseRobot {
 				Math.random() < 0.3) {
 			rc.regenerate();
 		}
+		// broadcast initial report if applicable
+		if (behavior == BehaviorState.REPORT_ENEMY) {
+			io.sendUShorts(BroadcastChannel.ARCHONS, BroadcastType.INITIAL_REPORT,
+					new int[] {initialReportTime, initialReportLoc.x,
+					initialReportLoc.y});
+		}
+		// indicator strings
+		dbg.setIndicatorString('j', 0, "SCOUT - " + behavior);
+		if (radar.closestLowFluxAlly != null) {
+			dbg.setIndicatorString('j', 1, "Closest low flux ally: " +
+					radar.closestLowFluxAlly.type + "(" + radar.closestLowFluxAllyDist +
+					")");
+		} else {
+			dbg.setIndicatorString('j', 1, "No nearby low flux allies.");
+		}
 	}
 	
 	@Override
 	public void processMessage(
 			BroadcastType type, StringBuilder sb) throws GameActionException {
 		switch (type) {
+			case INITIAL_REPORT_ACK:
+				initialReportAck = true;
+				break;
 			case MAP_EDGES:
 				ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 				break;
