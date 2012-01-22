@@ -1,369 +1,337 @@
 package ducks;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
-import battlecode.common.PowerNode;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
-import battlecode.common.RobotLevel;
-import battlecode.common.RobotType;
-
-
-
 
 public class ScoutRobot extends BaseRobot {
 	
-	public static final int SWARM_ROUNDS_UNTIL_STALE = 20;
-	public static final int CHASE_ROUNDS = 40;
+	/** The possible behaviors for the Scout. */
+	private enum BehaviorState {
+		WAIT_FOR_FLUX,
+		FIND_ENEMY,
+		REPORT_ENEMY,
+		PET,
+		GIVE_FLUX_TO_ALLIES,
+		EXPLORE
+	}
 	
-	public static final int CHASE_CLOSE_DISTANCE = 4;
+	/** Defines the shape of a space filling curve, used to explore the map
+	 * starting from some corner.
+	 */
+	private static final int[][] SCOUT_PATTERN = new int[][] {
+		{0,0},{1,0},{1,1},{0,1},{0,2},{1,2},{2,2},{2,1},{2,0},{3,0},{3,1},{3,2},
+		{3,3},{2,3},{1,3},{0,3},{0,4},{1,4},{2,4},{3,4},{4,4},{4,3},{4,2},{4,1},
+		{4,0},{5,0},{5,1},{5,2},{5,3},{5,4},{5,5},{4,5},{3,5},{2,5},{1,5},{0,5},
+		{0,6},{1,6},{2,6},{3,6},{4,6},{5,6},{6,6},{6,5},{6,4},{6,3},{6,2},{6,1},
+		{6,0},{7,0},{7,1},{7,2},{7,3},{7,4},{7,5},{7,6},{7,7},{6,7},{5,7},{4,7},
+		{3,7},{2,7},{1,7},{0,7},{0,8},{1,8},{2,8},{3,8},{4,8},{5,8},{6,8},{7,8},
+		{8,8},{8,7},{8,6},{8,5},{8,4},{8,3},{8,2},{8,1},{8,0},{9,0},{9,1},{9,2},
+		{9,3},{9,4},{9,5},{9,6},{9,7},{9,8},{9,9},{8,9},{7,9},{6,9},{5,9},{4,9},
+		{3,9},{2,9},{1,9},{0,9},{0,10},{1,10},{2,10},{3,10},{4,10},{5,10},{6,10},
+		{7,10},{8,10},{9,10},{10,10},{10,9},{10,8},{10,7},{10,6},{10,5},{10,4},
+		{10,3},{10,2},{10,1},{10,0},{11,0},{11,1},{11,2},{11,3},{11,4},{11,5},
+		{11,6},{11,7},{11,8},{11,9},{11,10},{11,11},{10,11},{9,11},{8,11},{7,11},
+		{6,11},{5,11},{4,11},{3,11},{2,11},{1,11},{0,11},{0,12},{1,12},{2,12},
+		{3,12},{4,12},{5,12},{6,12},{7,12},{8,12},{9,12},{10,12},{11,12},{12,12},
+		{12,11},{12,10},{12,9},{12,8},{12,7},{12,6},{12,5},{12,4},{12,3},{12,2},
+		{12,1},{12,0}};
 	
-	public static final int RETREAT_ROUNDS = 20;
+	/** Round to stop exploring, regardless of whether you're done. */
+	private static final int ROUND_TO_STOP_EXPLORING = 1000;
 	
-	public static final int RETREAT_THRESHOLD = -4;
-	public static final int RETREAT_STABILIZE = -2;
-	public static final int RETREAT_CHASE = -1;
+	/** The Scout's current position in SCOUT_PATTERN. When this equals
+	 * SCOUT_PATTERN.length - 1, the Scout knows the whole map.
+	 */
+	private int scoutPatternIdx;
 	
-	public static final int SWARM_TOO_CLOSE_DISTANCE = 3;
-	public static final int SWARM_TOO_FAR_DISTANCE = 30;
+	/** The Scout's current behavior. */
+	private BehaviorState behavior;
 	
-	public static final double SHUTDOWN_THRESHOLD = 1.0;
+	/** The Scout's current objective. */
+	private MapLocation objective;
 	
-	public static final double HEAL_THRESHOLD_FLUX = 4.0;
-	public static final double HEAL_THRESHOLD_NUM = 2;
-	
-	public static final double ATTACK = RobotType.SCOUT.attackPower+0.1;
-	
-	private enum ScoutState {
-		CHASE,
-		SWARM,
-		RETREAT,
-	};
-	
-	private ScoutState curstate;
-	
-	private RobotInfo chaseTarget;
-	private Direction chaseDir;
-	private int chaseRounds;
-	
-	private int retreatRounds;
-	private Direction retreatDir;
-	private MapLocation retreatLoc;
-	
-//	private MapLocation closestArchon;
-	private MapLocation swarmLoc;
-	private Direction swarmDir;
-	private int swarmUpdateRounds;
-	private int closestmsg;
-	
-	MapLocation movetarget;
-	Direction movedirection;
+	/** Initial enemy info report. */
+	private MapLocation initialReportLoc;
+	private int initialReportTime;
+	private boolean initialReportAck;
 	
 	public ScoutRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
-		
-		curstate = ScoutState.SWARM;
+		// set initial state
+		behavior = BehaviorState.WAIT_FOR_FLUX;
+		// set broadcast channels
+		io.setChannels(new BroadcastChannel[] {
+				BroadcastChannel.ALL,
+				BroadcastChannel.SCOUTS,
+				BroadcastChannel.EXPLORERS
+		});
+		// set navigation mode
+		nav.setNavigationMode(NavigationMode.GREEDY);
 	}
 
+	/**
+	 * In terms of bytecodes, this run method takes, as a conservative estimate,
+	 * 600 + cost of scan, which with a lot of enemies can get to 600 + 6000.
+	 */
 	@Override
-	public void run() throws GameActionException
-	{
+	public void run() throws GameActionException {
+		// suicide if not enough flux
+		if (rc.getFlux() < 3.0) {
+			rc.suicide();
+		}
+		// scan
 		radar.scan(true, true);
-		
-		swarmUpdateRounds++;
-		
-		if(!rc.isAttackActive()) 
-			attack();
-		
-		execute(curstate);
-		
-		int numdmg = radar.numAllyDamaged+(curEnergon<myMaxEnergon?1:0);
-		
-		if (rc.getFlux() > HEAL_THRESHOLD_FLUX
-				&& numdmg > HEAL_THRESHOLD_NUM)
-			rc.regenerate();
-		
-		switch (curstate)
-		{
-		case CHASE:
-			rc.setIndicatorString(0, "state:"+curstate+" "+chaseTarget+" "+chaseDir+" "+chaseRounds);
-			break;
-		case RETREAT:
-			rc.setIndicatorString(0, "state:"+curstate+" "+retreatRounds+" "+retreatDir);
-			break;
-		}
-		
-		closestmsg = 999;
-		
-	}
-	
-	public void execute(ScoutState state) throws GameActionException
-	{
-		switch (state)
-		{
-		case SWARM:
-			swarm();
-			break;
-		case CHASE:
-			chase();
-			break;
-		case RETREAT:
-			retreat();
-			break;
-		}
-	}
-	
-	@Override
-	public void processMessage(BroadcastType msgType, StringBuilder sb)
-			throws GameActionException {
-		switch (msgType)
-		{
-		case SWARM_DETAILS:
-		{
-			int[] msg = BroadcastSystem.decodeUShorts(sb);
-			MapLocation loc = new MapLocation(msg[1], msg[2]);
-			int dist = loc.distanceSquaredTo(curLoc);
-			if (dist < closestmsg)
-			{
-				swarmLoc = loc;
-				swarmDir = Constants.directions[msg[0]];
-				swarmUpdateRounds = 0;
-			}
-		} break;
-		}
-	}
-	
-	private void gotoStateAndExecute(ScoutState state) throws GameActionException
-	{
-		if (curstate != state)
-		{
-			curstate = state;
-			execute(state);
-		} else
-		{
-			System.out.println("transitioning from "+state+" to "+curstate);
-		}
-	}
-	
-	public void attack() throws GameActionException
-	{
-		radar.scan(true, true);
-		
-		if (radar.numEnemyRobots == 0) return;
-		
-		RobotInfo best = null;
-		boolean kill = false;
-		int closest = 999;
-		
-		for (int x=0; x<radar.numEnemyRobots; x++)
-		{
-			RobotInfo ri = radar.enemyInfos[radar.enemyRobots[x]];
-			if (!rc.canAttackSquare(ri.location)) continue;
-			
-			if (best == null)
-			{
-				best = ri;
-				kill = best.flux <= ATTACK;
-				closest = curLoc.distanceSquaredTo(best.location);
-			} else if (kill)
-			{
-				if (ri.flux > ATTACK) continue;
-				
-				int dist = curLoc.distanceSquaredTo(ri.location);
-				if (closest > dist)
-				{
-					best = ri;
-					closest = curLoc.distanceSquaredTo(best.location);
-				}
-			} else
-			{
-				int dist = curLoc.distanceSquaredTo(ri.location);
-				if (closest > dist)
-				{
-					best = ri;
-					closest = curLoc.distanceSquaredTo(best.location);
-					kill = best.flux <= ATTACK;
-				}
-			}
-		}
-		
-		if (best != null)
-			rc.attackSquare(best.location, best.robot.getRobotLevel());
-	}
-	
-	public void swarm() throws GameActionException
-	{
-		radar.scan(true, true);
-		
-		if (radar.numEnemyRobots>0)
-		{
-			gotoStateAndExecute(ScoutState.CHASE);
-			return;
-		}
-		
-		
-		
-		if (swarmLoc == null || swarmUpdateRounds>SWARM_ROUNDS_UNTIL_STALE)
-		{
-			swarmLoc = dc.getClosestArchon();
-			swarmDir = null;
-		}
-	}
-	
-	public void chase() throws GameActionException
-	{
-		radar.scan(true, true);
-		
-		if (radar.getArmyDifference() <= RETREAT_THRESHOLD)
-		{
-			gotoStateAndExecute(ScoutState.RETREAT);
-			return;
-		}
-		
-		if (radar.numEnemyRobots == 0)
-		{
-			if (chaseRounds--<=0 || chaseDir==null)
-			{
-				gotoStateAndExecute(ScoutState.SWARM);
-				return;
-			}
-			return;
-		} else if (radar.numEnemyRobots == radar.numEnemyTowers)
-		{
-			int closest = 999;
-//			check that the towers are actually attackable
-			for (int x=0; x<radar.numEnemyTowers; x++)
-			{
-				RobotInfo ri = radar.enemyInfos[radar.enemyTowers[x]];
-				if (rc.senseConnected((PowerNode) rc.senseObjectAtLocation(ri.location, RobotLevel.POWER_NODE)))
-				{
-					int dist = curLoc.distanceSquaredTo(ri.location);
-					if (dist < closest)
-					{
-						closest = dist;
-						chaseTarget = ri;
+		// switch states if necessary
+		switch (behavior) {
+			case WAIT_FOR_FLUX:
+				if (curRound - birthday < 50) {
+					if (birthday < 150) {
+						behavior = BehaviorState.FIND_ENEMY;
+					} else {
+						behavior = BehaviorState.PET;
 					}
 				}
-			}
-			if (chaseTarget==null)
-			{
-				if (chaseRounds--<=0 || chaseDir==null)
-				{
-					gotoStateAndExecute(ScoutState.SWARM);
-					return;
+				break;
+			case FIND_ENEMY:
+				if (radar.closestEnemy != null) {
+					behavior = BehaviorState.REPORT_ENEMY;
+					initialReportLoc = radar.closestEnemy.location;
+					initialReportTime = curRound;
 				}
-				return;
-			}
-		} else
-		{
-			chaseTarget = radar.closestEnemy;
+				break;
+			case REPORT_ENEMY:
+				if (initialReportAck) {
+					behavior = BehaviorState.PET;
+				}
+				break;
+			case PET:
+				if (rc.getFlux() > 40) {
+					behavior = BehaviorState.GIVE_FLUX_TO_ALLIES;
+				}
+				break;
+			case GIVE_FLUX_TO_ALLIES:
+				if (rc.getFlux() < 15) {
+					behavior = BehaviorState.PET;
+				}
+				break;
+			case EXPLORE:
+				if (curRound >= ROUND_TO_STOP_EXPLORING || scoutPatternIdx >=
+						SCOUT_PATTERN.length - 1) {
+					behavior = BehaviorState.PET;
+				}
+				break;
+			default:
+				break;
 		}
-		
-		chaseRounds = CHASE_ROUNDS;
-		
-		chaseDir = curLoc.directionTo(chaseTarget.location);
-	}
-	
-	public void retreat() throws GameActionException
-	{
-		radar.scan(true, true);
-		
-		if (radar.getArmyDifference() >= RETREAT_CHASE)
-		{
-			gotoStateAndExecute(ScoutState.CHASE);
-			return;
-		} else if (radar.getArmyDifference() >= RETREAT_STABILIZE)
-		{
-			gotoStateAndExecute(ScoutState.SWARM);
-			return;
+		// set flux balance mode
+		switch (behavior) {
+			case WAIT_FOR_FLUX:
+			case FIND_ENEMY:
+			case REPORT_ENEMY:
+			case PET:
+			case EXPLORE:
+				fbs.disable();
+				break;
+			case GIVE_FLUX_TO_ALLIES:
+				fbs.setPoolMode();
+				break;
+			default:
+				break;
 		}
-		
-		if (radar.numEnemyRobots == 0)
-		{
-			if (retreatRounds-- <= 0 || retreatDir==null)
-			{
-				gotoStateAndExecute(ScoutState.SWARM);
-				return;
-			}
-			return;
-		} else retreatRounds = RETREAT_ROUNDS;
-		
-		retreatDir = radar.getEnemySwarmTarget().directionTo(curLoc);
-		return;
+		// set objective based on behavior
+		switch (behavior) {
+			case WAIT_FOR_FLUX:
+				// go to nearest archon
+				objective = dc.getClosestArchon();
+				break;
+			case FIND_ENEMY:
+				objective = mc.guessEnemyPowerCoreLocation();
+				break;
+			case REPORT_ENEMY:
+			case PET:
+				// go to nearest archon
+				objective = dc.getClosestArchon();
+				break;
+			case GIVE_FLUX_TO_ALLIES:
+				// find a friend
+				if (radar.closestLowFluxAlly != null) {
+					objective = radar.closestLowFluxAlly.location;
+				} else {
+					objective = dc.getClosestArchon();
+				}
+				break;
+			case EXPLORE:
+				// get an unexplored location
+				objective = getExplorationTarget();
+				break;
+			default:
+				break;
+		}
+		// attack if you can
+		if (!rc.isAttackActive() && radar.closestEnemy != null &&
+				rc.canAttackSquare(radar.closestEnemy.location)) {
+			rc.attackSquare(radar.closestEnemy.location,
+					radar.closestEnemy.robot.getRobotLevel());
+		}
+		// heal if you should
+		if ((curEnergon < myMaxEnergon || radar.numAllyDamaged > 0) &&
+				Math.random() < 0.3) {
+			rc.regenerate();
+		}
+		// broadcast initial report if applicable
+		if (behavior == BehaviorState.REPORT_ENEMY) {
+			io.sendUShorts(BroadcastChannel.ARCHONS, BroadcastType.INITIAL_REPORT,
+					new int[] {initialReportTime, initialReportLoc.x,
+					initialReportLoc.y});
+		}
+		// indicator strings
+		dbg.setIndicatorString('j', 0, "SCOUT - " + behavior);
+		if (radar.closestLowFluxAlly != null) {
+			dbg.setIndicatorString('j', 1, "Closest low flux ally: " +
+					radar.closestLowFluxAlly.type + "(" + radar.closestLowFluxAllyDist +
+					")");
+		} else {
+			dbg.setIndicatorString('j', 1, "No nearby low flux allies.");
+		}
 	}
 	
 	@Override
-	public MoveInfo computeNextMove() throws GameActionException
-	{
-		if (rc.getFlux() < SHUTDOWN_THRESHOLD)
-		{
-			//TODO turn around code
-			return null;
-		} else
-		{
-			MapLocation closest = dc.getClosestArchon();
-			if (closest != null)
-			{
-				return new MoveInfo(curLoc.directionTo(closest),false);
+	public void processMessage(
+			BroadcastType type, StringBuilder sb) throws GameActionException {
+		switch (type) {
+			case INITIAL_REPORT_ACK:
+				initialReportAck = true;
+				break;
+			case MAP_EDGES:
+				ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
+				break;
+			case MAP_FRAGMENTS:
+				ses.receiveMapFragment(BroadcastSystem.decodeInts(sb));
+				break;
+			case POWERNODE_FRAGMENTS:
+				ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
+				break;
+			default:
+				super.processMessage(type, sb);
+		}
+	}
+	
+	@Override
+	public MoveInfo computeNextMove() throws GameActionException {
+		if (radar.closestEnemy != null) {
+			/* more aggressive kiting code
+			Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter());
+			int dist = (int)radar.closestEnemyDist;
+			// if we're too close, back up
+			if (dist <= 5) {
+				return new MoveInfo(dir.opposite(), true);
 			}
-			
-			switch (curstate)
-			{
-			case SWARM:
-			{
-				if (swarmDir==null)
-				{
-					nav.setDestination(swarmLoc);
-					return new MoveInfo(nav.navigateToDestination(), false);
-				}
-				
-				Direction toSwarm = curLoc.directionTo(swarmLoc);
-				
-//				if our direction to the swarm loc is equal or adjacent to the swarm dir
-//				then this means we are behind the swarm and need to move through
-				if ((toSwarm.ordinal()-swarmDir.ordinal()+9)%8 < 2)
-				{
-					return new MoveInfo(swarmDir, false);
-				}
-				
-				if (curLoc.distanceSquaredTo(swarmLoc) < SWARM_TOO_CLOSE_DISTANCE)
-				{
-					return new MoveInfo(swarmDir, false);
-				}
-				
-				if (curLoc.distanceSquaredTo(swarmLoc) > SWARM_TOO_FAR_DISTANCE)
-				{
-					return new MoveInfo(toSwarm, true);
-				}
-				
-				if (curDir != swarmDir)
-					return new MoveInfo(swarmDir);
-				else return null;
+			// if we're in safe range, face target
+			if (dist <= 25) {
+				return new MoveInfo(dir);
 			}
-			case CHASE:
-			{
-				if (curLoc.distanceSquaredTo(chaseTarget.location) <= CHASE_CLOSE_DISTANCE)
-				{
-					return new MoveInfo(chaseDir.opposite(), true);
-				} else
-					return new MoveInfo(chaseDir, false);
+			// we're far away, move to target
+			return new MoveInfo(dir, false);
+			*/
+			return new MoveInfo(curLoc.directionTo(
+					radar.getEnemySwarmCenter()).opposite(), true);
+		} else {
+			// if no enemy is nearby, go to objective
+			if (objective != null) {
+				return new MoveInfo(curLoc.directionTo(objective), false);
+			} else {
+				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
-			case RETREAT:
-			{
-//				MASSIVE TODO calculate vectors of retreat and if any coincides 
-//				with a direction to an archon
-				if (retreatLoc == null || 
-						curLoc.directionTo(retreatLoc) != retreatDir ||
-						curLoc.distanceSquaredTo(retreatLoc) < 5)
-				{
-					retreatLoc = curLoc.add(retreatDir,9);
-					nav.setDestination(retreatLoc);
-				}
-				
-//				return new MoveInfo(nav.navigateGreedy(retreatLoc), true);
-				return new MoveInfo(retreatDir, true);
+		}
+	}
+	
+	@Override
+	public void useExtraBytecodes() throws GameActionException {
+		super.useExtraBytecodes();
+		// share exploration with archons
+		if (behavior == BehaviorState.PET) {
+			if (curRound == Clock.getRoundNum() &&
+					Clock.getBytecodesLeft() > 4000 && Math.random() < 0.05 /
+					(radar.numAllyRobots + 1)) {
+				ses.broadcastMapFragment();
 			}
+			if (curRound == Clock.getRoundNum() &&
+					Clock.getBytecodesLeft() > 2000 && Math.random() < 0.05 /
+					(radar.numAllyRobots + 1)) {
+				ses.broadcastPowerNodeFragment();
+			}
+			if (curRound == Clock.getRoundNum() &&
+					Clock.getBytecodesLeft() > 2000 && Math.random() < 0.05 /
+					(radar.numAllyRobots + 1)) {
+				ses.broadcastMapEdges();
+			}
+		}
+		// process shared exploration
+		while (curRound == Clock.getRoundNum() &&
+				Clock.getBytecodesLeft() > 5000 &&
+				!mc.extractUpdatedPackedDataStep()) {
+		}
+	}
+	
+	/**
+	 * Get a location to explore.
+	 */
+	private MapLocation getExplorationTarget() {
+		Direction d;
+		int sx, sy, mx, my;
+		switch (myID % 4) {
+			case 0:
+				d = Direction.NORTH_WEST;
+				sx = mc.edgeXMin;
+				sy = mc.edgeYMin;
+				mx = 1;
+				my = 1;
+				break;
+			case 1:
+				d = Direction.NORTH_EAST;
+				sx = mc.edgeXMax;
+				sy = mc.edgeYMin;
+				mx = -1;
+				my = 1;
+				break;
+			case 2:
+				d = Direction.SOUTH_WEST;
+				sx = mc.edgeXMin;
+				sy = mc.edgeYMax;
+				mx = 1;
+				my = -1;
+				break;
+			case 3:
+			default:
+				d = Direction.SOUTH_EAST;
+				sx = mc.edgeXMax;
+				sy = mc.edgeYMax;
+				mx = -1;
+				my = -1;
+				break;
+		}
+		if (sx * sy == 0) {
+			// i don't know where the corner is
+			return myHome.add(d, 100);
+		}
+		// making new map locations is very costly so advance your scout pattern by
+		// at most 3 per turn
+		// TODO(jven): might be much cheaper to access mc.sensed and check map
+		// edges directly
+		int numIterations = 0;
+		for (int idx = scoutPatternIdx; idx < SCOUT_PATTERN.length &&
+				numIterations++ < 3; idx++) {
+			int[] coords = SCOUT_PATTERN[idx];
+			MapLocation loc = new MapLocation(
+					mc.cacheToWorldX(sx + mx * (1 + coords[0]) * 7),
+					mc.cacheToWorldY(sy + my * (1 + coords[1]) * 7));
+			if (!mc.isOffMap(loc) && !mc.isSensed(loc)) {
+				return loc;
+			} else {
+				scoutPatternIdx++;
 			}
 		}
 		return null;
