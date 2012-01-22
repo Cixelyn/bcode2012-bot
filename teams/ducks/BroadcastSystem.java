@@ -392,13 +392,15 @@ public class BroadcastSystem {
 		
 	}
 
-	/**
-	 * Completely dumps your whole message queue
-	 */
-	public void flushAllMessages() {
+	/** Completely dumps your whole message queue */
+	public void flushIncomingQueue() {
 		br.rc.getAllMessages();
 	}
 	
+	/** Dumps your whole message send queue queue */
+	public void flushSendQueue() {
+		msgContainer = new StringBuilder();
+	}
 	
 	
 	private static int hashMessage(StringBuilder msg) {

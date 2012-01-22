@@ -113,11 +113,14 @@ public abstract class BaseRobot {
 			resetClock();
 			updateRoundVariables();
 			
+			// Flush our send queue (if messages remaining because we went over bytecodes)
+			io.flushSendQueue();
+			
 
 			// Message Receive Loop - in its own try-catch to protect against messaging attacks
 			try {
 				if(justRevived)
-					io.flushAllMessages();
+					io.flushIncomingQueue();
 				else
 					io.receive();
 			} catch (Exception e) {
