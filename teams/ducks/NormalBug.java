@@ -84,7 +84,11 @@ public class NormalBug {
 				defaultTraceDirection = 1-defaultTraceDirection;
 				hitEdgeInOtherTraceDirection = false;
 			} else if(!(sx==expectedsx && sy==expectedsy)) {
-				return d[getDirTowards(expectedsx-sx, expectedsy-sy)];
+				int i = getDirTowards(expectedsx-sx, expectedsy-sy);
+				if(movableTerrain[i])
+					return d[i];
+				else
+					wallDir = i;
 			} else if(movableTerrain[wallDir]) {
 				// Tracing around phantom wall 
 				//   (could happen if a wall was actually a moving unit)
