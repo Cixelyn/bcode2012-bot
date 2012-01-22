@@ -72,7 +72,7 @@ public class SoldierRobot extends BaseRobot {
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo(closestEnemyLocation!= null && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) < 25);
-		boolean shouldSetNavTarget = true;
+		
 		if(closestEnemyLocation != null) {
 			// If we know of an enemy, lock onto it
 			behavior = BehaviorState.ENEMY_DETECTED;
@@ -83,15 +83,16 @@ public class SoldierRobot extends BaseRobot {
 			// Don't know of any enemies, stay chasing the last enemy we knew of
 		} else {
 			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if(behavior==BehaviorState.LOST && distToClosestArchon>25 || 
+			if((behavior==BehaviorState.LOST && distToClosestArchon>25) || 
 					distToClosestArchon>64) {
 				// If all allied archons are far away, move to closest one
 				behavior = BehaviorState.LOST;
 				nav.setNavigationMode(NavigationMode.BUG);
 				target = dc.getClosestArchon();
 				if(previousBugTarget!=null && target.distanceSquaredTo(previousBugTarget)<=25)
-					shouldSetNavTarget = false;
-				previousBugTarget = target;
+					target = previousBugTarget;
+				else
+					previousBugTarget = target;
 			} else {	
 				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && 
 						archonTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
@@ -141,8 +142,7 @@ public class SoldierRobot extends BaseRobot {
 		} 
 		
 		// Set nav target
-		if(shouldSetNavTarget)
-			nav.setDestination(target);
+		nav.setDestination(target);
 		
 		// Attack an enemy if there is some unit in our attackable squares
 		if(!rc.isAttackActive()) {
