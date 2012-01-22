@@ -13,6 +13,8 @@ public class SoldierRobot extends BaseRobot {
 		LOOKING_TO_HIBERNATE,
 		/** Hibernate until someone wakes it up. */
 		HIBERNATE,
+		/** Ran very low on flux, will hibernate until someone transfers it flux. */
+		LOW_FLUX_HIBERNATE,
 		/** Has too much flux (from being a battery), needs to give it back to archon. */
 		POOL,
 		/** No enemies to deal with. */
@@ -55,7 +57,6 @@ public class SoldierRobot extends BaseRobot {
 		// Scan everything every turn
 		radar.scan(true, true);
 		
-		
 		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
 		if(closestEnemyLocation!=null && rc.canSenseSquare(closestEnemyLocation))
 			closestEnemyLocation = null;
@@ -75,8 +76,9 @@ public class SoldierRobot extends BaseRobot {
 			target = closestEnemyLocation;
 			nav.setNavigationMode(NavigationMode.GREEDY);
 			lockAcquiredRound = curRound;
-		} else if(behavior != BehaviorState.ENEMY_DETECTED || 
-				curRound > lockAcquiredRound + 12) {
+		} else if(behavior == BehaviorState.ENEMY_DETECTED && curRound > lockAcquiredRound + 12) {
+			// Don't know of any enemies, stay chasing the last enemy we knew of
+		} else {
 			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 			if(behavior==BehaviorState.LOST && distToClosestArchon>25 || 
 					distToClosestArchon>64) {
@@ -126,7 +128,7 @@ public class SoldierRobot extends BaseRobot {
 			if(rc.getFlux() < 10) {
 				if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
 					// Too low flux, can't reach archon
-					behavior = BehaviorState.HIBERNATE;
+					behavior = BehaviorState.LOW_FLUX_HIBERNATE;
 				} else {
 					// Needs to get flux from archon
 					behavior = BehaviorState.REFUEL;
@@ -177,15 +179,16 @@ public class SoldierRobot extends BaseRobot {
 			fbs.setPoolMode();
 		
 		// Set debug string
-		dbg.setIndicatorString('h',1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
+		dbg.setIndicatorString('h', 1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
 		
 		// Reset messaging variables
 		closestSenderDist = Integer.MAX_VALUE;
 		
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE) {
-			HibernationSystem hsys = new HibernationSystem(this);
 			hsys.run();
+		} else if(behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
+			System.out.println("             "+hsys.lowFluxHibernation());
 		}
 		
 			
