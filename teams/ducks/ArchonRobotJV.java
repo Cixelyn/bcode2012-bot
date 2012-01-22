@@ -40,7 +40,6 @@ public class ArchonRobotJV extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		rc.setIndicatorString(0, "ARCHON - " + strategy);
 		// scan
 		radar.scan(true, true);
 		// check strategy state
@@ -70,6 +69,8 @@ public class ArchonRobotJV extends BaseRobot {
 		// broadcast objective for scorchers
 		io.sendMapLoc(BroadcastChannel.ALL, BroadcastType.RALLY,
 				mc.guessBestPowerNodeToCapture());
+		// indicator strings
+		dbg.setIndicatorString('j', 0, "ARCHON - " + strategy);
 	}
 	
 	@Override
@@ -81,7 +82,7 @@ public class ArchonRobotJV extends BaseRobot {
 				int initialReportTime = initialReport[0];
 				MapLocation initialReportLoc = new MapLocation(
 						initialReport[0], initialReport[1]);
-				System.out.println("Scouts report: Enemy approaching from " +
+				dbg.println('j', "Scouts report: Enemy approaching from " +
 						initialReportLoc + " as of round " + initialReportTime);
 				io.sendUShort(BroadcastChannel.SCOUTS,
 						BroadcastType.INITIAL_REPORT_ACK, 0);

@@ -33,7 +33,6 @@ public class AttackerRobotJV extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		rc.setIndicatorString(0, "ATTACKER - " + behavior);
 		// suicide if not enough flux
 		if (rc.getFlux() < 3.0) {
 			rc.suicide();
@@ -91,6 +90,7 @@ public class AttackerRobotJV extends BaseRobot {
 						radar.closestEnemy.robot.getRobotLevel());
 			}
 		}
+		dbg.setIndicatorString('j', 0, myType + " - " + behavior);
 	}
 	
 	@Override
