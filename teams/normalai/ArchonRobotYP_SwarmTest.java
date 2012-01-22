@@ -531,7 +531,6 @@ public class ArchonRobotYP_SwarmTest extends StrategyRobotExtended {
 		}
 		
 		
-		MapLocEval eval = ducks[expdir.ordinal()];
 		MapLocEval sepeval = ducks[(expdir.ordinal()+2)%8];
 		
 		int slval = sepeval.eval(leader);
@@ -545,23 +544,18 @@ public class ArchonRobotYP_SwarmTest extends StrategyRobotExtended {
 		
 		int myval = sepeval.eval(leader);
 		
-		int numabove = 0;
-		int numbelow = 0;
 		int index = 0;
-		int equal = 0;
-		
 		for (int x=1; x<archons.length; x++)
 		{
 			if (x==archonIndex) continue;
-			if (separationvalues[x] > slval)
-				numabove++;
-			else if (separationvalues[x] < slval)
-				numbelow++;
+			if (separationvalues[x] > slval) {
+			} else if (separationvalues[x] < slval) {
+			}
 			
 			if (separationvalues[x] < myval)
 				index++;
-			else if (separationvalues[x] == myval)
-				equal++;
+			else if (separationvalues[x] == myval) {
+			}
 		}
 		
 //		if (numabove > 2)

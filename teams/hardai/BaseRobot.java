@@ -3,7 +3,6 @@ package hardai;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
@@ -51,6 +50,7 @@ public abstract class BaseRobot {
 	// Internal Statistics
 	private int lastResetTime = 50;
 	private int executeStartTime = 50;
+	@SuppressWarnings("unused")
 	private int executeStartByte;
 	
 	
@@ -196,7 +196,8 @@ public abstract class BaseRobot {
 	private boolean checkClock() {
         if(executeStartTime==Clock.getRoundNum())
         	return false;
-        int currRound = Clock.getRoundNum();
+        @SuppressWarnings("unused")
+		int currRound = Clock.getRoundNum();
 //        int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
 //        System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
         return true;

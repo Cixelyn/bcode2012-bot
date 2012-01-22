@@ -51,7 +51,9 @@ public class SoldierRobotYP extends BaseRobot {
 //	private MapLocation closestArchon;
 	private MapLocation swarmLoc;
 	private Direction swarmDir;
+	@SuppressWarnings("unused")
 	private MapLocation newswarmLoc;
+	@SuppressWarnings("unused")
 	private Direction newswarmDir;
 	private int swarmUpdateRounds;
 	private int closestmsg;

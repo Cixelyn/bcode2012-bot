@@ -16,27 +16,37 @@ public class ArchonRobot extends StrategyRobot {
 	
 	
 	
+	@SuppressWarnings("unused")
 	private int armySizeBuilt;
+	@SuppressWarnings("unused")
 	private int armySizeTarget;
 	private boolean isDefender;
 	private boolean initialized;
 	
 	/** The true (starting) index of the archon */
 	private int trueArchonIndex;
+	@SuppressWarnings("unused")
 	private String myRadioChannel;
 	
 	// attack move variables
 	private boolean isLeader;
-	private int archonIndex;
+	@SuppressWarnings("unused")
 	private RobotInfo attackTarget;
 	private MapLocation attackMoveTarget;
+	@SuppressWarnings("unused")
 	private Direction attackMoveDirection;
+	@SuppressWarnings("unused")
 	private int roundsLastSeenEnemy;
 	
+	@SuppressWarnings("unused")
 	private int roundsToChase;
+	@SuppressWarnings("unused")
 	private int roundSinceMove;
+	@SuppressWarnings("unused")
 	private RobotState prevState;
+	@SuppressWarnings("unused")
 	private boolean gathering;
+	@SuppressWarnings("unused")
 	private boolean moving;
 	private int lastRoundCheckedTargets;
 	private MapLocation leaderLoc;
@@ -267,8 +277,6 @@ public class ArchonRobot extends StrategyRobot {
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb)
 			throws GameActionException {
-		int priority = 99;
-		
 		switch(msgType) {
 //		
 //		case 's':
@@ -413,20 +421,15 @@ public class ArchonRobot extends StrategyRobot {
 			if (leaderLoc.equals(curLoc))
 			{
 				isLeader = true;
-				archonIndex = 0;
 				micro.setKiteMode(Constants.ATTACK_MOVE_KITE_DISTANCE_SQUARED);
 			} else if (locs[1].equals(curLoc))
 			{
-				archonIndex = 1;
 			} else if (locs[2].equals(curLoc))
 			{
-				archonIndex = 2;
 			} else if (locs[3].equals(curLoc))
 			{
-				archonIndex = 3;
 			} else if (locs[4].equals(curLoc))
 			{
-				archonIndex = 4;
 			}
 		}
 	}
@@ -724,7 +727,6 @@ public class ArchonRobot extends StrategyRobot {
 	
 	public void sendSwarmInfo(MapLocation target, int diff)
 	{
-		int[] msg = new int[] {archonIndex, target.x, target.y, diff+100, curLoc.x, curLoc.y};
 		
 //		io.sendShorts("#xs", msg);
 //		io.sendShorts(myRadioChannel+"s", msg);
@@ -941,6 +943,7 @@ public class ArchonRobot extends StrategyRobot {
 //		io.sendShort("#xw", 0);
 	}
 	
+	@SuppressWarnings("unused")
 	private void wakeUpMyUnits() {
 //		io.sendShort("#" + trueArchonIndex + "w", 0);
 	}

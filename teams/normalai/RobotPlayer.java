@@ -1,7 +1,6 @@
 package normalai;
 
 import battlecode.common.RobotController;
-import battlecode.common.Team;
 
 public class RobotPlayer {
 	public static void run(RobotController myRC) {
@@ -22,14 +21,6 @@ public class RobotPlayer {
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
 					br = new ArchonRobotYP(myRC);
-//					br = new ArchonRobotHT(myRC);
-					if (br==null)
-					{
-						if (myRC.getTeam()==Team.A)
-							br = new ArchonRobotHT(myRC);
-						else
-							br = new ArchonRobotJV(myRC);
-					}
 					
 				} else br = new ArchonRobot(myRC);
 				break;
@@ -40,14 +31,6 @@ public class RobotPlayer {
 				else if (owner.equals("yp"))
 				{
 					br = new SoldierRobotYP(myRC);
-//					br = new SoldierRobotHT(myRC);
-					if (br == null)
-					{
-						if (myRC.getTeam()==Team.A)
-							br = new SoldierRobotHT(myRC);
-						else
-							br = new SoldierRobotJV(myRC);
-					}
 				} else br = new SoldierRobot(myRC);
 				break;
 			case SCOUT:
@@ -56,14 +39,6 @@ public class RobotPlayer {
 				else if (owner.equals("yp"))
 				{
 					br = new ScoutRobotYP(myRC);
-//					br = new ScoutRobotYP(myRC);
-					if (br == null)
-					{
-						if (myRC.getTeam()==Team.A)
-							br = new ScoutRobotYP(myRC);
-						else
-							br = new ScoutRobotYP(myRC);
-					}
 				}
 				break;
 			case DISRUPTER:

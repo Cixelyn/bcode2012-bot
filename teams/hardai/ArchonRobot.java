@@ -498,7 +498,9 @@ public class ArchonRobot extends BaseRobot{
 			break;
 		case INITIAL_REPORT:
 			int[] initialReport = BroadcastSystem.decodeUShorts(sb);
+			@SuppressWarnings("unused")
 			int initialReportTime = initialReport[0];
+			@SuppressWarnings("unused")
 			MapLocation initialReportLoc = new MapLocation(initialReport[0], initialReport[1]);
 //			dbg.println('e', "Scouts report: Enemy approaching from " +
 //					initialReportLoc + " as of round " + initialReportTime);
