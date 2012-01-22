@@ -34,8 +34,17 @@ public class HibernationSystem {
 
 		while (true) {
 			
-			if((curEnergon = rc.getEnergon()) < lastEnergon) return ExitCode.ATTACKED;
-			if((curFlux = rc.getFlux()) < lastFlux - 1.0) return ExitCode.ATTACKED;
+			// emergency wakeup conditions
+			if((curEnergon = rc.getEnergon()) < lastEnergon) {
+				br.resetClock();
+				br.io.sendWakeupCall();
+				return ExitCode.ATTACKED;
+			}
+			if((curFlux = rc.getFlux()) < lastFlux - 1.0) {
+				br.resetClock();
+				br.io.sendWakeupCall();
+				return ExitCode.ATTACKED;
+			}
 				
 			lastEnergon = curEnergon;
 			lastFlux = curFlux;
@@ -88,10 +97,23 @@ public class HibernationSystem {
 		int teamkey = br.io.teamkey;
 
 		while (true) {
-			
-			if((curEnergon = rc.getEnergon()) < lastEnergon) return ExitCode.ATTACKED;
-			if((curFlux = rc.getFlux()) < lastFlux - 1.0) return ExitCode.ATTACKED;
-			if(curFlux > lastFlux) return ExitCode.REFUELED;
+		
+		
+			// emergency wakeup conditions
+			if((curEnergon = rc.getEnergon()) < lastEnergon) {
+				br.resetClock();
+				br.io.sendWakeupCall();
+				return ExitCode.ATTACKED;
+			}
+			if((curFlux = rc.getFlux()) < lastFlux - 1.0) {
+				br.resetClock();
+				br.io.sendWakeupCall();
+				return ExitCode.ATTACKED;
+			}
+			if(curFlux > lastFlux) {
+				br.resetClock();
+				return ExitCode.REFUELED;
+			}
 				
 			lastEnergon = curEnergon;
 			lastFlux = curFlux;
