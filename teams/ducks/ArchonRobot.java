@@ -104,7 +104,7 @@ public class ArchonRobot extends BaseRobot{
 				roundLockTarget = curRound+30;
 				behavior = BehaviorState.RETREAT;
 				String ret = computeRetreatTarget();
-				rc.setIndicatorString(1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
+				dbg.setIndicatorString('h',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
 					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons)
@@ -168,7 +168,7 @@ public class ArchonRobot extends BaseRobot{
 		
 		// Set debug string
 		if (behavior != BehaviorState.RETREAT)
-			rc.setIndicatorString(1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
+			dbg.setIndicatorString('y',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
 		
 	}
 	
@@ -307,7 +307,7 @@ public class ArchonRobot extends BaseRobot{
 			return dir;
 		}
 		
-		System.out.println("GONNTA GET GEE'D");
+		dbg.println('y',"GONNTA GET GEE'D");
 		target = radar.getEnemySwarmTarget();
 		targetDir = target.directionTo(curLoc);
 		target = curLoc.add(targetDir,5);
@@ -318,7 +318,7 @@ public class ArchonRobot extends BaseRobot{
 	{
 		if (curLoc.distanceSquaredTo(target) < 10)
 			target = curLoc.add(targetDir,5);
-		rc.setIndicatorString(1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
+		dbg.setIndicatorString('y',1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
 	}
 	
 	private void computeBattleTarget()

@@ -55,7 +55,7 @@ public class SoldierRobot extends BaseRobot {
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo();
 		
-		rc.setIndicatorString(0, er.toString());
+		dbg.setIndicatorString('h',0, er.toString());
 		
 		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
 		boolean shouldSetNavTarget = true;
@@ -143,7 +143,7 @@ public class SoldierRobot extends BaseRobot {
 			fbs.setPoolMode();
 		
 		// Set debug string
-		rc.setIndicatorString(1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
+		dbg.setIndicatorString('h',1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
 		
 		// Reset messaging variables
 		closestSenderDist = Integer.MAX_VALUE;
