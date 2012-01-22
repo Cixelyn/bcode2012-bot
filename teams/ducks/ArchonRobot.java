@@ -189,6 +189,7 @@ public class ArchonRobot extends BaseRobot{
 	
 	private void computeChaseTarget()
 	{
+		lastPowerNodeGuess = null;
 		target = radar.getEnemySwarmTarget();
 		targetDir = curLoc.directionTo(target);
 		
