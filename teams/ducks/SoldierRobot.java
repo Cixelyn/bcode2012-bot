@@ -120,14 +120,10 @@ public class SoldierRobot extends BaseRobot {
 			}
 		}
 		
-		// Flux balance movement
+		// Check if we need more flux
 		if(behavior == BehaviorState.SWARM || behavior == BehaviorState.LOST ||
 				behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
-			if(rc.getFlux() > myMaxEnergon*2/3) {
-				// Needs to dump flux to archon
-				behavior = BehaviorState.POOL;
-				target = dc.getClosestArchon();
-			} else if(rc.getFlux() < 10) {
+			if(rc.getFlux() < 10) {
 				if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
 					// Too low flux, can't reach archon
 					behavior = BehaviorState.HIBERNATE;
@@ -137,7 +133,7 @@ public class SoldierRobot extends BaseRobot {
 					target = dc.getClosestArchon();
 				}
 			}
-		}
+		} 
 		
 		// Set nav target
 		if(shouldSetNavTarget)
@@ -163,6 +159,14 @@ public class SoldierRobot extends BaseRobot {
 			
 			if(bestLoc!=null)
 				rc.attackSquare(bestLoc, bestLevel);
+		}
+		
+		// Check if we have too much flux
+		if(behavior == BehaviorState.ENEMY_DETECTED) {
+			if(rc.getFlux() > myMaxEnergon*2/3) {
+				behavior = BehaviorState.POOL;
+				target = dc.getClosestArchon();
+			} 
 		}
 		
 		
@@ -225,6 +229,7 @@ public class SoldierRobot extends BaseRobot {
 			// If we're far from the swarm target, follow normal swarm rules
 			if(curLoc.distanceSquaredTo(target) >= 11) {
 				Direction dir = nav.navigateToDestination();
+				if(dir==null) return null;
 				if(behavior == BehaviorState.SWARM) {
 					if(radar.alliesInFront==0 && Math.random()<0.75) 
 						return null;
