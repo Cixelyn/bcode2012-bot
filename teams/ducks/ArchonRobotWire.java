@@ -370,7 +370,7 @@ public class ArchonRobotWire extends BaseRobot {
 			fbs.manageFlux();
 		}
 		// send rally
-		rally.broadcastRally();
+		//rally.broadcastRally();
 	}
 	
 	/**
@@ -393,7 +393,7 @@ public class ArchonRobotWire extends BaseRobot {
 		// distribute flux
 		fbs.manageFlux();
 		// send rally
-		rally.broadcastRally();
+		//rally.broadcastRally();
 	}
 	
 	/**

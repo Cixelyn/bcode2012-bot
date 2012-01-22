@@ -12,7 +12,8 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	private enum StrategyState {
 		SPLIT,
-		MAKE_SCOUTS
+		CAP,
+		ESCORT
 	}
 	
 	private static class MyConstants {
@@ -21,14 +22,12 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	private StrategyState strategy;
 	
-	int numScouts;
+	private RobotType nextUnit;
 
 	public ArchonRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);
 		// set initial states
 		strategy = StrategyState.SPLIT;
-		// set flux balance mode
-		fbs.setBatteryMode();
 		// set broadcast channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
@@ -41,14 +40,36 @@ public class ArchonRobotJV extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
+		rc.setIndicatorString(0, "ARCHON - " + strategy);
 		// scan
 		radar.scan(true, true);
 		// check strategy state
 		if (curRound < MyConstants.ROUND_TO_STOP_SPLIT) {
 			strategy = StrategyState.SPLIT;
+		} else if (curLoc.equals(dc.getAlliedArchons()[0])) {
+			strategy = StrategyState.CAP;
 		} else {
-			strategy = StrategyState.MAKE_SCOUTS;
+			strategy = StrategyState.ESCORT;
 		}
+		// set destination and flux balance mode
+		switch (strategy) {
+			case SPLIT:
+				fbs.disable();
+				break;
+			case CAP:
+				nav.setDestination(mc.guessBestPowerNodeToCapture());
+				fbs.setPoolMode();
+				break;
+			case ESCORT:
+				nav.setDestination(dc.getAlliedArchons()[0]);
+				fbs.setPoolMode();
+				break;
+			default:
+				break;
+		}
+		// broadcast objective for scorchers
+		io.sendMapLoc(BroadcastChannel.ALL, BroadcastType.RALLY,
+				mc.guessBestPowerNodeToCapture());
 	}
 	
 	@Override
@@ -71,27 +92,48 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
+		if (radar.closestEnemy != null && radar.closestEnemyDist < 25) {
+			return new MoveInfo(curLoc.directionTo(
+					radar.closestEnemy.location).opposite(), true);
+		}
 		switch (strategy) {
 			case SPLIT:
 				return new MoveInfo(myHome.directionTo(birthplace), false);
-			case MAKE_SCOUTS:
-				if (curLoc.equals(dc.getAlliedArchons()[0]) &&
-						rc.getFlux() >= RobotType.SCOUT.spawnCost +
-						RobotType.SCOUT.maxFlux) {
-					if (rc.senseTerrainTile(curLocInFront) != TerrainTile.OFF_MAP &&
-							rc.senseObjectAtLocation(
-							curLocInFront, RobotLevel.IN_AIR) == null) {
-						return new MoveInfo(RobotType.SCOUT, curDir);
-					} else {
-						return new MoveInfo(curDir.rotateLeft());
-					}
-				} else {
-					if (Math.random() < 0.3) {
-						return new MoveInfo(curLoc.directionTo(
-								mc.guessEnemyPowerCoreLocation()), false);
+			case CAP:
+				if (curLoc.isAdjacentTo(nav.getDestination())) {
+					if (rc.getFlux() >= 200 && rc.senseObjectAtLocation(
+							nav.getDestination(), RobotLevel.ON_GROUND) == null) {
+						return new MoveInfo(RobotType.TOWER, curLoc.directionTo(
+								nav.getDestination()));
 					} else {
 						return null;
 					}
+				} else if (rc.getFlux() >= (Clock.getRoundNum() < 200 ? 110 : 299) &&
+						rc.senseTerrainTile(curLocInFront) != TerrainTile.OFF_MAP &&
+						rc.senseObjectAtLocation(
+						curLocInFront, RobotLevel.IN_AIR) == null) {
+					return new MoveInfo(RobotType.SCOUT, curDir);
+				} else {
+					return new MoveInfo(nav.navigateToDestination(), false);
+				}
+			case ESCORT:
+				if (rc.getFlux() >= 290) {
+					if (rc.canMove(curDir)) {
+						if (Math.random() < 0.5) {
+							return new MoveInfo(RobotType.SCORCHER, curDir);
+						} else {
+							return new MoveInfo(RobotType.SOLDIER, curDir);
+						}
+					} else {
+						return new MoveInfo(curDir.rotateLeft());
+					}
+				} else if (dc.getClosestArchon() != null &&
+						curLoc.distanceSquaredTo(dc.getClosestArchon()) < 16 &&
+						Math.random() < 0.3) {
+					return new MoveInfo(curLoc.directionTo(
+							dc.getClosestArchon()).opposite(), false);
+				} else {
+					return new MoveInfo(nav.navigateToDestination(), false);
 				}
 			default:
 				return null;
@@ -101,26 +143,27 @@ public class ArchonRobotJV extends BaseRobot {
 	@Override
 	public void useExtraBytecodes() throws GameActionException {
 		super.useExtraBytecodes();
+		// prepare
+		if (curRound == Clock.getRoundNum() && Clock.getBytecodesLeft() > 5000) {
+			nav.prepare();
+		}
 		// share exploration
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 3000 && Math.random() < 0.05 /
-				(radar.numAllyRobots + 1)) {
+				Clock.getBytecodesLeft() > 3000 && Math.random() < 0.2) {
 			ses.broadcastMapFragment();
 		}
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.05 /
-				(radar.numAllyRobots + 1)) {
+				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.2) {
 			ses.broadcastPowerNodeFragment();
 		}
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.05 /
-				(radar.numAllyRobots + 1)) {
+				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.2) {
 			ses.broadcastMapEdges();
 		}
 		// process shared exploration
 		while (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000) {
-			mc.extractUpdatedPackedDataStep();
+				Clock.getBytecodesLeft() > 1000 &&
+				!mc.extractUpdatedPackedDataStep()) {
 		}
 	}
 }
