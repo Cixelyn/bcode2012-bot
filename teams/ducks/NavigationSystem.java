@@ -2,10 +2,12 @@ package ducks;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
 import battlecode.common.TerrainTile;
 
 public class NavigationSystem {
-	private final BaseRobot baseRobot;
+	private final BaseRobot br;
+	private final RobotController rc;
 	private final MapCacheSystem mapCache; 
 	public final TangentBug tangentBug; // public purely for optimization's sake
 	private final NormalBug normalBug;
@@ -14,12 +16,15 @@ public class NavigationSystem {
 	private MapLocation destination;
 	private int movesOnSameTarget;
 	private int expectedMovesToReachTarget;
-	public NavigationSystem(BaseRobot baseRobot) {
-		this.baseRobot = baseRobot;
-		mapCache = baseRobot.mc;
+	private int bugTurnsBlocked;
+	public NavigationSystem(BaseRobot br) {
+		this.br = br;
+		this.rc = br.rc;
+		mapCache = br.mc;
 		tangentBug = new TangentBug(mapCache.isWall);
 		normalBug = new NormalBug();
 		zeroLoc = new MapLocation(0,0);
+		bugTurnsBlocked = 0;
 		mode = NavigationMode.RANDOM;
 	}
 	
@@ -27,6 +32,7 @@ public class NavigationSystem {
 	public void reset() {
 		tangentBug.reset();
 		normalBug.reset();
+		bugTurnsBlocked=0;
 	}
 	
 	public NavigationMode getNavigationMode() {
@@ -58,7 +64,7 @@ public class NavigationSystem {
 		if(destination.equals(this.destination)) 
 			return;
 		movesOnSameTarget = 0;
-		expectedMovesToReachTarget = (int)(Math.sqrt(baseRobot.curLoc.distanceSquaredTo(destination)) *
+		expectedMovesToReachTarget = (int)(Math.sqrt(br.curLoc.distanceSquaredTo(destination)) *
 				TangentBug.MAP_UGLINESS_WEIGHT)+1;
 		this.destination = destination;
 		normalBug.setTarget(mapCache.worldToCacheX(destination.x), 
@@ -85,8 +91,8 @@ public class NavigationSystem {
 			if(mapCache.edgeYMax!=0) tangentBug.edgeYMax = mapCache.edgeYMax;
 
 			tangentBug.prepare(
-					mapCache.worldToCacheX(baseRobot.curLoc.x), 
-					mapCache.worldToCacheY(baseRobot.curLoc.y));
+					mapCache.worldToCacheX(br.curLoc.x), 
+					mapCache.worldToCacheY(br.curLoc.y));
 		} 
 	}
 	/** Returns direction to go next in order to reach the destination. <br>
@@ -138,34 +144,36 @@ public class NavigationSystem {
 	public Direction wiggleToMovableDirection(Direction dir) {
 		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI) 
 			return null;
-		if(baseRobot.rc.canMove(dir)) 
+		if(rc.canMove(dir)) 
 			return dir;
+		if(mode==NavigationMode.BUG)
+			return wiggleToMovableDirectionLimited(dir);
 		Direction d1, d2;
 		if(Math.random()<0.5) {
 			d1 = dir.rotateLeft();
-			if(baseRobot.rc.canMove(d1))
+			if(rc.canMove(d1))
 				return d1;
 			d2 = dir.rotateRight();
-			if(baseRobot.rc.canMove(d2))
+			if(rc.canMove(d2))
 				return d2;
 			d1 = d1.rotateLeft();
-			if(baseRobot.rc.canMove(d1))
+			if(rc.canMove(d1))
 				return d1;
 			d2 = d2.rotateRight();
-			if(baseRobot.rc.canMove(d2))
+			if(rc.canMove(d2))
 				return d2;
 		} else {
 			d2 = dir.rotateRight();
-			if(baseRobot.rc.canMove(d2))
+			if(rc.canMove(d2))
 				return d2;
 			d1 = dir.rotateLeft();
-			if(baseRobot.rc.canMove(d1))
+			if(rc.canMove(d1))
 				return d1;
 			d2 = d2.rotateRight();
-			if(baseRobot.rc.canMove(d2))
+			if(rc.canMove(d2))
 				return d2;
 			d1 = d1.rotateLeft();
-			if(baseRobot.rc.canMove(d1))
+			if(rc.canMove(d1))
 				return d1;
 		}
 		return null;
@@ -176,37 +184,37 @@ public class NavigationSystem {
 	public Direction wiggleToMovableDirectionLimited(Direction dir) {
 		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI) 
 			return null;
-		if(baseRobot.rc.canMove(dir)) 
+		if(rc.canMove(dir)) 
 			return dir;
 		Direction d1, d2;
 		if(Math.random()<0.5) {
 			d1 = dir.rotateLeft();
-			if(baseRobot.rc.canMove(d1))
+			if(rc.canMove(d1))
 				return d1;
 			d2 = dir.rotateRight();
-			if(baseRobot.rc.canMove(d2))
+			if(rc.canMove(d2))
 				return d2;
 			if(dir.isDiagonal()) {
 				d1 = d1.rotateLeft();
-				if(baseRobot.rc.canMove(d1))
+				if(rc.canMove(d1))
 					return d1;
 				d2 = d2.rotateRight();
-				if(baseRobot.rc.canMove(d2))
+				if(rc.canMove(d2))
 					return d2;
 			}
 		} else {
 			d2 = dir.rotateRight();
-			if(baseRobot.rc.canMove(d2))
+			if(rc.canMove(d2))
 				return d2;
 			d1 = dir.rotateLeft();
-			if(baseRobot.rc.canMove(d1))
+			if(rc.canMove(d1))
 				return d1;
 			if(dir.isDiagonal()) {
 				d2 = d2.rotateRight();
-				if(baseRobot.rc.canMove(d2))
+				if(rc.canMove(d2))
 					return d2;
 				d1 = d1.rotateLeft();
-				if(baseRobot.rc.canMove(d1))
+				if(rc.canMove(d1))
 					return d1;
 			}
 		}
@@ -225,23 +233,29 @@ public class NavigationSystem {
 		boolean movable[] = new boolean[8];
 		for(int i=0; i<8; i++) {
 			Direction dir = Constants.directions[i];
-			TerrainTile tt = baseRobot.rc.senseTerrainTile(
-					baseRobot.curLoc.add(dir));
-			movable[i] = (tt==null) ? baseRobot.rc.canMove(dir) :
-				(tt==TerrainTile.LAND);
+			TerrainTile tt = rc.senseTerrainTile(
+					br.curLoc.add(dir));
+			if(bugTurnsBlocked < 3)
+				movable[i] = (tt==null) ? rc.canMove(dir) : (tt==TerrainTile.LAND);
+			else
+				movable[i] = rc.canMove(dir);
 		}
+		
 		int[] d = normalBug.computeMove(
-				mapCache.worldToCacheX(baseRobot.curLoc.x), 
-				mapCache.worldToCacheY(baseRobot.curLoc.y),
+				mapCache.worldToCacheX(br.curLoc.x), 
+				mapCache.worldToCacheY(br.curLoc.y),
 				movable);
 		if(d==null) return Direction.NONE;
-		return dxdyToDirection(d[0], d[1]);
+		Direction ret = dxdyToDirection(d[0], d[1]);
+		if(!rc.canMove(ret)) bugTurnsBlocked++;
+		else bugTurnsBlocked=0;
+		return ret;
 	}
 	/** This is private because it needs the state of the navigator to work. */
 	private Direction navigateTangentBug() {
 		int[] d = tangentBug.computeMove(
-				mapCache.worldToCacheX(baseRobot.curLoc.x), 
-				mapCache.worldToCacheY(baseRobot.curLoc.y));
+				mapCache.worldToCacheX(br.curLoc.x), 
+				mapCache.worldToCacheY(br.curLoc.y));
 		if(d==null) return Direction.NONE;
 		return dxdyToDirection(d[0], d[1]);
 	}
@@ -256,7 +270,7 @@ public class NavigationSystem {
 		int b = rand%2*2+3;
 		for(int i=0; i<8; i++) {
 			Direction dir = Constants.directions[(a+i*b)%8];
-			if(!mapCache.isWall(baseRobot.curLoc.add(dir)))
+			if(!mapCache.isWall(br.curLoc.add(dir)))
 				return dir;
 		}
 		return Direction.NONE;
@@ -268,20 +282,20 @@ public class NavigationSystem {
 	 */
 	public Direction navigateRandomly(MapLocation destination) {
 		double d = Math.random();
-		if(d*1000-(int)(d*1000)<0.25) return baseRobot.curLoc.directionTo(destination);
+		if(d*1000-(int)(d*1000)<0.25) return br.curLoc.directionTo(destination);
 		d=d*2-1;
 		d = d*d*Math.signum(d);
-		Direction dir = baseRobot.curDir;
+		Direction dir = br.curDir;
 		if(d<0) {
 			do {
 				d++;
 				dir = dir.rotateLeft();
-			} while(d<0 || mapCache.isWall(baseRobot.curLoc.add(dir)));
+			} while(d<0 || mapCache.isWall(br.curLoc.add(dir)));
 		} else {
 			do {
 				d++;
 				dir = dir.rotateRight();
-			} while(d<0 || mapCache.isWall(baseRobot.curLoc.add(dir)));
+			} while(d<0 || mapCache.isWall(br.curLoc.add(dir)));
 		}
 		return dir;
 	}
@@ -290,12 +304,12 @@ public class NavigationSystem {
 	 * may return a direction that moves towards another robot. <br>
 	 */
 	public Direction navigateGreedy(MapLocation destination) {
-		Direction dir = baseRobot.curLoc.directionTo(destination);
+		Direction dir = br.curLoc.directionTo(destination);
 		if(Math.random()<0.5) {
-			while(mapCache.isWall(baseRobot.curLoc.add(dir)))
+			while(mapCache.isWall(br.curLoc.add(dir)))
 				dir = dir.rotateLeft();
 		} else {
-			while(mapCache.isWall(baseRobot.curLoc.add(dir)))
+			while(mapCache.isWall(br.curLoc.add(dir)))
 				dir = dir.rotateRight();
 		}
 		return dir;
