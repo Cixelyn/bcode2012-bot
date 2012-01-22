@@ -166,7 +166,7 @@ public abstract class BaseRobot {
 		curLocInFront = curLoc.add(curDir);
 		curLocInBack = curLoc.add(curDir.opposite());
 
-		justRevived = (lastResetTime < executeStartTime - 10);
+		justRevived = (lastResetTime < executeStartTime - 3);
 	}
 	
 	/**
