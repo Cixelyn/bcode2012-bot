@@ -170,6 +170,48 @@ public class NavigationSystem {
 		}
 		return null;
 	}
+	/** Same as above wiggle code, except when moving diagonally, can't wiggle diagonally. <br>
+	 * i.e. When trying to move NW, does not wiggle SW or NE.
+	 */
+	public Direction wiggleToMovableDirectionLimited(Direction dir) {
+		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI) 
+			return null;
+		if(baseRobot.rc.canMove(dir)) 
+			return dir;
+		Direction d1, d2;
+		if(Math.random()<0.5) {
+			d1 = dir.rotateLeft();
+			if(baseRobot.rc.canMove(d1))
+				return d1;
+			d2 = dir.rotateRight();
+			if(baseRobot.rc.canMove(d2))
+				return d2;
+			if(dir.isDiagonal()) {
+				d1 = d1.rotateLeft();
+				if(baseRobot.rc.canMove(d1))
+					return d1;
+				d2 = d2.rotateRight();
+				if(baseRobot.rc.canMove(d2))
+					return d2;
+			}
+		} else {
+			d2 = dir.rotateRight();
+			if(baseRobot.rc.canMove(d2))
+				return d2;
+			d1 = dir.rotateLeft();
+			if(baseRobot.rc.canMove(d1))
+				return d1;
+			if(dir.isDiagonal()) {
+				d2 = d2.rotateRight();
+				if(baseRobot.rc.canMove(d2))
+					return d2;
+				d1 = d1.rotateLeft();
+				if(baseRobot.rc.canMove(d1))
+					return d1;
+			}
+		}
+		return null;
+	}
 	
 	private Direction dxdyToDirection(int dx, int dy) {
 		return zeroLoc.directionTo(zeroLoc.add(dx, dy));

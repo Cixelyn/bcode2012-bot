@@ -72,9 +72,6 @@ public class NormalBug {
 			return new int[] {tx-sx, ty-sy};
 		}
 		
-		
-		
-		
 		double dist = (sx-tx)*(sx-tx)+(sy-ty)*(sy-ty);
 		if(tracing!=-1) {
 			turnsTraced++;
