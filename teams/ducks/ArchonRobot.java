@@ -78,12 +78,15 @@ public class ArchonRobot extends BaseRobot{
 			strategy = StrategyState.CAP;
 		} else if(Clock.getRoundNum()>1700 && myArchonID!=0) {
 			strategy = StrategyState.CAP;
-		} else if(Clock.getRoundNum()>1000 || mc.powerNodeGraph.enemyPowerCoreID != 0) {
+		} else if(Clock.getRoundNum()>1000 || 
+				(mc.powerNodeGraph.enemyPowerCoreID != 0 && enemySpottedTarget == null)) {
 			strategy = StrategyState.DEFEND;
 			enemySpottedTarget = null;
 		} else if(Clock.getRoundNum()>20) {
 			strategy = StrategyState.RUSH;
 		}
+		
+		dbg.setIndicatorString('h', 0, enemySpottedTarget+"");
 		
 		// If insufficiently prepared, prepare
 		if(nav.getTurnsPrepared() < TangentBug.DEFAULT_MIN_PREP_TURNS)
@@ -106,22 +109,20 @@ public class ArchonRobot extends BaseRobot{
 		
 		// If there is an enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null) {
+			enemySpottedTarget = radar.closestEnemy.location;
 			roundLockTarget = curRound+30;
-			if (radar.getArmyDifference() < -2 ||
-					(radar.alliesInFront==0 && radar.numEnemyRobots-radar.numEnemyArchons>0))
-			{
+			if (radar.getArmyDifference() < -2 || (radar.alliesInFront==0 && 
+					radar.numEnemyRobots-radar.numEnemyArchons>0)) {
 				roundLockTarget = curRound+30;
 				behavior = BehaviorState.RETREAT;
 				String ret = computeRetreatTarget();
 				dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
-					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons)
-			{
+					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons) {
 				behavior = BehaviorState.CHASE;
 				computeChaseTarget();
-			} else
-			{
+			} else {
 				behavior = BehaviorState.BATTLE;
 				computeBattleTarget();
 			}
