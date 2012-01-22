@@ -448,8 +448,8 @@ public class BroadcastSystem {
 			for(String addr: boundChannelHeaders) {
 			    while((i = sb.indexOf(addr, i)) != -1) {
 			        br.processMessage(
-			        	BroadcastType.decode(sb.charAt(i+addr.length())),
-			        	new StringBuilder(sb.substring(i + addr.length() + 1))
+			        	BroadcastType.decode(sb.charAt(i + 2)),
+			        	new StringBuilder(sb.substring(i + 3))
 			        );
 			        i++;
 			    }	
