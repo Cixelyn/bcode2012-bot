@@ -255,7 +255,7 @@ public class ArchonRobot extends BaseRobot{
 //		7 0 1
 //		6   2
 //		5 4 3
-		int[] closest_in_dir = er.getEnemiesInEachDirection();
+		int[] closest_in_dir = er.getEnemiesInEachDirectionOnly();
 //		int[] closest_in_dir = radar.closestInDir;
 		int[] wall_in_dir = new int[8];
 		
