@@ -6,6 +6,7 @@ import battlecode.common.RobotInfo;
 
 public class ExtendedRadarSystem {
 	private static final int BUFFER_SIZE = 4096;
+	private static final int MEMORY_TIMEOUT = 15;
 	
 	private final BaseRobot br;
 	private final MapLocation[] enemyLocationInfo;
@@ -20,10 +21,10 @@ public class ExtendedRadarSystem {
 		this.br = br;
 		enemyLocationInfo = new MapLocation[BUFFER_SIZE];
 		enemyEnergonInfo = new int[BUFFER_SIZE];
-		enemyKeySet = new FastIDSet(5);
+		enemyKeySet = new FastIDSet(MEMORY_TIMEOUT);
 		allyLocationInfo = new MapLocation[BUFFER_SIZE];
 		allyEnergonInfo = new int[BUFFER_SIZE];
-		allyKeySet = new FastIDSet(5);
+		allyKeySet = new FastIDSet(MEMORY_TIMEOUT);
 		flags = new int[BUFFER_SIZE];
 		flagCount = 0;
 	}
@@ -32,12 +33,15 @@ public class ExtendedRadarSystem {
 	 * Should only be called from processMessage().
 	 */
 	public void integrateEnemyInfo(int[] info) {
-		int senderID = info[0];
-		allyLocationInfo[senderID] = new MapLocation(info[1], info[2]);
-		allyEnergonInfo[senderID] = info[3];
-		allyKeySet.addID(senderID);
+		boolean firstIDIsAnAlly = info[3]>10000;
 		
-		for(int n=4; n<info.length; n+=4) {
+		if(firstIDIsAnAlly) {
+			int senderID = info[0];
+			allyLocationInfo[senderID] = new MapLocation(info[1], info[2]);
+			allyEnergonInfo[senderID] = info[3]-10001;
+			allyKeySet.addID(senderID);
+		}
+		for(int n=firstIDIsAnAlly?4:0; n<info.length; n+=4) {
 			int id = info[n];
 			enemyLocationInfo[id] = new MapLocation(info[n+1], info[n+2]);
 			enemyEnergonInfo[id] = info[n+3];
@@ -70,30 +74,45 @@ public class ExtendedRadarSystem {
 	public int getEnergonDifference(MapLocation center, int radiusSquared) {
 		flagCount++;
 		int diff = 0;
+		
+		String indicatorString = "";
+		
+		// Subtract enemy energon
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = enemyKeySet.getID(i);
 			if(center.distanceSquaredTo(enemyLocationInfo[id]) <= radiusSquared) 
-				diff -= enemyEnergonInfo[id];
+				{diff -= enemyEnergonInfo[id]; indicatorString+=" e-"+id+"-"+diff;}
 		}
+		
+		// Add ally energon
 		size = allyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = allyKeySet.getID(i);
 			if(center.distanceSquaredTo(allyLocationInfo[id]) <= radiusSquared) {
 				flags[id] = flagCount;
 				diff += allyEnergonInfo[id];
+				indicatorString+=" a-"+id+"-"+diff;
 			}
 		}
+		
+		// Add ally energon from robots in the local radar but not in the ER
 		for(int i=0; i<br.radar.numAllyRobots; i++) {
 			int id = br.radar.allyRobots[i];
 			if(flags[id]==flagCount) continue;
 			RobotInfo ri = br.radar.allyInfos[id];
 			if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
 				diff += ri.energon;
+				indicatorString+=" b-"+id+"-"+diff;
 			}
 		}
 		
-		br.dbg.setIndicatorString('h', 0, toString()+" ----- energon difference: "+diff);
+		// Add myself if necessary
+		if(flags[br.myID]!=flagCount && center.distanceSquaredTo(br.curLoc) <= radiusSquared) {
+			diff += br.curEnergon;
+		}
+		
+		br.dbg.setIndicatorString('h', 0, toString()+" ----- energon difference: "+diff+" "+indicatorString);
 		return diff;
 	}
 	
