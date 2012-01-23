@@ -48,24 +48,22 @@ public class ScoutRobot extends BaseRobot {
 	
 	public ScoutRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
-		// set initial state
 		strategy = StrategyState.BATTLE;
 		behavior = BehaviorState.PET;
 		enemySpottedTarget = null;
 		enemySpottedRound = -55555;
-		// set broadcast channels
+		fbs.setPoolMode();
+		nav.setNavigationMode(NavigationMode.GREEDY);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
 				BroadcastChannel.SCOUTS,
 				BroadcastChannel.EXPLORERS
 		});
-		// set navigation mode
-		nav.setNavigationMode(NavigationMode.GREEDY);
 	}
 
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()<200) {
+		if(Clock.getRoundNum()<500) {
 			strategy = StrategyState.INITIAL_EXPLORE;
 		} else {
 			strategy = StrategyState.BATTLE;
@@ -108,20 +106,6 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		
-		// set flux balance mode
-//		switch (behavior) {
-//			case FIND_ENEMY:
-//			case REPORT_ENEMY:
-//			case SWARM:
-//			case EXPLORE:
-//				fbs.disable();
-//				break;
-//			case SENDING_ALLY_FLUX:
-//				fbs.setPoolMode();
-//				break;
-//			default:
-//				break;
-//		}
 		
 		// set objective based on behavior
 		switch (behavior) {
