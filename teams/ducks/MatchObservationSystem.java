@@ -125,7 +125,7 @@ public class MatchObservationSystem {
 	}
 	
 	public static void main(String[] args) {
-//		test();
+		test();
 		// PUT MATCH OBSERVATION STRING HERE TO GET THE OPPONENT'S MESSAGE
 		String matchObservationString = "237e2330237e2330237e2331237e23393937332c3237363537237e23";
 		Message m = deserializeMessageFromString(decryptString(

@@ -1,12 +1,10 @@
 package ducks;
 
 import battlecode.common.Clock;
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import ducks.HibernationSystem.HibernationMode;
 
 public class ScoutRobot extends BaseRobot {
 	
@@ -176,28 +174,8 @@ public class ScoutRobot extends BaseRobot {
 //		}
 		
 		// indicator strings
-		dbg.setIndicatorString('e', 1, "Target=<"+(objective.x-curLoc.x)+","+(objective.y-curLoc.y)+">, Behavior="+behavior);
-		
-		// Enter hibernation if desired
-		if(behavior == BehaviorState.HIBERNATE) {
-			hsys.setMode(HibernationMode.NORMAL);
-			HibernationSystem.ExitCode ec = hsys.run();
-			if(ec == HibernationSystem.ExitCode.ATTACKED)
-				behavior = BehaviorState.SUPPORT_FRONT_LINES;
-			else if(ec == HibernationSystem.ExitCode.MESSAGED)
-				behavior = BehaviorState.SCOUT_FOR_ENEMIES;
-			nav.setDestination(curLoc);
-		} else if(behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
-			hsys.setMode(HibernationMode.LOW_FLUX);
-			HibernationSystem.ExitCode ec = hsys.run();
-			if(ec == HibernationSystem.ExitCode.ATTACKED)
-				behavior = BehaviorState.SUPPORT_FRONT_LINES;
-			else if(ec == HibernationSystem.ExitCode.MESSAGED)
-				behavior = BehaviorState.SCOUT_FOR_ENEMIES;
-			else if(ec == HibernationSystem.ExitCode.REFUELED)
-				behavior = BehaviorState.SCOUT_FOR_ENEMIES;
-			nav.setDestination(curLoc);
-		}
+		dbg.setIndicatorString('e', 1, "Target=<"+(objective.x-curLoc.x)+","+
+					(objective.y-curLoc.y)+">, Behavior="+behavior);
 	}
 	
 	@Override

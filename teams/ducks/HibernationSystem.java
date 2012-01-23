@@ -93,8 +93,9 @@ public class HibernationSystem {
 				try{
 					rc.broadcast(helpMsg);
 				} catch(GameActionException e) {
-					e.printStackTrace();
-					rc.addMatchObservation(e.toString());
+					br.dbg.println('c', "I ran out of flux and killed myself.");
+//					e.printStackTrace();
+//					rc.addMatchObservation(e.toString());
 				}
 			}
 			
