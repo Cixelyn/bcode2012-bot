@@ -1,11 +1,13 @@
 package ducks;
 
+import battlecode.common.Clock;
+
 public class FastIDSet {
 	
 	
 	private final FastUShortSet mergeSet;
 	private StringBuilder rawBlockSet;
-	private StringBuilder curBlock;
+	private String curBlock;
 	
 	private int maxBlocks;
 	private int numBlocks;
@@ -15,7 +17,7 @@ public class FastIDSet {
 	
 	public FastIDSet(int size) {
 		rawBlockSet = new StringBuilder();
-		curBlock = new StringBuilder();
+		curBlock = "";
 		
 		mergeSet = new FastUShortSet();
 		maxBlocks = size;
@@ -24,7 +26,7 @@ public class FastIDSet {
 	
 	
 	public void addID(int robotID) {
-		curBlock.append((char) robotID);
+		curBlock = curBlock.concat(String.valueOf((char) robotID));
 	}
 	
 	
@@ -34,7 +36,7 @@ public class FastIDSet {
 	
 	public void endRound() {
 		addIDBlock(curBlock); //add current block
-		curBlock = new StringBuilder();  // fresh block
+		curBlock = "";  // fresh block
 		if(numBlocks > maxBlocks) {
 			removeOldBlock();
 		}
@@ -50,11 +52,10 @@ public class FastIDSet {
 	}
 	
 	
-	private void addIDBlock(StringBuilder block) {
+	private void addIDBlock(String block) {
 		
 		// add the new block
-		rawBlockSet.append(block);
-		rawBlockSet.append(DELIMITER_C);
+		rawBlockSet.append(block.concat(DELIMITER_S));
 		
 		// fill in the merge set
 		for(int i=block.length(); --i>=0;) {
@@ -63,22 +64,31 @@ public class FastIDSet {
 		
 		numBlocks++;
 	}
+
 	
+	/**
+	 * This call is rather expensive so we optimize the hell out of it
+	 */
 	private void removeOldBlock() {
+
+		int i;
+		String oldBlock;
+		String recentBlocks;
+		
 		//grab the first block
 		int idx = rawBlockSet.indexOf(DELIMITER_S);
-		String oldBlock = rawBlockSet.substring(0, idx);
-		String recentBlocks =  rawBlockSet.substring(idx+1, rawBlockSet.length());
+		oldBlock = rawBlockSet.substring(0, idx);
+		recentBlocks =  rawBlockSet.substring(idx+1, rawBlockSet.length());
 		
-		for(int i=oldBlock.length(); --i>=0;) {
+		for(i=oldBlock.length(); --i>=0;) {
 			
-			char robotID = oldBlock.charAt(i);
 			// if the robot doesn't exist in new messages
+			char robotID = oldBlock.charAt(i);
 			if(recentBlocks.indexOf(String.valueOf(robotID)) < 0) {
 				mergeSet.remove(robotID);
 			}
-			
 		}
+		
 		// wipe out the first block
 		rawBlockSet = new StringBuilder(recentBlocks);
 		
@@ -99,7 +109,7 @@ public class FastIDSet {
 	}
 	
 	public static void main(String[] args) {
-		FastIDSet a = new FastIDSet(4);
+		FastIDSet a = new FastIDSet(3);
 		a.addID('a');
 		a.addID('b');
 		a.addID('b');

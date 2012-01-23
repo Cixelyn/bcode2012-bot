@@ -18,8 +18,10 @@ public class SoldierRobot extends BaseRobot {
 		LOW_FLUX_HIBERNATE,
 		/** Has too much flux (from being a battery), needs to give it back to archon. */
 		POOL,
-		/** No enemies to deal with. */
+		/** No enemies to deal with, swarming with archon. */
 		SWARM,
+		/** Heard of an enemy spotted call, but no enemy info calls yet. */
+		SEEK,
 		/** Run away from enemy forces. */
 		RETREAT, 
 		/** Far from target. Use bug to navigate. */
@@ -35,11 +37,13 @@ public class SoldierRobot extends BaseRobot {
 	MapLocation target;
 	MapLocation previousBugTarget;
 	int closestSwarmTargetSenderDist;
-	MapLocation archonTarget;
+	MapLocation archonSwarmTarget;
 	BehaviorState behavior;
 	MapLocation hibernateTarget;
 	double energonLastTurn;
-	boolean archonTargetIsEnemy;
+	MapLocation enemySpottedTarget;
+	int enemySpottedRound;
+	int roundLastWakenUp;
 	
 	public SoldierRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
@@ -54,7 +58,9 @@ public class SoldierRobot extends BaseRobot {
 		});
 		fbs.setPoolMode();
 		behavior = BehaviorState.SWARM;
-		archonTargetIsEnemy = false;
+		enemySpottedTarget = null;
+		enemySpottedRound = -55555;
+		roundLastWakenUp = -55555;
 	}
 
 	@Override
@@ -73,7 +79,7 @@ public class SoldierRobot extends BaseRobot {
 				curLoc.distanceSquaredTo(radarClosestEnemyLocation)))
 			closestEnemyLocation = radarClosestEnemyLocation;
 		if(curRound%5 == myID%5)
-			radar.broadcastEnemyInfo(closestEnemyLocation!= null && 
+			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) < 25);
 		
 		if(closestEnemyLocation != null) {
@@ -82,12 +88,20 @@ public class SoldierRobot extends BaseRobot {
 			target = closestEnemyLocation;
 			nav.setNavigationMode(NavigationMode.GREEDY);
 			lockAcquiredRound = curRound;
+			
 		} else if(curEnergon < energonLastTurn) {
 			// Got hurt since last turn.. look behind you
 			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+			
 		} else if(behavior == BehaviorState.ENEMY_DETECTED && curRound < lockAcquiredRound + 12) {
 			// Don't know of any enemies, stay chasing the last enemy we knew of
 			behavior = BehaviorState.ENEMY_DETECTED;
+			
+		} else if(curRound < enemySpottedRound + 100) {
+			// Not even chasing anyone, try going to the enemy spotted signal
+			behavior = BehaviorState.SEEK;
+			target = enemySpottedTarget;
+			
 		} else {
 			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 			if((behavior==BehaviorState.LOST && distToClosestArchon>25) || 
@@ -100,9 +114,10 @@ public class SoldierRobot extends BaseRobot {
 					target = previousBugTarget;
 				else
 					previousBugTarget = target;
+				
 			} else {	
 				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && 
-						archonTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
+						archonSwarmTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
 					// Hibernate once we're no longer adjacent to any allies
 					int adjacentMovable = 0;
 					if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
@@ -111,19 +126,22 @@ public class SoldierRobot extends BaseRobot {
 					if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
 					if(adjacentMovable<=1)
 						behavior = BehaviorState.HIBERNATE;
+					
 				} else if(closestSwarmTargetSenderDist == Integer.MAX_VALUE) { 
 					// We did not receive any swarm target broadcasts from our archons
 					behavior = BehaviorState.SWARM;
 					target = dc.getClosestArchon();
+					
 				} else {
 					// Follow target of closest archon's broadcast
 					behavior = BehaviorState.SWARM ;
-					target = archonTarget;
+					target = archonSwarmTarget;
 				}
 				
 				if(behavior == BehaviorState.SWARM && 
 						closestSwarmTargetSenderDist <= 10 && 
-						curLoc.distanceSquaredTo(target) <= 10) { 
+						curLoc.distanceSquaredTo(target) <= 10 && 
+						curRound > roundLastWakenUp + 10) { 
 					// Close enough to swarm target, look for a place to hibernate
 					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
 					hibernateTarget = target;
@@ -135,11 +153,12 @@ public class SoldierRobot extends BaseRobot {
 		
 		// Check if we need more flux
 		if(behavior == BehaviorState.SWARM || behavior == BehaviorState.LOST ||
-				behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
+				behavior == BehaviorState.LOOKING_TO_HIBERNATE || behavior == BehaviorState.SEEK) {
 			if(rc.getFlux() < 10) {
 				if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
 					// Too low flux, can't reach archon
-					behavior = BehaviorState.LOW_FLUX_HIBERNATE;
+					if(curRound > roundLastWakenUp + 10)
+						behavior = BehaviorState.LOW_FLUX_HIBERNATE;
 				} else {
 					// Needs to get flux from archon
 					behavior = BehaviorState.REFUEL;
@@ -148,10 +167,60 @@ public class SoldierRobot extends BaseRobot {
 			}
 		} 
 		
+		// Attack an enemy if there is some unit in our attackable squares
+		tryToAttack();
+		
+		// Check if we have too much flux
+		if(behavior == BehaviorState.ENEMY_DETECTED || behavior == BehaviorState.SEEK) {
+			if(rc.getFlux() > myMaxEnergon*2/3) {
+				behavior = BehaviorState.POOL;
+				target = dc.getClosestArchon();
+			} 
+		}
+		
 		// Set nav target
 		nav.setDestination(target);
 		
-		// Attack an enemy if there is some unit in our attackable squares
+		// Set the flux balance mode
+		if(behavior == BehaviorState.SWARM)
+			fbs.setBatteryMode();
+		else
+			fbs.setPoolMode();
+		
+		// Set debug string
+		dbg.setIndicatorString('e', 1, "Target=<"+(target.x-curLoc.x)+","+
+				(target.y-curLoc.y)+">, Behavior="+behavior);
+		
+		// Enter hibernation if desired
+		if(behavior == BehaviorState.HIBERNATE || behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
+			if(behavior == BehaviorState.HIBERNATE)
+				hsys.setMode(HibernationMode.NORMAL);
+			else 
+				hsys.setMode(HibernationMode.LOW_FLUX);
+			HibernationSystem.ExitCode ec = hsys.run();
+			if(ec == HibernationSystem.ExitCode.ATTACKED) {
+				radar.scan(false, true);
+				if(radar.closestEnemy==null)
+					behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+				else
+					tryToAttack();
+			} else if(ec == HibernationSystem.ExitCode.MESSAGED) {
+				behavior = BehaviorState.SWARM;
+			} else if(ec == HibernationSystem.ExitCode.REFUELED) {
+				behavior = BehaviorState.SWARM;
+			}
+			roundLastWakenUp = curRound;
+			target = curLoc;
+			nav.setDestination(target);
+		}
+		
+		// Update end of turn variables
+		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
+		energonLastTurn = curEnergon;
+			
+	}
+	
+	private void tryToAttack() throws GameActionException {
 		if(!rc.isAttackActive()) {
 			RobotInfo bestInfo = null;
 			double bestValue = Double.MAX_VALUE;
@@ -174,64 +243,25 @@ public class SoldierRobot extends BaseRobot {
 				rc.attackSquare(bestInfo.location, bestInfo.type.level);
 			}
 		}
-		
-		// Check if we have too much flux
-		if(behavior == BehaviorState.ENEMY_DETECTED) {
-			if(rc.getFlux() > myMaxEnergon*2/3) {
-				behavior = BehaviorState.POOL;
-				target = dc.getClosestArchon();
-			} 
-		}
-		
-		
-		// Set the flux balance mode
-		if(behavior == BehaviorState.SWARM && !archonTargetIsEnemy)
-			fbs.setBatteryMode();
-		else
-			fbs.setPoolMode();
-		
-		// Set debug string
-		dbg.setIndicatorString('h', 1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
-		
-		// Enter hibernation if desired
-		if(behavior == BehaviorState.HIBERNATE) {
-			hsys.setMode(HibernationMode.NORMAL);
-			HibernationSystem.ExitCode ec = hsys.run();
-			dbg.setIndicatorString('h', 0, ec+"");
-			if(ec == HibernationSystem.ExitCode.ATTACKED)
-				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
-			else if(ec == HibernationSystem.ExitCode.MESSAGED)
-				behavior = BehaviorState.SWARM;
-			nav.setDestination(curLoc);
-		} else if(behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
-			hsys.setMode(HibernationMode.LOW_FLUX);
-			HibernationSystem.ExitCode ec = hsys.run();
-			dbg.setIndicatorString('h', 0, ec+"(low)");
-			if(ec == HibernationSystem.ExitCode.ATTACKED)
-				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
-			else if(ec == HibernationSystem.ExitCode.MESSAGED)
-				behavior = BehaviorState.SWARM;
-			else if(ec == HibernationSystem.ExitCode.REFUELED)
-				behavior = BehaviorState.LOST;
-			nav.setDestination(curLoc);
-		}
-		
-		// Update end of turn variables
-		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
-		energonLastTurn = curEnergon;
-			
 	}
 	
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
+		int[] shorts;
 		switch(msgType) {
+		case ENEMY_SPOTTED:
+			shorts = BroadcastSystem.decodeUShorts(sb);
+			if(shorts[0] > enemySpottedRound) {
+				enemySpottedRound = shorts[0];
+				enemySpottedTarget = new MapLocation(shorts[1], shorts[2]);
+			}
+			break;
 		case SWARM_TARGET:
-			int[] shorts = BroadcastSystem.decodeUShorts(sb);
+			shorts = BroadcastSystem.decodeUShorts(sb);
 			int dist = curLoc.distanceSquaredTo(BroadcastSystem.decodeSenderLoc(sb));
 			if(dist<closestSwarmTargetSenderDist) {
 				closestSwarmTargetSenderDist = dist;
-				archonTargetIsEnemy = shorts[0]==2;
-				archonTarget = new MapLocation(shorts[1], shorts[2]);
+				archonSwarmTarget = new MapLocation(shorts[1], shorts[2]);
 			}
 			break;
 		case ENEMY_INFO:
@@ -266,13 +296,13 @@ public class SoldierRobot extends BaseRobot {
 				Direction dir = nav.navigateToDestination();
 				if(dir==null) return null;
 				if(behavior == BehaviorState.SWARM) {
-					if(radar.alliesInFront==0 && Math.random()<0.75) 
+					if(radar.alliesInFront==0 && Math.random()<0.6) 
 						return null;
 					if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
 						dir = nav.navigateCompletelyRandomly();
-					if(radar.alliesOnLeft > radar.alliesOnRight && Math.random()<0.3) 
+					if(radar.alliesOnLeft > radar.alliesOnRight && Math.random()<0.4) 
 						dir = dir.rotateRight();
-					else if(radar.alliesOnLeft < radar.alliesOnRight && Math.random()<0.3) 
+					else if(radar.alliesOnLeft < radar.alliesOnRight && Math.random()<0.4) 
 						dir = dir.rotateLeft();
 				}
 				return new MoveInfo(dir, false);
@@ -286,15 +316,20 @@ public class SoldierRobot extends BaseRobot {
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
-			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 16) > 0;
+			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 25) > 0;
 			int tooClose = weHaveBiggerFront ? -1 : 5;
 			int tooFar = weHaveBiggerFront ? 4 : 25;
+			int distToTarget = curLoc.distanceSquaredTo(target);
+			Direction dirToTarget = curLoc.directionTo(target);
+			boolean turnToFaceEnemyFirst = distToTarget <= 13;
 			
-			if(curLoc.distanceSquaredTo(target) <= tooClose) {
-				Direction dir = curLoc.directionTo(target).opposite();
+			if(turnToFaceEnemyFirst && dirToTarget!=curDir) {
+				return new MoveInfo(dirToTarget);
+			} else if(distToTarget <= tooClose) {
+				Direction dir = dirToTarget.opposite();
 				if(rc!=null && rc.canMove(dir))
 					return new MoveInfo(dir, true);
-			} else if(curLoc.distanceSquaredTo(target) >= tooFar) {
+			} else if(distToTarget >= tooFar) {
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
 		} else {

@@ -117,9 +117,6 @@ public class SoldierRobotCL extends BaseRobot {
 				behavior = BehaviorState.DEFEND;
 			}
 			break;
-		case HIBERNATE:
-			behavior = BehaviorState.HIBERNATE;
-			break;
 		}
 	}
 	

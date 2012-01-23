@@ -3,6 +3,7 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
 
 public class NavigationSystem {
@@ -101,6 +102,7 @@ public class NavigationSystem {
 	 * May return null for no movement. <br>
 	 * This method only considers walls as blocked movement, not units so it
 	 * may return a direction that moves towards another robot. <br>
+	 * @return null, or one of the 8 valid directions.
 	 */
 	public Direction navigateToDestination() {
 		if(destination==null || br.curLoc.equals(destination)) 
@@ -146,7 +148,7 @@ public class NavigationSystem {
 			return null;
 		if(rc.canMove(dir)) 
 			return dir;
-		if(mode==NavigationMode.BUG)
+		if(mode==NavigationMode.BUG || br.myType==RobotType.SCOUT)
 			return wiggleToMovableDirectionLimited(dir);
 		Direction d1, d2;
 		if(Math.random()<0.5) {

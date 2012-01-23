@@ -32,20 +32,25 @@ public enum BroadcastType {
 	ANNOUNCE_ENEMY,
 	// (temporary)
 	SWARM_DETAILS,
+	
 	/** ushorts(15-bit), [seek_or_swarm, target_loc.x, target_loc.y, sender_loc.x, sender_loc.y] */
 	SWARM_TARGET,
+	/** ushorts(15-bit), [round_spotted, enemy_loc.x, enemy_loc.y] */
+	ENEMY_SPOTTED,
 
-	// single ushort
-	HIBERNATE,
+	/** blank message. Sent by units with no flux */
+	LOW_FLUX_HELP,
 	
 	
 	
 //	ending semicolon
 	;
 	
-	public char header;
+	public final char header_c;
+	public final String header_s;
 	BroadcastType() {
-		header = (char)(this.ordinal());
+		header_c = (char)(this.ordinal());
+		header_s = String.valueOf(header_c);
 	}
 	
 	public static BroadcastType decode(char header) {

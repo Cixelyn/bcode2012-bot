@@ -22,7 +22,7 @@ public class ArchonRobotJV extends BaseRobot {
 	
 	private StrategyState strategy;
 	
-	private RobotType nextUnit;
+	//private RobotType nextUnit;
 
 	public ArchonRobotJV(RobotController myRC) throws GameActionException {
 		super(myRC);

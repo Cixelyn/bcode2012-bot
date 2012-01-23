@@ -6,7 +6,6 @@ import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Message;
-import battlecode.common.Team;
 
 /**
  *
@@ -144,7 +143,7 @@ public class BroadcastSystem {
 	 * type of the message is y.
 	 */
 	public void sendUShort(BroadcastChannel bChan, BroadcastType bType, int data) {
-		sendUShort(bChan.chanHeader + bType.header, data);
+		sendUShort(bChan.chanHeader + bType.header_c, data);
 	}
 	private void sendUShort(String header, int data) {
 		msgContainer.append(header + (char)data);
@@ -164,7 +163,7 @@ public class BroadcastSystem {
 	 * Sends a single map location to a unit
 	 */
 	public void sendMapLoc(BroadcastChannel bChan, BroadcastType bType, MapLocation loc) {
-		sendMapLoc(bChan.chanHeader + bType.header, loc);
+		sendMapLoc(bChan.chanHeader.concat(bType.header_s), loc);
 	}
 	
 	private void sendMapLoc(String header, MapLocation loc) {
@@ -189,7 +188,7 @@ public class BroadcastSystem {
 	 * @see BroadcastSystem#sendUShort(String, int)
 	 */
 	public void sendUShorts(BroadcastChannel bChan, BroadcastType bType, int[] ints) {
-		sendUShorts(bChan.chanHeader + bType.header, ints);
+		sendUShorts(bChan.chanHeader.concat(bType.header_s), ints);
 	}
 	private void sendUShorts(String header, int[] ints) {
 		for (int i : ints) {
@@ -198,6 +197,21 @@ public class BroadcastSystem {
 		msgContainer.append(header.concat(TERMINATOR_S));
 		
 	}
+	
+	/**
+	 * Sends a raw string over the channel. Same limitations apply as shorts,
+	 * "unicode chars" must be \u7fff or below.
+	 * @param bChan - broadcast channel
+	 * @param bType - message type
+	 * @param data - string to send
+	 * @see BroadcastSystem#sendUShorts(String, int[])
+	 */
+	public void sendRaw(BroadcastChannel bChan, BroadcastType bType, String data) {
+		msgContainer.append(bChan.chanHeader.concat(bType.header_s).concat(data));
+	}
+	
+	
+	
 
 	/**
 	 * Decodes the next 15-bit unsigned integer array in the message
@@ -261,7 +275,7 @@ public class BroadcastSystem {
 	 */
 	
 	public void sendUInts(BroadcastChannel bChan, BroadcastType bType, int[] ints) {
-		sendUInts(bChan.chanHeader + bType.header, ints);
+		sendUInts(bChan.chanHeader + bType.header_c, ints);
 	}
 	
 	private void sendUInts(String header, int[] ints) {
@@ -301,7 +315,7 @@ public class BroadcastSystem {
 	 * @see BroadcastSystem#sendUShort(String, int) sendInt
 	 */
 	public void sendMapLocs(BroadcastChannel bChan, BroadcastType bType, MapLocation[] locs) {
-		sendMapLocs(bChan.chanHeader + bType.header, locs);
+		sendMapLocs(bChan.chanHeader + bType.header_c, locs);
 	}
 	
 	
@@ -345,11 +359,7 @@ public class BroadcastSystem {
 		if(msgContainer.length() > 0) {
 		
 			// append message metadata
-			msgContainer.append(METADATA_S);
-			msgContainer.append((char)Clock.getRoundNum());
-			msgContainer.append((char)br.myID);
-			msgContainer.append((char)br.curLoc.x);
-			msgContainer.append((char)br.curLoc.y);
+			msgContainer.append(generateMetadata());
 			
 			// build message
 			Message m = new Message();
@@ -382,12 +392,19 @@ public class BroadcastSystem {
 			return;
 		}
 		
-		// build a pure wakeup call if we have nothign to send
-		if(shouldSendWakeup) {
+		
+		// build a pure wakeup call if we had nothing to send
+		if(shouldSendWakeup && !br.rc.hasBroadcasted()) {
 			Message m = new Message();
 			m.ints = new int[3];
 			m.ints[0] = teamkey;
 			m.ints[2] = Clock.getRoundNum();
+			shouldSendWakeup = false;
+			try {
+				br.rc.broadcast(m);
+			} catch (GameActionException e) {
+				e.printStackTrace();
+			}
 		}
 		
 	}
@@ -403,7 +420,7 @@ public class BroadcastSystem {
 	}
 	
 	
-	private int hashMessage(StringBuilder msg) {
+	public int hashMessage(StringBuilder msg) {
 		String tmp = new String();
 	
 		int endpoint = msg.length();
@@ -413,6 +430,15 @@ public class BroadcastSystem {
 					(msg.substring(0,midpoint)));
 		
 		return tmp.hashCode() * this.teamkey;
+	}
+	
+	
+	public String generateMetadata() {
+		return METADATA_S.concat(
+				String.valueOf((char)Clock.getRoundNum())).concat(
+				String.valueOf((char)br.myID)).concat(
+				String.valueOf((char)br.curLoc.x)).concat(
+				String.valueOf((char)br.curLoc.y));		
 	}
 	
 	
@@ -503,7 +529,7 @@ public class BroadcastSystem {
 		System.out.println((Arrays.toString(io.boundChannelHeaders)));
 		
 		
-		System.out.println(BroadcastType.decode(BroadcastType.ENEMY_ARCHON_KILL.header).toString());
+		System.out.println(BroadcastType.decode(BroadcastType.ENEMY_ARCHON_KILL.header_c).toString());
 	}
 	
 	

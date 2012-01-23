@@ -23,6 +23,7 @@ public class RobotPlayer {
 //					br = new ArchonRobotYP(myRC);
 //					br = new ArchonRobotHT(myRC);
 //					br = new FunBot(myRC);
+					br = new ArchonRobot(myRC);
 					if (br==null)
 					{
 						if (myRC.getTeam()==Team.A)
@@ -50,11 +51,12 @@ public class RobotPlayer {
 //					br = new SoldierRobotYP(myRC);
 //					br = new SoldierRobotHT(myRC);
 //					br = new FunBot(myRC);
+					br = new SoldierRobot(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
-//							br = new SoldierRobot(myRC);
-							br = new SoldierRobotYP(myRC);
+							br = new SoldierRobot(myRC);
+//							br = new SoldierRobotYP(myRC);
 //							br = new SoldierRobotHT(myRC);
 //							br = new SoldierRobotCL(myRC);
 						else
@@ -73,13 +75,16 @@ public class RobotPlayer {
 //					br = new ScoutRobotYP(myRC);
 //					br = new ScoutRobotYP(myRC);
 //					br = new FunBot(myRC);
+					br = new ScoutRobot(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
-							br = new ScoutRobotYP(myRC);
+							br = new ScoutRobot(myRC);
+//							br = new ScoutRobotYP(myRC);
 //							br = new ScoutRobotCL(myRC);
 						else
-							br = new ScoutRobotYP(myRC);
+							br = new ScoutRobot(myRC);
+//							br = new ScoutRobotYP(myRC);
 //							br = new ScoutRobotJV(myRC);
 					}
 				}
@@ -88,6 +93,24 @@ public class RobotPlayer {
 				break;
 			case SCORCHER:
 				if (owner.equals("justin")) br = null;
+				else if (owner.equals("yp"))
+				{
+//					br = new ScorcherRobotYP(myRC);
+//					br = new ScorcherRobotYP(myRC);
+//					br = new FunBot(myRC);
+					br = new ScorcherRobotYP(myRC);
+					if (br == null)
+					{
+						if (myRC.getTeam()==Team.A)
+							br = new ScorcherRobotYP(myRC);
+//							br = new ScorcherRobotYP(myRC);
+//							br = new ScorcherRobotYP(myRC);
+						else
+							br = new ScorcherRobotYP(myRC);
+//							br = new ScorcherRobotYP(myRC);
+//							br = new ScorcherRobotYP(myRC);
+					}
+				}
 				break;
 			default:
 				break;

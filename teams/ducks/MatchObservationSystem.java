@@ -1,6 +1,5 @@
 package ducks;
 
-import battlecode.common.Clock;
 import battlecode.common.MapLocation;
 import battlecode.common.Message;
 

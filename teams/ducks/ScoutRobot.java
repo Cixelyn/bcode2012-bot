@@ -1,157 +1,133 @@
 package ducks;
 
 import battlecode.common.Clock;
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 
 public class ScoutRobot extends BaseRobot {
 	
-	/** The possible behaviors for the Scout. */
+	private enum StrategyState {
+		/** Look for map edges so we have an idea where to find the enemy. */
+		INITIAL_EXPLORE,
+		/** Look around for the enemy. */
+		SCOUT_ENEMY,
+		/** Battle. Help target and transfer flux and heal. */
+		BATTLE,
+		/** No enemies around, heal up the army. */
+		HEAL,
+	}
 	private enum BehaviorState {
-		WAIT_FOR_FLUX,
-		FIND_ENEMY,
-		REPORT_ENEMY,
+		/** Go in a given direction until we see a new map edge or any enemy unit, then go back. */
+		LOOK_FOR_MAP_EDGE_OR_ENEMY,
+		/** Reports the newfound map edge. */
+		REPORT_MAP_EDGE,
+		/** Reports the enemy sighting. */
+		REPORT_ENEMY_SIGHTING,
+		/** Go around looking for enemies. */
+		SCOUT_FOR_ENEMIES,
+		/** Stand near the front lines and help target and heal. Kite enemies. */
+		SUPPORT_FRONT_LINES,
+		/** Found an ally to give flux to, go give him flux. */
+		SENDING_ALLY_FLUX,
+		/** Stand on top of an archon. Follow it around. Do nothing else. */
 		PET,
-		GIVE_FLUX_TO_ALLIES,
-		EXPLORE
+		/** At swarm target, hibernate until attacked or messaged to wake up. */
+		HIBERNATE,
+		/** Low on flux, need another scout to come give it some flux. */
+		LOW_FLUX_HIBERNATE,
 	}
 	
-	/** Defines the shape of a space filling curve, used to explore the map
-	 * starting from some corner.
-	 */
-	private static final int[][] SCOUT_PATTERN = new int[][] {
-		{0,0},{1,0},{1,1},{0,1},{0,2},{1,2},{2,2},{2,1},{2,0},{3,0},{3,1},{3,2},
-		{3,3},{2,3},{1,3},{0,3},{0,4},{1,4},{2,4},{3,4},{4,4},{4,3},{4,2},{4,1},
-		{4,0},{5,0},{5,1},{5,2},{5,3},{5,4},{5,5},{4,5},{3,5},{2,5},{1,5},{0,5},
-		{0,6},{1,6},{2,6},{3,6},{4,6},{5,6},{6,6},{6,5},{6,4},{6,3},{6,2},{6,1},
-		{6,0},{7,0},{7,1},{7,2},{7,3},{7,4},{7,5},{7,6},{7,7},{6,7},{5,7},{4,7},
-		{3,7},{2,7},{1,7},{0,7},{0,8},{1,8},{2,8},{3,8},{4,8},{5,8},{6,8},{7,8},
-		{8,8},{8,7},{8,6},{8,5},{8,4},{8,3},{8,2},{8,1},{8,0},{9,0},{9,1},{9,2},
-		{9,3},{9,4},{9,5},{9,6},{9,7},{9,8},{9,9},{8,9},{7,9},{6,9},{5,9},{4,9},
-		{3,9},{2,9},{1,9},{0,9},{0,10},{1,10},{2,10},{3,10},{4,10},{5,10},{6,10},
-		{7,10},{8,10},{9,10},{10,10},{10,9},{10,8},{10,7},{10,6},{10,5},{10,4},
-		{10,3},{10,2},{10,1},{10,0},{11,0},{11,1},{11,2},{11,3},{11,4},{11,5},
-		{11,6},{11,7},{11,8},{11,9},{11,10},{11,11},{10,11},{9,11},{8,11},{7,11},
-		{6,11},{5,11},{4,11},{3,11},{2,11},{1,11},{0,11},{0,12},{1,12},{2,12},
-		{3,12},{4,12},{5,12},{6,12},{7,12},{8,12},{9,12},{10,12},{11,12},{12,12},
-		{12,11},{12,10},{12,9},{12,8},{12,7},{12,6},{12,5},{12,4},{12,3},{12,2},
-		{12,1},{12,0}};
-	
-	/** Round to stop exploring, regardless of whether you're done. */
-	private static final int ROUND_TO_STOP_EXPLORING = 1000;
-	
-	/** The Scout's current position in SCOUT_PATTERN. When this equals
-	 * SCOUT_PATTERN.length - 1, the Scout knows the whole map.
-	 */
-	private int scoutPatternIdx;
-	
-	/** The Scout's current behavior. */
+	private StrategyState strategy;
 	private BehaviorState behavior;
-	
-	/** The Scout's current objective. */
 	private MapLocation objective;
 	
-	/** Initial enemy info report. */
-	private MapLocation initialReportLoc;
-	private int initialReportTime;
-	private boolean initialReportAck;
+	MapLocation enemySpottedTarget;
+	int enemySpottedRound;
 	
 	public ScoutRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
-		// set initial state
-		behavior = BehaviorState.WAIT_FOR_FLUX;
-		// set broadcast channels
+		strategy = StrategyState.BATTLE;
+		behavior = BehaviorState.PET;
+		enemySpottedTarget = null;
+		enemySpottedRound = -55555;
+		fbs.setPoolMode();
+		nav.setNavigationMode(NavigationMode.GREEDY);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
 				BroadcastChannel.SCOUTS,
 				BroadcastChannel.EXPLORERS
 		});
-		// set navigation mode
-		nav.setNavigationMode(NavigationMode.GREEDY);
 	}
 
-	/**
-	 * In terms of bytecodes, this run method takes, as a conservative estimate,
-	 * 600 + cost of scan, which with a lot of enemies can get to 600 + 6000.
-	 */
 	@Override
 	public void run() throws GameActionException {
+		if(Clock.getRoundNum()<500) {
+			strategy = StrategyState.INITIAL_EXPLORE;
+		} else {
+			strategy = StrategyState.BATTLE;
+		}
+		
 		// scan
 		radar.scan(true, true);
-		// switch states if necessary
-		switch (behavior) {
-			case WAIT_FOR_FLUX:
-				if (curRound - birthday < 50) {
-					if (birthday < 150) {
-						behavior = BehaviorState.FIND_ENEMY;
-					} else {
-						behavior = BehaviorState.PET;
-					}
-				}
-				break;
-			case FIND_ENEMY:
-				if (radar.closestEnemy != null) {
-					behavior = BehaviorState.REPORT_ENEMY;
-					initialReportLoc = radar.closestEnemy.location;
-					initialReportTime = curRound;
-				}
-				break;
-			case REPORT_ENEMY:
-				if (initialReportAck) {
-					behavior = BehaviorState.PET;
-				}
-				break;
-			case PET:
-				if (rc.getFlux() > 40) {
-					behavior = BehaviorState.GIVE_FLUX_TO_ALLIES;
-				}
-				break;
-			case GIVE_FLUX_TO_ALLIES:
-				if (rc.getFlux() < 15) {
-					behavior = BehaviorState.PET;
-				}
-				break;
-			case EXPLORE:
-				if (curRound >= ROUND_TO_STOP_EXPLORING || scoutPatternIdx >=
-						SCOUT_PATTERN.length - 1) {
-					behavior = BehaviorState.PET;
-				}
-				break;
-			default:
-				break;
+		
+		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
+		if(closestEnemyLocation!=null && rc.canSenseSquare(closestEnemyLocation))
+			closestEnemyLocation = null;
+		MapLocation radarClosestEnemyLocation = radar.closestEnemy==null ? 
+				null : radar.closestEnemy.location;
+		if(closestEnemyLocation==null || (radarClosestEnemyLocation!=null && 
+				curLoc.distanceSquaredTo(closestEnemyLocation) < 
+				curLoc.distanceSquaredTo(radarClosestEnemyLocation)))
+			closestEnemyLocation = radarClosestEnemyLocation;
+		if(curRound%5 == myID%5)
+			radar.broadcastEnemyInfo(false);
+		
+		
+		if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY || 
+				behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
+			if(radar.closestEnemy != null) {
+				behavior = BehaviorState.REPORT_ENEMY_SIGHTING;
+				enemySpottedTarget = radar.closestEnemy.location;
+				enemySpottedRound = curRound;
+			}
+		} else if(behavior == BehaviorState.REPORT_ENEMY_SIGHTING || 
+				behavior == BehaviorState.REPORT_MAP_EDGE) {
+			if(curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 25) {
+				if(strategy == StrategyState.INITIAL_EXPLORE) 
+					behavior = BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY;
+				else if(strategy == StrategyState.BATTLE)
+					behavior = BehaviorState.SUPPORT_FRONT_LINES;
+			}
+		} else if(behavior == BehaviorState.PET) {
+			if(strategy == StrategyState.INITIAL_EXPLORE) 
+				behavior = BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY;
 		}
-		// set flux balance mode
-		switch (behavior) {
-			case WAIT_FOR_FLUX:
-			case FIND_ENEMY:
-			case REPORT_ENEMY:
-			case PET:
-			case EXPLORE:
-				fbs.disable();
-				break;
-			case GIVE_FLUX_TO_ALLIES:
-				fbs.setPoolMode();
-				break;
-			default:
-				break;
-		}
+		
+		
+		
 		// set objective based on behavior
 		switch (behavior) {
-			case WAIT_FOR_FLUX:
-				// go to nearest archon
-				objective = dc.getClosestArchon();
-				break;
-			case FIND_ENEMY:
+			case SCOUT_FOR_ENEMIES:
+			case LOOK_FOR_MAP_EDGE_OR_ENEMY:
 				objective = mc.guessEnemyPowerCoreLocation();
 				break;
-			case REPORT_ENEMY:
+			case REPORT_MAP_EDGE:
+			case REPORT_ENEMY_SIGHTING:
 			case PET:
 				// go to nearest archon
 				objective = dc.getClosestArchon();
 				break;
-			case GIVE_FLUX_TO_ALLIES:
+			case SUPPORT_FRONT_LINES:
+				if(closestEnemyLocation != null)
+					objective = closestEnemyLocation;
+				else if(enemySpottedTarget != null)
+					objective = enemySpottedTarget;
+				else
+					objective = dc.getClosestArchon();
+				break;
+			case SENDING_ALLY_FLUX:
 				// find a friend
 				if (radar.closestLowFluxAlly != null) {
 					objective = radar.closestLowFluxAlly.location;
@@ -159,60 +135,61 @@ public class ScoutRobot extends BaseRobot {
 					objective = dc.getClosestArchon();
 				}
 				break;
-			case EXPLORE:
-				// get an unexplored location
-				objective = getExplorationTarget();
-				break;
 			default:
 				break;
 		}
+		
+		if(objective==null) 
+			objective = curLoc;
+		
 		// attack if you can
-		if (!rc.isAttackActive() && radar.closestEnemy != null &&
-				rc.canAttackSquare(radar.closestEnemy.location)) {
-			//TODO don't attack towers, and other shit to optimize slightly
+		if (!rc.isAttackActive() && radar.closestEnemyDist <= 5) {
+			RobotInfo bestInfo = null;
+			double bestValue = 0;
+			for(int n=0; n<radar.numEnemyRobots; n++) {
+				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
+				if(!rc.canAttackSquare(ri.location)) 
+					continue;
+				if(ri.flux > bestValue) {
+					bestInfo = ri;
+					bestValue = ri.flux;
+				}
+			}
 			
-			rc.attackSquare(radar.closestEnemy.location,
-					radar.closestEnemy.robot.getRobotLevel());
+			if(bestValue >= 0.15) {
+				rc.attackSquare(bestInfo.location, bestInfo.type.level);
+			}
 		}
+		
+		
 		// heal if you should
 		if (rc.getFlux() > 1.0 && ((curEnergon < myMaxEnergon - 0.2) || radar.numAllyToRegenerate > 0)) {
 			rc.regenerate();
 		}
-		// broadcast initial report if applicable
-		if (behavior == BehaviorState.REPORT_ENEMY) {
-			io.sendUShorts(BroadcastChannel.ARCHONS, BroadcastType.INITIAL_REPORT,
-					new int[] {initialReportTime, initialReportLoc.x,
-					initialReportLoc.y});
+		
+		// broadcast enemy spotting
+		if (behavior == BehaviorState.REPORT_ENEMY_SIGHTING && 
+				curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 64) {
+			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.ENEMY_SPOTTED,
+					new int[] {enemySpottedRound, enemySpottedTarget.x, enemySpottedTarget.y});
 		}
+		
 		// indicator strings
-		dbg.setIndicatorString('e', 0, "SCOUT - " + behavior);
-		if (radar.closestLowFluxAlly != null) {
-			dbg.setIndicatorString('e', 1, "Closest low flux ally: " +
-					radar.closestLowFluxAlly.type + "(" + radar.closestLowFluxAllyDist +
-					")");
-		} else {
-			dbg.setIndicatorString('e', 1, "No nearby low flux allies.");
-		}
+		dbg.setIndicatorString('e', 1, "Target=<"+(objective.x-curLoc.x)+","+
+					(objective.y-curLoc.y)+">, Behavior="+behavior);
 	}
 	
 	@Override
-	public void processMessage(
-			BroadcastType type, StringBuilder sb) throws GameActionException {
-		switch (type) {
-			case INITIAL_REPORT_ACK:
-				initialReportAck = true;
-				break;
-			case MAP_EDGES:
-				ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
-				break;
-			case MAP_FRAGMENTS:
-				ses.receiveMapFragment(BroadcastSystem.decodeInts(sb));
-				break;
-			case POWERNODE_FRAGMENTS:
-				ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
-				break;
-			default:
-				super.processMessage(type, sb);
+	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
+		switch(msgType) {
+		case MAP_EDGES:
+			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
+			break;
+		case POWERNODE_FRAGMENTS:
+			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
+			break;
+		default:
+			super.processMessage(msgType, sb);
 		}
 	}
 	
@@ -220,119 +197,35 @@ public class ScoutRobot extends BaseRobot {
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux() < 0.5) 
 			return null;
-		if (radar.closestEnemy != null) {
-			/* more aggressive kiting code
-			Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter());
-			int dist = (int)radar.closestEnemyDist;
-			// if we're too close, back up
-			if (dist <= 5) {
-				return new MoveInfo(dir.opposite(), true);
-			}
-			// if we're in safe range, face target
-			if (dist <= 25) {
-				return new MoveInfo(dir);
-			}
-			// we're far away, move to target
-			return new MoveInfo(dir, false);
-			*/
-			return new MoveInfo(curLoc.directionTo(
-					radar.getEnemySwarmCenter()).opposite(), true);
-		} else {
-			// if no enemy is nearby, go to objective
-			if (objective != null) {
-				return new MoveInfo(curLoc.directionTo(objective), false);
-			} else {
-				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
-			}
+		
+		// Retreat from enemies
+		if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 5) {
+			return new MoveInfo(curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite(), true);
+		} else if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 13) {
+			return null;
 		}
+		
+		// Go to objective
+		return new MoveInfo(curLoc.directionTo(objective), false);
 	}
 	
 	@Override
 	public void useExtraBytecodes() throws GameActionException {
-		super.useExtraBytecodes();
-		// share exploration with archons
-		if (behavior == BehaviorState.PET) {
+		if (strategy == StrategyState.INITIAL_EXPLORE) {
 			if (curRound == Clock.getRoundNum() &&
-					Clock.getBytecodesLeft() > 4000 && Math.random() < 0.05 /
-					(radar.numAllyRobots + 1)) {
+					Clock.getBytecodesLeft() > 6000 && Math.random() < 0.05) {
 				ses.broadcastMapFragment();
 			}
 			if (curRound == Clock.getRoundNum() &&
-					Clock.getBytecodesLeft() > 2000 && Math.random() < 0.05 /
-					(radar.numAllyRobots + 1)) {
+					Clock.getBytecodesLeft() > 5000 && Math.random() < 0.05) {
 				ses.broadcastPowerNodeFragment();
 			}
 			if (curRound == Clock.getRoundNum() &&
-					Clock.getBytecodesLeft() > 2000 && Math.random() < 0.05 /
-					(radar.numAllyRobots + 1)) {
+					Clock.getBytecodesLeft() > 2000 && Math.random() < 0.05) {
 				ses.broadcastMapEdges();
 			}
 		}
-		// process shared exploration
-		while (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 5000 &&
-				!mc.extractUpdatedPackedDataStep()) {
-		}
+		super.useExtraBytecodes();
 	}
 	
-	/**
-	 * Get a location to explore.
-	 */
-	private MapLocation getExplorationTarget() {
-		Direction d;
-		int sx, sy, mx, my;
-		switch (myID % 4) {
-			case 0:
-				d = Direction.NORTH_WEST;
-				sx = mc.edgeXMin;
-				sy = mc.edgeYMin;
-				mx = 1;
-				my = 1;
-				break;
-			case 1:
-				d = Direction.NORTH_EAST;
-				sx = mc.edgeXMax;
-				sy = mc.edgeYMin;
-				mx = -1;
-				my = 1;
-				break;
-			case 2:
-				d = Direction.SOUTH_WEST;
-				sx = mc.edgeXMin;
-				sy = mc.edgeYMax;
-				mx = 1;
-				my = -1;
-				break;
-			case 3:
-			default:
-				d = Direction.SOUTH_EAST;
-				sx = mc.edgeXMax;
-				sy = mc.edgeYMax;
-				mx = -1;
-				my = -1;
-				break;
-		}
-		if (sx * sy == 0) {
-			// i don't know where the corner is
-			return myHome.add(d, 100);
-		}
-		// making new map locations is very costly so advance your scout pattern by
-		// at most 3 per turn
-		// TODO(jven): might be much cheaper to access mc.sensed and check map
-		// edges directly
-		int numIterations = 0;
-		for (int idx = scoutPatternIdx; idx < SCOUT_PATTERN.length &&
-				numIterations++ < 3; idx++) {
-			int[] coords = SCOUT_PATTERN[idx];
-			MapLocation loc = new MapLocation(
-					mc.cacheToWorldX(sx + mx * (1 + coords[0]) * 7),
-					mc.cacheToWorldY(sy + my * (1 + coords[1]) * 7));
-			if (!mc.isOffMap(loc) && !mc.isSensed(loc)) {
-				return loc;
-			} else {
-				scoutPatternIdx++;
-			}
-		}
-		return null;
-	}
 }
