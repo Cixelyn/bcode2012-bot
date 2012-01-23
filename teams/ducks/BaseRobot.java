@@ -28,6 +28,7 @@ public abstract class BaseRobot {
 	public final DebugSystem dbg;
 	public final MatchObservationSystem mos;
 	public final HibernationSystem hsys;
+	public final TeamMemory tmem;
 	
 	// Robot Statistics - Permanent
 	public final RobotType myType;
@@ -101,6 +102,7 @@ public abstract class BaseRobot {
 		msm = new MovementStateMachine(this);
 		sws = new ScoutWireSystem(this);
 		hsys = new HibernationSystem(this);
+		tmem = new TeamMemory(this);
 		
 		mc.senseAll();
 		
@@ -221,7 +223,7 @@ public abstract class BaseRobot {
 			io.sendAll();
 		
 		if(Clock.getRoundNum()==curRound && (Clock.getBytecodesLeft()>4000 ||
-				radar.hasScannedAllies() && Clock.getBytecodesLeft()>1000)) {
+				radar.hasScannedAllies() && Clock.getBytecodesLeft()>1200)) {
 			fbs.manageFlux();
 		}
 	}
