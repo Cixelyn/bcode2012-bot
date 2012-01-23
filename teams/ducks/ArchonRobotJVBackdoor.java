@@ -38,6 +38,8 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 		// broadcast objective
 		io.sendMapLoc(BroadcastChannel.SOLDIERS, BroadcastType.RALLY,
 				objective);
+		// set indicator string
+		dbg.setIndicatorString('j', 0, "ARCHON - DEFENSE - <123,45678>");
 	}
 	
 	@Override
