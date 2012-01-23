@@ -59,7 +59,9 @@ public class DataCache {
 			int closestDistance = Integer.MAX_VALUE;
 			for (MapLocation archon : getAlliedArchons()) {
 				int distance = br.curLoc.distanceSquaredTo(archon);
-				if (distance > 0 && distance < closestDistance) {
+				// if i'm an archon, don't consider yourself the closest archon
+				if (!(br.myType == RobotType.ARCHON && distance == 0) &&
+						distance < closestDistance) {
 					closestArchon = archon;
 					closestDistance = distance;
 				}
