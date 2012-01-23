@@ -26,10 +26,7 @@ public class DebugSystem {
 	public void setIndicatorString(char owner, int position, String msg) {
 		if(launch_owner == owner || owner == 'e') {
 			if (encrypted) {
-				int a = Clock.getBytecodesLeft();
 				msg = Encryption.encryptString(msg);
-				int b = Clock.getBytecodesLeft();
-				System.out.println(a-b);
 			}
 			br.rc.setIndicatorString(position,msg);
 		}
