@@ -65,7 +65,8 @@ public class RobotPlayer {
 				} else br = new SoldierRobot(myRC);
 				break;
 			case SCOUT:
-				if (owner.equals("justin")) br = new ScoutRobotJV(myRC);
+				if (owner.equals("haitao")) br = new ScoutRobot(myRC);
+				else if (owner.equals("justin")) br = new ScoutRobot(myRC);
 				else if (owner.equals("cory")) br = new ScoutRobotCL(myRC);
 				else if (owner.equals("yp"))
 				{

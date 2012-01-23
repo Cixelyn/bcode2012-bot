@@ -1,4 +1,4 @@
-package ducks;
+package hardai;
 
 import battlecode.common.GameConstants;
 import battlecode.common.RobotInfo;
@@ -18,9 +18,12 @@ public class TargetingSystemSoldier extends TargetingSystem {
 		
 		RobotInfo backupTarget = null;
 		RobotInfo bestTarget = null;
+		@SuppressWarnings("unused")
 		double energon = 200;
+		@SuppressWarnings("unused")
 		double maxflux = 0.0;
 		boolean isKill = false;
+		@SuppressWarnings("unused")
 		int robotid = 0;
 		
 		radar.scan(false, true);
@@ -173,12 +176,10 @@ public class TargetingSystemSoldier extends TargetingSystem {
 		}
 		
 		lastTarget = bestTarget;
-		if (bestTarget!=null)
 		{
 //			lastTarget = bestTarget;
 			return bestTarget;
 		}
-		return backupTarget;
 	}
 
 }

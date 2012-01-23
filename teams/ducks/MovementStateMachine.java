@@ -30,8 +30,8 @@ public class MovementStateMachine {
 		case ABOUT_TO_SPAWN:
 			boolean spawningAir = nextMove.robotType.isAirborne();
 			if(rc.getFlux() >= nextMove.robotType.spawnCost && 
-					(spawningAir && (rc.senseObjectAtLocation(br.curLocInFront, RobotLevel.IN_AIR)==null)) || 
-					(!spawningAir && rc.canMove(br.curDir))) {
+					((spawningAir && (rc.senseObjectAtLocation(br.curLocInFront, RobotLevel.IN_AIR)==null)) || 
+					(!spawningAir && rc.canMove(br.curDir)))) {
 				rc.spawn(nextMove.robotType);
 				return MovementState.IDLE;
 			}

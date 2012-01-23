@@ -40,18 +40,15 @@ public enum BroadcastType {
 	
 	
 	
-	
-	
-	
 //	ending semicolon
 	;
 	
 	public char header;
 	BroadcastType() {
-		header = (char)(this.ordinal() + 0x100);
+		header = (char)(this.ordinal());
 	}
 	
 	public static BroadcastType decode(char header) {
-		return BroadcastType.values()[header - 0x100];
+		return BroadcastType.values()[header];
 	}
 }

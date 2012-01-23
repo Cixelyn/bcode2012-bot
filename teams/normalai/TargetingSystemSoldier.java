@@ -18,11 +18,7 @@ public class TargetingSystemSoldier extends TargetingSystem {
 		
 		RobotInfo backupTarget = null;
 		RobotInfo bestTarget = null;
-		double energon = 200;
-		double maxflux = 0.0;
 		boolean isKill = false;
-		int robotid = 0;
-		
 		radar.scan(false, true);
 		
 		if (lastTarget!=null)
@@ -36,13 +32,9 @@ public class TargetingSystemSoldier extends TargetingSystem {
 					isKill = lastTarget.energon <= ATTACK;
 					if (!isKill)
 					{
-						energon = lastTarget.energon;
-						robotid = lastTarget.robot.getID();
-						maxflux = lastTarget.flux;
+						lastTarget.robot.getID();
 					} else
 					{
-//						robotid = ri.robot.getID();
-						maxflux = lastTarget.flux;
 					}
 				}
 			} else
@@ -54,9 +46,8 @@ public class TargetingSystemSoldier extends TargetingSystem {
 		if (radar.numEnemyRobots == 0) return null;
 		
 		bestTarget = radar.closestEnemy;
-		energon = bestTarget.energon;
-		robotid = bestTarget.robot.getID();
-		maxflux = bestTarget.flux;
+		bestTarget.robot.getID();
+		
 		
 //		if (radar.numEnemyRobots>0) return radar.closestEnemy;
 		
@@ -71,8 +62,6 @@ public class TargetingSystemSoldier extends TargetingSystem {
 			{
 				bestTarget = ri;
 				isKill = true;
-//				robotid = ri.robot.getID();
-				maxflux = ri.flux;
 			}
 			
 //			if (bestTarget == null)
@@ -173,12 +162,10 @@ public class TargetingSystemSoldier extends TargetingSystem {
 		}
 		
 		lastTarget = bestTarget;
-		if (bestTarget!=null)
 		{
 //			lastTarget = bestTarget;
 			return bestTarget;
 		}
-		return backupTarget;
 	}
 
 }

@@ -5,14 +5,29 @@ import battlecode.common.*;
 public class HibernationSystem {
 	final BaseRobot br;
 	
-	public static enum ExitCode {MESSAGED, ATTACKED }
+	private boolean wakeOnFlux;
+
+	public static enum HibernationMode {NORMAL, LOW_FLUX}
+	public static enum ExitCode {MESSAGED, ATTACKED, REFUELED }
 	
 	public HibernationSystem(BaseRobot baseRobot) {
 		this.br = baseRobot;
+		wakeOnFlux = false;
 	}
+
+	public void setMode(HibernationMode mode) {
+		switch(mode) {
+		case NORMAL:
+			wakeOnFlux = false;
+		case LOW_FLUX:
+			wakeOnFlux = true;
+		}
+	}
+	
 
 	/** Enables hibernation mode and blocks until a wake-up message has been
 	 * received Don't change the variable order. It's been optimized to hell
+	 * @return reason for wakeup
 	 */
 	public ExitCode run() {
 
@@ -33,8 +48,24 @@ public class HibernationSystem {
 
 		while (true) {
 			
-			if((curEnergon = rc.getEnergon()) < lastEnergon) return ExitCode.ATTACKED;
-			if((curFlux = rc.getFlux()) < lastFlux - 1.0) return ExitCode.ATTACKED;
+			// emergency wakeup conditions
+			if((curEnergon = rc.getEnergon()) < lastEnergon) {
+				br.resetClock();
+				br.updateRoundVariables();
+				br.io.sendWakeupCall();
+				return ExitCode.ATTACKED;
+			}
+			if((curFlux = rc.getFlux()) < lastFlux - 1.0) {
+				br.resetClock();
+				br.updateRoundVariables();
+				br.io.sendWakeupCall();
+				return ExitCode.ATTACKED;
+			}      
+			if(wakeOnFlux && (curFlux > lastFlux)) {
+				br.resetClock();
+				br.updateRoundVariables();
+				return ExitCode.REFUELED;
+			}
 				
 			lastEnergon = curEnergon;
 			lastFlux = curFlux;
@@ -54,6 +85,7 @@ public class HibernationSystem {
 
 				if ((mints[2] <= (time=Clock.getRoundNum())) && (mints[2] > time - 10)) {
 					br.resetClock();
+					br.updateRoundVariables();
 					br.io.sendWakeupCall();
 					return ExitCode.MESSAGED; // our exit point
 				}

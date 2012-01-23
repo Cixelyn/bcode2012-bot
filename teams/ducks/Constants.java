@@ -57,7 +57,5 @@ public final class Constants {
 	
 	/** The frequency with which units broadcast information. */
 	public static final int ARCHON_BROADCAST_FREQUENCY = 4;
-	/** Secret keys for use in messaging system, one for each team. */
-	public static final int[] RADIO_TEAM_KEYS = new int[] {5555, 1729};
 	
 }

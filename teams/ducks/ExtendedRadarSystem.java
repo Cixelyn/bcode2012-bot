@@ -67,19 +67,19 @@ public class ExtendedRadarSystem {
 	/** Returns how much more energon worth of robots we have in the given radius. 
 	 * Returns a positive number iff we have more energon than the other team.
 	 */
-	public int getEnergonDifference(int radiusSquared) {
+	public int getEnergonDifference(MapLocation center, int radiusSquared) {
 		flagCount++;
 		int diff = 0;
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = enemyKeySet.getID(i);
-			if(br.curLoc.distanceSquaredTo(enemyLocationInfo[id]) <= radiusSquared) 
+			if(center.distanceSquaredTo(enemyLocationInfo[id]) <= radiusSquared) 
 				diff -= enemyEnergonInfo[id];
 		}
 		size = allyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = allyKeySet.getID(i);
-			if(br.curLoc.distanceSquaredTo(allyLocationInfo[id]) <= radiusSquared) {
+			if(center.distanceSquaredTo(allyLocationInfo[id]) <= radiusSquared) {
 				flags[id] = flagCount;
 				diff += allyEnergonInfo[id];
 			}
@@ -88,11 +88,12 @@ public class ExtendedRadarSystem {
 			int id = br.radar.allyRobots[i];
 			if(flags[id]==flagCount) continue;
 			RobotInfo ri = br.radar.allyInfos[id];
-			if(br.curLoc.distanceSquaredTo(ri.location) <= radiusSquared) {
+			if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
 				diff += ri.energon;
 			}
 		}
 		
+		br.dbg.setIndicatorString('h', 0, toString()+" ----- energon difference: "+diff);
 		return diff;
 	}
 	

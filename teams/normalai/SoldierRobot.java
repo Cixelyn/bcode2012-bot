@@ -14,15 +14,22 @@ public class SoldierRobot extends StrategyRobot {
 	private int ownerTrueID;
 //	private int ownerRobotID;
 	
+	@SuppressWarnings("unused")
 	private boolean isDefender;
 	private MapLocation swarmObjective;
+	@SuppressWarnings("unused")
 	private Direction swarmDirection;
+	@SuppressWarnings("unused")
 	private int swarmPriority;
 	private MapLocation archonOVERLORD;
 	
+	@SuppressWarnings("unused")
 	private RobotInfo target;
+	@SuppressWarnings("unused")
 	private MapLocation targetLoc;
+	@SuppressWarnings("unused")
 	private RobotInfo target2;
+	@SuppressWarnings("unused")
 	private MapLocation target2Loc;
 	
 	private MapLocation fromObjective;
@@ -171,8 +178,6 @@ public class SoldierRobot extends StrategyRobot {
 			BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		
 		swarmPriority = 999;
-		int closest = 999;
-		MapLocation temp;
 		
 	}
 	

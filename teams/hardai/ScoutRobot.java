@@ -1,4 +1,4 @@
-package ducks;
+package hardai;
 
 import battlecode.common.Clock;
 import battlecode.common.Direction;
@@ -6,7 +6,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
-public class ScoutRobotJV extends BaseRobot {
+public class ScoutRobot extends BaseRobot {
 	
 	/** The possible behaviors for the Scout. */
 	private enum BehaviorState {
@@ -58,7 +58,7 @@ public class ScoutRobotJV extends BaseRobot {
 	private int initialReportTime;
 	private boolean initialReportAck;
 	
-	public ScoutRobotJV(RobotController myRC) throws GameActionException {
+	public ScoutRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		// set initial state
 		behavior = BehaviorState.WAIT_FOR_FLUX;
@@ -173,12 +173,13 @@ public class ScoutRobotJV extends BaseRobot {
 		// attack if you can
 		if (!rc.isAttackActive() && radar.closestEnemy != null &&
 				rc.canAttackSquare(radar.closestEnemy.location)) {
+			//TODO don't attack towers, and other shit to optimize slightly
+			
 			rc.attackSquare(radar.closestEnemy.location,
 					radar.closestEnemy.robot.getRobotLevel());
 		}
 		// heal if you should
-		if ((curEnergon < myMaxEnergon || radar.numAllyDamaged > 0) &&
-				Math.random() < 0.3) {
+		if ((curEnergon < myMaxEnergon - 0.2) || radar.numAllyToRegenerate > 0) {
 			rc.regenerate();
 		}
 		// broadcast initial report if applicable
@@ -188,13 +189,13 @@ public class ScoutRobotJV extends BaseRobot {
 					initialReportLoc.y});
 		}
 		// indicator strings
-		dbg.setIndicatorString('j', 0, "SCOUT - " + behavior);
+		dbg.setIndicatorString('e', 0, "SCOUT - " + behavior);
 		if (radar.closestLowFluxAlly != null) {
-			dbg.setIndicatorString('j', 1, "Closest low flux ally: " +
+			dbg.setIndicatorString('e', 1, "Closest low flux ally: " +
 					radar.closestLowFluxAlly.type + "(" + radar.closestLowFluxAllyDist +
 					")");
 		} else {
-			dbg.setIndicatorString('j', 1, "No nearby low flux allies.");
+			dbg.setIndicatorString('e', 1, "No nearby low flux allies.");
 		}
 	}
 	
