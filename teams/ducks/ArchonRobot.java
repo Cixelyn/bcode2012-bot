@@ -563,12 +563,6 @@ public class ArchonRobot extends BaseRobot{
 			}
 		}
 		
-		if(rc.getFlux() > fluxToMakeSoldierAt) {
-			if(rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
-				return new MoveInfo(RobotType.SCOUT, curDir);
-			}
-		}
-		
 		if(radar.closestEnemyDist <= 20 && behavior != BehaviorState.CHASE) {
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
