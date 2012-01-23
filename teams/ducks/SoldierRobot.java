@@ -161,28 +161,7 @@ public class SoldierRobot extends BaseRobot {
 		} 
 		
 		// Attack an enemy if there is some unit in our attackable squares
-		if(!rc.isAttackActive()) {
-			RobotInfo bestInfo = null;
-			double bestValue = Double.MAX_VALUE;
-			for(int n=0; n<radar.numEnemyRobots; n++) {
-				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
-				if(!rc.canAttackSquare(ri.location)) 
-					continue;
-				if((bestValue <= myType.attackPower && ri.energon <= myType.attackPower) ?
-						ri.energon > bestValue : ri.energon < bestValue) {
-					// Say a soldier does 6 damage. We prefer hitting units with less energon, but we also would rather hit a unit with 5 energon than a unit with 1 energon.
-					bestInfo = ri;
-					bestValue = ri.energon;
-				}
-			}
-			
-			if(bestInfo!=null) {
-				if(bestValue <= myType.attackPower) {
-					er.broadcastKill(bestInfo.robot.getID());
-				}
-				rc.attackSquare(bestInfo.location, bestInfo.type.level);
-			}
-		}
+		tryToAttack();
 		
 		// Check if we have too much flux
 		if(behavior == BehaviorState.ENEMY_DETECTED) {
@@ -205,20 +184,19 @@ public class SoldierRobot extends BaseRobot {
 		dbg.setIndicatorString('e', 1, "Target=<"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Behavior="+behavior);
 		
 		// Enter hibernation if desired
-		if(behavior == BehaviorState.HIBERNATE) {
-			hsys.setMode(HibernationMode.NORMAL);
+		if(behavior == BehaviorState.HIBERNATE || behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
+			if(behavior == BehaviorState.HIBERNATE)
+				hsys.setMode(HibernationMode.NORMAL);
+			else 
+				hsys.setMode(HibernationMode.LOW_FLUX);
 			HibernationSystem.ExitCode ec = hsys.run();
-			if(ec == HibernationSystem.ExitCode.ATTACKED)
-				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
-			else if(ec == HibernationSystem.ExitCode.MESSAGED)
-				behavior = BehaviorState.SWARM;
-			target = curLoc;
-			nav.setDestination(target);
-		} else if(behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
-			hsys.setMode(HibernationMode.LOW_FLUX);
-			HibernationSystem.ExitCode ec = hsys.run();
-			if(ec == HibernationSystem.ExitCode.ATTACKED)
-				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+			if(ec == HibernationSystem.ExitCode.ATTACKED) {
+				radar.scan(false, true);
+				if(radar.closestEnemy==null)
+					behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+				else
+					tryToAttack();
+			}
 			else if(ec == HibernationSystem.ExitCode.MESSAGED)
 				behavior = BehaviorState.SWARM;
 			else if(ec == HibernationSystem.ExitCode.REFUELED)
@@ -231,6 +209,31 @@ public class SoldierRobot extends BaseRobot {
 		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
 		energonLastTurn = curEnergon;
 			
+	}
+	
+	private void tryToAttack() throws GameActionException {
+		if(!rc.isAttackActive()) {
+			RobotInfo bestInfo = null;
+			double bestValue = Double.MAX_VALUE;
+			for(int n=0; n<radar.numEnemyRobots; n++) {
+				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
+				if(!rc.canAttackSquare(ri.location)) 
+					continue;
+				if((bestValue <= myType.attackPower && ri.energon <= myType.attackPower) ?
+						ri.energon > bestValue : ri.energon < bestValue) {
+					// Say a soldier does 6 damage. We prefer hitting units with less energon, but we also would rather hit a unit with 5 energon than a unit with 1 energon.
+					bestInfo = ri;
+					bestValue = ri.energon;
+				}
+			}
+			
+			if(bestInfo!=null) {
+				if(bestValue <= myType.attackPower) {
+					er.broadcastKill(bestInfo.robot.getID());
+				}
+				rc.attackSquare(bestInfo.location, bestInfo.type.level);
+			}
+		}
 	}
 	
 	@Override

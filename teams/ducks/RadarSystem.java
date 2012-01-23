@@ -489,7 +489,8 @@ public class RadarSystem {
 			shorts[c] = ri.robot.getID();
 			shorts[c+1] = ri.location.x;
 			shorts[c+2] = ri.location.y;
-			shorts[c+3] = (ri.type==RobotType.ARCHON || ri.type==RobotType.TOWER) ? 0 : (int)Math.ceil(ri.energon);
+			shorts[c+3] = (ri.type==RobotType.ARCHON || ri.type==RobotType.TOWER || 
+					ri.type==RobotType.SCOUT) ? 0 : (int)Math.ceil(ri.energon);
 		}
 		br.er.integrateEnemyInfo(shorts);
 		br.io.sendUShorts(BroadcastChannel.EXTENDED_RADAR, BroadcastType.ENEMY_INFO, shorts);

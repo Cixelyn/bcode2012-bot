@@ -80,8 +80,7 @@ public class ScoutRobot extends BaseRobot {
 				curLoc.distanceSquaredTo(radarClosestEnemyLocation)))
 			closestEnemyLocation = radarClosestEnemyLocation;
 		if(curRound%5 == myID%5)
-			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
-					curLoc.distanceSquaredTo(closestEnemyLocation) < 25);
+			radar.broadcastEnemyInfo(false);
 		
 		// switch states if necessary
 		if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY || 

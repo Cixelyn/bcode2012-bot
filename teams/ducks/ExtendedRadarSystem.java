@@ -3,6 +3,7 @@ package ducks;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 
 public class ExtendedRadarSystem {
 	private static final int BUFFER_SIZE = 4096;
@@ -85,6 +86,19 @@ public class ExtendedRadarSystem {
 				{diff -= enemyEnergonInfo[id]; indicatorString+=" e-"+id+"-"+diff;}
 		}
 		
+		// Subtract enemy energon from robots in the local radar but not in the ER
+		for(int i=0; i<br.radar.numEnemyRobots; i++) {
+			int id = br.radar.enemyRobots[i];
+			if(flags[id]==flagCount) continue;
+			RobotInfo ri = br.radar.enemyInfos[id];
+			if(ri.type == RobotType.ARCHON || ri.type == RobotType.SCOUT || ri.type == RobotType.TOWER)
+				continue;
+			if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
+				diff -= ri.energon;
+				indicatorString+=" d-"+id+"-"+diff;
+			}
+		}
+		
 		// Add ally energon
 		size = allyKeySet.size();
 		for(int i=0; i<size; i++) {
@@ -101,6 +115,8 @@ public class ExtendedRadarSystem {
 			int id = br.radar.allyRobots[i];
 			if(flags[id]==flagCount) continue;
 			RobotInfo ri = br.radar.allyInfos[id];
+			if(ri.type == RobotType.ARCHON || ri.type == RobotType.SCOUT || ri.type == RobotType.TOWER)
+				continue;
 			if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
 				diff += ri.energon;
 				indicatorString+=" b-"+id+"-"+diff;
