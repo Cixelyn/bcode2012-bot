@@ -6,7 +6,6 @@ import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Message;
-import battlecode.common.Team;
 
 /**
  *

@@ -1,7 +1,8 @@
 package ducks;
 
-import battlecode.common.*;
-import static battlecode.common.Clock.getRoundNum;
+import battlecode.common.GameActionException;
+import battlecode.common.Message;
+import battlecode.common.RobotController;
 
 public class HibernationSystem {
 	final BaseRobot br;
@@ -39,7 +40,6 @@ public class HibernationSystem {
 
 		RobotController rc = br.rc; 	// field 4
 		int time=br.myID;				// field 5
-		int clock;
 		boolean localLowFluxMode = this.lowFluxMode;
 	
 		double lastEnergon = rc.getEnergon();
@@ -113,12 +113,10 @@ public class HibernationSystem {
 				if (mints[0] != teamkey)
 					continue;
 				
-//				if ((mints[2] <= (clock=Clock.getRoundNum())) && (mints[2] > clock - 10)) {
-					br.resetClock();
-					br.updateRoundVariables();
-					br.io.sendWakeupCall();
-					return ExitCode.MESSAGED; // our exit point
-//				}
+				br.resetClock();
+				br.updateRoundVariables();
+				br.io.sendWakeupCall();
+				return ExitCode.MESSAGED; // our exit point
 			}
 
 			rc.yield();
