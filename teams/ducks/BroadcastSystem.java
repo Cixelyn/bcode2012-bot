@@ -163,7 +163,7 @@ public class BroadcastSystem {
 	 * Sends a single map location to a unit
 	 */
 	public void sendMapLoc(BroadcastChannel bChan, BroadcastType bType, MapLocation loc) {
-		sendMapLoc(bChan.chanHeader + bType.header_c, loc);
+		sendMapLoc(bChan.chanHeader.concat(bType.header_s), loc);
 	}
 	
 	private void sendMapLoc(String header, MapLocation loc) {
@@ -188,7 +188,7 @@ public class BroadcastSystem {
 	 * @see BroadcastSystem#sendUShort(String, int)
 	 */
 	public void sendUShorts(BroadcastChannel bChan, BroadcastType bType, int[] ints) {
-		sendUShorts(bChan.chanHeader + bType.header_c, ints);
+		sendUShorts(bChan.chanHeader.concat(bType.header_s), ints);
 	}
 	private void sendUShorts(String header, int[] ints) {
 		for (int i : ints) {
@@ -197,6 +197,21 @@ public class BroadcastSystem {
 		msgContainer.append(header.concat(TERMINATOR_S));
 		
 	}
+	
+	/**
+	 * Sends a raw string over the channel. Same limitations apply as shorts,
+	 * "unicode chars" must be \u7fff or below.
+	 * @param bChan - broadcast channel
+	 * @param bType - message type
+	 * @param data - string to send
+	 * @see BroadcastSystem#sendUShorts(String, int[])
+	 */
+	public void sendRaw(BroadcastChannel bChan, BroadcastType bType, String data) {
+		msgContainer.append(bChan.chanHeader.concat(bType.header_s).concat(data));
+	}
+	
+	
+	
 
 	/**
 	 * Decodes the next 15-bit unsigned integer array in the message
