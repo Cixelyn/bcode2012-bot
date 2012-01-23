@@ -26,6 +26,7 @@ public abstract class BaseRobot {
 	public final MovementStateMachine msm;
 	public final ScoutWireSystem sws;
 	public final DebugSystem dbg;
+	public final MatchObservationSystem mos;
 	
 	// Robot Statistics - Permanent
 	public final RobotType myType;
@@ -84,6 +85,7 @@ public abstract class BaseRobot {
 		// DO NOT CHANGE THE ORDER OF THESE DECLARATIONS
 		// SOME CONTRUCTORS NEED OTHERS TO ALREADY BE DECLARED
 		dbg = new DebugSystem(this);
+		mos = new MatchObservationSystem(this);
 		dc = new DataCache(this);
 		mc = new MapCacheSystem(this);
 		nav = new NavigationSystem(this);
