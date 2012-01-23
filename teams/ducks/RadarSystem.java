@@ -75,6 +75,8 @@ public class RadarSystem {
 	
 	public RobotInfo closestEnemy;
 	public int closestEnemyDist;
+	public RobotInfo closestEnemyWithFlux;
+	public int closestEnemyWithFluxDist;
 	
 	public RobotInfo closestLowFluxAlly;
 	public double closestLowFluxAllyDist;
@@ -112,6 +114,8 @@ public class RadarSystem {
 	private void resetEnemyStats() {
 		closestEnemy = null;
 		closestEnemyDist = Integer.MAX_VALUE;
+		closestEnemyWithFlux = null;
+		closestEnemyWithFluxDist = Integer.MAX_VALUE;
 		numEnemyRobots = 0;
 		numEnemyArchons = 0;
 		numEnemySoldiers = 0;
@@ -180,6 +184,10 @@ public class RadarSystem {
 		if (dist < closestEnemyDist) {
 			closestEnemy = rinfo;
 			closestEnemyDist = dist;
+		}
+		if (rinfo.flux >= 0.15 && dist < closestEnemyWithFluxDist && rinfo.type==RobotType.SOLDIER) {
+			closestEnemyWithFlux = rinfo;
+			closestEnemyWithFluxDist = dist;
 		}
 	}
 	
@@ -474,7 +482,7 @@ public class RadarSystem {
 			shorts[0] = br.myID;
 			shorts[1] = br.curLoc.x;
 			shorts[2] = br.curLoc.y;
-			shorts[3] = (int)Math.ceil(br.curEnergon);
+			shorts[3] = 10001+(int)Math.ceil(br.curEnergon);
 		}
 		for(int i=0, c=sendOwnInfo?4:0; i<numEnemyRobots; i++, c+=4) {
 			RobotInfo ri = enemyInfos[enemyRobots[i]];
