@@ -7,8 +7,8 @@ public class RobotPlayer {
 	public static void run(RobotController myRC) {
 		BaseRobot br = null;
 		
-//		String owner = System.getProperty("bc.testing.strategy");
-		String owner = "yp";
+		String owner = System.getProperty("bc.testing.strategy");
+//		String owner = "yp";
 		
 		
 		

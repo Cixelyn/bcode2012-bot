@@ -51,8 +51,8 @@ public class SoldierRobotYP extends BaseRobot {
 //	private MapLocation closestArchon;
 	private MapLocation swarmLoc;
 	private Direction swarmDir;
-	private MapLocation newswarmLoc;
-	private Direction newswarmDir;
+//	private MapLocation newswarmLoc;
+//	private Direction newswarmDir;
 	private int swarmUpdateRounds;
 	private int closestmsg;
 	
@@ -97,8 +97,8 @@ public class SoldierRobotYP extends BaseRobot {
 		}
 		
 		closestmsg = 999;
-		newswarmLoc = null;
-		newswarmDir = null;
+//		newswarmLoc = null;
+//		newswarmDir = null;
 		
 		eakc.broadcastDeadEnemyArchonIDs();
 		

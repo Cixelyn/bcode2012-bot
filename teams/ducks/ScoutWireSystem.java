@@ -28,7 +28,7 @@ public class ScoutWireSystem {
 	 */
 	private class ScoutWireSystemConstants {
 		public static final int MAX_SCOUTS_PER_WIRE = 10;
-		public static final int MAX_WIRE_ID = 255;
+//		public static final int MAX_WIRE_ID = 255;
 	}
 	
 	//----------------- COMMON FIELDS ---------------------
