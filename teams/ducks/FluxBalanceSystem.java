@@ -79,10 +79,10 @@ public class FluxBalanceSystem {
 	
 	private void distributeArchonBattery() throws GameActionException {
 		if(rc.getFlux() > 10)
-			distributeFluxBattle(rc.getFlux()-0.1);
-		if(rc.getFlux() <= 150) 
+			distributeFluxBattle(rc.getFlux() - 0.1);
+		if(rc.getFlux() <= 210) 
 			return;
-		double fluxToTransfer = rc.getFlux()-0.1;
+		double fluxToTransfer = rc.getFlux()-210;
 		for(int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
 			RobotInfo ri = radar.adjacentAllies[n];
 			if (ri.type == RobotType.TOWER)
@@ -107,14 +107,14 @@ public class FluxBalanceSystem {
 	private void distributeScoutPool() throws GameActionException {
 		// TODO implement moving to low flux units and giving them flux
 		
-		double myUpperFluxThreshold = br.curEnergon < br.myMaxEnergon ? 
+		double myUpperFluxThreshold = br.curEnergon < br.myMaxEnergon/2 ? 
 				br.curEnergon/2 : br.curEnergon*2/3;
 			
 		distributeFluxBattle(rc.getFlux()-myUpperFluxThreshold);
 	}
 	
 	private void distributeUnitPool() throws GameActionException {
-		double myUpperFluxThreshold = br.curEnergon < br.myMaxEnergon ? 
+		double myUpperFluxThreshold = br.curEnergon < br.myMaxEnergon/2 ? 
 				br.curEnergon/2 : br.curEnergon*2/3;
 			
 		distributeFluxBattle(rc.getFlux()-myUpperFluxThreshold);
@@ -127,17 +127,19 @@ public class FluxBalanceSystem {
 		
 		br.radar.scan(true, false);
 		
+		// Compute amount that we need to transfer to put everyone above their lower threshold
 		double amountBelowLowerThreshold = 0;
 		for (int n=0; n<radar.numAdjacentAllies; n++) {
 			RobotInfo ri = radar.adjacentAllies[n];
 			if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON)
 				continue;
-			double lowerFluxThreshold = ri.energon < ri.type.maxEnergon ? 
+			double lowerFluxThreshold = ri.energon < ri.type.maxEnergon/2 ? 
 					ri.energon/4 : ri.energon/3;
 			if(ri.flux < lowerFluxThreshold)
 				amountBelowLowerThreshold += lowerFluxThreshold - ri.flux;
 		}
-		// scouts shouldn't transfer to archons or other scouts
+		
+		// If everyone is above their lower threshold, give to archons and scouts
 		if(br.myType != RobotType.SCOUT && amountBelowLowerThreshold == 0) {
 			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
 				RobotInfo ri = radar.adjacentAllies[n];
@@ -155,21 +157,20 @@ public class FluxBalanceSystem {
 					fluxToTransfer -= x;
 				}
 			}
+			
+		// Otherwise, give flux to those that need it
 		} else {
 			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
 				RobotInfo ri = radar.adjacentAllies[n];
 				if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON)
 					continue;
-				double lowerFluxThreshold = ri.energon < ri.type.maxEnergon ? 
+				double lowerFluxThreshold = ri.energon < ri.type.maxEnergon/2 ? 
 						ri.energon/4 : ri.energon/3;
 				if(ri.flux < lowerFluxThreshold) {
-					double upperFluxThreshold = ri.energon < ri.type.maxEnergon ? 
+					double upperFluxThreshold = ri.energon < ri.type.maxEnergon/2 ? 
 							ri.energon/2 : ri.energon*2/3;
 					double x = Math.min(fluxToTransfer, upperFluxThreshold - ri.flux);
 					rc.transferFlux(ri.location, ri.type.level, x);
-					if (br.myType == RobotType.SCOUT) {
-//						br.dbg.println('e', "Scout giving flux to " + ri.type + ".");
-					}
 					fluxToTransfer -= x;
 				}
 			}

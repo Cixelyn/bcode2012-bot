@@ -49,8 +49,8 @@ public class ScoutRobot extends BaseRobot {
 	public ScoutRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		// set initial state
-		strategy = StrategyState.SCOUT_ENEMY;
-		behavior = BehaviorState.SUPPORT_FRONT_LINES;
+		strategy = StrategyState.BATTLE;
+		behavior = BehaviorState.PET;
 		enemySpottedTarget = null;
 		enemySpottedRound = -55555;
 		// set broadcast channels
@@ -65,6 +65,12 @@ public class ScoutRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
+		if(Clock.getRoundNum()<200) {
+			strategy = StrategyState.INITIAL_EXPLORE;
+		} else {
+			strategy = StrategyState.BATTLE;
+		}
+		
 		// scan
 		radar.scan(true, true);
 		
@@ -80,7 +86,7 @@ public class ScoutRobot extends BaseRobot {
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo(false);
 		
-		// switch states if necessary
+		
 		if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY || 
 				behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
 			if(radar.closestEnemy != null) {
@@ -88,6 +94,17 @@ public class ScoutRobot extends BaseRobot {
 				enemySpottedTarget = radar.closestEnemy.location;
 				enemySpottedRound = curRound;
 			}
+		} else if(behavior == BehaviorState.REPORT_ENEMY_SIGHTING || 
+				behavior == BehaviorState.REPORT_MAP_EDGE) {
+			if(curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 25) {
+				if(strategy == StrategyState.INITIAL_EXPLORE) 
+					behavior = BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY;
+				else if(strategy == StrategyState.BATTLE)
+					behavior = BehaviorState.SUPPORT_FRONT_LINES;
+			}
+		} else if(behavior == BehaviorState.PET) {
+			if(strategy == StrategyState.INITIAL_EXPLORE) 
+				behavior = BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY;
 		}
 		
 		
@@ -166,12 +183,12 @@ public class ScoutRobot extends BaseRobot {
 			rc.regenerate();
 		}
 		
-		// broadcast initial report if applicable
-//		if (behavior == BehaviorState.REPORT_ENEMY) {
-//			io.sendUShorts(BroadcastChannel.ARCHONS, BroadcastType.INITIAL_REPORT,
-//					new int[] {initialReportTime, initialReportLoc.x,
-//					initialReportLoc.y});
-//		}
+		// broadcast enemy spotting
+		if (behavior == BehaviorState.REPORT_ENEMY_SIGHTING && 
+				curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 64) {
+			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.ENEMY_SPOTTED,
+					new int[] {enemySpottedRound, enemySpottedTarget.x, enemySpottedTarget.y});
+		}
 		
 		// indicator strings
 		dbg.setIndicatorString('e', 1, "Target=<"+(objective.x-curLoc.x)+","+
@@ -180,17 +197,7 @@ public class ScoutRobot extends BaseRobot {
 	
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
-		int[] shorts;
 		switch(msgType) {
-		case ENEMY_SPOTTED:
-			shorts = BroadcastSystem.decodeUShorts(sb);
-			MapLocation newEnemySpottedTarget = new MapLocation(shorts[1], shorts[2]);
-			if(enemySpottedTarget==null || curLoc.distanceSquaredTo(enemySpottedTarget) <
-					curLoc.distanceSquaredTo(enemySpottedTarget)) {
-				enemySpottedRound = shorts[0];
-				enemySpottedTarget = newEnemySpottedTarget;
-			}
-			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 			break;
@@ -214,8 +221,8 @@ public class ScoutRobot extends BaseRobot {
 			return null;
 		}
 		
-		// Go to objective (scouts always travel backwards)
-		return new MoveInfo(curLoc.directionTo(objective), true);
+		// Go to objective
+		return new MoveInfo(curLoc.directionTo(objective), false);
 	}
 	
 	@Override

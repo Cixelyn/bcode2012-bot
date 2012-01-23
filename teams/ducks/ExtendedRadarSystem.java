@@ -76,14 +76,12 @@ public class ExtendedRadarSystem {
 		flagCount++;
 		int diff = 0;
 		
-		String indicatorString = "";
-		
 		// Subtract enemy energon
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = enemyKeySet.getID(i);
 			if(center.distanceSquaredTo(enemyLocationInfo[id]) <= radiusSquared) 
-				{diff -= enemyEnergonInfo[id]; indicatorString+=" e-"+id+"-"+diff;}
+				diff -= enemyEnergonInfo[id];
 		}
 		
 		// Subtract enemy energon from robots in the local radar but not in the ER
@@ -95,7 +93,6 @@ public class ExtendedRadarSystem {
 				continue;
 			if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
 				diff -= ri.energon;
-				indicatorString+=" d-"+id+"-"+diff;
 			}
 		}
 		
@@ -106,7 +103,6 @@ public class ExtendedRadarSystem {
 			if(center.distanceSquaredTo(allyLocationInfo[id]) <= radiusSquared) {
 				flags[id] = flagCount;
 				diff += allyEnergonInfo[id];
-				indicatorString+=" a-"+id+"-"+diff;
 			}
 		}
 		
@@ -119,7 +115,6 @@ public class ExtendedRadarSystem {
 				continue;
 			if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
 				diff += ri.energon;
-				indicatorString+=" b-"+id+"-"+diff;
 			}
 		}
 		
@@ -128,7 +123,7 @@ public class ExtendedRadarSystem {
 			diff += br.curEnergon;
 		}
 		
-		br.dbg.setIndicatorString('h', 0, toString()+" ----- energon difference: "+diff+" "+indicatorString);
+//		br.dbg.setIndicatorString('h', 0, toString()+" ----- energon difference: "+diff);
 		return diff;
 	}
 	
@@ -193,12 +188,12 @@ public class ExtendedRadarSystem {
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = enemyKeySet.getID(i);
-			ret+="id="+id+",pos=<"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+">,hp="+enemyEnergonInfo[id]+"     ";
+			ret+=" id="+id+", pos=<"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+">, hp="+enemyEnergonInfo[id]+"     ";
 		}
 		size = allyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = allyKeySet.getID(i);
-			ret+="(ally)id="+id+",pos=<"+(allyLocationInfo[id].x-br.curLoc.x)+","+(allyLocationInfo[id].y-br.curLoc.y)+">,hp="+allyEnergonInfo[id]+"     ";
+			ret+=" (ally)id="+id+", pos=<"+(allyLocationInfo[id].x-br.curLoc.x)+","+(allyLocationInfo[id].y-br.curLoc.y)+">, hp="+allyEnergonInfo[id]+"     ";
 		}
 		return ret;
 	}

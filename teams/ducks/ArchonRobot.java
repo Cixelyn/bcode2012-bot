@@ -81,19 +81,16 @@ public class ArchonRobot extends BaseRobot{
 	public void run() throws GameActionException {
 		
 		// Currently the strategy transition is based on hard-coded turn numbers
-		if(Clock.getRoundNum()>2800) {
+		if(Clock.getRoundNum()>3100) {
 			strategy = StrategyState.CAP;
 		} else if(Clock.getRoundNum()>1700 && myArchonID!=0) {
 			strategy = StrategyState.CAP;
 		} else if(Clock.getRoundNum()>1000 || 
 				(mc.powerNodeGraph.enemyPowerCoreID != 0 && enemySpottedTarget == null)) {
 			strategy = StrategyState.DEFEND;
-			enemySpottedTarget = null;
 		} else if(Clock.getRoundNum()>20) {
 			strategy = StrategyState.RUSH;
 		}
-		
-		dbg.setIndicatorString('h', 0, enemySpottedTarget+"");
 		
 		// If insufficiently prepared, prepare
 		if(nav.getTurnsPrepared() < TangentBug.DEFAULT_MIN_PREP_TURNS)
@@ -107,7 +104,7 @@ public class ArchonRobot extends BaseRobot{
 			radar.broadcastEnemyInfo(false);
 		
 		if (behavior == BehaviorState.RETREAT && radar.getArmyDifference() > 2)
-			stayTargetLockedUntilRound = 0;
+			stayTargetLockedUntilRound = -55555;
 		
 		// If there is an enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null) {
@@ -139,12 +136,13 @@ public class ArchonRobot extends BaseRobot{
 			case RETREAT: updateRetreatTarget(); break;
 			}
 			
-		// If someone else told us of an enemy spotting, go to that location
-		} else if(strategy != StrategyState.DEFEND && enemySpottedTarget != null) {
+		// If someone else told us of a recent enemy spotting, go to that location
+		} else if(strategy != StrategyState.DEFEND && curRound < enemySpottedRound + 100) {
 			behavior = BehaviorState.SWARM;
 			target = enemySpottedTarget;
 			if(curLoc.distanceSquaredTo(enemySpottedTarget) <= 16) {
 				enemySpottedTarget = null;
+				enemySpottedRound = -55555;
 			}
 			
 		// If we haven't seen anyone for a while, go back to swarm mode and reset target
@@ -569,8 +567,10 @@ public class ArchonRobot extends BaseRobot{
 		switch(msgType) {
 		case ENEMY_SPOTTED:
 			int[] shorts = BroadcastSystem.decodeUShorts(sb);
-			enemySpottedRound = shorts[0];
-			enemySpottedTarget = new MapLocation(shorts[1], shorts[2]);
+			if(shorts[0] > enemySpottedRound) {
+				enemySpottedRound = shorts[0];
+				enemySpottedTarget = new MapLocation(shorts[1], shorts[2]);
+			}
 			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
