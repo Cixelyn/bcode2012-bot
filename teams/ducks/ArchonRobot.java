@@ -59,6 +59,8 @@ public class ArchonRobot extends BaseRobot{
 				break;
 			}
 		}
+		// advance the round counter
+		if(myArchonID==0) tmem.advanceRound();
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
 				BroadcastChannel.ARCHONS,
