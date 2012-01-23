@@ -73,19 +73,21 @@ public class ExtendedRadarSystem {
 	 * Returns a positive number iff we have more energon than the other team.
 	 */
 	public int getEnergonDifference(MapLocation center, int radiusSquared) {
+		
+		int i; // hardcoded to bring i into istore_3
+		
 		flagCount++;
 		int diff = 0;
 		
 		// Subtract enemy energon
-		int size = enemyKeySet.size();
-		for(int i=0; i<size; i++) {
+		for(i=enemyKeySet.size(); --i>=0;) {
 			int id = enemyKeySet.getID(i);
 			if(center.distanceSquaredTo(enemyLocationInfo[id]) <= radiusSquared) 
 				diff -= enemyEnergonInfo[id];
 		}
 		
 		// Subtract enemy energon from robots in the local radar but not in the ER
-		for(int i=0; i<br.radar.numEnemyRobots; i++) {
+		for(i=br.radar.numEnemyRobots; --i>=0;) {
 			int id = br.radar.enemyRobots[i];
 			if(flags[id]==flagCount) continue;
 			RobotInfo ri = br.radar.enemyInfos[id];
@@ -97,8 +99,7 @@ public class ExtendedRadarSystem {
 		}
 		
 		// Add ally energon
-		size = allyKeySet.size();
-		for(int i=0; i<size; i++) {
+		for(i=allyKeySet.size(); --i>=0;) {
 			int id = allyKeySet.getID(i);
 			if(center.distanceSquaredTo(allyLocationInfo[id]) <= radiusSquared) {
 				flags[id] = flagCount;
@@ -107,7 +108,7 @@ public class ExtendedRadarSystem {
 		}
 		
 		// Add ally energon from robots in the local radar but not in the ER
-		for(int i=0; i<br.radar.numAllyRobots; i++) {
+		for(i=br.radar.numAllyRobots; --i>=0;) {
 			int id = br.radar.allyRobots[i];
 			if(flags[id]==flagCount) continue;
 			RobotInfo ri = br.radar.allyInfos[id];
@@ -129,10 +130,9 @@ public class ExtendedRadarSystem {
 	
 	/** Returns the location of this closest enemy. */
 	public MapLocation getClosestEnemyLocation() {
-		int size = enemyKeySet.size();
 		MapLocation ret = null;
 		int bestDist = Integer.MAX_VALUE;
-		for(int i=0; i<size; i++) {
+		for(int i=enemyKeySet.size(); --i>=0;) {
 			int id = enemyKeySet.getID(i);
 			int dist = br.curLoc.distanceSquaredTo(enemyLocationInfo[id]);
 			if(dist<bestDist) {
