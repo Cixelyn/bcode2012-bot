@@ -42,9 +42,11 @@ public class ArchonRobot extends BaseRobot{
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	
-	static final int RETREAT_RADIUS = 5;
+	static final int RETREAT_RADIUS = 4;
+	static final int RETREAT_DISTANCE = 6;
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
+	static final int TURNS_TO_RETREAT = 30;
 	MapLocation lastPowerNodeGuess;
 	
 	public ArchonRobot(RobotController myRC) throws GameActionException {
@@ -110,9 +112,10 @@ public class ArchonRobot extends BaseRobot{
 			enemySpottedRound = curRound;
 			enemySpottedTarget = radar.closestEnemy.location;
 			stayTargetLockedUntilRound = curRound + TURNS_TO_LOCK_ONTO_AN_ENEMY;
-			if (radar.getArmyDifference() < -2 || (radar.alliesInFront==0 && 
-					radar.numEnemyRobots-radar.numEnemyArchons>0)) {
-				stayTargetLockedUntilRound = curRound+30;
+			Direction enemyswarmdir = curLoc.directionTo(radar.getEnemySwarmTarget());
+			if (radar.getArmyDifference() < -2 || (radar.getAlliesInDirection(enemyswarmdir)==0 && 
+					radar.numEnemyRobots-radar.numEnemyArchons-radar.numEnemyTowers>0)) {
+				stayTargetLockedUntilRound = curRound+TURNS_TO_RETREAT;
 				behavior = BehaviorState.RETREAT;
 				String ret = computeRetreatTarget();
 				dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
@@ -253,6 +256,7 @@ public class ArchonRobot extends BaseRobot{
 //		6   2
 //		5 4 3
 		int[] closest_in_dir = er.getEnemiesInEachDirection();
+//		int[] closest_in_dir = radar.closestInDir;
 		int[] wall_in_dir = new int[8];
 		
 //		now, deal with when we are close to map boundaries
@@ -302,6 +306,14 @@ public class ArchonRobot extends BaseRobot{
 			}
 		}
 		
+//		String dir = ""	+(closest_in_dir[0]==99?(wall_in_dir[0]==0?"o":"x"):"x")
+//						+(closest_in_dir[1]==99?(wall_in_dir[1]==0?"o":"x"):"x")
+//						+(closest_in_dir[2]==99?(wall_in_dir[2]==0?"o":"x"):"x")
+//						+(closest_in_dir[3]==99?(wall_in_dir[3]==0?"o":"x"):"x")
+//						+(closest_in_dir[4]==99?(wall_in_dir[4]==0?"o":"x"):"x")
+//						+(closest_in_dir[5]==99?(wall_in_dir[5]==0?"o":"x"):"x")
+//						+(closest_in_dir[6]==99?(wall_in_dir[6]==0?"o":"x"):"x")
+//						+(closest_in_dir[7]==99?(wall_in_dir[7]==0?"o":"x"):"x");
 		String dir = ""	+(closest_in_dir[0]==0?(wall_in_dir[0]==0?"o":"x"):"x")
 						+(closest_in_dir[1]==0?(wall_in_dir[1]==0?"o":"x"):"x")
 						+(closest_in_dir[2]==0?(wall_in_dir[2]==0?"o":"x"):"x")
@@ -313,59 +325,96 @@ public class ArchonRobot extends BaseRobot{
 		dir = dir+dir;
 		int index;
 		
+		
+		Direction newdir;
 		index = dir.indexOf("ooooooo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+3)%8];
-			target = curLoc.add(targetDir,5);
+			newdir = Constants.directions[(index+3)%8];
+			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			{
+				targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			}
 			return dir;
 		}
 		
 		index = dir.indexOf("oooooo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+3)%8];
-			target = curLoc.add(targetDir,5);
+			newdir = Constants.directions[(index+3)%8];
+			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			{
+				targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			}
 			return dir;
 		}
 		
 		index = dir.indexOf("ooooo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+2)%8];
-			target = curLoc.add(targetDir,5);
+			newdir = Constants.directions[(index+2)%8];
+			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			{
+				targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			}
 			return dir;
 		}
 		
 		index = dir.indexOf("oooo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+2)%8];
-			target = curLoc.add(targetDir,5);
+			newdir = Constants.directions[(index+2)%8];
+			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			{
+				targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			}
 			return dir;
 		}
 		
 		index = dir.indexOf("ooo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+1)%8];
-			target = curLoc.add(targetDir,5);
+			newdir = Constants.directions[(index+1)%8];
+			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			{
+				targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			}
 			return dir;
 		}
 		
 		index = dir.indexOf("oo");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index+1)%8];
-			target = curLoc.add(targetDir,5);
+			newdir = Constants.directions[(index+1)%8];
+			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			{
+				targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			}
 			return dir;
 		}
 		
 		index = dir.indexOf("o");
 		if (index>-1)
 		{
-			targetDir = Constants.directions[(index)%8];
-			target = curLoc.add(targetDir,5);
+			newdir = Constants.directions[(index)%8];
+			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			{
+				targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			}
 			return dir;
 		}
 		
@@ -379,16 +428,25 @@ public class ArchonRobot extends BaseRobot{
 //				lowest = closest_in_dir[x];
 //			}
 		target = radar.getEnemySwarmTarget();
-//		targetDir = target.directionTo(curLoc);
+		newdir = target.directionTo(curLoc);
 //		targetDir = Constants.directions[lowesti];
-		target = curLoc.add(targetDir,5);
+		if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+		{
+			targetDir = newdir;
+			target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			return null;
+		}
 		return null;
 	}
 	
 	private void updateRetreatTarget()
 	{
 		if (curLoc.distanceSquaredTo(target) < 10)
-			target = curLoc.add(targetDir,5);
+		{
+			target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+		}
 		dbg.setIndicatorString('y',1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
 	}
 	
@@ -530,15 +588,14 @@ public class ArchonRobot extends BaseRobot{
 	public MoveInfo computeNextMove() throws GameActionException {
 		
 		
-		
 		if (behavior==BehaviorState.RETREAT) {
+			nav.setDestination(target);
 			if(rc.getFlux() > 130) {
 				for(int d=curDir.ordinal(); d<curDir.ordinal()+8; d++)
 					if (rc.canMove(Constants.directions[d%8]))
 						return new MoveInfo(RobotType.SOLDIER, Constants.directions[d%8]);
-			} else {
-				return new MoveInfo(nav.navigateToDestination(), true);
 			}
+			return new MoveInfo(nav.navigateToDestination(), true);
 		}
 		
 		if(strategy == StrategyState.SPLIT) {
