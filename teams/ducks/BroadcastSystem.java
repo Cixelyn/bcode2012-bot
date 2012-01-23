@@ -466,11 +466,9 @@ public class BroadcastSystem {
 	}
 	
 	private void possiblyRememberEnemyMessage(Message m) {
-		if (Math.random() < 0.001) {
-			int a = Clock.getBytecodesLeft();
-			br.mos.rememberMessage(m);
-			int b = Clock.getBytecodesLeft();
-			System.out.println(a-b);
+		if (Math.random() < 0.0001) {
+			// the boolean determines whether we encrypt or not
+			br.mos.rememberMessage(m, false);
 		}
 	}
 	

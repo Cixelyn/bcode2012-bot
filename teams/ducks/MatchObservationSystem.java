@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.Clock;
 import battlecode.common.MapLocation;
 import battlecode.common.Message;
 
@@ -14,41 +15,51 @@ public class MatchObservationSystem {
 		br = myBR;
 	}
 	
-	public void rememberMessage(Message m) {
-		br.rc.addMatchObservation(encryptString(serializeMessageToString(m)));
+	/**
+	 * Sets a match observation for the fun gamers to review later. Useful for
+	 * looking at enemy messages!
+	 * @param m The message to remember
+	 * @param shouldEncrypt Whether to encrypt the message or not. Right now,
+	 * takes about 2000 bytecodes per message. Not sure why it's so many. :(
+	 */
+	public void rememberMessage(Message m, boolean shouldEncrypt) {
+		String s = serializeMessageToString(m);
+		if (shouldEncrypt) {
+			s = encryptString(s);
+		}
+		br.rc.addMatchObservation(s);
 	}
 	
 	private static String serializeMessageToString(Message m) {
 		if (m == null) {
 			return "";
 		}
-		StringBuilder sb = new StringBuilder();
-		sb.append(DELIMITER);
+		String s = DELIMITER;
 		if (m.ints != null) {
-			sb.append(m.ints.length + DELIMITER);
+			s = s.concat(m.ints.length + DELIMITER);
 			for (int myInt : m.ints) {
-				sb.append(myInt + DELIMITER);
+				s = s.concat(myInt + DELIMITER);
 			}
 		} else {
-			sb.append(0 + DELIMITER);
+			s = s.concat(0 + DELIMITER);
 		}
 		if (m.strings != null) {
-			sb.append(m.strings.length + DELIMITER);
+			s = s.concat(m.strings.length + DELIMITER);
 			for (String myString : m.strings) {
-				sb.append(myString + DELIMITER);
+				s = s.concat(myString + DELIMITER);
 			}
 		} else {
-			sb.append(0 + DELIMITER);
+			s = s.concat(0 + DELIMITER);
 		}
 		if (m.locations != null) {
-			sb.append(m.locations.length + DELIMITER);
+			s = s.concat(m.locations.length + DELIMITER);
 			for (MapLocation myLoc : m.locations) {
-				sb.append(myLoc.x + "," + myLoc.y + DELIMITER);
+				s = s.concat(myLoc.x + "," + myLoc.y + DELIMITER);
 			}
 		} else {
-			sb.append(0 + DELIMITER);
+			s = s.concat(0 + DELIMITER);
 		}
-		return sb.toString();
+		return s;
 	}
 	
 	private static Message deserializeMessageFromString(String s) {
@@ -92,23 +103,24 @@ public class MatchObservationSystem {
 	}
 	
 	private static String encryptString(String s) {
-		StringBuilder sb = new StringBuilder();
+		String t = "";
 		for (int i = 0; i < s.length(); i++) {
-			sb.append(Integer.toHexString((7 * i + (int)s.charAt(i)) % 65536) + 'x');
+			t = t.concat(Integer.toHexString(
+					(7 * i + (int)s.charAt(i)) % 65536) + 'x');
 		}
-		return sb.toString();
+		return t;
 	}
 	
-	private static String decryptString(String s) {
-		StringBuilder sb = new StringBuilder();
+	private static String decryptString(String t) {
+		String s = "";
 		int i = 0;
-		while (s.indexOf('x') != -1) {
-			sb.append((char)(((65536 - 7) * i + Integer.parseInt(
-					s.substring(0, s.indexOf('x')), 16)) % 65536));
-			s = s.substring(s.indexOf('x') + 1);
+		while (t.indexOf('x') != -1) {
+			s = s.concat("" + (char)(((65536 - 7) * i + Integer.parseInt(
+					t.substring(0, t.indexOf('x')), 16)) % 65536));
+			t = t.substring(t.indexOf('x') + 1);
 			i++;
 		}
-		return sb.toString();
+		return s;
 	}
 	
 	private static void test() {
@@ -130,10 +142,19 @@ public class MatchObservationSystem {
 	
 	public static void main(String[] args) {
 //		test();
-		// PUT MATCH OBSERVATION STRING HERE TO GET THE OPPONENT'S MESSAGE
+		
+		/**
+		 *  PUT MATCH OBSERVATION STRING HERE TO GET THE OPPONENT'S MESSAGE
+		 */
 		String matchObservationString = "23x85x31x48x3fxa1x4dx62x6ax62xc4x70x8ax91x92x99x93xf5xa1xbexc5xc5xcfxd2xdcxe0xd9x13bxe7xfbxf5x157x103x119x111x173x11fx13cx143x148x148x14bx158x164x16ax172x176x16cx1cex17ax197x19ex1a3x1a6x1a6x1b3x1bfx1c5x1ccx1d6x1c7x229x1d5x";
-		Message m = deserializeMessageFromString(decryptString(
-				matchObservationString));
+		boolean wasEncrypted = true;
+		
+		
+		// DON'T CHANGE ANYTHING BELOW
+		if (wasEncrypted) {
+			matchObservationString = decryptString(matchObservationString);
+		}
+		Message m = deserializeMessageFromString(matchObservationString);
 		for (int a : m.ints) System.out.println(a);
 		for (String b : m.strings) System.out.println(b);
 		for (MapLocation c : m.locations) System.out.println(c);
