@@ -1,26 +1,27 @@
 package ducks;
 
 import battlecode.common.*;
+import static battlecode.common.Clock.getRoundNum;
 
 public class HibernationSystem {
 	final BaseRobot br;
 	
-	private boolean wakeOnFlux;
+	private boolean lowFluxMode;
 
 	public static enum HibernationMode {NORMAL, LOW_FLUX}
 	public static enum ExitCode {MESSAGED, ATTACKED, REFUELED }
-	
+
 	public HibernationSystem(BaseRobot baseRobot) {
 		this.br = baseRobot;
-		wakeOnFlux = false;
+		lowFluxMode = false;
 	}
 
 	public void setMode(HibernationMode mode) {
 		switch(mode) {
 		case NORMAL:
-			wakeOnFlux = false;
+			lowFluxMode = false;
 		case LOW_FLUX:
-			wakeOnFlux = true;
+			lowFluxMode = true;
 		}
 	}
 	
@@ -37,14 +38,31 @@ public class HibernationSystem {
 		Message[] msgs;	 				// astore_3
 
 		RobotController rc = br.rc; 	// field 4
-		int time; 						// field 5
-		
+		int time=br.myID;				// field 5
+		int clock;
+		boolean localLowFluxMode = this.lowFluxMode;
+	
 		double lastEnergon = rc.getEnergon();
 		double lastFlux = rc.getFlux();
 		double curEnergon, curFlux;
 
 		// team number check
 		int teamkey = br.io.teamkey;
+		
+		
+		// generate our help message
+		Message helpMsg = new Message();
+		
+		String data = 
+				BroadcastChannel.SCOUTS.chanHeader.concat(
+				BroadcastType.LOW_FLUX_HELP.header_s).concat(
+				br.io.generateMetadata());
+		helpMsg.ints = new int[]{
+				br.io.teamkey,
+				br.io.hashMessage(new StringBuilder(data)),
+		};
+		helpMsg.strings = new String[]{data};
+		
 
 		while (true) {
 			
@@ -61,12 +79,25 @@ public class HibernationSystem {
 				br.io.sendWakeupCall();
 				return ExitCode.ATTACKED;
 			}      
-			if(wakeOnFlux && (curFlux > lastFlux)) {
+			
+			// low flux mode checks
+			// we check the boolean only on special events so that
+			// our bytecode usage is lower in low flux mode
+			if(curFlux > lastFlux && localLowFluxMode) {
 				br.resetClock();
 				br.updateRoundVariables();
 				return ExitCode.REFUELED;
 			}
-				
+			
+			if(time++ % 50 == 0 && localLowFluxMode) {
+				try{
+					rc.broadcast(helpMsg);
+				} catch(GameActionException e) {
+					e.printStackTrace();
+					rc.addMatchObservation(e.toString());
+				}
+			}
+			
 			lastEnergon = curEnergon;
 			lastFlux = curFlux;
 			
@@ -75,21 +106,19 @@ public class HibernationSystem {
 			for (i = msgs.length; --i >= 0;) {
 
 				// validity check
-				mints = msgs[i].ints;
-				if (mints == null)
+				if ((mints = msgs[i].ints) == null)
 					continue;
 				if (mints.length != 3)
 					continue;
 				if (mints[0] != teamkey)
 					continue;
-
-				if ((mints[2] <= (time=Clock.getRoundNum())) && (mints[2] > time - 10)) {
+				
+//				if ((mints[2] <= (clock=Clock.getRoundNum())) && (mints[2] > clock - 10)) {
 					br.resetClock();
 					br.updateRoundVariables();
 					br.io.sendWakeupCall();
 					return ExitCode.MESSAGED; // our exit point
-				}
-
+//				}
 			}
 
 			rc.yield();
