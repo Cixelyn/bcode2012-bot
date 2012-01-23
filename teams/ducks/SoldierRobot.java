@@ -44,6 +44,7 @@ public class SoldierRobot extends BaseRobot {
 	boolean archonTargetIsEnemy;
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
+	int roundLastWakenUp;
 	
 	public SoldierRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
@@ -61,6 +62,7 @@ public class SoldierRobot extends BaseRobot {
 		archonTargetIsEnemy = false;
 		enemySpottedTarget = null;
 		enemySpottedRound = -55555;
+		roundLastWakenUp = -55555;
 	}
 
 	@Override
@@ -135,7 +137,8 @@ public class SoldierRobot extends BaseRobot {
 				
 				if(behavior == BehaviorState.SWARM && 
 						closestSwarmTargetSenderDist <= 10 && 
-						curLoc.distanceSquaredTo(target) <= 10) { 
+						curLoc.distanceSquaredTo(target) <= 10 && 
+						curRound > roundLastWakenUp + 10) { 
 					// Close enough to swarm target, look for a place to hibernate
 					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
 					hibernateTarget = target;
@@ -151,7 +154,8 @@ public class SoldierRobot extends BaseRobot {
 			if(rc.getFlux() < 10) {
 				if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
 					// Too low flux, can't reach archon
-					behavior = BehaviorState.LOW_FLUX_HIBERNATE;
+					if(curRound > roundLastWakenUp + 10)
+						behavior = BehaviorState.LOW_FLUX_HIBERNATE;
 				} else {
 					// Needs to get flux from archon
 					behavior = BehaviorState.REFUEL;
@@ -196,11 +200,12 @@ public class SoldierRobot extends BaseRobot {
 					behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
 				else
 					tryToAttack();
-			}
-			else if(ec == HibernationSystem.ExitCode.MESSAGED)
+			} else if(ec == HibernationSystem.ExitCode.MESSAGED) {
 				behavior = BehaviorState.SWARM;
-			else if(ec == HibernationSystem.ExitCode.REFUELED)
-				behavior = BehaviorState.LOST;
+			} else if(ec == HibernationSystem.ExitCode.REFUELED) {
+				behavior = BehaviorState.SWARM;
+			}
+			roundLastWakenUp = curRound;
 			target = curLoc;
 			nav.setDestination(target);
 		}
