@@ -471,7 +471,10 @@ public class RadarSystem {
 	
 	public int getAlliesInDirection(Direction dir)
 	{
-		return allies_in_dir[dir.ordinal()]+allies_in_dir[(dir.ordinal()+1)%8]+allies_in_dir[(dir.ordinal()+7)%8];
+		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI)
+			return 0;
+		return allies_in_dir[dir.ordinal()]+allies_in_dir[(dir.ordinal()+1)%8]+
+				allies_in_dir[(dir.ordinal()+7)%8];
 	}
 
 	/**
