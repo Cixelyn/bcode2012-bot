@@ -428,17 +428,24 @@ public class BroadcastSystem {
 				
 				
 				// validity check
-				if(m.ints == null) continue;
-				if(m.ints.length < 2 || m.ints.length > 3) continue;
-				if(m.strings == null || m.strings.length != 1 ) continue;
-				if(m.locations != null) continue;
+				if(m.ints == null || m.ints.length < 2 || m.ints.length > 3 ||
+						m.strings == null || m.strings.length != 1 || m.locations != null) {
+					possiblyRememberEnemyMessage(m);
+					continue;
+				}
 				
 				// team check
-				if(m.ints[0] != teamkey) continue;
+				if(m.ints[0] != teamkey) {
+					possiblyRememberEnemyMessage(m);
+					continue;
+				}
 				
 				// hash check
-				if(m.strings[0] == null) continue;
-				if(m.ints[1] != hashMessage(new StringBuilder(m.strings[0]))) continue;
+				if(m.strings[0] == null ||
+						m.ints[1] != hashMessage(new StringBuilder(m.strings[0]))) {
+					possiblyRememberEnemyMessage(m);
+					continue;
+				}
 				
 				sb.append(m.strings[0]);
 			}
@@ -455,6 +462,15 @@ public class BroadcastSystem {
 			        i++;
 			    }	
 			}
+		}
+	}
+	
+	private void possiblyRememberEnemyMessage(Message m) {
+		if (Math.random() < 0.001) {
+			int a = Clock.getBytecodesLeft();
+			br.mos.rememberMessage(m);
+			int b = Clock.getBytecodesLeft();
+			System.out.println(a-b);
 		}
 	}
 	

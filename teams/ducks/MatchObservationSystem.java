@@ -94,15 +94,19 @@ public class MatchObservationSystem {
 	private static String encryptString(String s) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < s.length(); i++) {
-			sb.append(Integer.toHexString((int)s.charAt(i)));
+			sb.append(Integer.toHexString((7 * i + (int)s.charAt(i)) % 65536) + 'x');
 		}
 		return sb.toString();
 	}
 	
 	private static String decryptString(String s) {
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < s.length(); i+=2) {
-			sb.append((char)(Integer.parseInt(s.substring(i, i+2), 16)));
+		int i = 0;
+		while (s.indexOf('x') != -1) {
+			sb.append((char)(((65536 - 7) * i + Integer.parseInt(
+					s.substring(0, s.indexOf('x')), 16)) % 65536));
+			s = s.substring(s.indexOf('x') + 1);
+			i++;
 		}
 		return sb.toString();
 	}
@@ -127,7 +131,7 @@ public class MatchObservationSystem {
 	public static void main(String[] args) {
 //		test();
 		// PUT MATCH OBSERVATION STRING HERE TO GET THE OPPONENT'S MESSAGE
-		String matchObservationString = "237e2330237e2330237e2331237e23393937332c3237363537237e23";
+		String matchObservationString = "23x85x31x48x3fxa1x4dx62x6ax62xc4x70x8ax91x92x99x93xf5xa1xbexc5xc5xcfxd2xdcxe0xd9x13bxe7xfbxf5x157x103x119x111x173x11fx13cx143x148x148x14bx158x164x16ax172x176x16cx1cex17ax197x19ex1a3x1a6x1a6x1b3x1bfx1c5x1ccx1d6x1c7x229x1d5x";
 		Message m = deserializeMessageFromString(decryptString(
 				matchObservationString));
 		for (int a : m.ints) System.out.println(a);
