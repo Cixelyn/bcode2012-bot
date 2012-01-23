@@ -285,7 +285,8 @@ public class SoldierRobot extends BaseRobot {
 			
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
-			boolean weHaveBiggerFront = er.getEnergonDifference(16) > 0;
+			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
+			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 16) > 0;
 			int tooClose = weHaveBiggerFront ? -1 : 5;
 			int tooFar = weHaveBiggerFront ? 4 : 25;
 			
