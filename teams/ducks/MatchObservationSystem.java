@@ -24,7 +24,7 @@ public class MatchObservationSystem {
 	public void rememberMessage(Message m, boolean shouldEncrypt) {
 		String s = serializeMessageToString(m);
 		if (shouldEncrypt) {
-			s = encryptString(s);
+			s = Encryption.encryptString(s);
 		}
 		br.rc.addMatchObservation(s);
 	}
@@ -101,37 +101,16 @@ public class MatchObservationSystem {
 		return m;
 	}
 	
-	private static String encryptString(String s) {
-		String t = "";
-		for (int i = 0; i < s.length(); i++) {
-			t = t.concat(Integer.toHexString(
-					(7 * i + (int)s.charAt(i)) % 65536) + 'x');
-		}
-		return t;
-	}
-	
-	private static String decryptString(String t) {
-		String s = "";
-		int i = 0;
-		while (t.indexOf('x') != -1) {
-			s = s.concat("" + (char)(((65536 - 7) * i + Integer.parseInt(
-					t.substring(0, t.indexOf('x')), 16)) % 65536));
-			t = t.substring(t.indexOf('x') + 1);
-			i++;
-		}
-		return s;
-	}
-	
-	private static void test() {
+	public static void test() {
 		Message m = new Message();
 		m.ints = new int[] {10,11,12};
 		m.strings = new String[] {"sup", "hi", "enemy over here!", "yoyoyoyo"};
 		m.locations = new MapLocation[] {new MapLocation(22, 55)};
 		String s = serializeMessageToString(m);
 		System.out.println(s);
-		s = encryptString(s);
+		s = Encryption.encryptString(s);
 		System.out.println(s);
-		s = decryptString(s);
+		s = Encryption.decryptString(s);
 		System.out.println(s);
 		Message m2 = deserializeMessageFromString(s);
 		for (int a : m2.ints) System.out.println(a);
@@ -145,13 +124,13 @@ public class MatchObservationSystem {
 		/**
 		 *  PUT MATCH OBSERVATION STRING HERE TO GET THE OPPONENT'S MESSAGE
 		 */
-		String matchObservationString = "23x85x31x48x3fxa1x4dx62x6ax62xc4x70x8ax91x92x99x93xf5xa1xbexc5xc5xcfxd2xdcxe0xd9x13bxe7xfbxf5x157x103x119x111x173x11fx13cx143x148x148x14bx158x164x16ax172x176x16cx1cex17ax197x19ex1a3x1a6x1a6x1b3x1bfx1c5x1ccx1d6x1c7x229x1d5x";
-		boolean wasEncrypted = true;
+		String matchObservationString = "";
+		boolean wasEncrypted = false;
 		
 		
 		// DON'T CHANGE ANYTHING BELOW
 		if (wasEncrypted) {
-			matchObservationString = decryptString(matchObservationString);
+			matchObservationString = Encryption.decryptString(matchObservationString);
 		}
 		Message m = deserializeMessageFromString(matchObservationString);
 		for (int a : m.ints) System.out.println(a);

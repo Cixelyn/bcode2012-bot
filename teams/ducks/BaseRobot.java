@@ -86,7 +86,8 @@ public abstract class BaseRobot {
 		
 		// DO NOT CHANGE THE ORDER OF THESE DECLARATIONS
 		// SOME CONTRUCTORS NEED OTHERS TO ALREADY BE DECLARED
-		dbg = new DebugSystem(this);
+		// the boolean is whether to encrypt (222 bytecodes)
+		dbg = new DebugSystem(this, true);
 		mos = new MatchObservationSystem(this);
 		dc = new DataCache(this);
 		mc = new MapCacheSystem(this);
