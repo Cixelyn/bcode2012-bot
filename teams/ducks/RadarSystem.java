@@ -71,7 +71,7 @@ public class RadarSystem {
 //	yp's variables for archon retreat code
 	public int[] closestInDir;
 	final static int[] blank_closestInDir = new int[] {99,99,99,99,99,99,99,99};
-//	public int[] allies_in_dir;
+	public int[] allies_in_dir;
 	
 	public RobotInfo closestEnemy;
 	public int closestEnemyDist;
@@ -141,6 +141,7 @@ public class RadarSystem {
 		alliesInFront = 0;
 		closestLowFluxAlly = null;
 		closestLowFluxAllyDist = Integer.MAX_VALUE;
+		allies_in_dir = new int[8];
 	}
 
 	private void addEnemy(RobotInfo rinfo) throws GameActionException {
@@ -255,7 +256,11 @@ public class RadarSystem {
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
 
-		if ((rinfo.energon < rinfo.type.maxEnergon - 0.2) && !rinfo.regen) {
+
+		int dist = br.curLoc.distanceSquaredTo(rinfo.location);
+		
+		if ((rinfo.energon < rinfo.type.maxEnergon - 0.2) && !rinfo.regen
+				&& dist <= 5) {
 			numAllyToRegenerate++;
 		}
 
@@ -273,7 +278,6 @@ public class RadarSystem {
 			alliesInFront++;
 		
 		// TODO(jven): this stuff should be linked with fbs
-		int dist = br.curLoc.distanceSquaredTo(rinfo.location);
 		if (rinfo.type != RobotType.ARCHON && rinfo.type != RobotType.SCOUT &&
 				rinfo.flux < rinfo.energon / 3 &&
 				dist < closestLowFluxAllyDist) {
@@ -300,16 +304,15 @@ public class RadarSystem {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
 		
-		if (rinfo.type != RobotType.ARCHON)
+		
+		switch (rinfo.type) {
+		case ARCHON:
+		case SOLDIER:
+		case SCORCHER:
+		case DISRUPTER:
 		{
-			int ddir = (br.curLoc.directionTo(rinfo.location).ordinal()-
-					br.curDir.ordinal()+8) % 8;
-			if(ddir >= 5)
-				alliesOnLeft++;
-			else if(ddir >= 1 && ddir <= 3)
-				alliesOnRight++;
-			if(ddir <= 1 || ddir == 7)
-				alliesInFront++;
+			allies_in_dir[br.curLoc.directionTo(rinfo.location).ordinal()]++;
+		} break;
 		}
 	}
 
@@ -464,6 +467,11 @@ public class RadarSystem {
 		return new MapLocation((int) (vecEnemyX * 7 / a) + br.curLoc.x,
 				(int) (vecEnemyY * 7 / a) + br.curLoc.y);
 
+	}
+	
+	public int getAlliesInDirection(Direction dir)
+	{
+		return allies_in_dir[dir.ordinal()]+allies_in_dir[(dir.ordinal()+1)%8]+allies_in_dir[(dir.ordinal()+7)%8];
 	}
 
 	/**
