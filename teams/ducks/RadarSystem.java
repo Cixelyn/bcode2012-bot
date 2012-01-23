@@ -31,7 +31,7 @@ public class RadarSystem {
 
 	public int numAdjacentAllies;
 	public int numAllyRobots;
-	public int numAllyDamaged;
+	public int numAllyToRegenerate;
 	public final RobotInfo[] adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	public int alliesOnLeft;
 	public int alliesOnRight;
@@ -74,7 +74,7 @@ public class RadarSystem {
 //	public int[] allies_in_dir;
 	
 	public RobotInfo closestEnemy;
-	public double closestEnemyDist;
+	public int closestEnemyDist;
 	
 	public RobotInfo closestLowFluxAlly;
 	public double closestLowFluxAllyDist;
@@ -111,7 +111,7 @@ public class RadarSystem {
 	
 	private void resetEnemyStats() {
 		closestEnemy = null;
-		closestEnemyDist = 999;
+		closestEnemyDist = Integer.MAX_VALUE;
 		numEnemyRobots = 0;
 		numEnemyArchons = 0;
 		numEnemySoldiers = 0;
@@ -131,12 +131,12 @@ public class RadarSystem {
 	private void resetAllyStats() {
 		numAdjacentAllies = 0;
 		numAllyRobots = 0;
-		numAllyDamaged = 0;
+		numAllyToRegenerate = 0;
 		alliesOnLeft = 0;
 		alliesOnRight = 0;
 		alliesInFront = 0;
 		closestLowFluxAlly = null;
-		closestLowFluxAllyDist = 999;
+		closestLowFluxAllyDist = Integer.MAX_VALUE;
 	}
 
 	private void addEnemy(RobotInfo rinfo) throws GameActionException {
@@ -247,8 +247,8 @@ public class RadarSystem {
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
 
-		if (rinfo.energon != rinfo.type.maxEnergon) {
-			numAllyDamaged++;
+		if ((rinfo.energon < rinfo.type.maxEnergon - 0.2) && !rinfo.regen) {
+			numAllyToRegenerate++;
 		}
 
 		if (rinfo.location.isAdjacentTo(br.curLoc)) {
@@ -285,7 +285,7 @@ public class RadarSystem {
 		numAllyRobots++;
 
 		if (rinfo.energon != rinfo.type.maxEnergon) {
-			numAllyDamaged++;
+			numAllyToRegenerate++;
 		}
 
 		if (rinfo.location.isAdjacentTo(br.curLoc)) {
@@ -466,15 +466,17 @@ public class RadarSystem {
 	}
 	
 	/** Gets the enemy info from the radar into your own and nearby robots' extended radar. */
-	public void broadcastEnemyInfo() {
+	public void broadcastEnemyInfo(boolean sendOwnInfo) {
 		if(numEnemyRobots==0) return;
 		
-		int[] shorts = new int[numEnemyRobots*4+4];
-		shorts[0] = br.myID;
-		shorts[1] = br.curLoc.x;
-		shorts[2] = br.curLoc.y;
-		shorts[3] = br.myType==RobotType.ARCHON ? 0 : (int)Math.ceil(br.curEnergon);
-		for(int i=0, c=4; i<numEnemyRobots; i++, c+=4) {
+		int[] shorts = new int[numEnemyRobots*4+(sendOwnInfo?4:0)];
+		if(sendOwnInfo) {
+			shorts[0] = br.myID;
+			shorts[1] = br.curLoc.x;
+			shorts[2] = br.curLoc.y;
+			shorts[3] = (int)Math.ceil(br.curEnergon);
+		}
+		for(int i=0, c=sendOwnInfo?4:0; i<numEnemyRobots; i++, c+=4) {
 			RobotInfo ri = enemyInfos[enemyRobots[i]];
 			shorts[c] = ri.robot.getID();
 			shorts[c+1] = ri.location.x;

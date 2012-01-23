@@ -27,6 +27,7 @@ public abstract class BaseRobot {
 	public final ScoutWireSystem sws;
 	public final DebugSystem dbg;
 	public final MatchObservationSystem mos;
+	public final HibernationSystem hsys;
 	
 	// Robot Statistics - Permanent
 	public final RobotType myType;
@@ -99,6 +100,7 @@ public abstract class BaseRobot {
 		ao = new ArchonOwnership(this);
 		msm = new MovementStateMachine(this);
 		sws = new ScoutWireSystem(this);
+		hsys = new HibernationSystem(this);
 		
 		mc.senseAll();
 		
@@ -160,7 +162,8 @@ public abstract class BaseRobot {
 		}
 	}
 	
-	private void updateRoundVariables() {
+	/** Resets the current round variables of the robot. */
+	public void updateRoundVariables() {
 		curRound = Clock.getRoundNum();
 		curEnergon = rc.getEnergon();
 		curLoc = rc.getLocation();

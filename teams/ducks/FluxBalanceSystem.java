@@ -121,7 +121,7 @@ public class FluxBalanceSystem {
 	}
 	
 	private void distributeFluxBattle(double fluxToTransfer) throws GameActionException {
-//		rc.setIndicatorString(0, fluxToTransfer<=0 ? "No flux to distribute" : 
+//		br.dbg.setIndicatorString('e', 0, fluxToTransfer<=0 ? "No flux to distribute" : 
 //			"Trying to distribute "+String.format("%.1f", fluxToTransfer)+" flux");
 		if(fluxToTransfer<=0) return;
 		
@@ -168,7 +168,7 @@ public class FluxBalanceSystem {
 					double x = Math.min(fluxToTransfer, upperFluxThreshold - ri.flux);
 					rc.transferFlux(ri.location, ri.type.level, x);
 					if (br.myType == RobotType.SCOUT) {
-						br.dbg.println('j', "Scout giving flux to " + ri.type + ".");
+//						br.dbg.println('e', "Scout giving flux to " + ri.type + ".");
 					}
 					fluxToTransfer -= x;
 				}
