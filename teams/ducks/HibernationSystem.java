@@ -89,7 +89,7 @@ public class HibernationSystem {
 				return ExitCode.REFUELED;
 			}
 			
-			if(time++ % 50 == 0 && localLowFluxMode) {
+			if(time++ % 60 == 0 && localLowFluxMode) {
 				try{
 					rc.broadcast(helpMsg);
 				} catch(GameActionException e) {
