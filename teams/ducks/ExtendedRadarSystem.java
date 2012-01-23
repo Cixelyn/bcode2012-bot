@@ -158,7 +158,8 @@ public class ExtendedRadarSystem {
 	}
 	
 	/**
-	 * Counts the number of enemies in each direction in our extended radar
+	 * Counts the number of enemies in each direction in our extended radar,
+	 * Also adds them to the two neighboring directions
 	 */
 	public int[] getEnemiesInEachDirection() {
 		int[] counts = new int[8];
@@ -170,6 +171,22 @@ public class ExtendedRadarSystem {
 				counts[(dirOrdinal+1)%8]++;
 				counts[dirOrdinal]+=2;
 				counts[(dirOrdinal+7)%8]++;
+			}
+		}
+		return counts;
+	}
+	
+	/**
+	 * Counts the number of enemies in each direction in our extended radar
+	 */
+	public int[] getEnemiesInEachDirectionOnly() {
+		int[] counts = new int[8];
+		int size = enemyKeySet.size();
+		for(int i=0; i<size; i++) {
+			int id = enemyKeySet.getID(i);
+			int dirOrdinal = br.curLoc.directionTo(enemyLocationInfo[id]).ordinal();
+			if(dirOrdinal<8) {
+				counts[dirOrdinal]++;
 			}
 		}
 		return counts;
