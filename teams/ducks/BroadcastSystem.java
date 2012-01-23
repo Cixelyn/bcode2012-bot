@@ -43,8 +43,8 @@ public class BroadcastSystem {
 	public BroadcastSystem(BaseRobot br) {
 		this.br = br;
 		boundChannelHeaders = new String[0];
-		teamkey = (br.myTeam == Team.A ?
-				Constants.RADIO_TEAM_KEYS[0] : Constants.RADIO_TEAM_KEYS[1]);
+		teamkey = (br.myHome.x * 0xFFFF) + br.myHome.y;
+		
 		msgContainer = new StringBuilder();
 		shouldSendWakeup = false;
 	}
@@ -403,7 +403,7 @@ public class BroadcastSystem {
 	}
 	
 	
-	private static int hashMessage(StringBuilder msg) {
+	private int hashMessage(StringBuilder msg) {
 		String tmp = new String();
 	
 		int endpoint = msg.length();
@@ -412,7 +412,7 @@ public class BroadcastSystem {
 		tmp.concat(msg.substring(midpoint,endpoint)).concat(
 					(msg.substring(0,midpoint)));
 		
-		return tmp.hashCode();
+		return tmp.hashCode() * this.teamkey;
 	}
 	
 	
