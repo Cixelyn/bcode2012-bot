@@ -10,6 +10,8 @@ public final class Constants {
 	/** Reverse ordinal mappings */
 	public static final Direction[] directions = Direction.values();
 
+	public static final int ENEMY_SPOTTED_SIGNAL_TIMEOUT = 50;
+	
 	public static final int SOLDIER_BROADCAST_FREQUENCY = 30;
 	public static final int ARCHON_OWNERSHIP_BUFFER_LENGTH = 5;
 	

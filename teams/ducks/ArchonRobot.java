@@ -137,7 +137,7 @@ public class ArchonRobot extends BaseRobot{
 			}
 			
 		// If someone else told us of a recent enemy spotting, go to that location
-		} else if(strategy != StrategyState.DEFEND && curRound < enemySpottedRound + 100) {
+		} else if(strategy != StrategyState.DEFEND && curRound < enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT) {
 			behavior = BehaviorState.SWARM;
 			target = enemySpottedTarget;
 			if(curLoc.distanceSquaredTo(enemySpottedTarget) <= 16) {
@@ -617,8 +617,10 @@ public class ArchonRobot extends BaseRobot{
 			if(Math.random() < 0.000001 && Clock.getRoundNum() > 500 && 
 					rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
 				return new MoveInfo(RobotType.SCOUT, curDir);
-			} else if(rc.canMove(curDir)) {
-				return new MoveInfo(RobotType.SOLDIER, curDir);
+			} else {
+				Direction dir = nav.wiggleToMovableDirection(curDir);
+				if(dir!=null)
+					return new MoveInfo(RobotType.SOLDIER, dir);
 			}
 		}
 		
@@ -626,33 +628,36 @@ public class ArchonRobot extends BaseRobot{
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
-		// If I'm swarming and closest of all archons to my target, slow down
-		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0) {
-			boolean isClosestToTarget = true;
-			int myDist = curLoc.distanceSquaredTo(target);
-			for(MapLocation loc: rc.senseAlliedArchons()) {
-				if(loc.distanceSquaredTo(target) < myDist) {
-					isClosestToTarget = false;
-					break;
+		if(behavior == BehaviorState.SWARM) {
+			MapLocation closestToTarget = null;
+			int bestDist = Integer.MAX_VALUE;
+			for(MapLocation loc: dc.getAlliedArchons()) {
+				int dist = loc.distanceSquaredTo(target);
+				if(dist < bestDist) {
+					closestToTarget = loc;
+					bestDist = dist;
 				}
 			}
-			if(isClosestToTarget) {
-				if (Clock.getRoundNum()>=100 && Clock.getRoundNum()<=110 && rc.getFlux()>90) {
+			// If I'm closest archon to my target...
+			if(curLoc.equals(closestToTarget)) {
+				
+				// If it's between turn 100 and 110, try to build a scout
+				if (Clock.getRoundNum()>=100 && Clock.getRoundNum()<=110 && rc.getFlux()>90)
 					return new MoveInfo(RobotType.SCOUT, curDir);
-				} else if(Math.random()<0.8) {
+				
+				// If there are no allies in front, slow down (maintain compact swarm)
+				if(Math.random()<0.8 && radar.alliesInFront==0) {
 					return null;
 				}
-			}
-		}
-		
-		// If I'm too close to an allied archon, move away from him with some probability
-		if(dc.getClosestArchon()!=null) {
-			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if(distToNearestArchon <= 36 &&
-					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && 
-					rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
-					Math.random() < 0.85-Math.sqrt(distToNearestArchon)/10) {
-				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
+				
+			// Otherwise, if I'm too close to an allied archon, move away from him with some probability
+			} else {
+				if(dc.getClosestArchon()!=null) {
+					int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+					if(distToNearestArchon <= 25 && Math.random() < 1.05-Math.sqrt(distToNearestArchon)/10) {
+						return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
+					}
+				}
 			}
 		}
 		
@@ -671,6 +676,7 @@ public class ArchonRobot extends BaseRobot{
 		
 		// None of the above conditions met, move to the destination
 		} else {
+			dbg.setIndicatorString('h', 0, "I did at normal move at round "+curRound);
 			Direction dir = nav.navigateToDestination();
 			if(dir==null) 
 				return null;
