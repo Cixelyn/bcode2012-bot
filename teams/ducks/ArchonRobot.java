@@ -314,15 +314,15 @@ public class ArchonRobot extends BaseRobot{
 //						+(closest_in_dir[5]==99?(wall_in_dir[5]==0?"o":"x"):"x")
 //						+(closest_in_dir[6]==99?(wall_in_dir[6]==0?"o":"x"):"x")
 //						+(closest_in_dir[7]==99?(wall_in_dir[7]==0?"o":"x"):"x");
-		String dir = ""	+(closest_in_dir[0]==0?(wall_in_dir[0]==0?"o":"x"):"x")
-						+(closest_in_dir[1]==0?(wall_in_dir[1]==0?"o":"x"):"x")
-						+(closest_in_dir[2]==0?(wall_in_dir[2]==0?"o":"x"):"x")
-						+(closest_in_dir[3]==0?(wall_in_dir[3]==0?"o":"x"):"x")
-						+(closest_in_dir[4]==0?(wall_in_dir[4]==0?"o":"x"):"x")
-						+(closest_in_dir[5]==0?(wall_in_dir[5]==0?"o":"x"):"x")
-						+(closest_in_dir[6]==0?(wall_in_dir[6]==0?"o":"x"):"x")
-						+(closest_in_dir[7]==0?(wall_in_dir[7]==0?"o":"x"):"x");
-		dir = dir+dir;
+		String dir =  "".concat(closest_in_dir[0]==0?(wall_in_dir[0]==0?"o":"x"):"x")
+						.concat(closest_in_dir[1]==0?(wall_in_dir[1]==0?"o":"x"):"x")
+						.concat(closest_in_dir[2]==0?(wall_in_dir[2]==0?"o":"x"):"x")
+						.concat(closest_in_dir[3]==0?(wall_in_dir[3]==0?"o":"x"):"x")
+						.concat(closest_in_dir[4]==0?(wall_in_dir[4]==0?"o":"x"):"x")
+						.concat(closest_in_dir[5]==0?(wall_in_dir[5]==0?"o":"x"):"x")
+						.concat(closest_in_dir[6]==0?(wall_in_dir[6]==0?"o":"x"):"x")
+						.concat(closest_in_dir[7]==0?(wall_in_dir[7]==0?"o":"x"):"x");
+		dir = dir.concat(dir);
 		int index;
 		
 		
