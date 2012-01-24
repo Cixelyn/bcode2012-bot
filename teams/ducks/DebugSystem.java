@@ -1,6 +1,5 @@
 package ducks;
 
-import battlecode.common.Clock;
 
 public class DebugSystem {
 	
@@ -26,7 +25,7 @@ public class DebugSystem {
 	public void setIndicatorString(char owner, int position, String msg) {
 		if(launch_owner == owner || owner == 'e') {
 			if (encrypted) {
-				msg = Encryption.encryptString(msg);
+				msg = Encryption.encryptString(msg, br.curRound);
 			}
 			br.rc.setIndicatorString(position,msg);
 		}

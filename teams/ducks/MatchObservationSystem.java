@@ -24,7 +24,7 @@ public class MatchObservationSystem {
 	public void rememberMessage(Message m, boolean shouldEncrypt) {
 		String s = serializeMessageToString(m);
 		if (shouldEncrypt) {
-			s = Encryption.encryptString(s);
+			s = Encryption.encryptString(s, br.curRound);
 		}
 		br.rc.addMatchObservation(s);
 	}
@@ -108,9 +108,9 @@ public class MatchObservationSystem {
 		m.locations = new MapLocation[] {new MapLocation(22, 55)};
 		String s = serializeMessageToString(m);
 		System.out.println(s);
-		s = Encryption.encryptString(s);
+		s = Encryption.encryptString(s, 1);
 		System.out.println(s);
-		s = Encryption.decryptString(s);
+		s = Encryption.decryptString(s, 1);
 		System.out.println(s);
 		Message m2 = deserializeMessageFromString(s);
 		for (int a : m2.ints) System.out.println(a);
@@ -126,11 +126,13 @@ public class MatchObservationSystem {
 		 */
 		String matchObservationString = "";
 		boolean wasEncrypted = false;
+		int roundNum = -1;
 		
 		
 		// DON'T CHANGE ANYTHING BELOW
 		if (wasEncrypted) {
-			matchObservationString = Encryption.decryptString(matchObservationString);
+			matchObservationString = Encryption.decryptString(
+					matchObservationString, roundNum);
 		}
 		Message m = deserializeMessageFromString(matchObservationString);
 		for (int a : m.ints) System.out.println(a);
