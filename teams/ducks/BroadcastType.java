@@ -23,7 +23,11 @@ public enum BroadcastType {
 	RALLY,
 	
 	// extended radar
-	/** ushorts(15-bit), [sender_robot_ID, sender_loc.x, sender_loc.y, sender_energon, robot_ID_1, loc_1.x, loc_1.y, energon_1(rounded up), robot_ID_2, loc_2.x, etc...] */
+	/** ushorts(15-bit), [sender_robot_ID, sender_loc.x, sender_loc.y, 
+	 * sender_energon (+10000 if sender info is included at all), sender_type, 
+	 * robot_ID_1, loc_1.x, loc_1.y, energon_1(rounded up), robot_type_1, 
+	 * robot_ID_2, loc_2.x, etc...] 
+	 */
 	ENEMY_INFO,
 	/** ushort(15-bit), robot_ID_of_robot_that_I_killed */
 	ENEMY_KILL,
