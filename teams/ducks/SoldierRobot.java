@@ -1,12 +1,13 @@
 package ducks;
 
-import ducks.HibernationSystem.HibernationMode;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
+import battlecode.common.RobotType;
+import ducks.HibernationSystem.HibernationMode;
 
 public class SoldierRobot extends BaseRobot {
 	private enum BehaviorState {
@@ -45,6 +46,10 @@ public class SoldierRobot extends BaseRobot {
 	int enemySpottedRound;
 	int roundLastWakenUp;
 	
+	MapLocation closestEnemyLocation;
+	RobotType closestEnemyType;
+	
+	
 	public SoldierRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
@@ -69,25 +74,37 @@ public class SoldierRobot extends BaseRobot {
 		// Scan everything every turn
 		radar.scan(true, true);
 		
-		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
+		int closestEnemyID = er.getClosestEnemyID();
+		closestEnemyLocation = closestEnemyID==-1 ? null : 
+			er.enemyLocationInfo[closestEnemyID];
+		closestEnemyType = closestEnemyID==-1 ? null : 
+			er.enemyTypeInfo[closestEnemyID];
 		if(closestEnemyLocation!=null && rc.canSenseSquare(closestEnemyLocation))
 			closestEnemyLocation = null;
-		MapLocation radarClosestEnemyLocation = radar.closestEnemy==null ? 
-				null : radar.closestEnemy.location;
-		if(closestEnemyLocation==null || (radarClosestEnemyLocation!=null && 
-				curLoc.distanceSquaredTo(closestEnemyLocation) < 
-				curLoc.distanceSquaredTo(radarClosestEnemyLocation)))
-			closestEnemyLocation = radarClosestEnemyLocation;
+		RobotInfo radarClosestEnemy = radar.closestEnemy;
+		if(radarClosestEnemy!=null && (closestEnemyLocation==null || (radarClosestEnemy.location!=null && 
+				curLoc.distanceSquaredTo(closestEnemyLocation) <=
+				curLoc.distanceSquaredTo(radarClosestEnemy.location)))) {
+			closestEnemyLocation = radarClosestEnemy.location;
+			closestEnemyType = radarClosestEnemy.type;
+		}
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
-					curLoc.distanceSquaredTo(closestEnemyLocation) < 25);
+					curLoc.distanceSquaredTo(closestEnemyLocation) <= 25);
 		
 		if(closestEnemyLocation != null) {
-			// If we know of an enemy, lock onto it
-			behavior = BehaviorState.ENEMY_DETECTED;
-			target = closestEnemyLocation;
-			nav.setNavigationMode(NavigationMode.GREEDY);
-			lockAcquiredRound = curRound;
+			
+			if(curEnergon < energonLastTurn && curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
+				// Current target is too far away, got hit from behind probably
+				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+			} else {
+			
+				// If we know of an enemy, lock onto it
+				behavior = BehaviorState.ENEMY_DETECTED;
+				target = closestEnemyLocation;
+				nav.setNavigationMode(NavigationMode.GREEDY);
+				lockAcquiredRound = curRound;
+			}
 			
 		} else if(curEnergon < energonLastTurn) {
 			// Got hurt since last turn.. look behind you
@@ -317,15 +334,18 @@ public class SoldierRobot extends BaseRobot {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
 			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 25) > 0;
-			int tooClose = weHaveBiggerFront ? -1 : 5;
-			int tooFar = weHaveBiggerFront ? 4 : 25;
+			boolean targetIsRanged = closestEnemyType==RobotType.DISRUPTER || 
+					closestEnemyType==RobotType.SCORCHER;
+			int tooCloseCantRetreat = targetIsRanged ? 5 : 0;
+			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
+			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
 			boolean turnToFaceEnemyFirst = distToTarget <= 13;
 			
 			if(turnToFaceEnemyFirst && dirToTarget!=curDir) {
 				return new MoveInfo(dirToTarget);
-			} else if(distToTarget <= tooClose) {
+			} else if(distToTarget>tooCloseCantRetreat && distToTarget <= tooClose) {
 				Direction dir = dirToTarget.opposite();
 				if(rc!=null && rc.canMove(dir))
 					return new MoveInfo(dir, true);

@@ -8,13 +8,16 @@ import battlecode.common.RobotType;
 public class ExtendedRadarSystem {
 	private static final int BUFFER_SIZE = 4096;
 	private static final int MEMORY_TIMEOUT = 15;
+	private static final RobotType[] robotTypes = RobotType.values();
 	
 	private final BaseRobot br;
-	private final MapLocation[] enemyLocationInfo;
-	private final int[] enemyEnergonInfo;
+	public final MapLocation[] enemyLocationInfo;
+	public final int[] enemyEnergonInfo;
+	public final RobotType[] enemyTypeInfo;
 	private final FastIDSet enemyKeySet;
-	private final MapLocation[] allyLocationInfo;
-	private final int[] allyEnergonInfo;
+	public final MapLocation[] allyLocationInfo;
+	public final int[] allyEnergonInfo;
+	public final RobotType[] allyTypeInfo;
 	private final FastIDSet allyKeySet;
 	private final int[] flags;
 	private int flagCount;
@@ -22,9 +25,11 @@ public class ExtendedRadarSystem {
 		this.br = br;
 		enemyLocationInfo = new MapLocation[BUFFER_SIZE];
 		enemyEnergonInfo = new int[BUFFER_SIZE];
+		enemyTypeInfo = new RobotType[BUFFER_SIZE];
 		enemyKeySet = new FastIDSet(MEMORY_TIMEOUT);
 		allyLocationInfo = new MapLocation[BUFFER_SIZE];
 		allyEnergonInfo = new int[BUFFER_SIZE];
+		allyTypeInfo = new RobotType[BUFFER_SIZE];
 		allyKeySet = new FastIDSet(MEMORY_TIMEOUT);
 		flags = new int[BUFFER_SIZE];
 		flagCount = 0;
@@ -34,18 +39,20 @@ public class ExtendedRadarSystem {
 	 * Should only be called from processMessage().
 	 */
 	public void integrateEnemyInfo(int[] info) {
-		boolean firstIDIsAnAlly = info[3]>10000;
+		boolean firstIDIsAnAlly = info[3]>9000; // lol
 		
 		if(firstIDIsAnAlly) {
 			int senderID = info[0];
 			allyLocationInfo[senderID] = new MapLocation(info[1], info[2]);
 			allyEnergonInfo[senderID] = info[3]-10001;
+			allyTypeInfo[senderID] = robotTypes[info[4]];
 			allyKeySet.addID(senderID);
 		}
-		for(int n=firstIDIsAnAlly?4:0; n<info.length; n+=4) {
+		for(int n=firstIDIsAnAlly?5:0; n<info.length; n+=5) {
 			int id = info[n];
 			enemyLocationInfo[id] = new MapLocation(info[n+1], info[n+2]);
 			enemyEnergonInfo[id] = info[n+3];
+			enemyTypeInfo[id] = robotTypes[info[n+4]];
 			enemyKeySet.addID(id);
 		}
 	}
@@ -130,15 +137,15 @@ public class ExtendedRadarSystem {
 		return diff;
 	}
 	
-	/** Returns the location of this closest enemy. */
-	public MapLocation getClosestEnemyLocation() {
-		MapLocation ret = null;
+	/** Returns the id of this closest enemy, or -1 if there are no enemies. */
+	public int getClosestEnemyID() {
+		int ret = -1;
 		int bestDist = Integer.MAX_VALUE;
 		for(int i=enemyKeySet.size(); --i>=0;) {
 			int id = enemyKeySet.getID(i);
 			int dist = br.curLoc.distanceSquaredTo(enemyLocationInfo[id]);
 			if(dist<bestDist) {
-				ret = enemyLocationInfo[id];
+				ret = id;
 				bestDist = dist;
 			}
 		}
