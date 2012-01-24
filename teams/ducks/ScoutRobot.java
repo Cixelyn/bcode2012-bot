@@ -5,6 +5,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 
 public class ScoutRobot extends BaseRobot {
 	
@@ -46,6 +47,9 @@ public class ScoutRobot extends BaseRobot {
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	
+	MapLocation closestEnemyLocation;
+	RobotType closestEnemyType;
+	
 	public ScoutRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		strategy = StrategyState.BATTLE;
@@ -72,15 +76,7 @@ public class ScoutRobot extends BaseRobot {
 		// scan
 		radar.scan(true, true);
 		
-		MapLocation closestEnemyLocation = er.getClosestEnemyLocation();
-		if(closestEnemyLocation!=null && rc.canSenseSquare(closestEnemyLocation))
-			closestEnemyLocation = null;
-		MapLocation radarClosestEnemyLocation = radar.closestEnemy==null ? 
-				null : radar.closestEnemy.location;
-		if(closestEnemyLocation==null || (radarClosestEnemyLocation!=null && 
-				curLoc.distanceSquaredTo(closestEnemyLocation) < 
-				curLoc.distanceSquaredTo(radarClosestEnemyLocation)))
-			closestEnemyLocation = radarClosestEnemyLocation;
+		MapLocation closestEnemyLocation = radar.closestEnemy==null ? null : radar.closestEnemy.location;
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo(false);
 		
