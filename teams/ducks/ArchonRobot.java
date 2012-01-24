@@ -81,7 +81,7 @@ public class ArchonRobot extends BaseRobot{
 	public void run() throws GameActionException {
 		
 		// Currently the strategy transition is based on hard-coded turn numbers
-		if(Clock.getRoundNum()>3100) {
+		if(Clock.getRoundNum()>3200) {
 			strategy = StrategyState.CAP;
 		} else if(Clock.getRoundNum()>1700 && myArchonID!=0) {
 			strategy = StrategyState.CAP;
@@ -117,7 +117,7 @@ public class ArchonRobot extends BaseRobot{
 				stayTargetLockedUntilRound = curRound+TURNS_TO_RETREAT;
 				behavior = BehaviorState.RETREAT;
 				String ret = computeRetreatTarget();
-				dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
+				dbg.setIndicatorString('e', 1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
 					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons) {
@@ -172,7 +172,7 @@ public class ArchonRobot extends BaseRobot{
 		nav.setDestination(target);
 		
 		// Set the flux balance mode
-		if(behavior == BehaviorState.SWARM && enemySpottedTarget == null)
+		if(behavior == BehaviorState.SWARM && curRound > enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT)
 			fbs.setBatteryMode();
 		else
 			fbs.setPoolMode();
@@ -628,7 +628,8 @@ public class ArchonRobot extends BaseRobot{
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
-		if(behavior == BehaviorState.SWARM) {
+		if(behavior == BehaviorState.SWARM || behavior == BehaviorState.BATTLE || 
+				behavior == BehaviorState.CHASE) {
 			MapLocation closestToTarget = null;
 			int bestDist = Integer.MAX_VALUE;
 			for(MapLocation loc: dc.getAlliedArchons()) {
@@ -646,7 +647,7 @@ public class ArchonRobot extends BaseRobot{
 					return new MoveInfo(RobotType.SCOUT, curDir);
 				
 				// If there are no allies in front, slow down (maintain compact swarm)
-				if(Math.random()<0.8 && radar.alliesInFront==0) {
+				if(behavior == BehaviorState.SWARM && Math.random()<0.8 && radar.alliesInFront==0) {
 					return null;
 				}
 				
