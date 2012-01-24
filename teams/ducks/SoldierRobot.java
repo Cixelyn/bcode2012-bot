@@ -97,7 +97,7 @@ public class SoldierRobot extends BaseRobot {
 			// Don't know of any enemies, stay chasing the last enemy we knew of
 			behavior = BehaviorState.ENEMY_DETECTED;
 			
-		} else if(curRound < enemySpottedRound + 100) {
+		} else if(curRound < enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT) {
 			// Not even chasing anyone, try going to the enemy spotted signal
 			behavior = BehaviorState.SEEK;
 			target = enemySpottedTarget;
@@ -139,8 +139,8 @@ public class SoldierRobot extends BaseRobot {
 				}
 				
 				if(behavior == BehaviorState.SWARM && 
-						closestSwarmTargetSenderDist <= 10 && 
-						curLoc.distanceSquaredTo(target) <= 10 && 
+						closestSwarmTargetSenderDist <= 18 && 
+						curLoc.distanceSquaredTo(target) <= 18 && 
 						curRound > roundLastWakenUp + 10) { 
 					// Close enough to swarm target, look for a place to hibernate
 					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
