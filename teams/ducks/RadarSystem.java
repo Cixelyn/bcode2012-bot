@@ -5,8 +5,10 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
+import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
+import battlecode.common.Team;
 
 /**
  * The goal of this class is to cache data from the expensive calls to
@@ -361,30 +363,33 @@ public class RadarSystem {
 				resetEnemyStats();
 			if (scanAllies)
 				resetAllyStats();
-			
+		
+			// Bring some vars into local space for the raep loop
+			RobotController rc = br.rc;
+			Team myTeam = rc.getTeam();
 			
 			for (int idx = robots.length; --idx >= 0;) {
 				Robot r = robots[idx];
 				try {
 					if (isArchon){
-						if (br.myTeam == r.getTeam()) {
+						if (myTeam == r.getTeam()) {
 							if (scanAllies) {
-								addAllyForArchon(br.rc.senseRobotInfo(r));
+								addAllyForArchon(rc.senseRobotInfo(r));
 							}
 						} else {
 							if (scanEnemies) {
-								addEnemyForArchon(br.rc.senseRobotInfo(r));
+								addEnemyForArchon(rc.senseRobotInfo(r));
 							}
 						}
 					} else
 					{
-						if (br.myTeam == r.getTeam()) {
+						if (myTeam == r.getTeam()) {
 							if (scanAllies) {
-								addAlly(br.rc.senseRobotInfo(r));
+								addAlly(rc.senseRobotInfo(r));
 							}
 						} else {
 							if (scanEnemies) {
-								addEnemy(br.rc.senseRobotInfo(r));
+								addEnemy(rc.senseRobotInfo(r));
 							}
 						}
 					}
@@ -395,7 +400,7 @@ public class RadarSystem {
 					e.printStackTrace();
 				}
 			}
-
+			
 			if (scanEnemies)
 			{
 				if (numEnemyRobots == 0) {
