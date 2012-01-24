@@ -35,6 +35,7 @@ public class BroadcastSystem {
 	private BroadcastSystem() {
 		System.out.println("WARNING: RADIO NOT BOUND TO BASEROBOT");
 		msgContainer = new StringBuilder();
+		teamkey = 1;
 	}
 
 	
@@ -426,10 +427,9 @@ public class BroadcastSystem {
 		int endpoint = msg.length();
 		int midpoint = endpoint / 2;
 		
-		tmp.concat(msg.substring(midpoint,endpoint)).concat(
-					(msg.substring(0,midpoint)));
+		return tmp.concat(msg.substring(midpoint,endpoint)).concat(
+					(msg.substring(0,midpoint))).hashCode() * this.teamkey;
 		
-		return tmp.hashCode() * this.teamkey;
 	}
 	
 	
@@ -528,6 +528,17 @@ public class BroadcastSystem {
 		io.addChannel(BroadcastChannel.ALL);
 		System.out.println((Arrays.toString(io.boundChannelHeaders)));
 		
+		
+		// Test hashing
+		StringBuilder msg1 = new StringBuilder("abcdefg");
+		StringBuilder msg2 = new StringBuilder("woieruw");
+		StringBuilder msg3 = new StringBuilder("weoiruwaeral;sfaas;dlfjxc2#$@#$@#$");
+		System.out.println(io.hashMessage(msg1));
+		System.out.println(io.hashMessage(msg1));
+		System.out.println(io.hashMessage(msg2));
+		System.out.println(io.hashMessage(msg2));
+		System.out.println(io.hashMessage(msg3));
+		System.out.println(io.hashMessage(msg3));
 		
 		System.out.println(BroadcastType.decode(BroadcastType.ENEMY_ARCHON_KILL.header_c).toString());
 	}
