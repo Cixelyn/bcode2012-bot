@@ -493,20 +493,37 @@ public class RadarSystem {
 	public void broadcastEnemyInfo(boolean sendOwnInfo) {
 		if(numEnemyRobots==0) return;
 		
-		int[] shorts = new int[numEnemyRobots*4+(sendOwnInfo?4:0)];
+		int[] shorts = new int[numEnemyRobots*5+(sendOwnInfo?5:0)];
 		if(sendOwnInfo) {
 			shorts[0] = br.myID;
 			shorts[1] = br.curLoc.x;
 			shorts[2] = br.curLoc.y;
-			shorts[3] = 10001+(int)Math.ceil(br.curEnergon);
+			shorts[3] = 10000+(int)Math.ceil(br.curEnergon);
+			shorts[4] = br.myType.ordinal();
 		}
-		for(int i=0, c=sendOwnInfo?4:0; i<numEnemyRobots; i++, c+=4) {
+		for(int i=0, c=sendOwnInfo?5:0; i<numEnemyRobots; i++, c+=5) {
 			RobotInfo ri = enemyInfos[enemyRobots[i]];
 			shorts[c] = ri.robot.getID();
 			shorts[c+1] = ri.location.x;
 			shorts[c+2] = ri.location.y;
-			shorts[c+3] = (ri.type==RobotType.ARCHON || ri.type==RobotType.TOWER || 
-					ri.type==RobotType.SCOUT) ? 0 : (int)Math.ceil(ri.energon);
+			switch(ri.type) {
+			case SOLDIER:
+				shorts[c+3] = (int)Math.ceil(ri.energon);
+				break;
+			case DISRUPTER:
+				shorts[c+3] = (int)Math.ceil(ri.energon*0.7);
+				break;
+			case SCORCHER:
+				shorts[c+3] = (int)Math.ceil(ri.energon*1.5);
+				break;
+			case SCOUT:
+				shorts[c+3] = 2;
+				break;
+			default:
+				shorts[c+3] = 0;
+				break;
+			}
+			shorts[c+4] = ri.type.ordinal();
 		}
 		br.er.integrateEnemyInfo(shorts);
 		br.io.sendUShorts(BroadcastChannel.EXTENDED_RADAR, BroadcastType.ENEMY_INFO, shorts);
