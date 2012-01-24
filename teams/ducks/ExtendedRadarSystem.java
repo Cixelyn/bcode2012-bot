@@ -91,10 +91,11 @@ public class ExtendedRadarSystem {
 			int id = br.radar.enemyRobots[i];
 			if(flags[id]==flagCount) continue;
 			RobotInfo ri = br.radar.enemyInfos[id];
-			if(ri.type == RobotType.ARCHON || ri.type == RobotType.SCOUT || ri.type == RobotType.TOWER)
-				continue;
-			if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
-				diff -= ri.energon;
+			
+			if(ri.type == RobotType.SOLDIER || ri.type == RobotType.DISRUPTER || ri.type == RobotType.SCORCHER) {
+				if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
+					diff -= ri.energon;
+				}
 			}
 		}
 		
@@ -112,10 +113,11 @@ public class ExtendedRadarSystem {
 			int id = br.radar.allyRobots[i];
 			if(flags[id]==flagCount) continue;
 			RobotInfo ri = br.radar.allyInfos[id];
-			if(ri.type == RobotType.ARCHON || ri.type == RobotType.SCOUT || ri.type == RobotType.TOWER)
-				continue;
-			if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
-				diff += ri.energon;
+			
+			if(ri.type == RobotType.SOLDIER || ri.type == RobotType.DISRUPTER || ri.type == RobotType.SCORCHER) {
+				if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
+					diff += ri.energon;
+				}
 			}
 		}
 		
