@@ -49,10 +49,10 @@ public class RobotPlayer {
 				else if(owner.equals("cory")) br = new SoldierRobotCL(myRC);
 				else if (owner.equals("yp"))
 				{
-//					br = new SoldierRobotYP(myRC);
+					br = new SoldierRobotYP(myRC);
 //					br = new SoldierRobotHT(myRC);
 //					br = new FunBot(myRC);
-					br = new SoldierRobot(myRC);
+//					br = new SoldierRobot(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
