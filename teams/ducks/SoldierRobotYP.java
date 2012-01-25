@@ -9,7 +9,7 @@ import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import ducks.HibernationSystem.HibernationMode;
 
-public class SoldierRobot extends BaseRobot {
+public class SoldierRobotYP extends BaseRobot {
 	private enum BehaviorState {
 		/** Want to hibernate, need to find a non-blocking place to do it. */
 		LOOKING_TO_HIBERNATE,
@@ -50,7 +50,7 @@ public class SoldierRobot extends BaseRobot {
 	RobotType closestEnemyType;
 	
 	
-	public SoldierRobot(RobotController myRC) throws GameActionException {
+	public SoldierRobotYP(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		lockAcquiredRound = -1;
