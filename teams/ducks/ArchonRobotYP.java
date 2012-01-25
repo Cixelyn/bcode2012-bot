@@ -95,7 +95,7 @@ public class ArchonRobotYP extends BaseRobot{
 		// The new strategy transition
 		switch(strategy) {
 		case INITIAL_EXPLORE:
-			if(curRound > 150) 
+			if(curRound > 80) 
 				strategy = StrategyState.RETURN_HOME;
 			break;
 		case RETURN_HOME:
@@ -642,7 +642,13 @@ public class ArchonRobotYP extends BaseRobot{
 			} else {
 				Direction dir = nav.wiggleToMovableDirection(curDir);
 				if(dir!=null)
-					return new MoveInfo(RobotType.SOLDIER, dir);
+					if (behavior == BehaviorState.CHASE)
+						return new MoveInfo(RobotType.SOLDIER, dir);
+					else
+						if (Math.random()<0.6)
+							return new MoveInfo(RobotType.SOLDIER, dir);
+						else
+							return new MoveInfo(RobotType.DISRUPTER, dir);
 			}
 		}
 		

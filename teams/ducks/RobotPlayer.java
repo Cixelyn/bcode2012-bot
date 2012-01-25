@@ -20,10 +20,10 @@ public class RobotPlayer {
 				else if(owner.equals("yp")) 
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
-//					br = new ArchonRobotYP(myRC);
+					br = new ArchonRobotYP(myRC);
 //					br = new ArchonRobotHT(myRC);
 //					br = new FunBot(myRC);
-					br = new ArchonRobot(myRC);
+//					br = new ArchonRobot(myRC);
 					if (br==null)
 					{
 						if (myRC.getTeam()==Team.A)
@@ -94,14 +94,14 @@ public class RobotPlayer {
 				if (owner.equals("yp"))
 				{
 					
-					br = new DisruptorRobotYP(myRC);
+					br = new DisrupterRobotYP(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
-							br = new DisruptorRobotYP(myRC);
+							br = new DisrupterRobotYP(myRC);
 						
 						else
-							br = new DisruptorRobotYP(myRC);
+							br = new DisrupterRobotYP(myRC);
 						
 					}
 				}
