@@ -29,6 +29,7 @@ public class RobotPlayer {
 						if (myRC.getTeam()==Team.A)
 //							br = new ArchonRobot(myRC);
 							br = new ArchonRobotYP(myRC);
+//							br = new ArchonRobotYPOld(myRC);
 //							br = new ArchonRobotHT(myRC);
 //							br = new ArchonRobotJV(myRC);
 //							br = new ArchonRobotCL(myRC);
@@ -90,6 +91,20 @@ public class RobotPlayer {
 				}
 				break;
 			case DISRUPTER:
+				if (owner.equals("yp"))
+				{
+					
+					br = new DisruptorRobotYP(myRC);
+					if (br == null)
+					{
+						if (myRC.getTeam()==Team.A)
+							br = new DisruptorRobotYP(myRC);
+						
+						else
+							br = new DisruptorRobotYP(myRC);
+						
+					}
+				}
 				break;
 			case SCORCHER:
 				if (owner.equals("justin")) br = null;
