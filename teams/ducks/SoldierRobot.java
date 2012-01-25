@@ -157,7 +157,7 @@ public class SoldierRobot extends BaseRobot {
 				
 				if(behavior == BehaviorState.SWARM && 
 						closestSwarmTargetSenderDist <= 18 && 
-						curLoc.distanceSquaredTo(target) <= 18 && 
+						curLoc.distanceSquaredTo(target) <= 26 && 
 						curRound > roundLastWakenUp + 10) { 
 					// Close enough to swarm target, look for a place to hibernate
 					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
@@ -301,7 +301,10 @@ public class SoldierRobot extends BaseRobot {
 			return new MoveInfo(curDir.opposite());
 		} else if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
 			// If we're looking to hibernate, move around randomly
-			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
+			if(Math.random()<0.2)
+				return new MoveInfo(curLoc.directionTo(target).opposite(), false);
+			else
+				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 		} else if(behavior == BehaviorState.SWARM ) {
 			// If we're on top of our target power node, move around randomly
 			if(curLoc.equals(target) && 

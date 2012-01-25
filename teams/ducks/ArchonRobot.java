@@ -5,18 +5,19 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 
 public class ArchonRobot extends BaseRobot{
 	private enum StrategyState {
-		/** Initial split. */
-		SPLIT,
+		/** Initially try to explore some terrain. */
+		INITIAL_EXPLORE,
+		/** Split up and defend base. Transitions into defend. */
+		RETURN_HOME,
+		/** Defend the power core. */
+		DEFEND,
 		/** Seek and destroy towards a target. */
 		RUSH, 
-		/** Hold a position. */
-		DEFEND,
 		/** Take power nodes. */
 		CAP,
 	}
@@ -56,12 +57,9 @@ public class ArchonRobot extends BaseRobot{
 		stayTargetLockedUntilRound = -Integer.MAX_VALUE;
 		// compute archon ID
 		MapLocation[] alliedArchons = dc.getAlliedArchons();
-		for(int i=alliedArchons.length; --i>=0; ) {
-			if(alliedArchons[i].equals(curLoc)) {
+		for(int i=alliedArchons.length; --i>=0; )
+			if(alliedArchons[i].equals(curLoc))
 				myArchonID = i;
-				break;
-			}
-		}
 		// advance the round counter
 		if(myArchonID==0) tmem.advanceRound();
 		io.setChannels(new BroadcastChannel[] {
@@ -71,7 +69,7 @@ public class ArchonRobot extends BaseRobot{
 		});
 		fbs.setPoolMode();
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
-		strategy = StrategyState.SPLIT;
+		strategy = StrategyState.INITIAL_EXPLORE;
 		behavior = BehaviorState.BATTLE;
 		enemySpottedRound = -55555;
 		enemySpottedTarget = null;
@@ -93,26 +91,27 @@ public class ArchonRobot extends BaseRobot{
 //		} else if(curRound>20) {
 //			strategy = StrategyState.RUSH;
 //		}
-		if(curRound > 2000) 
-			strategy = StrategyState.DEFEND;
-		else
-			strategy = StrategyState.SPLIT;
-		if(!gotOutput && curRound > 1500) {
-			gotOutput = true;
-			int sensed = 0;
-			int total = 0;
-			for(int x=64; x<192; x++) for(int y=64; y<192; y++) {
-				MapLocation loc = new MapLocation(mc.cacheToWorldX(x), mc.cacheToWorldY(y));
-				if(mc.isOffMap(loc)) continue;
-				if(mc.isSensed(loc))
-					sensed++;
-				total++;
-			}
-				
-			dbg.println('e', "sensed: "+sensed+", total: "+total);
-		}
-		if(curRound%1000==499) gotOutput = false;
 		
+		// The new strategy transition
+		switch(strategy) {
+		case INITIAL_EXPLORE:
+			if(curRound > 150) 
+				strategy = StrategyState.RETURN_HOME;
+			break;
+		case RETURN_HOME:
+			if(curLoc.distanceSquaredTo(myHome) <= 64)
+				strategy = StrategyState.DEFEND;
+			break;
+		case DEFEND:
+			if(curRound > 1300) 
+				strategy = StrategyState.CAP;
+			break;
+		case CAP:
+			break;
+		default:
+			break;
+		}
+
 		
 		// If insufficiently prepared, prepare
 		if(nav.getTurnsPrepared() < TangentBug.DEFAULT_MIN_PREP_TURNS)
@@ -170,7 +169,7 @@ public class ArchonRobot extends BaseRobot{
 		// If we haven't seen anyone for a while, go back to swarm mode and reset target
 		} else {
 			behavior = BehaviorState.SWARM;
-			if(strategy == StrategyState.DEFEND) {
+			if(strategy == StrategyState.DEFEND || strategy == StrategyState.RETURN_HOME) {
 				target = myHome;
 			} else if(strategy == StrategyState.RUSH) {
 				computeExploreTarget();
@@ -194,8 +193,6 @@ public class ArchonRobot extends BaseRobot{
 		nav.setDestination(target);
 		
 		// Set the flux balance mode
-		if(strategy == StrategyState.SPLIT)
-			fbs.disable();
 		if(behavior == BehaviorState.SWARM && curRound > enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT)
 			fbs.setBatteryMode();
 		else
@@ -606,26 +603,58 @@ public class ArchonRobot extends BaseRobot{
 	public MoveInfo computeNextMove() throws GameActionException {
 		
 		// If it's between turn 100 and 150, try to build a scout (archons 0 and 1)
-//		if (curRound>=100 && curRound<=150 && rc.getFlux()>90) {
-//			if(myArchonID==0) {
-//				if(curRound%10==0)
-//					return new MoveInfo(RobotType.SCOUT, curDir);
-//				else return null;
-//			} else if(myArchonID==1) {
-//				if(curRound%10==5)
-//					return new MoveInfo(RobotType.SCOUT, curDir);
-//				else return null;
-//			}
-//		}
+		if (curRound>=100 && curRound<=150 && rc.getFlux()>90) {
+			if(myArchonID==0) {
+				if(curRound%10==0)
+					return new MoveInfo(RobotType.SCOUT, curDir);
+				else return null;
+			} else if(myArchonID==1) {
+				if(curRound%10==5)
+					return new MoveInfo(RobotType.SCOUT, curDir);
+				else return null;
+			}
+		}
 				
-				
-		// Initial split behavior
-		if(strategy == StrategyState.SPLIT) {
+		// Retreat behavior
+		if (behavior==BehaviorState.RETREAT) {
+			nav.setDestination(target);
+			if(rc.getFlux() > 130) {
+				for(int d=curDir.ordinal(); d<curDir.ordinal()+8; d++)
+					if (rc.canMove(Constants.directions[d%8]))
+						return new MoveInfo(RobotType.SOLDIER, Constants.directions[d%8]);
+			}
+			return new MoveInfo(nav.navigateToDestination(), true);
+		}
+		
+		// If we have sufficient flux, make a soldier
+		int fluxToMakeSoldierAt;
+		switch (behavior) {
+		case SWARM: fluxToMakeSoldierAt = 280; break;
+		case RETREAT: fluxToMakeSoldierAt = 130; break;
+		default:
+			fluxToMakeSoldierAt = (strategy==StrategyState.CAP) ? 225 : 150; 
+			break;
+		}
+		if(rc.getFlux() > fluxToMakeSoldierAt) {
+			if(Math.random() < 0.000001 && Clock.getRoundNum() > 500 && 
+					rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
+				return new MoveInfo(RobotType.SCOUT, curDir);
+			} else {
+				Direction dir = nav.wiggleToMovableDirection(curDir);
+				if(dir!=null)
+					return new MoveInfo(RobotType.SOLDIER, dir);
+			}
+		}
+		
+		// If there's an enemy within 20 dist, run away
+		if(radar.closestEnemyDist <= 20 && behavior != BehaviorState.CHASE) {
+			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
+		}
+		
+		// Initial explore behavior
+		if(strategy == StrategyState.INITIAL_EXPLORE) {
 			if(curRound > 80 && Math.random()<0.3) 
 				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
-			if(curRound > 1000 && Math.random()<0.7 && 
-					curLoc.distanceSquaredTo(dc.getClosestArchon()) > 64)
-				return new MoveInfo(curLoc.directionTo(myHome), false);
 
 			boolean[] movable = dc.getMovableDirections();
 			Direction bestDir = null;
@@ -645,44 +674,38 @@ public class ArchonRobot extends BaseRobot{
 				}
 			}
 			return new MoveInfo(bestDir, false);
-		}
-		
-		
-		
-		// Retreat behavior
-		if (behavior==BehaviorState.RETREAT) {
-			nav.setDestination(target);
-			if(rc.getFlux() > 130) {
-				for(int d=curDir.ordinal(); d<curDir.ordinal()+8; d++)
-					if (rc.canMove(Constants.directions[d%8]))
-						return new MoveInfo(RobotType.SOLDIER, Constants.directions[d%8]);
+			
+		// Return home behavior
+		} else if(strategy == StrategyState.RETURN_HOME) {
+			return new MoveInfo(nav.navigateToDestination(), false);
+			
+		// Defend behavior
+		} else if(strategy == StrategyState.DEFEND) {
+			if(curLoc.distanceSquaredTo(myHome) <= 100) {
+				if(Math.random()<0.02) 
+					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
+				
+				boolean[] movable = dc.getMovableDirections();
+				Direction bestDir = null;
+				int bestDist = 0;
+				for(int i=8; i>=0; i--) {
+					if(i!=8 && !movable[i]) continue;
+					Direction dir = i==8 ? null : Constants.directions[i];
+					MapLocation newLoc = i==8 ? curLoc : curLoc.add(dir);
+					int dist = Integer.MAX_VALUE;
+					for(MapLocation loc: dc.getAlliedArchons()) {
+						if(loc.equals(curLoc)) continue;
+						dist = Math.min(dist, loc.distanceSquaredTo(newLoc));
+					}
+					if(bestDist < 25 && dist > bestDist) {
+						bestDist = dist;
+						bestDir = dir;
+					}
+				}
+				return new MoveInfo(bestDir, false);
+			} else {
+				return new MoveInfo(nav.navigateToDestination(), false);
 			}
-			return new MoveInfo(nav.navigateToDestination(), true);
-		}
-		
-		// If we have sufficient flux, make a soldier
-//		int fluxToMakeSoldierAt;
-//		switch (behavior) {
-//		case SWARM: fluxToMakeSoldierAt = 280; break;
-//		case RETREAT: fluxToMakeSoldierAt = 130; break;
-//		default:
-//			fluxToMakeSoldierAt = (strategy==StrategyState.CAP) ? 225 : 150; 
-//			break;
-//		}
-//		if(rc.getFlux() > fluxToMakeSoldierAt) {
-//			if(Math.random() < 0.000001 && Clock.getRoundNum() > 500 && 
-//					rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
-//				return new MoveInfo(RobotType.SCOUT, curDir);
-//			} else {
-//				Direction dir = nav.wiggleToMovableDirection(curDir);
-//				if(dir!=null)
-//					return new MoveInfo(RobotType.SOLDIER, dir);
-//			}
-//		}
-		
-		// If there's an enemy within 20 dist, run away
-		if(radar.closestEnemyDist <= 20 && behavior != BehaviorState.CHASE) {
-			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
 		if(behavior == BehaviorState.SWARM || behavior == BehaviorState.BATTLE || 
@@ -730,13 +753,12 @@ public class ArchonRobot extends BaseRobot{
 		
 		// None of the above conditions met, move to the destination
 		} else {
-			// dbg.setIndicatorString('h', 0, "I did a normal move at round "+curRound);
 			Direction dir = nav.navigateToDestination();
 			if(dir==null) 
 				return null;
 			else if(curLoc.add(dir).equals(nav.getDestination()))
 				return new MoveInfo(dir);
-			else if(Clock.getRoundNum() < 500)
+			else if(curRound < 500)
 				return new MoveInfo(dir, true);
 			else
 				return new MoveInfo(dir, false);

@@ -141,18 +141,19 @@ public class FluxBalanceSystem {
 		
 		// If everyone is above their lower threshold, give to archons and scouts
 		if(br.myType != RobotType.SCOUT && amountBelowLowerThreshold == 0) {
-			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
-				RobotInfo ri = radar.adjacentAllies[n];
-				if (ri.type == RobotType.ARCHON && ri.flux < 280) {
-					double x = Math.min(fluxToTransfer, 280-ri.flux);
-					rc.transferFlux(ri.location, ri.type.level, x);
-					fluxToTransfer -= x;
+			if(br.myType != RobotType.ARCHON)
+				for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
+					RobotInfo ri = radar.adjacentAllies[n];
+					if (ri.type == RobotType.ARCHON && ri.flux < 280) {
+						double x = Math.min(fluxToTransfer, 280-ri.flux);
+						rc.transferFlux(ri.location, ri.type.level, x);
+						fluxToTransfer -= x;
+					}
 				}
-			}
 			for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
 				RobotInfo ri = radar.adjacentAllies[n];
-				if (ri.type == RobotType.SCOUT && ri.flux<50) {
-					double x = Math.min(fluxToTransfer, 50-ri.flux);
+				if (ri.type == RobotType.SCOUT && ri.flux<45) {
+					double x = Math.min(fluxToTransfer, 45-ri.flux);
 					rc.transferFlux(ri.location, ri.type.level, x);
 					fluxToTransfer -= x;
 				}
