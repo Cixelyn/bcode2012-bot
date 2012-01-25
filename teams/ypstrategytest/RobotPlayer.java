@@ -15,34 +15,37 @@ public class RobotPlayer {
 	public static void dostuff(RobotController rc) throws Exception
 	{
 		if (!rc.getLocation().equals(rc.senseAlliedArchons()[0])) rc.suicide();
-	
-		int t1,t2,t3;
-		char c1 = 'a';
-		@SuppressWarnings("unused")
-		char c2 = 'a';
-		
-		String s1 = "a";
-		@SuppressWarnings("unused")
-		String s2 = "a";
-		StringBuilder c4 = new StringBuilder();
-		
-		t1 = Clock.getBytecodeNum();
-		s1 = s1.concat(String.valueOf(c1));
-		t2 = Clock.getBytecodeNum();
-		System.out.println("weroiu: " + (t2-t1));
-	
-		t1 = Clock.getBytecodeNum();
-		c4.append(c1);
-		t2 = Clock.getBytecodeNum();
-		System.out.println("weroiu: " + (t2-t1));
-		
-		
-		
-		
+
+		// DO THINGS IN TESTCLASS.RUN()
+		// DO THINGS IN TESTCLASS.RUN()
+		// DO THINGS IN TESTCLASS.RUN()
+//		int t1,t2,t3;
+//		char c1 = 'a';
+//		@SuppressWarnings("unused")
+//		char c2 = 'a';
+//		
+//		String s1 = "a";
+//		@SuppressWarnings("unused")
+//		String s2 = "a";
+//		StringBuilder c4 = new StringBuilder();
+//		
+//		t1 = Clock.getBytecodeNum();
+//		s1 = s1.concat(String.valueOf(c1));
+//		t2 = Clock.getBytecodeNum();
+//		System.out.println("weroiu: " + (t2-t1));
+//	
+//		t1 = Clock.getBytecodeNum();
+//		c4.append(c1);
+//		t2 = Clock.getBytecodeNum();
+//		System.out.println("weroiu: " + (t2-t1));
+		// DO THINGS IN TESTCLASS.RUN()
+		// DO THINGS IN TESTCLASS.RUN()
+		// DO THINGS IN TESTCLASS.RUN()
 		TestClass.run();
 		rc.resign();
 		
 		int bytecode;
+		int t1,t2,t3;
 		
 		genStrategyElts();
 		StrategyHeap sh = new StrategyHeap();

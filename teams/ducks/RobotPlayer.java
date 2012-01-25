@@ -20,15 +20,16 @@ public class RobotPlayer {
 				else if(owner.equals("yp")) 
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
-//					br = new ArchonRobotYP(myRC);
+					br = new ArchonRobotYP(myRC);
 //					br = new ArchonRobotHT(myRC);
 //					br = new FunBot(myRC);
-					br = new ArchonRobot(myRC);
+//					br = new ArchonRobot(myRC);
 					if (br==null)
 					{
 						if (myRC.getTeam()==Team.A)
 //							br = new ArchonRobot(myRC);
 							br = new ArchonRobotYP(myRC);
+//							br = new ArchonRobotYPOld(myRC);
 //							br = new ArchonRobotHT(myRC);
 //							br = new ArchonRobotJV(myRC);
 //							br = new ArchonRobotCL(myRC);
@@ -90,6 +91,20 @@ public class RobotPlayer {
 				}
 				break;
 			case DISRUPTER:
+				if (owner.equals("yp"))
+				{
+					
+					br = new DisrupterRobotYP(myRC);
+					if (br == null)
+					{
+						if (myRC.getTeam()==Team.A)
+							br = new DisrupterRobotYP(myRC);
+						
+						else
+							br = new DisrupterRobotYP(myRC);
+						
+					}
+				}
 				break;
 			case SCORCHER:
 				if (owner.equals("justin")) br = null;

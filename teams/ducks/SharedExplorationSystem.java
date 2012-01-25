@@ -23,33 +23,33 @@ public class SharedExplorationSystem {
 		
 		if(Clock.getRoundNum()/6%2==0) {
 			if(br.mc.edgeXMin!=0) {
-				startRow = (br.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
+				startCol = (br.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
 				if(br.mc.edgeXMax!=0) {
-					numRowBlocks = br.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-(br.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
-				} else {
-					numRowBlocks = 16;
-				}
-			} else if(br.mc.edgeXMax!=0) {
-				numRowBlocks = 16;
-				startRow = br.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-numRowBlocks+1;
-			} else {
-				startRow = 0;
-				numRowBlocks = 64;
-			}
-			
-			if(br.mc.edgeYMin!=0) {
-				startCol = (br.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
-				if(br.mc.edgeYMax!=0) {
-					numColBlocks = br.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-(br.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
+					numColBlocks = br.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-(br.mc.edgeXMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
 				} else {
 					numColBlocks = 16;
 				}
-			} else if(br.mc.edgeYMax!=0) {
+			} else if(br.mc.edgeXMax!=0) {
 				numColBlocks = 16;
-				startCol = br.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-numColBlocks+1;
+				startCol = br.mc.edgeXMax/MapCacheSystem.MAP_BLOCK_SIZE-numColBlocks+1;
 			} else {
 				startCol = 0;
 				numColBlocks = 64;
+			}
+			
+			if(br.mc.edgeYMin!=0) {
+				startRow = (br.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE;
+				if(br.mc.edgeYMax!=0) {
+					numRowBlocks = br.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-(br.mc.edgeYMin+1)/MapCacheSystem.MAP_BLOCK_SIZE+1;
+				} else {
+					numRowBlocks = 16;
+				}
+			} else if(br.mc.edgeYMax!=0) {
+				numRowBlocks = 16;
+				startRow = br.mc.edgeYMax/MapCacheSystem.MAP_BLOCK_SIZE-numRowBlocks+1;
+			} else {
+				startRow = 0;
+				numRowBlocks = 64;
 			}
 		} else {
 			int rotation = (int)(Clock.getRoundNum()/12%4);
@@ -58,7 +58,7 @@ public class SharedExplorationSystem {
 			numRowBlocks = 3;
 			numColBlocks = 3;
 		}
-		int xb = startCol + (Clock.getRoundNum()/12 % numColBlocks);
+		int xb = startCol + ((Clock.getRoundNum()/12+br.myID) % numColBlocks);
 		
 		int[] buffer = new int[256];
 		int c=0;
