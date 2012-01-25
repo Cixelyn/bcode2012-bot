@@ -272,6 +272,7 @@ public class MapCacheSystem {
 		int xblock = block / 64;
 		int yblock = block % 64;
 		if(packedSensed[xblock][yblock]!=packedSensedInfo) {
+			//System.out.println("receiving map info on block: "+xblock+","+yblock);
 			packedDataUpdated.add(block);
 			packedIsWall[xblock][yblock] |= packedIsWallInfo;
 			packedSensed[xblock][yblock] |= packedSensedInfo;

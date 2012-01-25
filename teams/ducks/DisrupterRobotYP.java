@@ -9,7 +9,7 @@ import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import ducks.HibernationSystem.HibernationMode;
 
-public class SoldierRobot extends BaseRobot {
+public class DisrupterRobotYP extends BaseRobot {
 	private enum BehaviorState {
 		/** Want to hibernate, need to find a non-blocking place to do it. */
 		LOOKING_TO_HIBERNATE,
@@ -50,7 +50,7 @@ public class SoldierRobot extends BaseRobot {
 	RobotType closestEnemyType;
 	
 	
-	public SoldierRobot(RobotController myRC) throws GameActionException {
+	public DisrupterRobotYP(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		lockAcquiredRound = -1;
@@ -339,9 +339,9 @@ public class SoldierRobot extends BaseRobot {
 			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 25) > 0;
 			boolean targetIsRanged = closestEnemyType==RobotType.DISRUPTER || 
 					closestEnemyType==RobotType.SCORCHER;
-			int tooCloseCantRetreat = targetIsRanged ? 5 : 0;
-			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
-			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
+			int tooCloseCantRetreat = targetIsRanged ? 5 : 3;
+			int tooClose = weHaveBiggerFront ? (targetIsRanged ? 7 : 5) : (targetIsRanged ? 10 : 10);
+			int tooFar = weHaveBiggerFront ? 10 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
 			boolean turnToFaceEnemyFirst = distToTarget <= 13;
