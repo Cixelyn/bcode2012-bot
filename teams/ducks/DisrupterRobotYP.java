@@ -55,7 +55,7 @@ public class DisrupterRobotYP extends BaseRobot {
 		
 		lockAcquiredRound = -1;
 		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
-		nav.setNavigationMode(NavigationMode.GREEDY);
+		nav.setNavigationMode(NavigationMode.BUG);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
 				BroadcastChannel.SOLDIERS,
@@ -102,7 +102,7 @@ public class DisrupterRobotYP extends BaseRobot {
 				// If we know of an enemy, lock onto it
 				behavior = BehaviorState.ENEMY_DETECTED;
 				target = closestEnemyLocation;
-				nav.setNavigationMode(NavigationMode.GREEDY);
+				nav.setNavigationMode(NavigationMode.BUG);
 				lockAcquiredRound = curRound;
 			}
 			
@@ -294,7 +294,7 @@ public class DisrupterRobotYP extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		if(rc.getFlux()<0.8) return null;
+		if(rc.getFlux()<0.8) return new MoveInfo(curLoc.directionTo(target));
 		
 		if(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES) {
 			// Just turn around once
@@ -339,7 +339,7 @@ public class DisrupterRobotYP extends BaseRobot {
 			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 25) > 0;
 			boolean targetIsRanged = closestEnemyType==RobotType.DISRUPTER || 
 					closestEnemyType==RobotType.SCORCHER;
-			int tooCloseCantRetreat = targetIsRanged ? 5 : 3;
+			int tooCloseCantRetreat = targetIsRanged ? 3 : 1;
 			int tooClose = weHaveBiggerFront ? (targetIsRanged ? 7 : 5) : (targetIsRanged ? 10 : 10);
 			int tooFar = weHaveBiggerFront ? 10 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
