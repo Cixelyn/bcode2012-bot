@@ -7,7 +7,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
-public class ArchonRobotYP extends BaseRobot{
+public class ArchonRobotYPOld extends BaseRobot{
 	private enum StrategyState {
 		/** Initial split. */
 		SPLIT,
@@ -46,7 +46,7 @@ public class ArchonRobotYP extends BaseRobot{
 	MapLocation lastPowerNodeGuess;
 	
 	
-	public ArchonRobotYP(RobotController myRC) throws GameActionException {
+	public ArchonRobotYPOld(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		roundLockTarget = -Integer.MAX_VALUE;
