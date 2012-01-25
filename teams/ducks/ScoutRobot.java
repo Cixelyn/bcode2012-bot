@@ -1,11 +1,13 @@
 package ducks;
 
 import battlecode.common.Clock;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
+import battlecode.common.TerrainTile;
 
 public class ScoutRobot extends BaseRobot {
 	
@@ -21,11 +23,9 @@ public class ScoutRobot extends BaseRobot {
 	}
 	private enum BehaviorState {
 		/** Go in a given direction until we see a new map edge or any enemy unit, then go back. */
-		LOOK_FOR_MAP_EDGE_OR_ENEMY,
+		LOOK_FOR_MAP_EDGE,
 		/** Reports the newfound map edge. */
-		REPORT_MAP_EDGE,
-		/** Reports the enemy sighting. */
-		REPORT_ENEMY_SIGHTING,
+		REPORT_TO_ARCHON,
 		/** Go around looking for enemies. */
 		SCOUT_FOR_ENEMIES,
 		/** Stand near the front lines and help target and heal. Kite enemies. */
@@ -50,12 +50,13 @@ public class ScoutRobot extends BaseRobot {
 	MapLocation closestEnemyLocation;
 	RobotType closestEnemyType;
 	
+	Direction mapEdgeToSeek;
+	
 	public ScoutRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
-		strategy = StrategyState.BATTLE;
-		behavior = BehaviorState.PET;
 		enemySpottedTarget = null;
 		enemySpottedRound = -55555;
+		mapEdgeToSeek = null;
 		fbs.setPoolMode();
 		nav.setNavigationMode(NavigationMode.GREEDY);
 		io.setChannels(new BroadcastChannel[] {
@@ -63,11 +64,13 @@ public class ScoutRobot extends BaseRobot {
 				BroadcastChannel.SCOUTS,
 				BroadcastChannel.EXPLORERS
 		});
+		strategy = StrategyState.INITIAL_EXPLORE;
+		resetBehavior();
 	}
 
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()<500) {
+		if(Clock.getRoundNum()<1000) {
 			strategy = StrategyState.INITIAL_EXPLORE;
 		} else {
 			strategy = StrategyState.BATTLE;
@@ -81,36 +84,37 @@ public class ScoutRobot extends BaseRobot {
 			radar.broadcastEnemyInfo(false);
 		
 		
-		if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY || 
-				behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
+		if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
 			if(radar.closestEnemy != null) {
-				behavior = BehaviorState.REPORT_ENEMY_SIGHTING;
+				behavior = BehaviorState.REPORT_TO_ARCHON;
 				enemySpottedTarget = radar.closestEnemy.location;
 				enemySpottedRound = curRound;
 			}
-		} else if(behavior == BehaviorState.REPORT_ENEMY_SIGHTING || 
-				behavior == BehaviorState.REPORT_MAP_EDGE) {
+		} else if(behavior == BehaviorState.REPORT_TO_ARCHON) {
 			if(curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 25) {
-				if(strategy == StrategyState.INITIAL_EXPLORE) 
-					behavior = BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY;
-				else if(strategy == StrategyState.BATTLE)
-					behavior = BehaviorState.SUPPORT_FRONT_LINES;
+				resetBehavior();
 			}
 		} else if(behavior == BehaviorState.PET) {
 			if(strategy == StrategyState.INITIAL_EXPLORE) 
-				behavior = BehaviorState.LOOK_FOR_MAP_EDGE_OR_ENEMY;
+				behavior = BehaviorState.LOOK_FOR_MAP_EDGE;
+		} else if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE) {
+			if(mapEdgeToSeek == Direction.NORTH && mc.edgeYMin!=0 ||
+					mapEdgeToSeek == Direction.SOUTH && mc.edgeYMax!=0 ||
+					mapEdgeToSeek == Direction.WEST && mc.edgeXMin!=0 ||
+					mapEdgeToSeek == Direction.EAST && mc.edgeXMax!=0)
+				behavior = BehaviorState.REPORT_TO_ARCHON;
 		}
+				
 		
 		
 		
 		// set objective based on behavior
 		switch (behavior) {
 			case SCOUT_FOR_ENEMIES:
-			case LOOK_FOR_MAP_EDGE_OR_ENEMY:
+			case LOOK_FOR_MAP_EDGE:
 				objective = mc.guessEnemyPowerCoreLocation();
 				break;
-			case REPORT_MAP_EDGE:
-			case REPORT_ENEMY_SIGHTING:
+			case REPORT_TO_ARCHON:
 			case PET:
 				// go to nearest archon
 				objective = dc.getClosestArchon();
@@ -164,15 +168,42 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		// broadcast enemy spotting
-		if (behavior == BehaviorState.REPORT_ENEMY_SIGHTING && 
+		if (behavior == BehaviorState.REPORT_TO_ARCHON && 
 				curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 64) {
-			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.ENEMY_SPOTTED,
+			if(enemySpottedTarget != null)
+				io.sendUShorts(BroadcastChannel.ALL, BroadcastType.ENEMY_SPOTTED,
 					new int[] {enemySpottedRound, enemySpottedTarget.x, enemySpottedTarget.y});
 		}
 		
 		// indicator strings
 		dbg.setIndicatorString('e', 1, "Target=<"+(objective.x-curLoc.x)+","+
 					(objective.y-curLoc.y)+">, Behavior="+behavior);
+	}
+	
+	private void resetBehavior() {
+		if(strategy == StrategyState.INITIAL_EXPLORE) {
+			if(birthday % 10 < 5) {
+				if(mc.edgeXMax==0) {
+					behavior = BehaviorState.LOOK_FOR_MAP_EDGE;
+					mapEdgeToSeek = Direction.EAST;
+				} else if(mc.edgeXMin==0) {
+					behavior = BehaviorState.LOOK_FOR_MAP_EDGE;
+					mapEdgeToSeek = Direction.WEST;
+				} else {
+					behavior = BehaviorState.SCOUT_FOR_ENEMIES;
+				}
+			} else {
+				if(mc.edgeYMax==0) {
+					behavior = BehaviorState.LOOK_FOR_MAP_EDGE;
+					mapEdgeToSeek = Direction.SOUTH;
+				} else if(mc.edgeYMin==0) {
+					behavior = BehaviorState.LOOK_FOR_MAP_EDGE;
+					mapEdgeToSeek = Direction.NORTH;
+				} else {
+					behavior = BehaviorState.SCOUT_FOR_ENEMIES;
+				}
+			}
+		}
 	}
 	
 	@Override
@@ -195,11 +226,14 @@ public class ScoutRobot extends BaseRobot {
 			return null;
 		
 		// Retreat from enemies
-		if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 5) {
+		if (radar.closestEnemyWithFlux != null) {
 			return new MoveInfo(curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite(), true);
-		} else if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 13) {
-			return null;
 		}
+
+		// Look for map edges
+		if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE)
+			return new MoveInfo(mapEdgeToSeek, false);
+		
 		
 		// Go to objective
 		return new MoveInfo(curLoc.directionTo(objective), false);
