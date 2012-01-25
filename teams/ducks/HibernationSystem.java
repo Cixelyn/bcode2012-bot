@@ -8,30 +8,42 @@ public class HibernationSystem {
 	final BaseRobot br;
 	
 	private boolean lowFluxMode;
+	
+	public static final int MODE_NORMAL = 0xA;
+	public static final int MODE_LOW_FLUX = 0xB;
+	
+	public static final int EXIT_MESSAGED = 0x0;
+	public static final int EXIT_ATTACKED = 0x1;
+	public static final int EXIT_REFUELED = 0x2;
 
-	public static enum HibernationMode {NORMAL, LOW_FLUX}
-	public static enum ExitCode {MESSAGED, ATTACKED, REFUELED }
 
 	public HibernationSystem(BaseRobot baseRobot) {
 		this.br = baseRobot;
 		lowFluxMode = false;
 	}
-
-	public void setMode(HibernationMode mode) {
+	
+	public void setMode(int mode) {
 		switch(mode) {
-		case NORMAL:
+		case MODE_NORMAL:
 			lowFluxMode = false;
-		case LOW_FLUX:
+			break;
+		case MODE_LOW_FLUX:
 			lowFluxMode = true;
+			break;
+		default:
+			System.out.println("ERROR: INCORRECT HSYS MODE SET");
+			break;
 		}
+		
 	}
+
 	
 
 	/** Enables hibernation mode and blocks until a wake-up message has been
 	 * received Don't change the variable order. It's been optimized to hell
-	 * @return reason for wakeup
+	 * @return int status code - reason for wakeup
 	 */
-	public ExitCode run() {
+	public int run() {
 
 		// LOCAL VARIABLE DECLARATION ORDER
 		int i; 							// istore_1
@@ -71,13 +83,13 @@ public class HibernationSystem {
 				br.resetClock();
 				br.updateRoundVariables();
 				br.io.sendWakeupCall();
-				return ExitCode.ATTACKED;
+				return EXIT_ATTACKED;
 			}
 			if((curFlux = rc.getFlux()) < lastFlux - 1.0) {
 				br.resetClock();
 				br.updateRoundVariables();
 				br.io.sendWakeupCall();
-				return ExitCode.ATTACKED;
+				return EXIT_ATTACKED;
 			}      
 			
 			// low flux mode checks
@@ -86,15 +98,14 @@ public class HibernationSystem {
 			if(curFlux > lastFlux && localLowFluxMode) {
 				br.resetClock();
 				br.updateRoundVariables();
-				return ExitCode.REFUELED;
+				return EXIT_REFUELED;
 			}
 			
-			if(time++ % 60 == 0 && localLowFluxMode) {
+			if(localLowFluxMode && time++ % 60 == 0) { // faster fail case first
 				try{
 					rc.broadcast(helpMsg);
 				} catch(GameActionException e) {
 					br.dbg.println('c', "I ran out of flux and killed myself.");
-//					e.printStackTrace();
 //					rc.addMatchObservation(e.toString());
 				}
 			}
@@ -117,7 +128,7 @@ public class HibernationSystem {
 				br.resetClock();
 				br.updateRoundVariables();
 				br.io.sendWakeupCall();
-				return ExitCode.MESSAGED; // our exit point
+				return EXIT_MESSAGED; // our exit point
 			}
 
 			rc.yield();

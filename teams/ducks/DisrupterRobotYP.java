@@ -7,7 +7,6 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
-import ducks.HibernationSystem.HibernationMode;
 
 public class DisrupterRobotYP extends BaseRobot {
 	private enum BehaviorState {
@@ -211,19 +210,19 @@ public class DisrupterRobotYP extends BaseRobot {
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE || behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
 			if(behavior == BehaviorState.HIBERNATE)
-				hsys.setMode(HibernationMode.NORMAL);
+				hsys.setMode(HibernationSystem.MODE_NORMAL);
 			else 
-				hsys.setMode(HibernationMode.LOW_FLUX);
-			HibernationSystem.ExitCode ec = hsys.run();
-			if(ec == HibernationSystem.ExitCode.ATTACKED) {
+				hsys.setMode(HibernationSystem.MODE_LOW_FLUX);
+			int ec = hsys.run();
+			if(ec == HibernationSystem.EXIT_ATTACKED) {
 				radar.scan(false, true);
 				if(radar.closestEnemy==null)
 					behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
 				else
 					tryToAttack();
-			} else if(ec == HibernationSystem.ExitCode.MESSAGED) {
+			} else if(ec == HibernationSystem.EXIT_MESSAGED) {
 				behavior = BehaviorState.SWARM;
-			} else if(ec == HibernationSystem.ExitCode.REFUELED) {
+			} else if(ec == HibernationSystem.EXIT_REFUELED) {
 				behavior = BehaviorState.SWARM;
 			}
 			roundLastWakenUp = curRound;
