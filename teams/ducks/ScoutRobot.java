@@ -70,7 +70,7 @@ public class ScoutRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()<1000) {
+		if(Clock.getRoundNum()<600) {
 			strategy = StrategyState.INITIAL_EXPLORE;
 		} else {
 			strategy = StrategyState.BATTLE;
@@ -95,14 +95,18 @@ public class ScoutRobot extends BaseRobot {
 				resetBehavior();
 			}
 		} else if(behavior == BehaviorState.PET) {
-			if(strategy == StrategyState.INITIAL_EXPLORE) 
-				behavior = BehaviorState.LOOK_FOR_MAP_EDGE;
+			if(rc.getFlux() > 40)
+				resetBehavior();
 		} else if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE) {
 			if(mapEdgeToSeek == Direction.NORTH && mc.edgeYMin!=0 ||
 					mapEdgeToSeek == Direction.SOUTH && mc.edgeYMax!=0 ||
 					mapEdgeToSeek == Direction.WEST && mc.edgeXMin!=0 ||
 					mapEdgeToSeek == Direction.EAST && mc.edgeXMax!=0)
 				behavior = BehaviorState.REPORT_TO_ARCHON;
+		}
+		
+		if(rc.getFlux() < 15) {
+			behavior = BehaviorState.PET;
 		}
 				
 		
@@ -111,12 +115,10 @@ public class ScoutRobot extends BaseRobot {
 		// set objective based on behavior
 		switch (behavior) {
 			case SCOUT_FOR_ENEMIES:
-			case LOOK_FOR_MAP_EDGE:
 				objective = mc.guessEnemyPowerCoreLocation();
 				break;
 			case REPORT_TO_ARCHON:
 			case PET:
-				// go to nearest archon
 				objective = dc.getClosestArchon();
 				break;
 			case SUPPORT_FRONT_LINES:
@@ -127,14 +129,7 @@ public class ScoutRobot extends BaseRobot {
 				else
 					objective = dc.getClosestArchon();
 				break;
-			case SENDING_ALLY_FLUX:
-				// find a friend
-				if (radar.closestLowFluxAlly != null) {
-					objective = radar.closestLowFluxAlly.location;
-				} else {
-					objective = dc.getClosestArchon();
-				}
-				break;
+			
 			default:
 				break;
 		}
@@ -203,7 +198,14 @@ public class ScoutRobot extends BaseRobot {
 					behavior = BehaviorState.SCOUT_FOR_ENEMIES;
 				}
 			}
+		} else if(strategy == StrategyState.SCOUT_ENEMY) {
+			behavior = BehaviorState.SCOUT_FOR_ENEMIES;
+		} else if(strategy == StrategyState.HEAL) {
+			behavior = BehaviorState.PET;
+		} else {
+			behavior = BehaviorState.SUPPORT_FRONT_LINES;
 		}
+			
 	}
 	
 	@Override
