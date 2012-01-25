@@ -294,7 +294,7 @@ public class DisrupterRobotYP extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		if(rc.getFlux()<0.8) return new MoveInfo(curLoc.directionTo(target));
+		if(rc.getFlux()<1.6) return new MoveInfo(curLoc.directionTo(target));
 		
 		if(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES) {
 			// Just turn around once
@@ -340,7 +340,7 @@ public class DisrupterRobotYP extends BaseRobot {
 			boolean targetIsRanged = closestEnemyType==RobotType.DISRUPTER || 
 					closestEnemyType==RobotType.SCORCHER;
 			int tooCloseCantRetreat = targetIsRanged ? 3 : 1;
-			int tooClose = weHaveBiggerFront ? (targetIsRanged ? 7 : 5) : (targetIsRanged ? 10 : 10);
+			int tooClose = weHaveBiggerFront ? (targetIsRanged ? 7 : 5) : (targetIsRanged ? 10 : 8);
 			int tooFar = weHaveBiggerFront ? 10 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
