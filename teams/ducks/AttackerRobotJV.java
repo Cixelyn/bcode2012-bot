@@ -117,7 +117,7 @@ public class AttackerRobotJV extends BaseRobot {
 						radar.closestEnemy.location), false);
 			}
 		} else {
-			if (Math.random() < movementProbability) {
+			if (Util.randDouble() < movementProbability) {
 				return new MoveInfo(nav.navigateToDestination(), false);
 			} else {
 				return new MoveInfo(curDir.rotateLeft().rotateLeft().rotateLeft());

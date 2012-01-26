@@ -348,7 +348,7 @@ public class ArchonRobot extends BaseRobot{
 			{
 				targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -361,7 +361,7 @@ public class ArchonRobot extends BaseRobot{
 			{
 				targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -374,7 +374,7 @@ public class ArchonRobot extends BaseRobot{
 			{
 				targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -387,7 +387,7 @@ public class ArchonRobot extends BaseRobot{
 			{
 				targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -400,7 +400,7 @@ public class ArchonRobot extends BaseRobot{
 			{
 				targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -413,7 +413,7 @@ public class ArchonRobot extends BaseRobot{
 			{
 				targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -426,7 +426,7 @@ public class ArchonRobot extends BaseRobot{
 			{
 				targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -447,7 +447,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 			targetDir = newdir;
 			target = curLoc.add(targetDir, RETREAT_DISTANCE);
-			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			return null;
 		}
 		return null;
@@ -458,7 +458,7 @@ public class ArchonRobot extends BaseRobot{
 		if (curLoc.distanceSquaredTo(target) < 10)
 		{
 			target = curLoc.add(targetDir, RETREAT_DISTANCE);
-			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Math.random()*8)]);
+			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 		}
 		dbg.setIndicatorString('y',1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
 	}
@@ -636,7 +636,7 @@ public class ArchonRobot extends BaseRobot{
 			break;
 		}
 		if(rc.getFlux() > fluxToMakeSoldierAt) {
-			if(Math.random() < 0.000001 && Clock.getRoundNum() > 500 && 
+			if(Util.randDouble() < 0.000001 && Clock.getRoundNum() > 500 && 
 					rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
 				return new MoveInfo(RobotType.SCOUT, curDir);
 			} else {
@@ -653,7 +653,7 @@ public class ArchonRobot extends BaseRobot{
 		
 		// Initial explore behavior
 		if(strategy == StrategyState.INITIAL_EXPLORE) {
-			if(curRound > 80 && Math.random()<0.3) 
+			if(curRound > 80 && Util.randDouble()<0.3) 
 				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 
 			boolean[] movable = dc.getMovableDirections();
@@ -682,7 +682,7 @@ public class ArchonRobot extends BaseRobot{
 		// Defend behavior
 		} else if(strategy == StrategyState.DEFEND) {
 			if(curLoc.distanceSquaredTo(myHome) <= 100) {
-				if(Math.random()<0.02) 
+				if(Util.randDouble()<0.02) 
 					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 				
 				boolean[] movable = dc.getMovableDirections();
@@ -723,7 +723,7 @@ public class ArchonRobot extends BaseRobot{
 			if(curLoc.equals(closestToTarget)) {
 				
 				// If there are no allies in front, slow down (maintain compact swarm)
-				if(behavior == BehaviorState.SWARM && Math.random()<0.8 && radar.alliesInFront==0) {
+				if(behavior == BehaviorState.SWARM && Util.randDouble()<0.8 && radar.alliesInFront==0) {
 					return null;
 				}
 				
@@ -731,7 +731,7 @@ public class ArchonRobot extends BaseRobot{
 			} else {
 				if(dc.getClosestArchon()!=null) {
 					int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-					if(distToNearestArchon <= 25 && Math.random() < 1.05-Math.sqrt(distToNearestArchon)/10) {
+					if(distToNearestArchon <= 25 && Util.randDouble() < 1.05-Math.sqrt(distToNearestArchon)/10) {
 						return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
 					}
 				}

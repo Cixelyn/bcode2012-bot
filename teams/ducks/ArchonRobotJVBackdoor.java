@@ -97,15 +97,15 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 		}
 		// share exploration
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 3000 && Math.random() < 0.2) {
+				Clock.getBytecodesLeft() > 3000 && Util.randDouble() < 0.2) {
 			ses.broadcastMapFragment();
 		}
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.2) {
+				Clock.getBytecodesLeft() > 1000 && Util.randDouble() < 0.2) {
 			ses.broadcastPowerNodeFragment();
 		}
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.2) {
+				Clock.getBytecodesLeft() > 1000 && Util.randDouble() < 0.2) {
 			ses.broadcastMapEdges();
 		}
 		// flux and messaging
