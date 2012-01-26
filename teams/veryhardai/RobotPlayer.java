@@ -1,7 +1,6 @@
 package veryhardai;
 
 import battlecode.common.RobotController;
-import battlecode.common.Team;
 
 public class RobotPlayer {
 	public static void run(RobotController myRC) {

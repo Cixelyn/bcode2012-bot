@@ -1,6 +1,5 @@
 package verydisrupterai;
 
-import battlecode.common.Clock;
 
 public class FastIDSet {
 	
