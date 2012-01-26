@@ -14,16 +14,20 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 	public ArchonRobotJVBackdoor(
 			RobotController myRC) throws GameActionException {
 		super(myRC);
+		
 		// set broadcast channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
 				BroadcastChannel.ARCHONS,
 				BroadcastChannel.EXPLORERS
 		});
+		
 		// set flux balance mode
 		fbs.setPoolMode();
+		
 		// set navigation mode
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
+		
 		// set initial objective
 		objective = myHome;
 	}
@@ -32,14 +36,15 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 	public void run() throws GameActionException {
 		// scan
 		radar.scan(true, true);
+		
 		// set objective
-		objective = getNextBackdoorPowerNode();
+//		objective = getNextBackdoorPowerNode();
+		objective = mc.guessBestPowerNodeToCapture();
 		nav.setDestination(objective);
+		
 		// broadcast objective
-		io.sendMapLoc(BroadcastChannel.SOLDIERS, BroadcastType.RALLY,
+		io.sendMapLoc(BroadcastChannel.DISRUPTERS, BroadcastType.RALLY,
 				objective);
-		// set indicator string
-		dbg.setIndicatorString('j', 0, "ARCHON - DEFENSE - <123,45678>");
 	}
 	
 	@Override
@@ -62,17 +67,26 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		// if enemy in range, make some soldiers...
-		if (radar.numEnemyTowers > 0 &&
-				rc.getFlux() > RobotType.SOLDIER.spawnCost + 15) {
+		// if you have enough flux, make a disrupter...
+		if (rc.getFlux() == myMaxFlux || radar.closestEnemy != null &&
+				rc.getFlux() > RobotType.DISRUPTER.spawnCost + 15) {
 			if (rc.canMove(curDir)) {
-				return new MoveInfo(RobotType.SOLDIER, curDir);
+				return new MoveInfo(RobotType.DISRUPTER, curDir);
 			} else {
 				return new MoveInfo(curDir.rotateLeft());
 			}
-		}
+			
+		// ...otherwise, if a non-tower enemy is nearby, kite it
+		} else if (radar.closestEnemy != null) {
+			Direction dir = curLoc.directionTo(radar.closestEnemy.location);
+			if (radar.closestEnemy.type == RobotType.TOWER) {
+				return new MoveInfo(dir);
+			} else {
+				return new MoveInfo(dir.opposite(), true);
+			}
+		
 		// ...otherwise, go to target
-		else {
+		} else {
 			int distance = curLoc.distanceSquaredTo(objective);
 			if (distance == 0) {
 				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
@@ -84,7 +98,15 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 					return null;
 				}
 			} else {
-				return new MoveInfo(nav.navigateToDestination(), false);
+				// with some probability, split from other archons
+				if (dc.getClosestArchon() != null &&
+						curLoc.distanceSquaredTo(dc.getClosestArchon()) < 16 &&
+						Math.random() < 0.3) {
+					return new MoveInfo(curLoc.directionTo(
+							dc.getClosestArchon()).opposite(), true);
+				} else {
+					return new MoveInfo(nav.navigateToDestination(), true);
+				}
 			}
 		}
 	}
@@ -95,6 +117,7 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 		if (curRound == Clock.getRoundNum() && Clock.getBytecodesLeft() > 5000) {
 			nav.prepare();
 		}
+		
 		// share exploration
 		if (curRound == Clock.getRoundNum() &&
 				Clock.getBytecodesLeft() > 3000 && Math.random() < 0.2) {
@@ -108,8 +131,10 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.2) {
 			ses.broadcastMapEdges();
 		}
+		
 		// flux and messaging
 		super.useExtraBytecodes();
+		
 		// process shared exploration
 		while (curRound == Clock.getRoundNum() &&
 				Clock.getBytecodesLeft() > 1000 &&
@@ -117,18 +142,26 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 		}
 	}
 	
+	/**
+	 * Returns a caputurable power node far from the center but close to the
+	 * Archon.
+	 * @return The MapLocation of a power node to take.
+	 */
+	/*
 	private MapLocation getNextBackdoorPowerNode() {
+		// initialize some stuffs
 		MapLocation center = new MapLocation(
 				(myHome.x + mc.guessEnemyPowerCoreLocation().x) / 2,
 				(myHome.y + mc.guessEnemyPowerCoreLocation().y) / 2);
 		MapLocation bestPowerNode = null;
 		int bestHeuristic = Integer.MAX_VALUE;
+		
+		// get a tower close to me but far from the center
 		for (MapLocation powerNode : dc.getCapturablePowerCores()) {
 			// if it's the enemy core, take it
 			if (powerNode.equals(mc.getEnemyPowerCoreLocation())) {
 				return powerNode;
 			}
-			// get a tower close to me but far from the center
 			int heuristic = curLoc.distanceSquaredTo(powerNode) -
 					2 * center.distanceSquaredTo(powerNode);
 			if (heuristic < bestHeuristic) {
@@ -138,4 +171,5 @@ public class ArchonRobotJVBackdoor extends BaseRobot {
 		}
 		return bestPowerNode;
 	}
+	*/
 }

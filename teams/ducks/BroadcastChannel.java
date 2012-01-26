@@ -5,6 +5,7 @@ public enum BroadcastChannel {
 	ALL,
 	ARCHONS,
 	SOLDIERS,
+	DISRUPTERS,
 	SCOUTS,
 	EXTENDED_RADAR,
 	EXPLORERS;

@@ -105,6 +105,7 @@ public class RobotPlayer {
 						
 					}
 				}
+				else if (owner.equals("justin")) br = new DisrupterRobotJV(myRC);
 				break;
 			case SCORCHER:
 				if (owner.equals("justin")) br = null;
