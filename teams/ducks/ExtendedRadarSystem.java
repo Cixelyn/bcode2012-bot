@@ -89,8 +89,10 @@ public class ExtendedRadarSystem {
 		// Subtract enemy energon
 		for(i=enemyKeySet.size(); --i>=0;) {
 			int id = enemyKeySet.getID(i);
-			if(center.distanceSquaredTo(enemyLocationInfo[id]) <= radiusSquared) 
+			if(center.distanceSquaredTo(enemyLocationInfo[id]) <= radiusSquared) {
+				flags[id] = flagCount;
 				diff -= enemyEnergonInfo[id];
+			}
 		}
 		
 		// Subtract enemy energon from robots in the local radar but not in the ER
@@ -133,7 +135,7 @@ public class ExtendedRadarSystem {
 			diff += br.curEnergon;
 		}
 		
-//		br.dbg.setIndicatorString('h', 0, toString()+" ----- energon difference: "+diff);
+		br.dbg.setIndicatorString('h', 0, toString()+" ----- energon difference: "+diff);
 		return diff;
 	}
 	
