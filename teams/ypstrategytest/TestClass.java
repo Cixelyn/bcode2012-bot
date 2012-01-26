@@ -329,22 +329,22 @@ int t1,t2;
 //		System.out.println("random: " + (t2-t1));
 		
 		
-		for (int x=0; x<10; x++)
+		for (int x=0; x<1000; x++)
 		{
-			t1 = Clock.getBytecodeNum();
-			System.out.println(nextRandom());
-			t2 = Clock.getBytecodeNum();
-			System.out.println("fast random: " + (t2-t1));
+//			t1 = Clock.getBytecodeNum();
+//			System.out.println(nextRandom());
+//			t2 = Clock.getBytecodeNum();
+//			System.out.println("fast random: " + (t2-t1));
 			
-			t1 = Clock.getBytecodeNum();
+//			t1 = Clock.getBytecodeNum();
 			System.out.println(randDouble());
-			t2 = Clock.getBytecodeNum();
-			System.out.println("proper random: " + (t2-t1));
+//			t2 = Clock.getBytecodeNum();
+//			System.out.println("proper random: " + (t2-t1));
 			
-			t1 = Clock.getBytecodeNum();
-			System.out.println(Math.random());
-			t2 = Clock.getBytecodeNum();
-			System.out.println("Math random: " + (t2-t1));
+//			t1 = Clock.getBytecodeNum();
+//			System.out.println(Math.random());
+//			t2 = Clock.getBytecodeNum();
+//			System.out.println("Math random: " + (t2-t1));
 		}
 		
 		
@@ -493,6 +493,11 @@ int t1,t2;
 		System.out.println("string writer used: "+(t2-t1));
 	}
 	
+	public static void randInit(int seed1, int seed2)
+	{
+		m_z = seed1;
+		m_w = seed2;
+	}
 	
 	private static int pos = 0;
 	public static double nextRandom()
@@ -500,8 +505,8 @@ int t1,t2;
 		return randDoubles[(pos=(pos+Clock.getBytecodeNum())%4096)];
 	}
 
-	static int m_z = Clock.getBytecodeNum();
-	static int m_w = Clock.getRoundNum();
+	static int m_z;// = Clock.getBytecodeNum();
+	static int m_w;// = Clock.getRoundNum();
 	static boolean randinit = false;
 	private static void randInit()
 	{
@@ -526,7 +531,7 @@ int t1,t2;
 	public static double randDouble()
 	{
 //		if (!randinit) randInit();
-		return (gen() * 2.328306435454494e-10 + 1.0);
+		return (gen() * 2.32830644e-10 + 0.5);
 	}
 	
 //	t1 = Clock.getBytecodeNum();
@@ -534,21 +539,20 @@ int t1,t2;
 //	t2 = Clock.getBytecodeNum();
 //	System.out.println("string writer used: "+(t2-t1));
 	
-//	public static void main(String[] args) {
-//		double[] rand = new double[4096];
-//		for (int x=0; x<rand.length; x++)
-//			rand[x] = Math.random();
-//		System.out.println("public static final double[] randDoubles = new double[]{");
-//		for (int x=0; x<4096; x+=16)
-//		{
-//			for (int y=0; y<16; y++)
-//			{
-//				System.out.print(rand[x+y]+",");
-//			}
-//			System.out.println();
-//		}
-//		System.out.println("};");
-//	}
+	public static void main(String[] args) {
+		
+		randInit(1532,58);
+		
+		int count = 0;
+		for (int x=0; x<1000000; x++)
+		{
+			double gen = randDouble();
+			if (gen<0.0001) count++;
+		}
+		
+		System.out.println(count);
+		
+	}
 
 	
 	static StrategyQueue sq;

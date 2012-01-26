@@ -130,7 +130,7 @@ public class ArchonRobotJV extends BaseRobot {
 			case ESCORT:
 				if (rc.getFlux() >= 290) {
 					if (rc.canMove(curDir)) {
-						if (Math.random() < 0.5) {
+						if (Util.randDouble() < 0.5) {
 							return new MoveInfo(RobotType.SCORCHER, curDir);
 						} else {
 							return new MoveInfo(RobotType.SOLDIER, curDir);
@@ -140,7 +140,7 @@ public class ArchonRobotJV extends BaseRobot {
 					}
 				} else if (dc.getClosestArchon() != null &&
 						curLoc.distanceSquaredTo(dc.getClosestArchon()) < 16 &&
-						Math.random() < 0.3) {
+						Util.randDouble() < 0.3) {
 					return new MoveInfo(curLoc.directionTo(
 							dc.getClosestArchon()).opposite(), false);
 				} else {
@@ -160,15 +160,15 @@ public class ArchonRobotJV extends BaseRobot {
 		}
 		// share exploration
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 3000 && Math.random() < 0.2) {
+				Clock.getBytecodesLeft() > 3000 && Util.randDouble() < 0.2) {
 			ses.broadcastMapFragment();
 		}
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.2) {
+				Clock.getBytecodesLeft() > 1000 && Util.randDouble() < 0.2) {
 			ses.broadcastPowerNodeFragment();
 		}
 		if (curRound == Clock.getRoundNum() &&
-				Clock.getBytecodesLeft() > 1000 && Math.random() < 0.2) {
+				Clock.getBytecodesLeft() > 1000 && Util.randDouble() < 0.2) {
 			ses.broadcastMapEdges();
 		}
 		// process shared exploration
