@@ -341,7 +341,7 @@ public class SoldierRobotYP extends BaseRobot {
 					closestEnemyType==RobotType.SCORCHER;
 			int tooCloseCantRetreat = targetIsRanged ? 5 : 0;
 			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
-			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
+			int tooFar = weHaveBiggerFront ? (targetIsRanged ? 0 : 4) : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
 			boolean turnToFaceEnemyFirst = distToTarget <= 13;

@@ -645,10 +645,10 @@ public class ArchonRobotYP extends BaseRobot{
 					if (behavior == BehaviorState.CHASE)
 						return new MoveInfo(RobotType.SOLDIER, dir);
 					else
-						if (Math.random()<0.6)
+//						if (Math.random()<0.6)
 							return new MoveInfo(RobotType.SOLDIER, dir);
-						else
-							return new MoveInfo(RobotType.DISRUPTER, dir);
+//						else
+//							return new MoveInfo(RobotType.DISRUPTER, dir);
 			}
 		}
 		
