@@ -29,8 +29,6 @@ public class ArchonRobot extends BaseRobot{
 		RETREAT, 
 		/** Fight the enemy forces. Micro, maybe kite. */
 		BATTLE, 
-		/** Track enemy's last position and keep following them. */
-		CHASE,
 	}
 	int myArchonID;
 	
@@ -141,10 +139,6 @@ public class ArchonRobot extends BaseRobot{
 				String ret = computeRetreatTarget();
 				dbg.setIndicatorString('e', 1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
-			} else if(curDir == curLoc.directionTo(radar.getEnemySwarmCenter()) &&
-					radar.alliesInFront > radar.numEnemyRobots - radar.numEnemyArchons) {
-				behavior = BehaviorState.CHASE;
-				computeChaseTarget();
 			} else {
 				behavior = BehaviorState.BATTLE;
 				computeBattleTarget();
@@ -152,11 +146,8 @@ public class ArchonRobot extends BaseRobot{
 		
 		// we should update the target based on the previous target direction if we are chasing or retreating
 		} else if(curRound <= stayTargetLockedUntilRound && targetDir!=null) {
-			switch (behavior)
-			{
-			case CHASE: updateChaseTarget(); break;
-			case RETREAT: updateRetreatTarget(); break;
-			}
+			if(behavior == BehaviorState.RETREAT)
+				updateRetreatTarget();
 			
 		// If someone else told us of a recent enemy spotting, go to that location
 		} else if(strategy != StrategyState.DEFEND && curRound < enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT) {
@@ -199,27 +190,16 @@ public class ArchonRobot extends BaseRobot{
 		else
 			fbs.setPoolMode();
 		
-		// Broadcast stuff
-		if (behavior == BehaviorState.CHASE) {
-			MapLocation tar = radar.getEnemySwarmTarget();
-			// Broadcast my target info to the soldier swarm
-			int[] shorts = new int[3];
-			shorts[0] = 1;
-			shorts[1] = tar.x;
-			shorts[2] = tar.y;
-			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-		} else {
-			// Broadcast my target info to the soldier swarm
-			int[] shorts = new int[3];
-			shorts[0] = (behavior == BehaviorState.RETREAT) ? 0 : 1;
-			shorts[1] = target.x;
-			shorts[2] = target.y;
-			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
-		}
+		// Broadcast my target info to the soldier swarm
+		int[] shorts = new int[3];
+		shorts[0] = (behavior == BehaviorState.RETREAT) ? 0 : 1;
+		shorts[1] = target.x;
+		shorts[2] = target.y;
+		io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
 		
 		// Broadcast a possibly out of date enemy sighting every 20 turns
 		if(enemySpottedTarget != null && curRound%20 == myArchonID*3) {
-			int[] shorts = new int[3];
+			shorts = new int[3];
 			shorts[0] = enemySpottedRound;
 			shorts[1] = enemySpottedTarget.x;
 			shorts[2] = enemySpottedTarget.y;
@@ -231,46 +211,7 @@ public class ArchonRobot extends BaseRobot{
 			dbg.setIndicatorString('h',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
 		
 	}
-	
-	private void computeChaseTarget()
-	{
-		lastPowerNodeGuess = null;
-		target = radar.getEnemySwarmTarget();
-		targetDir = curLoc.directionTo(target);
-		
-//		TODO not doing anything special right now about edges or corners
-////		now, deal with when we are close to map boundaries
-//		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+CHASE_COMPUTE_RADIUS)
-//		{
-//			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+CHASE_COMPUTE_RADIUS)
-//			{
-////				we are near the SOUTH_EAST corner
-//				
-//			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-CHASE_COMPUTE_RADIUS)
-//			{
-////				we are near the NORTH_EAST corner
-//				
-//			}
-//		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-CHASE_COMPUTE_RADIUS)
-//		{
-//			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+CHASE_COMPUTE_RADIUS)
-//			{
-////				we are near the SOUTH_WEST corner
-//				
-//			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-CHASE_COMPUTE_RADIUS)
-//			{
-////				we are near the NORTH_WEST corner
-//				
-//			}
-//		}
-	}
-	
-	private void updateChaseTarget()
-	{
-		if (curLoc.distanceSquaredTo(target) < 10)
-			target = curLoc.add(targetDir,5);
-	}
-	
+
 	private String computeRetreatTarget()
 	{
 		lastPowerNodeGuess = null;
@@ -656,7 +597,7 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		// If there's an enemy within 20 dist, run away
-		if(radar.closestEnemyDist <= 20 && behavior != BehaviorState.CHASE) {
+		if(radar.closestEnemyDist <= 20) {
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
@@ -717,8 +658,7 @@ public class ArchonRobot extends BaseRobot{
 			}
 		}
 		
-		if(behavior == BehaviorState.SWARM || behavior == BehaviorState.BATTLE || 
-				behavior == BehaviorState.CHASE) {
+		if(behavior == BehaviorState.SWARM || behavior == BehaviorState.BATTLE) {
 			MapLocation closestToTarget = null;
 			int bestDist = Integer.MAX_VALUE;
 			for(MapLocation loc: dc.getAlliedArchons()) {
