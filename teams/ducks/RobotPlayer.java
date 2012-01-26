@@ -1,14 +1,16 @@
 package ducks;
 
+import battlecode.common.Clock;
 import battlecode.common.RobotController;
 import battlecode.common.Team;
 
 public class RobotPlayer {
 	public static void run(RobotController myRC) {
 		BaseRobot br = null;
+		int rseed = myRC.getRobot().getID();
+		Util.randInit(rseed,rseed*Clock.getRoundNum());
 		
 		String owner = System.getProperty("bc.testing.strategy");
-		
 		
 		
 		try {
