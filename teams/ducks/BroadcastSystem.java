@@ -492,7 +492,7 @@ public class BroadcastSystem {
 	}
 	
 	private void possiblyRememberEnemyMessage(Message m) {
-		if (Math.random() < 0.0001) {
+		if (Math.random() < 0.01) {
 			// the boolean determines whether we encrypt or not
 			br.mos.rememberMessage(m, false);
 		}
