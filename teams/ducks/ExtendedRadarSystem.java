@@ -216,13 +216,15 @@ public class ExtendedRadarSystem {
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = enemyKeySet.getID(i);
-			ret+=" id="+id+", pos=<"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+">, hp="+enemyEnergonInfo[id]+"     ";
+			ret+=" id="+id+", pos=<"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+
+					">, hp="+enemyEnergonInfo[id]+", "+enemyTypeInfo[id]+"     ";
 		}
 		size = allyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = allyKeySet.getID(i);
-			ret+=" (ally)id="+id+", pos=<"+(allyLocationInfo[id].x-br.curLoc.x)+","+(allyLocationInfo[id].y-br.curLoc.y)+">, hp="+allyEnergonInfo[id]+"     ";
+			ret+=" (ally)id="+id+", pos=<"+(allyLocationInfo[id].x-br.curLoc.x)+","+(allyLocationInfo[id].y-br.curLoc.y)+
+					">, hp="+allyEnergonInfo[id]+", "+allyTypeInfo[id]+"     ";
 		}
-		return ret;
+		return ret.substring(0, Math.min(ret.length(), 150));
 	}
 }

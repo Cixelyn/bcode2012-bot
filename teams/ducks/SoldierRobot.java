@@ -342,9 +342,8 @@ public class SoldierRobot extends BaseRobot {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
 			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 24) > 0;
-			boolean targetIsRanged = closestEnemyType==RobotType.DISRUPTER || 
-					closestEnemyType==RobotType.SCORCHER;
-			int tooCloseCantRetreat = targetIsRanged ? 5 : 0;
+			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
+			int tooCloseCantRetreat = targetIsRanged ? 4 : 0;
 			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
 			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
@@ -353,9 +352,8 @@ public class SoldierRobot extends BaseRobot {
 			if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
 				return new MoveInfo(dirToTarget);
 			} else if(distToTarget>tooCloseCantRetreat && distToTarget <= tooClose) {
-				Direction dir = dirToTarget.opposite();
-				if(rc!=null && rc.canMove(dir))
-					return new MoveInfo(dir, true);
+				if(rc.canMove(curDir.opposite()))
+					return new MoveInfo(curDir.opposite(), true);
 			} else if(distToTarget >= tooFar) {
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
