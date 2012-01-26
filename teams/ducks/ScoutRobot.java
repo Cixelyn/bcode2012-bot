@@ -245,15 +245,15 @@ public class ScoutRobot extends BaseRobot {
 	public void useExtraBytecodes() throws GameActionException {
 		if (strategy == StrategyState.INITIAL_EXPLORE) {
 			if (curRound == Clock.getRoundNum() &&
-					Clock.getBytecodesLeft() > 6000 && Math.random() < 0.05) {
+					Clock.getBytecodesLeft() > 6000 && Util.randDouble() < 0.05) {
 				ses.broadcastMapFragment();
 			}
 			if (curRound == Clock.getRoundNum() &&
-					Clock.getBytecodesLeft() > 5000 && Math.random() < 0.05) {
+					Clock.getBytecodesLeft() > 5000 && Util.randDouble() < 0.05) {
 				ses.broadcastPowerNodeFragment();
 			}
 			if (curRound == Clock.getRoundNum() &&
-					Clock.getBytecodesLeft() > 2000 && Math.random() < 0.05) {
+					Clock.getBytecodesLeft() > 2000 && Util.randDouble() < 0.05) {
 				ses.broadcastMapEdges();
 			}
 		}

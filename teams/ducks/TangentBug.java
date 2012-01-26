@@ -283,7 +283,7 @@ public class TangentBug {
 		else if(!traceDirLocked && bdir[bestTraceDir]==-1 && bdir[1-bestTraceDir]!=-1) 
 			bestTraceDir = 1 - bestTraceDir;
 		
-		if(!traceDirLocked && chanceGoLongWay>0 && Math.random()<chanceGoLongWay) 
+		if(!traceDirLocked && chanceGoLongWay>0 && Util.randDouble()<chanceGoLongWay) 
 			bestTraceDir = 1 - bestTraceDir;
 		traceDirLastTurn = bestTraceDir;
 		tangentPosLastTurn = bpos[bestTraceDir];

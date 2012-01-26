@@ -54,7 +54,7 @@ public class NormalBug {
 	
 	public void reset() {
 		tracing = -1;
-		defaultTraceDirection = (int)(Math.random()+0.5);
+		defaultTraceDirection = (int)(Util.randDouble()+0.5);
 		traceThreshold = INITIAL_TRACE_THRESHOLD;
 		hitEdgeInOtherTraceDirection = false;
 	}

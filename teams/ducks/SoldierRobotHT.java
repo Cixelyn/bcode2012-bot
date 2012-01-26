@@ -183,19 +183,19 @@ public class SoldierRobotHT extends BaseRobot {
 		} else if(curLoc.distanceSquaredTo(target) >= tooFar) {
 			Direction dir = nav.navigateToDestination();
 			if(behavior == BehaviorState.SWARM) {
-				if(radar.alliesInFront==0 && Math.random()<0.75) 
+				if(radar.alliesInFront==0 && Util.randDouble()<0.75) 
 					return null;
-				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+				if(radar.alliesInFront > 3 && Util.randDouble()<0.05 * radar.alliesInFront) 
 					dir = nav.navigateCompletelyRandomly();
-				if(radar.alliesOnLeft > radar.alliesOnRight && Math.random()<0.3) 
+				if(radar.alliesOnLeft > radar.alliesOnRight && Util.randDouble()<0.3) 
 					dir = dir.rotateRight();
-				else if(radar.alliesOnLeft < radar.alliesOnRight && Math.random()<0.3) 
+				else if(radar.alliesOnLeft < radar.alliesOnRight && Util.randDouble()<0.3) 
 					dir = dir.rotateLeft();
 			}
 			return new MoveInfo(dir, false);
 		} else {
 			if(behavior == BehaviorState.SWARM) {
-				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+				if(radar.alliesInFront > 3 && Util.randDouble()<0.05 * radar.alliesInFront) 
 					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
 		}
