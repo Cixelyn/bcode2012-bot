@@ -7,6 +7,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
+import battlecode.common.TerrainTile;
 
 public class ArchonRobot extends BaseRobot{
 	private enum StrategyState {
@@ -605,13 +606,21 @@ public class ArchonRobot extends BaseRobot{
 		// If it's between turn 100 and 150, try to build a scout (archons 0 and 1)
 		if (curRound>=100 && curRound<=150 && rc.getFlux()>90) {
 			if(myArchonID==0) {
-				if(curRound%10==0)
-					return new MoveInfo(RobotType.SCOUT, curDir);
-				else return null;
+				if(curRound%10==0) {
+					Direction dir = curDir;
+					while(rc.senseTerrainTile(curLoc.add(dir))==TerrainTile.OFF_MAP || 
+							rc.senseObjectAtLocation(curLoc.add(dir), RobotLevel.IN_AIR)!=null) 
+						dir = dir.rotateLeft();
+					return new MoveInfo(RobotType.SCOUT, dir);
+				} else return null;
 			} else if(myArchonID==1) {
-				if(curRound%10==5)
-					return new MoveInfo(RobotType.SCOUT, curDir);
-				else return null;
+				if(curRound%10==5){
+					Direction dir = curDir;
+					while(rc.senseTerrainTile(curLoc.add(dir))==TerrainTile.OFF_MAP || 
+							rc.senseObjectAtLocation(curLoc.add(dir), RobotLevel.IN_AIR)!=null) 
+						dir = dir.rotateLeft();
+					return new MoveInfo(RobotType.SCOUT, dir);
+				} else return null;
 			}
 		}
 				

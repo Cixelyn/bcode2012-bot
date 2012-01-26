@@ -44,6 +44,7 @@ public class SoldierRobot extends BaseRobot {
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	int roundLastWakenUp;
+	boolean checkedBehind;
 	
 	MapLocation closestEnemyLocation;
 	RobotType closestEnemyType;
@@ -65,6 +66,7 @@ public class SoldierRobot extends BaseRobot {
 		enemySpottedTarget = null;
 		enemySpottedRound = -55555;
 		roundLastWakenUp = -55555;
+		checkedBehind = false;
 	}
 
 	@Override
@@ -105,9 +107,11 @@ public class SoldierRobot extends BaseRobot {
 				lockAcquiredRound = curRound;
 			}
 			
-		} else if(curEnergon < energonLastTurn) {
+		} else if(curEnergon < energonLastTurn || (behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES &&
+				!checkedBehind)) {
 			// Got hurt since last turn.. look behind you
 			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+			checkedBehind = false;
 			
 		} else if(behavior == BehaviorState.ENEMY_DETECTED && curRound < lockAcquiredRound + 12) {
 			// Don't know of any enemies, stay chasing the last enemy we knew of
@@ -298,6 +302,7 @@ public class SoldierRobot extends BaseRobot {
 		
 		if(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES) {
 			// Just turn around once
+			checkedBehind = true;
 			return new MoveInfo(curDir.opposite());
 		} else if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
 			// If we're looking to hibernate, move around randomly
