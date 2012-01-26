@@ -151,7 +151,7 @@ public class NavigationSystem {
 		if(mode==NavigationMode.BUG || br.myType==RobotType.SCOUT)
 			return wiggleToMovableDirectionLimited(dir);
 		Direction d1, d2;
-		if(Math.random()<0.5) {
+		if(Util.randDouble()<0.5) {
 			d1 = dir.rotateLeft();
 			if(rc.canMove(d1))
 				return d1;
@@ -189,7 +189,7 @@ public class NavigationSystem {
 		if(rc.canMove(dir)) 
 			return dir;
 		Direction d1, d2;
-		if(Math.random()<0.5) {
+		if(Util.randDouble()<0.5) {
 			d1 = dir.rotateLeft();
 			if(rc.canMove(d1))
 				return d1;
@@ -267,7 +267,7 @@ public class NavigationSystem {
 	 * may return a direction that moves towards another robot.
 	 */
 	public Direction navigateCompletelyRandomly() {
-		int rand = (int)(Math.random()*16);
+		int rand = (int)(Util.randDouble()*16);
 		int a = rand/2;
 		int b = rand%2*2+3;
 		for(int i=0; i<8; i++) {
@@ -283,7 +283,7 @@ public class NavigationSystem {
 	 * may return a direction that moves towards another robot. <br>
 	 */
 	public Direction navigateRandomly(MapLocation destination) {
-		double d = Math.random();
+		double d = Util.randDouble();
 		if(d*1000-(int)(d*1000)<0.25) return br.curLoc.directionTo(destination);
 		d=d*2-1;
 		d = d*d*Math.signum(d);
@@ -307,7 +307,7 @@ public class NavigationSystem {
 	 */
 	public Direction navigateGreedy(MapLocation destination) {
 		Direction dir = br.curLoc.directionTo(destination);
-		if(Math.random()<0.5) {
+		if(Util.randDouble()<0.5) {
 			while(mapCache.isWall(br.curLoc.add(dir)))
 				dir = dir.rotateLeft();
 		} else {
@@ -322,6 +322,6 @@ public class NavigationSystem {
 	
 	/** Returns a direction at random from the eight standard directions. */
 	public static Direction getRandomDirection() {
-		return Constants.directions[(int)(Math.random()*8)];
+		return Constants.directions[(int)(Util.randDouble()*8)];
 	}
 }

@@ -312,7 +312,7 @@ public class Micro {
 				loc, RobotLevel.POWER_NODE) != null) {
 			Direction newDir = dir;
 			for (int tries = 0; tries < 30; tries++) {
-				if (Math.random() < 0.5) {
+				if (Util.randDouble() < 0.5) {
 					newDir = newDir.rotateLeft();
 				} else {
 					newDir = newDir.rotateRight();

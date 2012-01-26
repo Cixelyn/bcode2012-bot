@@ -174,12 +174,12 @@ public class ArchonRobotHT extends BaseRobot{
 			int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 			if(distToNearestArchon <= 36 &&
 					!(strategy==StrategyState.CAP && curLoc.distanceSquaredTo(target)<=36 && rc.senseObjectAtLocation(dc.getClosestArchon(), RobotLevel.ON_GROUND).getID() > myID) && 
-					Math.random() < 0.75-Math.sqrt(distToNearestArchon)/10) {
+					Util.randDouble() < 0.75-Math.sqrt(distToNearestArchon)/10) {
 				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()).opposite(), false);
 			}
 		}
 		
-		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Math.random()<0.9)
+		if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Util.randDouble()<0.9)
 			return null;
 		
 		if(strategy == StrategyState.CAP && 

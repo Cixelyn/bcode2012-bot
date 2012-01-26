@@ -44,6 +44,7 @@ public class SoldierRobot extends BaseRobot {
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	int roundLastWakenUp;
+	boolean checkedBehind;
 	
 	MapLocation closestEnemyLocation;
 	RobotType closestEnemyType;
@@ -65,6 +66,7 @@ public class SoldierRobot extends BaseRobot {
 		enemySpottedTarget = null;
 		enemySpottedRound = -55555;
 		roundLastWakenUp = -55555;
+		checkedBehind = false;
 	}
 
 	@Override
@@ -105,9 +107,11 @@ public class SoldierRobot extends BaseRobot {
 				lockAcquiredRound = curRound;
 			}
 			
-		} else if(curEnergon < energonLastTurn) {
+		} else if(curEnergon < energonLastTurn || (behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES &&
+				!checkedBehind)) {
 			// Got hurt since last turn.. look behind you
 			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+			checkedBehind = false;
 			
 		} else if(behavior == BehaviorState.ENEMY_DETECTED && curRound < lockAcquiredRound + 12) {
 			// Don't know of any enemies, stay chasing the last enemy we knew of
@@ -298,10 +302,11 @@ public class SoldierRobot extends BaseRobot {
 		
 		if(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES) {
 			// Just turn around once
+			checkedBehind = true;
 			return new MoveInfo(curDir.opposite());
 		} else if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
 			// If we're looking to hibernate, move around randomly
-			if(Math.random()<0.2)
+			if(Util.randDouble()<0.2)
 				return new MoveInfo(curLoc.directionTo(target).opposite(), false);
 			else
 				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
@@ -316,27 +321,27 @@ public class SoldierRobot extends BaseRobot {
 				Direction dir = nav.navigateToDestination();
 				if(dir==null) return null;
 				if(behavior == BehaviorState.SWARM) {
-					if(radar.alliesInFront==0 && Math.random()<0.6) 
+					if(radar.alliesInFront==0 && Util.randDouble()<0.6) 
 						return null;
-					if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+					if(radar.alliesInFront > 3 && Util.randDouble()<0.05 * radar.alliesInFront) 
 						dir = nav.navigateCompletelyRandomly();
-					if(radar.alliesOnLeft > radar.alliesOnRight && Math.random()<0.4) 
+					if(radar.alliesOnLeft > radar.alliesOnRight && Util.randDouble()<0.4) 
 						dir = dir.rotateRight();
-					else if(radar.alliesOnLeft < radar.alliesOnRight && Math.random()<0.4) 
+					else if(radar.alliesOnLeft < radar.alliesOnRight && Util.randDouble()<0.4) 
 						dir = dir.rotateLeft();
 				}
 				return new MoveInfo(dir, false);
 				
 			// If we're fairly close, and there's lots of allies around, move randomly
 			} else if(curLoc.distanceSquaredTo(target) >= 2) {
-				if(radar.alliesInFront > 3 && Math.random()<0.05 * radar.alliesInFront) 
+				if(radar.alliesInFront > 3 && Util.randDouble()<0.05 * radar.alliesInFront) 
 					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			}
 			
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
-			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 25) > 0;
+			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 24) > 0;
 			boolean targetIsRanged = closestEnemyType==RobotType.DISRUPTER || 
 					closestEnemyType==RobotType.SCORCHER;
 			int tooCloseCantRetreat = targetIsRanged ? 5 : 0;
@@ -344,9 +349,8 @@ public class SoldierRobot extends BaseRobot {
 			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
-			boolean turnToFaceEnemyFirst = distToTarget <= 13;
 			
-			if(turnToFaceEnemyFirst && dirToTarget!=curDir) {
+			if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
 				return new MoveInfo(dirToTarget);
 			} else if(distToTarget>tooCloseCantRetreat && distToTarget <= tooClose) {
 				Direction dir = dirToTarget.opposite();
@@ -355,6 +359,7 @@ public class SoldierRobot extends BaseRobot {
 			} else if(distToTarget >= tooFar) {
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
+			
 		} else {
 			return new MoveInfo(nav.navigateToDestination(), false);
 		}
