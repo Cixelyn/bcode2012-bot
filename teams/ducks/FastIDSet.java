@@ -1,6 +1,5 @@
 package ducks;
 
-import battlecode.common.Clock;
 
 public class FastIDSet {
 	
