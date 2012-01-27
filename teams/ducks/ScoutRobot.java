@@ -85,7 +85,7 @@ public class ScoutRobot extends BaseRobot {
 		
 		
 		if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
-			if(radar.closestEnemy != null) {
+			if(radar.closestEnemy != null && radar.closestEnemy.type != RobotType.SCOUT) {
 				behavior = BehaviorState.REPORT_TO_ARCHON;
 				enemySpottedTarget = radar.closestEnemy.location;
 				enemySpottedRound = curRound;

@@ -119,8 +119,8 @@ public class ArchonRobot extends BaseRobot{
 		// Scan everything every turn
 		radar.scan(true, true);
 		
-		// Broadcast enemy info every 3 turns
-		if(curRound%3 == myArchonID%3)
+		// Broadcast enemy info every 5 turns
+		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myArchonID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
 			radar.broadcastEnemyInfo(false);
 		
 		if (behavior == BehaviorState.RETREAT && radar.getArmyDifference() > 2)
@@ -128,8 +128,10 @@ public class ArchonRobot extends BaseRobot{
 		
 		// If there is an enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null) {
-			enemySpottedRound = curRound;
-			enemySpottedTarget = radar.closestEnemy.location;
+			if(radar.closestEnemy.type != RobotType.SCOUT) {
+				enemySpottedRound = curRound;
+				enemySpottedTarget = radar.closestEnemy.location;
+			}
 			stayTargetLockedUntilRound = curRound + TURNS_TO_LOCK_ONTO_AN_ENEMY;
 			Direction enemyswarmdir = curLoc.directionTo(radar.getEnemySwarmTarget());
 			if (radar.getArmyDifference() < -2 || (radar.getAlliesInDirection(enemyswarmdir)==0 && 
@@ -137,7 +139,7 @@ public class ArchonRobot extends BaseRobot{
 				stayTargetLockedUntilRound = curRound+TURNS_TO_RETREAT;
 				behavior = BehaviorState.RETREAT;
 				String ret = computeRetreatTarget();
-				dbg.setIndicatorString('e', 1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
+				dbg.setIndicatorString('y', 1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else {
 				behavior = BehaviorState.BATTLE;
