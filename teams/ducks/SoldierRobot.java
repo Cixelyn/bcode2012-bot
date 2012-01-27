@@ -225,7 +225,6 @@ public class SoldierRobot extends BaseRobot {
 			er.reset();
 			int ec = hsys.run();
 			
-			System.out.println("coming out of hibernation "+ec);
 			// Come out of hibernation
 			if(ec == HibernationSystem.EXIT_ATTACKED) {
 				radar.scan(false, true);
