@@ -40,6 +40,9 @@ public class MovementStateMachine {
 		nextMove = null;
 		turnsStuck = 0;
 	}
+	public boolean justMoved() {
+		return curState == MovementState.JUST_MOVED;
+	}
 	public void step() throws GameActionException {
 		curState = execute();
 		br.dbg.setIndicatorString('h',2, nextMove+", movement_state="+curState);

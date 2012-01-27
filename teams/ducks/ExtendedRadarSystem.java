@@ -85,7 +85,7 @@ public class ExtendedRadarSystem {
 	/** Returns how much more energon worth of robots we have in the given radius. 
 	 * Returns a positive number iff we have more energon than the other team.
 	 */
-	public int getEnergonDifference(MapLocation center, int radiusSquared) {
+	public int getStrengthDifference(MapLocation center, int radiusSquared) {
 		
 		int i; // hardcoded to bring i into istore_3
 		
@@ -138,7 +138,7 @@ public class ExtendedRadarSystem {
 		
 		// Add myself if necessary
 		if(flags[br.myID]!=flagCount && center.distanceSquaredTo(br.curLoc) <= radiusSquared) {
-			diff += br.curEnergon;
+			diff += Util.getOwnStrengthEstimate(br.rc);
 		}
 		
 		br.dbg.setIndicatorString('h', 0, toString()+"|||||   energon difference: "+diff);
