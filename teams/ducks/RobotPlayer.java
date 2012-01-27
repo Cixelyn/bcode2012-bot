@@ -25,7 +25,8 @@ public class RobotPlayer {
 //					br = new ArchonRobotYP(myRC);
 //					br = new ArchonRobotHT(myRC);
 //					br = new FunBot(myRC);
-					br = new ArchonRobot(myRC);
+//					br = new ArchonRobot(myRC);
+					br = new CoryIsADuck(myRC);
 					if (br==null)
 					{
 						if (myRC.getTeam()==Team.A)
@@ -54,7 +55,8 @@ public class RobotPlayer {
 //					br = new SoldierRobotYP(myRC);
 //					br = new SoldierRobotHT(myRC);
 //					br = new FunBot(myRC);
-					br = new SoldierRobot(myRC);
+//					br = new SoldierRobot(myRC);
+					br = new SoldierLitter(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
