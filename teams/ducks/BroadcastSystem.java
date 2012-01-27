@@ -354,10 +354,24 @@ public class BroadcastSystem {
 	}
 	
 
+	/**
+	 * forces a message send. Use at your own risk
+	 * @param m - message to send
+	 */
+	public void forceSend(Message m) {
+		try{
+			br.rc.broadcast(m);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+
 	public void sendAll() {
 		
 		// normal message sending
-		if(msgContainer.length() > 0) {
+		if(msgContainer.length() > 0 && !br.rc.hasBroadcasted()) {
 		
 			// append message metadata
 			msgContainer.append(generateMetadata());
