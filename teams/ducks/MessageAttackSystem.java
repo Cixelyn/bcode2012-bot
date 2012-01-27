@@ -15,6 +15,9 @@ public class MessageAttackSystem {
 	
 	private final BaseRobot br;
 	
+	/** Memorized message. */
+	private Message memorizedMessage;
+	
 	/** The enemy team number. */
 	private int enemyTeam;
 	
@@ -26,6 +29,7 @@ public class MessageAttackSystem {
 	
 	public MessageAttackSystem(BaseRobot myBR) {
 		br = myBR;
+		memorizedMessage = null;
 		enemyTeam = -1;
 		messageData = new int[16384][0];
 		loaded = false;
@@ -56,6 +60,18 @@ public class MessageAttackSystem {
 				(m.strings == null || m.strings.length == 0) &&
 				m.locations != null && m.locations.length == 1) {
 			enemyTeam = 16;
+			memorizedMessage = m;
+			return true;
+		}
+		
+		// 031: Yippee: another string user... 1 int 1 string, int is a hash...
+		// don't appear to explicitly use the current round, so we're trying a
+		// rebroadcast attack
+		if (m.ints != null && m.ints.length == 1 &&
+				m.strings != null && m.strings.length == 1 &&
+				(m.locations == null || m.locations.length == 0)) {
+			enemyTeam = 31;
+			memorizedMessage = m;
 			return true;
 		}
 		
@@ -64,6 +80,7 @@ public class MessageAttackSystem {
 				m.strings != null && m.strings.length == 1 &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 47;
+			memorizedMessage = m;
 			return true;
 		}
 		
@@ -75,6 +92,21 @@ public class MessageAttackSystem {
 				(m.strings == null || m.strings.length == 0) &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 53;
+			memorizedMessage = m;
+			return true;
+		}
+		
+		// 096: Apathy: although apathy is closed to any sort of naive message
+		// attacks, his messages are very distinctive in that the round number
+		// is encoded in the map location (the y coordinate)
+		//
+		// thanks to boxdrop for their message dumps from the seeding tourney <3
+		if ((m.ints == null || m.ints.length == 0) &&
+				m.strings != null && m.strings.length == 1 &&
+				m.locations != null && m.locations.length == 1 &&
+				m.locations[0].y == br.curRound) {
+			enemyTeam = 96;
+			memorizedMessage = m;
 			return true;
 		}
 		
@@ -111,9 +143,9 @@ public class MessageAttackSystem {
 			case 16:
 				load016();
 				break;
-			case 42:
+			case 31:
+			case 47:
 			case 53:
-				break;
 			default:
 				break;
 		}
@@ -153,13 +185,23 @@ public class MessageAttackSystem {
 					m.locations = new MapLocation[] {new MapLocation(data[2], data[3])};
 				}
 				break;
+			case 31:
+				m = memorizedMessage;
+				break;
 			case 42:
 				m = new Message();
 				m.ints = new int[] {5555, 0, br.curRound};
 				m.strings = new String[] {"Robert'); DROP TABLE Students;--"};
+				break;
 			case 53:
 				m = new Message();
 				m.ints = new int[] {653608212, 0, br.curRound};
+				break;
+			case 96:
+				m = new Message();
+				m.strings = new String[] {"^sup^&^sup^&"};
+				m.locations = new MapLocation[] {new MapLocation(
+						m.strings.hashCode() + br.curRound, br.curRound)};
 				break;
 			default:
 				break;
@@ -239,5 +281,12 @@ public class MessageAttackSystem {
 		messageData[10575] = new int[] {125828966, 277838490, 16402, 31334};
 		messageData[10768] = new int[] {133136254, 315456638, 16420, 31338};
 		// END AUTO GENERATED CODE
+	}
+	
+	public static void main(String[] args) {
+		MapLocation home = new MapLocation(16374,31306);
+		System.out.println(home.hashCode());
+		MapLocation[] locs = new MapLocation[] {new MapLocation(16420,31338)};
+		System.out.println(locs.hashCode());
 	}
 }
