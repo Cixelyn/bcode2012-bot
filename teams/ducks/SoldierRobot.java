@@ -222,6 +222,7 @@ public class SoldierRobot extends BaseRobot {
 			
 			
 			msm.reset();
+			er.reset();
 			int ec = hsys.run();
 			
 			System.out.println("coming out of hibernation "+ec);

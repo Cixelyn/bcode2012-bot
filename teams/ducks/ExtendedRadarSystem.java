@@ -7,18 +7,19 @@ import battlecode.common.RobotType;
 
 public class ExtendedRadarSystem {
 	private static final int BUFFER_SIZE = 4096;
-	private static final int MEMORY_TIMEOUT = 16;
+	private static final int ALLY_MEMORY_TIMEOUT = 16;
+	private static final int ENEMY_MEMORY_TIMEOUT = 16;
 	private static final RobotType[] robotTypes = RobotType.values();
 	
 	private final BaseRobot br;
 	public final MapLocation[] enemyLocationInfo;
 	public final int[] enemyEnergonInfo;
 	public final RobotType[] enemyTypeInfo;
-	private final FastIDSet enemyKeySet;
+	private FastIDSet enemyKeySet;
 	public final MapLocation[] allyLocationInfo;
 	public final int[] allyEnergonInfo;
 	public final RobotType[] allyTypeInfo;
-	private final FastIDSet allyKeySet;
+	private FastIDSet allyKeySet;
 	private final int[] flags;
 	private int flagCount;
 	public ExtendedRadarSystem(BaseRobot br) {
@@ -26,13 +27,18 @@ public class ExtendedRadarSystem {
 		enemyLocationInfo = new MapLocation[BUFFER_SIZE];
 		enemyEnergonInfo = new int[BUFFER_SIZE];
 		enemyTypeInfo = new RobotType[BUFFER_SIZE];
-		enemyKeySet = new FastIDSet(MEMORY_TIMEOUT);
 		allyLocationInfo = new MapLocation[BUFFER_SIZE];
 		allyEnergonInfo = new int[BUFFER_SIZE];
 		allyTypeInfo = new RobotType[BUFFER_SIZE];
-		allyKeySet = new FastIDSet(MEMORY_TIMEOUT);
 		flags = new int[BUFFER_SIZE];
 		flagCount = 0;
+		reset();
+	}
+	
+	/** Clears all units in the ER. Will be needed if unit just woke up from hibernating. */
+	public void reset() {
+		enemyKeySet = new FastIDSet(ENEMY_MEMORY_TIMEOUT);
+		allyKeySet = new FastIDSet(ALLY_MEMORY_TIMEOUT);
 	}
 	
 	/** Ally broadcasted some enemy info to us, integrate it into the system. <br>
