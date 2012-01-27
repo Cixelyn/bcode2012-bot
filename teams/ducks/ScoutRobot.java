@@ -126,7 +126,7 @@ public class ScoutRobot extends BaseRobot {
 		}
 	
 		
-		// flux Support Logic
+		// flux support logic
 		if(helpAllyLocation != null) {
 			if(curLoc.distanceSquaredTo(helpAllyLocation) <= 2) {
 				helpAllyLocation = null;  // we should have healed him
@@ -140,7 +140,7 @@ public class ScoutRobot extends BaseRobot {
 			behavior = BehaviorState.PET;
 		}
 		
-		//  received flux from ally
+		// received flux from ally
 		if(behavior == BehaviorState.PET) {
 			if(rc.getFlux() > 40)
 				resetBehavior();
@@ -206,7 +206,7 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		// broadcast enemy spotting
-		if (behavior == BehaviorState.REPORT_TO_ARCHON && 
+		if (curRound%4==myID%4 && behavior == BehaviorState.REPORT_TO_ARCHON && 
 				curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 64) {
 			if(enemySpottedTarget != null)
 				io.sendUShorts(BroadcastChannel.ALL, BroadcastType.ENEMY_SPOTTED,
@@ -214,8 +214,8 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		// indicator strings
-		dbg.setIndicatorString('e', 1, "Target=<"+(objective.x-curLoc.x)+","+
-					(objective.y-curLoc.y)+">, Strat=" + strategy + ", Behavior="+behavior);
+		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(objective)+
+				", Strat=" + strategy + ", Behavior="+behavior);
 	}
 	
 	private void resetBehavior() {
@@ -288,7 +288,7 @@ public class ScoutRobot extends BaseRobot {
 			return null;
 	
 		// ALWAYS RETREAT FROM ENEMEY
-		if (radar.closestEnemyWithFlux != null) {
+		if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 20) {
 			return new MoveInfo(curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite(), true);
 		}
 
