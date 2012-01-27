@@ -22,8 +22,6 @@ public class SoldierRobot extends BaseRobot {
 		SWARM,
 		/** Heard of an enemy spotted call, but no enemy info calls yet. */
 		SEEK,
-		/** Run away from enemy forces. */
-		RETREAT, 
 		/** Far from target. Use bug to navigate. */
 		LOST,
 		/** Need to refuel. Go to nearest archon. */
@@ -42,6 +40,7 @@ public class SoldierRobot extends BaseRobot {
 	BehaviorState behavior;
 	MapLocation hibernateTarget;
 	double energonLastTurn;
+	double fluxLastTurn;
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	int roundLastWakenUp;
@@ -68,11 +67,22 @@ public class SoldierRobot extends BaseRobot {
 		enemySpottedRound = -55555;
 		roundLastWakenUp = -55555;
 		archonSwarmTime = -55555;
+		energonLastTurn = 0;
+		fluxLastTurn = 0;
 		checkedBehind = false;
 	}
 
 	@Override
 	public void run() throws GameActionException {
+		if((behavior==BehaviorState.SWARM || behavior==BehaviorState.LOOKING_TO_HIBERNATE ||
+				behavior==BehaviorState.LOST || behavior==BehaviorState.REFUEL) && 
+				rc.isMovementActive() && !msm.justMoved()) {
+			// No action if unnecessary
+			
+			energonLastTurn = curEnergon;
+			fluxLastTurn = rc.getFlux();
+			return;
+		}
 		
 		// Scan everything every turn
 		radar.scan(true, true);
@@ -97,7 +107,8 @@ public class SoldierRobot extends BaseRobot {
 		
 		if(closestEnemyLocation != null) {
 			
-			if(curEnergon < energonLastTurn && curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
+			if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) && 
+					curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
 				// Current target is too far away, got hit from behind probably
 				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
 			} else {
@@ -249,9 +260,8 @@ public class SoldierRobot extends BaseRobot {
 		}
 		
 		// Update end of turn variables
-		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
 		energonLastTurn = curEnergon;
-			
+		fluxLastTurn = rc.getFlux();
 	}
 	
 	private void tryToAttack() throws GameActionException {
@@ -373,8 +383,12 @@ public class SoldierRobot extends BaseRobot {
 				
 			// If we are too close to the target, back off
 			} else if(distToTarget <= tooClose) {
-				if(rc.canMove(curDir.opposite()))
-					return new MoveInfo(curDir.opposite(), true);
+				if(targetIsRanged) {
+					return new MoveInfo(dirToTarget.opposite(), true);
+				} else {
+					if(rc.canMove(curDir.opposite()))
+						return new MoveInfo(curDir.opposite(), true);
+				}
 				
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
