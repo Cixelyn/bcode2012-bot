@@ -91,7 +91,8 @@ public class SoldierRobot extends BaseRobot {
 			closestEnemyLocation = radarClosestEnemy.location;
 			closestEnemyType = radarClosestEnemy.type;
 		}
-		if(curRound%5 == myID%5)
+		dbg.setIndicatorString('h', 0, closestEnemyLocation==null ? "no enemy" : locationToVectorString(closestEnemyLocation)+", "+closestEnemyType);
+		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
 			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) <= 25);
 		
@@ -210,8 +211,7 @@ public class SoldierRobot extends BaseRobot {
 			fbs.setPoolMode();
 		
 		// Set debug string
-		dbg.setIndicatorString('e', 1, "Target=<"+(target.x-curLoc.x)+","+
-				(target.y-curLoc.y)+">, Behavior="+behavior);
+		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(target)+", Behavior="+behavior);
 		
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE || behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
@@ -358,7 +358,6 @@ public class SoldierRobot extends BaseRobot {
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
 			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 24) > 0;
 			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
-			int tooCloseCantRetreat = targetIsRanged ? 4 : 0;
 			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
 			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
@@ -366,7 +365,7 @@ public class SoldierRobot extends BaseRobot {
 			
 			if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
 				return new MoveInfo(dirToTarget);
-			} else if(distToTarget>tooCloseCantRetreat && distToTarget <= tooClose) {
+			} else if(distToTarget <= tooClose) {
 				if(rc.canMove(curDir.opposite()))
 					return new MoveInfo(curDir.opposite(), true);
 			} else if(distToTarget >= tooFar) {

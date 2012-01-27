@@ -501,44 +501,26 @@ public class RadarSystem {
 	
 	/** Gets the enemy info from the radar into your own and nearby robots' extended radar. */
 	public void broadcastEnemyInfo(boolean sendOwnInfo) {
-		if(numEnemyRobots==0) return;
+		if(numEnemyRobots==numEnemyScouts) return;
 		
-		int[] shorts = new int[numEnemyRobots*5+(sendOwnInfo?5:0)];
+		int[] shorts = new int[(numEnemyRobots-numEnemyScouts)*5+(sendOwnInfo?5:0)];
 		if(sendOwnInfo) {
 			shorts[0] = br.myID;
 			shorts[1] = br.curLoc.x;
 			shorts[2] = br.curLoc.y;
-			shorts[3] = 10000+(int)Math.ceil(br.curEnergon)+10;
+			shorts[3] = 10000+(int)Math.ceil(Util.getOwnStrengthEstimate(br.rc));
 			shorts[4] = br.myType.ordinal();
 		}
 		for(int i=0, c=sendOwnInfo?5:0; i<numEnemyRobots; i++, c+=5) {
 			RobotInfo ri = enemyInfos[enemyRobots[i]];
+			if(ri.type==RobotType.SCOUT) {
+				c-=5;
+				continue;
+			}
 			shorts[c] = ri.robot.getID();
 			shorts[c+1] = ri.location.x;
 			shorts[c+2] = ri.location.y;
-			double strengthEstimate;
-			switch(ri.type) {
-			case SOLDIER:
-				strengthEstimate = ri.energon+10;
-				break;
-			case DISRUPTER:
-				strengthEstimate = ri.energon*0.7+10;
-				break;
-			case SCORCHER:
-				strengthEstimate = ri.energon*1.5+10;
-				break;
-			case SCOUT:
-				strengthEstimate = 2;
-				break;
-			default:
-				strengthEstimate = 0;
-				break;
-			}
-			if(ri.flux < 0.15) 
-				strengthEstimate *= 0.25;
-			if(ri.roundsUntilAttackIdle > 5) 
-				strengthEstimate *= 20/(15+ri.roundsUntilAttackIdle);
-			shorts[c+3] = (int)Math.ceil(strengthEstimate);
+			shorts[c+3] = (int)Math.ceil(Util.getStrengthEstimate(ri));
 			shorts[c+4] = ri.type.ordinal();
 		}
 		if(br.myType==RobotType.SOLDIER || br.myType==RobotType.DISRUPTER || br.myType==RobotType.SCORCHER)
