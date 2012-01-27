@@ -392,7 +392,10 @@ public class SoldierRobot extends BaseRobot {
 				
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
-				return new MoveInfo(nav.navigateToDestination(), false);
+				if(isOptimalAdvancingDirection(curDir, target, dirToTarget))
+					return new MoveInfo(curDir, false);
+				else
+					return new MoveInfo(dirToTarget, false);
 			}
 			
 		} else {
@@ -402,5 +405,35 @@ public class SoldierRobot extends BaseRobot {
 		
 		// Default action is turning towards target
 		return new MoveInfo(curLoc.directionTo(target));
+	}
+	
+	/** If the enemy is <dx, dy> away from me, is the given direction a reasonable direction to move? 
+	 * I want to ensure that I can still attack him if I move in that direction, without having to turn
+	 * in a different direction afterwards.
+	 */
+	private boolean isOptimalAdvancingDirection(Direction dir, MapLocation target, Direction dirToTarget) {
+		int dx = target.x-curLoc.x;
+		int dy = target.y-curLoc.y;
+		switch(dx) {
+		case -2:
+			if(dy==1) return dir==Direction.WEST || dir==Direction.SOUTH_WEST;
+			else if(dy==-1) return dir==Direction.WEST || dir==Direction.NORTH_WEST;
+			break;
+		case -1:
+			if(dy==1) return dir==Direction.SOUTH || dir==Direction.SOUTH_WEST;
+			else if(dy==-1) return dir==Direction.NORTH || dir==Direction.NORTH_WEST;
+			break;
+		case 1:
+			if(dy==2) return dir==Direction.SOUTH || dir==Direction.SOUTH_EAST;
+			else if(dy==-2) return dir==Direction.NORTH || dir==Direction.NORTH_EAST;
+			break;
+		case 2:
+			if(dy==1) return dir==Direction.EAST || dir==Direction.SOUTH_EAST;
+			else if(dy==-1) return dir==Direction.EAST || dir==Direction.NORTH_EAST;
+			break;
+		default:
+			break;
+		}
+		return dir == dirToTarget;
 	}
 }
