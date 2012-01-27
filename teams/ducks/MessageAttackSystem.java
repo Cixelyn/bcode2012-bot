@@ -52,11 +52,18 @@ public class MessageAttackSystem {
 		// 016: Team 16: seems to always send 3 ints and a map location... 3rd
 		// i think 1st int is message type, 2nd int is round num, 3rd is a hash,
 		// and map loc is a target
-		if (m.ints != null && m.ints.length == 3 &&
-				m.ints[1] == br.curRound &&
-				m.strings == null || m.strings.length == 0 &&
+		if (m.ints != null && m.ints.length == 3 && m.ints[1] == br.curRound &&
+				(m.strings == null || m.strings.length == 0) &&
 				m.locations != null && m.locations.length == 1) {
 			enemyTeam = 16;
+			return true;
+		}
+		
+		// 047: fun gamers: for testing purposes only...
+		if (m.ints != null && m.ints.length == 3 && m.ints[2] == br.curRound &&
+				m.strings != null && m.strings.length == 1 &&
+				(m.locations == null || m.locations.length == 0)) {
+			enemyTeam = 47;
 			return true;
 		}
 		
@@ -65,8 +72,8 @@ public class MessageAttackSystem {
 		// not coordinating on a common message format
 		if (m.ints != null && m.ints.length == 3 &&
 				m.ints[2] == br.curRound &&
-				m.strings == null || m.strings.length == 0 &&
-				m.locations == null || m.locations.length == 0) {
+				(m.strings == null || m.strings.length == 0) &&
+				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 53;
 			return true;
 		}
@@ -76,12 +83,12 @@ public class MessageAttackSystem {
 	}
 	
 	/**
-	 * Returns whether a guess has been made about the enemy team.
-	 * @return True if we have already set a guess on the enemy team, False
-	 * otherwise.
+	 * Returns which team we think we are playing against.
+	 * @return enemyTeam The team number we think we are playing against,
+	 * -1 if we have no guess.
 	 */
-	public boolean isEnemyTeamKnown() {
-		return enemyTeam != -1;
+	public int guessEnemyTeam() {
+		return enemyTeam;
 	}
 	
 	/**
@@ -104,6 +111,7 @@ public class MessageAttackSystem {
 			case 16:
 				load016();
 				break;
+			case 42:
 			case 53:
 				break;
 			default:
@@ -126,7 +134,7 @@ public class MessageAttackSystem {
 	 * Returns an enemy message to send to the enemy team.
 	 * @return An enemy message. May return null.
 	 */
-	public Message getMessage() {
+	public Message getEnemyMessage() {
 		
 		// if we haven't loaded message data, return null
 		if (!loaded) {
@@ -145,6 +153,10 @@ public class MessageAttackSystem {
 					m.locations = new MapLocation[] {new MapLocation(data[2], data[3])};
 				}
 				break;
+			case 42:
+				m = new Message();
+				m.ints = new int[] {5555, 0, br.curRound};
+				m.strings = new String[] {"Robert'); DROP TABLE Students;--"};
 			case 53:
 				m = new Message();
 				m.ints = new int[] {653608212, 0, br.curRound};
