@@ -15,18 +15,25 @@ public class MatchObservationSystem {
 	}
 	
 	/**
-	 * Sets a match observation for the fun gamers to review later. Useful for
-	 * looking at enemy messages!
-	 * @param m The message to remember
-	 * @param shouldEncrypt Whether to encrypt the message or not. Right now,
-	 * takes about 2000 bytecodes per message. Not sure why it's so many. :(
+	 * Sets a match observation for the fun gamers to review later.
+	 * @param s The string to remember
+	 * @param shouldEncrypt Whether to encrypt the string or not.
 	 */
-	public void rememberMessage(Message m, boolean shouldEncrypt) {
-		String s = serializeMessageToString(m);
+	public void rememberString(String s, boolean shouldEncrypt) {
 		if (shouldEncrypt) {
 			s = Encryption.encryptString(s, br.curRound);
 		}
 		br.rc.addMatchObservation(s);
+	}
+	
+	/**
+	 * Serializes a message into a string and remembers it.
+	 * @param m The message to remember
+	 * @param shouldEncrypt Whether to encrypt the message or not.
+	 */
+	public void rememberMessage(Message m, boolean shouldEncrypt) {
+		String s = serializeMessageToString(m);
+		rememberString(s, shouldEncrypt);
 	}
 	
 	private static String serializeMessageToString(Message m) {

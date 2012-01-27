@@ -4,6 +4,7 @@ import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.Message;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
@@ -161,6 +162,14 @@ public class ScoutRobot extends BaseRobot {
 			rc.regenerate();
 		}
 		
+		// perform message attack every few rounds if possible
+		if (mas.isLoaded() && curRound % 20 == myID % 20) {
+			Message m = mas.getEnemyMessage();
+			if (m != null) {
+				io.forceSend(mas.getEnemyMessage());
+			}
+		}
+		
 		// broadcast enemy spotting
 		if (behavior == BehaviorState.REPORT_TO_ARCHON && 
 				curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 64) {
@@ -260,6 +269,14 @@ public class ScoutRobot extends BaseRobot {
 					Clock.getBytecodesLeft() > 2000 && Util.randDouble() < 0.05) {
 				ses.broadcastMapEdges();
 			}
+		}
+		// If we have identified the enemy team, load past message data.
+		// This method call will occur at most once per Scout.
+		if (mas.guessEnemyTeam() != -1 && !mas.isLoaded() &&
+				Clock.getBytecodesLeft() > 5000) {
+			mos.rememberString("I think we are facing team " +
+				mas.guessEnemyTeam() + ".", true);
+			mas.load();
 		}
 		super.useExtraBytecodes();
 	}

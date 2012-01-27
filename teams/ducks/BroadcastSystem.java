@@ -6,6 +6,7 @@ import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Message;
+import battlecode.common.RobotType;
 
 /**
  *
@@ -500,9 +501,15 @@ public class BroadcastSystem {
 	}
 	
 	private void memoEnemy(Message m) {
-		if (Util.randDouble() < 0.01) {
+		// log message to match observation
+		if (br.myType == RobotType.ARCHON) {
+			br.mos.rememberMessage(m, true);
+		}
+		// if a scout, try to identify enemy team
+		if (br.myType == RobotType.SCOUT && br.mas.guessEnemyTeam() == -1 &&
+				Util.randDouble() < 0.01) {
 			// the boolean determines whether we encrypt or not
-			br.mos.rememberMessage(m, false);
+			br.mas.detectTeam(m);
 		}
 	}
 	

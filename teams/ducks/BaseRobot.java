@@ -29,6 +29,7 @@ public abstract class BaseRobot {
 	public final MatchObservationSystem mos;
 	public final HibernationSystem hsys;
 	public final TeamMemory tmem;
+	public final MessageAttackSystem mas;
 	
 	// Robot Statistics - Permanent
 	public final RobotType myType;
@@ -104,6 +105,7 @@ public abstract class BaseRobot {
 		sws = new ScoutWireSystem(this);
 		hsys = new HibernationSystem(this);
 		tmem = new TeamMemory(this);
+		mas = new MessageAttackSystem(this);
 		
 		mc.senseAll();
 		
