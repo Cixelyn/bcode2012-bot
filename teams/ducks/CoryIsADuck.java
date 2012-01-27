@@ -51,8 +51,8 @@ public class CoryIsADuck extends BaseRobot {
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
 	static final int TURNS_TO_RETREAT = 30;
-	static final int DENSITY_BEFORE_MOVING = 11;
-	static final int DENSITY_BEFORE_STOPPING = 6;
+	static final int DENSITY_BEFORE_MOVING = 8;
+	static final int DENSITY_BEFORE_STOPPING = 4;
 	MapLocation lastPowerNodeGuess;
 	
 	public CoryIsADuck(RobotController myRC) throws GameActionException {
@@ -214,7 +214,7 @@ public class CoryIsADuck extends BaseRobot {
 		}
 		
 		// Broadcast a possibly out of date enemy sighting every 20 turns
-		if(radar.closestEnemy != null && curRound%20 == myArchonID*3) {
+		if(enemySpottedTarget != null && curRound%20 == myArchonID*3) {
 			int[] shorts = new int[3];
 			shorts[0] = enemySpottedRound;
 			shorts[1] = enemySpottedTarget.x;
