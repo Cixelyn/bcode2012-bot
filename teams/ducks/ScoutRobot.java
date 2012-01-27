@@ -14,20 +14,23 @@ public class ScoutRobot extends BaseRobot {
 	private enum StrategyState {
 		/** Look for map edges so we have an idea where to find the enemy. */
 		INITIAL_EXPLORE,
-		/** Look around for the enemy. */
-		SCOUT_ENEMY,
 		/** Battle. Help target and transfer flux and heal. */
 		BATTLE,
-		/** No enemies around, heal up the army. */
-		HEAL,
+		/** Wander around the map helping archons to support units */
+		SUPPORT,
 	}
+	
 	private enum BehaviorState {
+		
+		// SPECIAL STATES USED FOR INITIAL_EXPLORE
 		/** Go in a given direction until we see a new map edge or any enemy unit, then go back. */
 		LOOK_FOR_MAP_EDGE,
 		/** Reports the newfound map edge. */
 		REPORT_TO_ARCHON,
 		/** Go around looking for enemies. */
 		SCOUT_FOR_ENEMIES,
+		
+		// GENERAL PURPOSE STATES 
 		/** Stand near the front lines and help target and heal. Kite enemies. */
 		SUPPORT_FRONT_LINES,
 		/** Found an ally to give flux to, go give him flux. */
@@ -39,7 +42,8 @@ public class ScoutRobot extends BaseRobot {
 		/** Low on flux, need another scout to come give it some flux. */
 		LOW_FLUX_HIBERNATE,
 	}
-	
+
+	private StrategyState lastStrategy;
 	private StrategyState strategy;
 	private BehaviorState behavior;
 	private MapLocation objective;
@@ -50,6 +54,9 @@ public class ScoutRobot extends BaseRobot {
 	MapLocation closestEnemyLocation;
 	RobotType closestEnemyType;
 	
+	MapLocation helpAllyLocation = null;
+	int helpAllyRound;
+
 	Direction mapEdgeToSeek;
 	
 	public ScoutRobot(RobotController myRC) throws GameActionException {
@@ -70,50 +77,80 @@ public class ScoutRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()<1000) {
-			strategy = StrategyState.SCOUT_ENEMY;
-		} else {
-			strategy = StrategyState.BATTLE;
-		}
 		
-		// scan
+		// scan every round in all conditions
 		radar.scan(true, true);
+		if(radar.closestEnemy != null) {
+			enemySpottedTarget = radar.closestEnemy.location;
+			enemySpottedRound = curRound;
+		} else {
+			enemySpottedTarget = null;
+		}
+	
+		// Setup strategy transitions
+		if(Clock.getRoundNum()<1000) { strategy = StrategyState.INITIAL_EXPLORE; }
+		else if(radar.numEnemyRobots > 0 || radar.numEnemyScouts < radar.numEnemyRobots) {
+			strategy = StrategyState.BATTLE;
+		} else {
+			strategy = StrategyState.SUPPORT;
+		}
+		if(lastStrategy != strategy) {
+			resetBehavior();
+		}
+		lastStrategy = strategy;
 		
+	
+		// report enemy info in all conditions
 		MapLocation closestEnemyLocation = radar.closestEnemy==null ? null : radar.closestEnemy.location;
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo(false);
 		
 		
-		if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
-			if(radar.closestEnemy != null) {
-				behavior = BehaviorState.REPORT_TO_ARCHON;
-				enemySpottedTarget = radar.closestEnemy.location;
-				enemySpottedRound = curRound;
+		// logic for initial explore
+		if(strategy == StrategyState.INITIAL_EXPLORE) { 
+			if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
+				if(radar.closestEnemy != null) {
+					behavior = BehaviorState.REPORT_TO_ARCHON;
+				}
+			} else if(behavior == BehaviorState.REPORT_TO_ARCHON) {
+				if(curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 25) {
+					resetBehavior();
+				}
+			} else if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE) {
+				if(mapEdgeToSeek == Direction.NORTH && mc.edgeYMin!=0 ||
+						mapEdgeToSeek == Direction.SOUTH && mc.edgeYMax!=0 ||
+						mapEdgeToSeek == Direction.WEST && mc.edgeXMin!=0 ||
+						mapEdgeToSeek == Direction.EAST && mc.edgeXMax!=0)
+					behavior = BehaviorState.REPORT_TO_ARCHON;
 			}
-		} else if(behavior == BehaviorState.REPORT_TO_ARCHON) {
-			if(curLoc.distanceSquaredTo(dc.getClosestArchon()) <= 25) {
-				resetBehavior();
+		}
+	
+		
+		// flux Support Logic
+		if(helpAllyLocation != null) {
+			if(curLoc.distanceSquaredTo(helpAllyLocation) <= 2) {
+				helpAllyLocation = null;  // we should have healed him
+				if(behavior == BehaviorState.SENDING_ALLY_FLUX) resetBehavior();
 			}
-		} else if(behavior == BehaviorState.PET) {
-			if(rc.getFlux() > 40)
-				resetBehavior();
-		} else if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE) {
-			if(mapEdgeToSeek == Direction.NORTH && mc.edgeYMin!=0 ||
-					mapEdgeToSeek == Direction.SOUTH && mc.edgeYMax!=0 ||
-					mapEdgeToSeek == Direction.WEST && mc.edgeXMin!=0 ||
-					mapEdgeToSeek == Direction.EAST && mc.edgeXMax!=0)
-				behavior = BehaviorState.REPORT_TO_ARCHON;
 		}
 		
-		if(rc.getFlux() < 15) {
+		
+		// fast behavior switch if we're going to get G'ed
+		if(rc.getFlux() < 15 || rc.getEnergon() < 7) {
 			behavior = BehaviorState.PET;
 		}
-				
 		
-		
+		//  received flux from ally
+		if(behavior == BehaviorState.PET) {
+			if(rc.getFlux() > 40)
+				resetBehavior();
+		}
 		
 		// set objective based on behavior
 		switch (behavior) {
+			case SENDING_ALLY_FLUX:
+				objective = helpAllyLocation;
+				break;
 			case SCOUT_FOR_ENEMIES:
 				objective = mc.guessEnemyPowerCoreLocation();
 				break;
@@ -129,11 +166,10 @@ public class ScoutRobot extends BaseRobot {
 				else
 					objective = dc.getClosestArchon();
 				break;
-			
 			default:
 				break;
 		}
-		
+	
 		if(objective==null) 
 			objective = curLoc;
 		
@@ -155,7 +191,6 @@ public class ScoutRobot extends BaseRobot {
 				rc.attackSquare(bestInfo.location, bestInfo.type.level);
 			}
 		}
-		
 		
 		// heal if you should
 		if (rc.getFlux() > 1.0 && ((curEnergon < myMaxEnergon - 0.2) || radar.numAllyToRegenerate > 0)) {
@@ -180,11 +215,12 @@ public class ScoutRobot extends BaseRobot {
 		
 		// indicator strings
 		dbg.setIndicatorString('e', 1, "Target=<"+(objective.x-curLoc.x)+","+
-					(objective.y-curLoc.y)+">, Behavior="+behavior);
+					(objective.y-curLoc.y)+">, Strat=" + strategy + ", Behavior="+behavior);
 	}
 	
 	private void resetBehavior() {
-		if(strategy == StrategyState.INITIAL_EXPLORE) {
+		switch(strategy) {
+		case INITIAL_EXPLORE:
 			if(birthday % 10 < 5) {
 				if(mc.edgeXMax==0) {
 					behavior = BehaviorState.LOOK_FOR_MAP_EDGE;
@@ -206,12 +242,18 @@ public class ScoutRobot extends BaseRobot {
 					behavior = BehaviorState.SCOUT_FOR_ENEMIES;
 				}
 			}
-		} else if(strategy == StrategyState.SCOUT_ENEMY) {
-			behavior = BehaviorState.SCOUT_FOR_ENEMIES;
-		} else if(strategy == StrategyState.HEAL) {
-			behavior = BehaviorState.PET;
-		} else {
+			break;
+		case BATTLE:
 			behavior = BehaviorState.SUPPORT_FRONT_LINES;
+			break;
+		case SUPPORT:
+			if(helpAllyLocation != null)
+				behavior = BehaviorState.SENDING_ALLY_FLUX;
+			else
+				behavior = BehaviorState.PET;
+			break;
+		default:
+			break;
 		}
 			
 	}
@@ -219,6 +261,16 @@ public class ScoutRobot extends BaseRobot {
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
+		case LOW_FLUX_HELP:
+			if(helpAllyLocation == null) {
+				helpAllyLocation = BroadcastSystem.decodeSenderLoc(sb);
+				helpAllyRound = curRound;
+				System.out.println("GOING TO HEAL ALLY @ "+ helpAllyLocation.toString());
+			}
+			if(strategy == StrategyState.SUPPORT) { //go flux ally if we're in support mode
+				behavior = BehaviorState.SENDING_ALLY_FLUX;
+			}
+			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 			break;
@@ -234,13 +286,13 @@ public class ScoutRobot extends BaseRobot {
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux() < 0.5) 
 			return null;
-		
-		// Retreat from enemies
+	
+		// ALWAYS RETREAT FROM ENEMEY
 		if (radar.closestEnemyWithFlux != null) {
 			return new MoveInfo(curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite(), true);
 		}
 
-		// Look for map edges
+		// INITIAL_EXPLORE STATES
 		if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE)
 			return new MoveInfo(mapEdgeToSeek, false);
 		else if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
@@ -249,7 +301,6 @@ public class ScoutRobot extends BaseRobot {
 			else
 				return new MoveInfo(nav.navigateRandomly(objective), false);
 		}
-		
 		
 		// Go to objective
 		return new MoveInfo(curLoc.directionTo(objective), false);
