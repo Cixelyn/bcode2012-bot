@@ -357,7 +357,7 @@ public class SoldierLitter extends BaseRobot {
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
-			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 24) > 0;
+			boolean weHaveBiggerFront = er.getStrengthDifference(midpoint, 24) > 0;
 			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
 			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
 			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
