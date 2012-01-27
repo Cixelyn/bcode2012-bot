@@ -451,29 +451,23 @@ public class BroadcastSystem {
 			//Message Receive Loop
 			StringBuilder sb = new StringBuilder();
 			for (Message m: br.rc.getAllMessages()) {
+			
+				int[] mints;
+				String data;
 				
-				
-				// validity check
-				if(m.ints == null || m.ints.length < 2 || m.ints.length > 3 ||
-						m.strings == null || m.strings.length != 1 || m.locations != null) {
-					possiblyRememberEnemyMessage(m);
-					continue;
-				}
+				// ints validity check
+				if((mints = m.ints) == null || mints.length < 2 || mints.length > 3) {memoEnemy(m); continue;}
+				if(m.strings == null || m.strings.length != 1) {memoEnemy(m); continue;}
+				if(m.locations != null) {memoEnemy(m); continue;}
 				
 				// team check
-				if(m.ints[0] != teamkey) {
-					possiblyRememberEnemyMessage(m);
-					continue;
-				}
+				if(mints[0] != teamkey) { memoEnemy(m); continue;}
 				
 				// hash check
-				if(m.strings[0] == null ||
-						m.ints[1] != hashMessage(new StringBuilder(m.strings[0]))) {
-					possiblyRememberEnemyMessage(m);
-					continue;
-				}
+				if((data = m.strings[0]) == null) {memoEnemy(m); continue;}
+				if(mints[1] != hashMessage(new StringBuilder(data))) { memoEnemy(m); continue; }
 				
-				sb.append(m.strings[0]);
+				sb.append(data);
 			}
 			
 			
@@ -491,7 +485,7 @@ public class BroadcastSystem {
 		}
 	}
 	
-	private void possiblyRememberEnemyMessage(Message m) {
+	private void memoEnemy(Message m) {
 		if (Util.randDouble() < 0.01) {
 			// the boolean determines whether we encrypt or not
 			br.mos.rememberMessage(m, false);
