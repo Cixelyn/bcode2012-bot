@@ -131,12 +131,10 @@ public class ArchonRobot extends BaseRobot{
 		if (behavior == BehaviorState.RETREAT && radar.getArmyDifference() > 3)
 			stayTargetLockedUntilRound = -55555;
 		
-		// If there is an enemy in sensor range, set target as enemy swarm target
-		if(radar.closestEnemy != null) {
-			if(radar.closestEnemy.type != RobotType.SCOUT) {
-				enemySpottedRound = curRound;
-				enemySpottedTarget = radar.closestEnemy.location;
-			}
+		// If there is a non-scout enemy in sensor range, set target as enemy swarm target
+		if(radar.closestEnemy != null && radar.numEnemyScouts < radar.numEnemyRobots) {
+			enemySpottedRound = curRound;
+			enemySpottedTarget = radar.closestEnemy.location;
 			stayTargetLockedUntilRound = curRound + TURNS_TO_LOCK_ONTO_AN_ENEMY;
 			Direction enemyswarmdir = curLoc.directionTo(radar.getEnemySwarmTarget());
 			if (radar.getArmyDifference() < -2 || (radar.getAlliesInDirection(enemyswarmdir) < radar.numEnemyRobots-radar.numEnemyArchons-radar.numEnemyTowers)) {

@@ -91,7 +91,6 @@ public class SoldierRobot extends BaseRobot {
 			closestEnemyLocation = radarClosestEnemy.location;
 			closestEnemyType = radarClosestEnemy.type;
 		}
-		dbg.setIndicatorString('h', 0, closestEnemyLocation==null ? "no enemy" : locationToVectorString(closestEnemyLocation)+", "+closestEnemyType);
 		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
 			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) <= 25);
@@ -356,26 +355,38 @@ public class SoldierRobot extends BaseRobot {
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
-			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 24) > 0;
+			int strengthDifference = er.getStrengthDifference(midpoint, 24);
+			boolean weHaveBiggerFront = strengthDifference > 0;
 			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
 			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
 			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
 			
-			if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
+			// If we are much stronger and my energon is low, retreat to nearest archon
+			if(curEnergon <= 12 && strengthDifference > Util.getOwnStrengthEstimate(rc)+10) {
+				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()), true);
+				
+			// If we aren't turned the right way, turn towards target
+			} else if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
 				return new MoveInfo(dirToTarget);
+				
+			// If we are too close to the target, back off
 			} else if(distToTarget <= tooClose) {
 				if(rc.canMove(curDir.opposite()))
 					return new MoveInfo(curDir.opposite(), true);
+				
+			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
 			
 		} else {
+			// Go towards target
 			return new MoveInfo(nav.navigateToDestination(), false);
 		}
 		
+		// Default action is turning towards target
 		return new MoveInfo(curLoc.directionTo(target));
 	}
 }
