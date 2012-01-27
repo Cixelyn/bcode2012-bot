@@ -51,6 +51,8 @@ public class CoryIsADuck extends BaseRobot {
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
 	static final int TURNS_TO_RETREAT = 30;
+	static final int DENSITY_BEFORE_MOVING = 11;
+	static final int DENSITY_BEFORE_STOPPING = 6;
 	MapLocation lastPowerNodeGuess;
 	
 	public CoryIsADuck(RobotController myRC) throws GameActionException {
@@ -95,6 +97,8 @@ public class CoryIsADuck extends BaseRobot {
 //			strategy = StrategyState.RUSH;
 //		}
 		
+		int density = calculateDensity();
+		
 		// The new strategy transition
 		switch(strategy) {
 		case INITIAL_EXPLORE:
@@ -106,10 +110,12 @@ public class CoryIsADuck extends BaseRobot {
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if(curRound > 300) 
+			if((curRound > 1000 && density>DENSITY_BEFORE_MOVING) || eakc.getNumEnemyArchonsAlive()<3) 
 				strategy = StrategyState.CAP;
 			break;
 		case CAP:
+			if((density<DENSITY_BEFORE_STOPPING) && eakc.getNumEnemyArchonsAlive()>=3)
+				strategy = StrategyState.DEFEND;
 			break;
 		default:
 			break;
@@ -168,8 +174,11 @@ public class CoryIsADuck extends BaseRobot {
 		// If we haven't seen anyone for a while, go back to swarm mode and reset target
 		} else {
 			behavior = BehaviorState.SWARM;
-			if(strategy == StrategyState.DEFEND || strategy == StrategyState.RETURN_HOME) {
+			if(strategy == StrategyState.RETURN_HOME) {
 				target = myHome;
+			} else if (strategy == StrategyState.DEFEND )
+			{
+				target = curLoc;
 			} else {
 				target = mc.guessBestPowerNodeToCapture();
 			}
@@ -205,7 +214,7 @@ public class CoryIsADuck extends BaseRobot {
 		}
 		
 		// Broadcast a possibly out of date enemy sighting every 20 turns
-		if(enemySpottedTarget != null && curRound%20 == myArchonID*3) {
+		if(radar.closestEnemy != null && curRound%20 == myArchonID*3) {
 			int[] shorts = new int[3];
 			shorts[0] = enemySpottedRound;
 			shorts[1] = enemySpottedTarget.x;
@@ -218,6 +227,12 @@ public class CoryIsADuck extends BaseRobot {
 			dbg.setIndicatorString('h',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
 		
 		
+	}
+	
+	private int calculateDensity()
+	{
+		radar.scan(true, false);
+		return radar.numAllyRobots;
 	}
 	
 	private String computeRetreatTarget()
