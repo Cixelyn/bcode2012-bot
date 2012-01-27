@@ -280,7 +280,7 @@ public class RadarSystem {
 			alliesInFront++;
 		
 		// TODO(jven): this stuff should be linked with fbs
-		if (rinfo.type != RobotType.ARCHON && rinfo.type != RobotType.SCOUT &&
+		if (rinfo.type != RobotType.SCOUT &&
 				rinfo.flux < rinfo.energon / 3 &&
 				dist < closestLowFluxAllyDist) {
 			closestLowFluxAlly = rinfo;
