@@ -4,38 +4,161 @@ import battlecode.common.MapLocation;
 import battlecode.common.Message;
 
 /**
- * A messaging attack on Team 16. We replay messages to him from previous
- * matches in an attempt to screw up his receivers.
+ * Messaging attack stuff. We replay messages to other teams from our previous
+ * matches vs them in an attempt to screw up their units.
  * 
  * His messages (at the time of this writing) consist of 3 ints and a map loc.
  * 
  * @author jven
  */
-public class Team16System {
+public class MessageAttackSystem {
 	
-	/** Maps round number to 4 ints. The first 2 ints are ints in the message
-	 * and the last 2 are the map loc x and y. The round number is also in the
-	 * message.
-	 */
+	private final BaseRobot br;
+	
+	/** The enemy team number. */
+	private int enemyTeam;
+	
+	/** Maps round number to ints used in generating an enemy message. */
 	private int[][] messageData;
+	
 	/** Whether the loadMessageData method has been called. */
 	private boolean loaded;
 	
-	public Team16System() {
-		// initialize
+	public MessageAttackSystem(BaseRobot myBR) {
+		br = myBR;
+		enemyTeam = -1;
 		messageData = new int[16384][0];
 		loaded = false;
 	}
 	
 	/**
-	 * Loads previous messages into messageData. May be a bit expensive in
-	 * bytecodes so call during a Robot's initialization and only if the Robot
-	 * will use this.
+	 * Guess which team we are playing given one of their messages. Guess is
+	 * based on messages sent in past games.
+	 * @param m An enemy message.
+	 * @return True if we set a guess on the enemy team, False otherwise.
 	 */
-	public void loadMessageData() {
+	public boolean detectTeam(Message m) {
+		
+		// return if we already made a guess
+		if (enemyTeam != -1) {
+			return false;
+		}
+		
+		// return if message is null
+		if (m == null) {
+			return false;
+		}
+		
+		// 016: Team 16: seems to always send 3 ints and a map location... 3rd
+		// i think 1st int is message type, 2nd int is round num, 3rd is a hash,
+		// and map loc is a target
+		if (m.ints != null && m.ints.length == 3 &&
+				m.ints[1] == br.curRound &&
+				m.strings == null || m.strings.length == 0 &&
+				m.locations != null && m.locations.length == 1) {
+			enemyTeam = 16;
+			return true;
+		}
+		
+		// 053: Chaos Legion: sometimes sends 1 encrypted, sometimes sends
+		// 3 ints, 3rd is round number... i'm guessing the team members are
+		// not coordinating on a common message format
+		if (m.ints != null && m.ints.length == 3 &&
+				m.ints[2] == br.curRound &&
+				m.strings == null || m.strings.length == 0 &&
+				m.locations == null || m.locations.length == 0) {
+			enemyTeam = 53;
+			return true;
+		}
+		
+		// no match :(
+		return false;
+	}
+	
+	/**
+	 * Returns whether a guess has been made about the enemy team.
+	 * @return True if we have already set a guess on the enemy team, False
+	 * otherwise.
+	 */
+	public boolean isEnemyTeamKnown() {
+		return enemyTeam != -1;
+	}
+	
+	/**
+	 * Initialize the message attack system based on the enemy team guess.
+	 */
+	public void load() {
+		
+		// if we haven't guessed the enemy team, return
+		if (enemyTeam == -1) {
+			return;
+		}
+		
+		// if we already loaded message data, return
 		if (loaded) {
 			return;
 		}
+		
+		// load message data if appropriate
+		switch (enemyTeam) {
+			case 16:
+				load016();
+				break;
+			case 53:
+				break;
+			default:
+				break;
+		}
+		
+		loaded = true;
+	}
+	
+	/**
+	 * Returns whether the message attack system has been initialized and is
+	 * ready to generate enemy messages.
+	 * @return True if the system is loaded, False otherwise.
+	 */
+	public boolean isLoaded() {
+		return loaded;
+	}
+	
+	/**
+	 * Returns an enemy message to send to the enemy team.
+	 * @return An enemy message. May return null.
+	 */
+	public Message getMessage() {
+		
+		// if we haven't loaded message data, return null
+		if (!loaded) {
+			return null;
+		}
+		
+		// return enemy message
+		Message m = null;
+		switch (enemyTeam) {
+			case 16:
+				int[] data = messageData[br.curRound];
+				// if we don't have any message data for this round, return null
+				if (data != null) {
+					m = new Message();
+					m.ints = new int[] {data[0], br.curRound, data[1]};
+					m.locations = new MapLocation[] {new MapLocation(data[2], data[3])};
+				}
+				break;
+			case 53:
+				m = new Message();
+				m.ints = new int[] {653608212, 0, br.curRound};
+				break;
+			default:
+				break;
+		}
+		return m;
+	}
+	
+	/**
+	 * Loads previous messages from team016 into messageData.
+	 */
+	private void load016() {
 		// AUTO GENERATED CODE
 		messageData[614] = new int[] {133136254, 315446129, 16383, 31314};
 		messageData[636] = new int[] {133136254, 315446086, 16381, 31315};
@@ -104,30 +227,5 @@ public class Team16System {
 		messageData[10575] = new int[] {125828966, 277838490, 16402, 31334};
 		messageData[10768] = new int[] {133136254, 315456638, 16420, 31338};
 		// END AUTO GENERATED CODE
-		loaded = true;
-	}
-	
-	/**
-	 * Returns a Team 16 message from a prior game if one is available for the
-	 * given round number. Returns null if none is available.
-	 * @param roundNum The round number for which an enemy message should be
-	 * returned.
-	 * @return An enemy message for the given round number.
-	 */
-	public Message getMessage(int roundNum) {
-		// if we haven't loaded message data, return null
-		if (!loaded) {
-			return null;
-		}
-		int[] data = messageData[roundNum];
-		// if we don't have any message data for this round, return null
-		if (data == null) {
-			return null;
-		} else {
-			Message m = new Message();
-			m.ints = new int[] {data[0], roundNum, data[1]};
-			m.locations = new MapLocation[] {new MapLocation(data[2], data[3])};
-			return m;
-		}
 	}
 }
