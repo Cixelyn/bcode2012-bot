@@ -43,7 +43,9 @@ public class ArchonRobot extends BaseRobot{
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	
-	static final int RETREAT_RADIUS = 4;
+	Direction lastFlee;
+	
+	static final int RETREAT_RADIUS = 6;
 	static final int RETREAT_DISTANCE = 6;
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
@@ -73,6 +75,7 @@ public class ArchonRobot extends BaseRobot{
 		enemySpottedRound = -55555;
 		enemySpottedTarget = null;
 		lastPowerNodeGuess = null;
+		lastFlee = null;
 	}
 	
 	boolean gotOutput = false;
@@ -123,7 +126,9 @@ public class ArchonRobot extends BaseRobot{
 		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myArchonID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
 			radar.broadcastEnemyInfo(false);
 		
-		if (behavior == BehaviorState.RETREAT && radar.getArmyDifference() > 2)
+		if (behavior != BehaviorState.RETREAT) lastFlee = null;
+		
+		if (behavior == BehaviorState.RETREAT && radar.getArmyDifference() > 3)
 			stayTargetLockedUntilRound = -55555;
 		
 		// If there is an enemy in sensor range, set target as enemy swarm target
@@ -134,12 +139,11 @@ public class ArchonRobot extends BaseRobot{
 			}
 			stayTargetLockedUntilRound = curRound + TURNS_TO_LOCK_ONTO_AN_ENEMY;
 			Direction enemyswarmdir = curLoc.directionTo(radar.getEnemySwarmTarget());
-			if (radar.getArmyDifference() < -2 || (radar.getAlliesInDirection(enemyswarmdir)==0 && 
-					radar.numEnemyRobots-radar.numEnemyArchons-radar.numEnemyTowers>0)) {
+			if (radar.getArmyDifference() < -2 || (radar.getAlliesInDirection(enemyswarmdir) < radar.numEnemyRobots-radar.numEnemyArchons-radar.numEnemyTowers)) {
 				stayTargetLockedUntilRound = curRound+TURNS_TO_RETREAT;
 				behavior = BehaviorState.RETREAT;
 				String ret = computeRetreatTarget();
-				dbg.setIndicatorString('y', 1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
+				dbg.setIndicatorString('e', 1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else {
 				behavior = BehaviorState.BATTLE;
@@ -222,8 +226,8 @@ public class ArchonRobot extends BaseRobot{
 //		7 0 1
 //		6   2
 //		5 4 3
-		int[] closest_in_dir = er.getEnemiesInEachDirectionOnly();
-//		int[] closest_in_dir = radar.closestInDir;
+//		int[] closest_in_dir = er.getEnemiesInEachDirectionOnly();
+		int[] closest_in_dir = radar.closestInDir;
 		int[] wall_in_dir = new int[8];
 		
 //		now, deal with when we are close to map boundaries
@@ -273,17 +277,24 @@ public class ArchonRobot extends BaseRobot{
 			}
 		}
 		
-		String dir =  "".concat(closest_in_dir[0]==0?(wall_in_dir[0]==0?"o":"x"):"x")
-						.concat(closest_in_dir[1]==0?(wall_in_dir[1]==0?"o":"x"):"x")
-						.concat(closest_in_dir[2]==0?(wall_in_dir[2]==0?"o":"x"):"x")
-						.concat(closest_in_dir[3]==0?(wall_in_dir[3]==0?"o":"x"):"x")
-						.concat(closest_in_dir[4]==0?(wall_in_dir[4]==0?"o":"x"):"x")
-						.concat(closest_in_dir[5]==0?(wall_in_dir[5]==0?"o":"x"):"x")
-						.concat(closest_in_dir[6]==0?(wall_in_dir[6]==0?"o":"x"):"x")
-						.concat(closest_in_dir[7]==0?(wall_in_dir[7]==0?"o":"x"):"x");
+//		dbg.setIndicatorString('y', 2, ""	+wall_in_dir[0]+wall_in_dir[1]+wall_in_dir[2]+wall_in_dir[3]
+//											+wall_in_dir[4]+wall_in_dir[5]+wall_in_dir[6]+wall_in_dir[7]
+//											+" "+mc.edgeXMax+" "+mc.edgeXMin+" "+mc.edgeYMax+" "+mc.edgeYMin+" "+mc.cacheToWorldX(mc.edgeXMax));
+		
+		if (lastFlee != null) wall_in_dir[lastFlee.opposite().ordinal()] = 1;
+		
+		String dir =  "".concat(closest_in_dir[0]==99?(wall_in_dir[0]==0?"o":"x"):"x")
+						.concat(closest_in_dir[1]==99?(wall_in_dir[1]==0?"o":"x"):"x")
+						.concat(closest_in_dir[2]==99?(wall_in_dir[2]==0?"o":"x"):"x")
+						.concat(closest_in_dir[3]==99?(wall_in_dir[3]==0?"o":"x"):"x")
+						.concat(closest_in_dir[4]==99?(wall_in_dir[4]==0?"o":"x"):"x")
+						.concat(closest_in_dir[5]==99?(wall_in_dir[5]==0?"o":"x"):"x")
+						.concat(closest_in_dir[6]==99?(wall_in_dir[6]==0?"o":"x"):"x")
+						.concat(closest_in_dir[7]==99?(wall_in_dir[7]==0?"o":"x"):"x");
 		dir = dir.concat(dir);
 		int index;
 		
+		targetDir = curLoc.directionTo(target);
 		
 		Direction newdir;
 		index = dir.indexOf("ooooooo");
@@ -292,7 +303,7 @@ public class ArchonRobot extends BaseRobot{
 			newdir = Constants.directions[(index+3)%8];
 			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
 			{
-				targetDir = newdir;
+				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
 				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
@@ -305,7 +316,7 @@ public class ArchonRobot extends BaseRobot{
 			newdir = Constants.directions[(index+3)%8];
 			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
 			{
-				targetDir = newdir;
+				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
 				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
@@ -318,7 +329,7 @@ public class ArchonRobot extends BaseRobot{
 			newdir = Constants.directions[(index+2)%8];
 			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
 			{
-				targetDir = newdir;
+				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
 				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
@@ -331,7 +342,7 @@ public class ArchonRobot extends BaseRobot{
 			newdir = Constants.directions[(index+2)%8];
 			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
 			{
-				targetDir = newdir;
+				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
 				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
@@ -344,7 +355,7 @@ public class ArchonRobot extends BaseRobot{
 			newdir = Constants.directions[(index+1)%8];
 			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
 			{
-				targetDir = newdir;
+				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
 				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
@@ -357,7 +368,7 @@ public class ArchonRobot extends BaseRobot{
 			newdir = Constants.directions[(index+1)%8];
 			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
 			{
-				targetDir = newdir;
+				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
 				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
@@ -370,7 +381,7 @@ public class ArchonRobot extends BaseRobot{
 			newdir = Constants.directions[(index)%8];
 			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
 			{
-				targetDir = newdir;
+				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
 				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
@@ -378,20 +389,20 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		dbg.println('y',"GONNTA GET GEE'D");
-//		int lowest = closest_in_dir[0];
-//		int lowesti = 0;
-//		for (int x=1; x<8; x++)
-//			if (closest_in_dir[x]<lowest)
-//			{
-//				lowesti = x;
-//				lowest = closest_in_dir[x];
-//			}
-		target = radar.getEnemySwarmTarget();
-		newdir = target.directionTo(curLoc);
-//		targetDir = Constants.directions[lowesti];
+		int lowest = closest_in_dir[0];
+		int lowesti = 0;
+		for (int x=1; x<8; x++)
+			if (closest_in_dir[x]<lowest)
+			{
+				lowesti = x;
+				lowest = closest_in_dir[x];
+			}
+//		target = radar.getEnemySwarmTarget();
+//		newdir = target.directionTo(curLoc);
+		newdir = Constants.directions[lowesti];
 		if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
 		{
-			targetDir = newdir;
+			lastFlee = targetDir = newdir;
 			target = curLoc.add(targetDir, RETREAT_DISTANCE);
 			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			return null;

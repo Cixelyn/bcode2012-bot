@@ -497,15 +497,15 @@ public class MapCacheSystem {
 	public int worldToCacheX(int worldX) {
 		return worldX-powerCoreWorldX+POWER_CORE_POSITION;
 	}
-	/** Converts from world x coordinates to cache y coordinates. */
+	/** Converts from world x coordinates to cache x coordinates. */
 	public int cacheToWorldX(int cacheX) {
 		return cacheX+powerCoreWorldX-POWER_CORE_POSITION;
 	}
-	/** Converts from cache x coordinates to world x coordinates. */
+	/** Converts from cache y coordinates to world y coordinates. */
 	public int worldToCacheY(int worldY) {
 		return worldY-powerCoreWorldY+POWER_CORE_POSITION;
 	}
-	/** Converts from cache x coordinates to world y coordinates. */
+	/** Converts from cache y coordinates to world y coordinates. */
 	public int cacheToWorldY(int cacheY) {
 		return cacheY+powerCoreWorldY-POWER_CORE_POSITION;
 	}
