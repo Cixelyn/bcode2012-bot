@@ -335,7 +335,7 @@ public class DisrupterRobotYP extends BaseRobot {
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
-			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 25) > 0;
+			boolean weHaveBiggerFront = er.getStrengthDifference(midpoint, 25) > 0;
 			boolean targetIsRanged = closestEnemyType==RobotType.DISRUPTER || 
 					closestEnemyType==RobotType.SCORCHER;
 			int tooCloseCantRetreat = targetIsRanged ? 3 : 1;

@@ -26,7 +26,7 @@ public class Encryption {
 		return s.concat(t.substring(DESHUFFLE.length*l));
 	}
 	
-	public static void main(String[] args) {
+	public static void test() {
 		String[] myStrings = new String[] {
 				"I'm an Archon in rush mode.",
 				"I hope no one sees my super secret tangent bug.",
@@ -44,10 +44,11 @@ public class Encryption {
 			System.out.println("Decrypted: " + decryptString(encryptString(myString, i), i));
 		}
 	}
+	
+	public static void main() {
+//		test(); 
+		String s = "";
+		int roundNum = 1;
+		System.out.println(decryptString(s, roundNum));
+	}
 }
-
-//2 4 0 8 7 3 6 5 1
-//2 8 0 5 1 7 6 4 3
-//
-//3 6 5 1 2 4 0 8 7
-//6 3 4 0 5 2

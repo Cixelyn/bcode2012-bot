@@ -7,17 +7,17 @@ import battlecode.common.RobotType;
 
 public class ExtendedRadarSystem {
 	private static final int BUFFER_SIZE = 4096;
-	private static final int ALLY_MEMORY_TIMEOUT = 16;
+	public static final int ALLY_MEMORY_TIMEOUT = 5;
 	private static final int ENEMY_MEMORY_TIMEOUT = 16;
 	private static final RobotType[] robotTypes = RobotType.values();
 	
 	private final BaseRobot br;
 	public final MapLocation[] enemyLocationInfo;
-	public final int[] enemyEnergonInfo;
+	public final int[] enemyUnitStrengthEstimate;
 	public final RobotType[] enemyTypeInfo;
 	private FastIDSet enemyKeySet;
 	public final MapLocation[] allyLocationInfo;
-	public final int[] allyEnergonInfo;
+	public final int[] allyUnitStrengthEstimate;
 	public final RobotType[] allyTypeInfo;
 	private FastIDSet allyKeySet;
 	private final int[] flags;
@@ -25,10 +25,10 @@ public class ExtendedRadarSystem {
 	public ExtendedRadarSystem(BaseRobot br) {
 		this.br = br;
 		enemyLocationInfo = new MapLocation[BUFFER_SIZE];
-		enemyEnergonInfo = new int[BUFFER_SIZE];
+		enemyUnitStrengthEstimate = new int[BUFFER_SIZE];
 		enemyTypeInfo = new RobotType[BUFFER_SIZE];
 		allyLocationInfo = new MapLocation[BUFFER_SIZE];
-		allyEnergonInfo = new int[BUFFER_SIZE];
+		allyUnitStrengthEstimate = new int[BUFFER_SIZE];
 		allyTypeInfo = new RobotType[BUFFER_SIZE];
 		flags = new int[BUFFER_SIZE];
 		flagCount = 0;
@@ -50,14 +50,14 @@ public class ExtendedRadarSystem {
 		if(firstIDIsAnAlly) {
 			int senderID = info[0];
 			allyLocationInfo[senderID] = new MapLocation(info[1], info[2]);
-			allyEnergonInfo[senderID] = info[3]-10001;
+			allyUnitStrengthEstimate[senderID] = info[3]-10001;
 			allyTypeInfo[senderID] = robotTypes[info[4]];
 			allyKeySet.addID(senderID);
 		}
 		for(int n=firstIDIsAnAlly?5:0; n<info.length; n+=5) {
 			int id = info[n];
 			enemyLocationInfo[id] = new MapLocation(info[n+1], info[n+2]);
-			enemyEnergonInfo[id] = info[n+3];
+			enemyUnitStrengthEstimate[id] = info[n+3];
 			enemyTypeInfo[id] = robotTypes[info[n+4]];
 			enemyKeySet.addID(id);
 		}
@@ -85,7 +85,7 @@ public class ExtendedRadarSystem {
 	/** Returns how much more energon worth of robots we have in the given radius. 
 	 * Returns a positive number iff we have more energon than the other team.
 	 */
-	public int getEnergonDifference(MapLocation center, int radiusSquared) {
+	public int getStrengthDifference(MapLocation center, int radiusSquared) {
 		
 		int i; // hardcoded to bring i into istore_3
 		
@@ -97,7 +97,7 @@ public class ExtendedRadarSystem {
 			int id = enemyKeySet.getID(i);
 			if(center.distanceSquaredTo(enemyLocationInfo[id]) <= radiusSquared) {
 				flags[id] = flagCount;
-				diff -= enemyEnergonInfo[id];
+				diff -= enemyUnitStrengthEstimate[id];
 			}
 		}
 		
@@ -109,7 +109,7 @@ public class ExtendedRadarSystem {
 			
 			if(ri.type == RobotType.SOLDIER || ri.type == RobotType.DISRUPTER || ri.type == RobotType.SCORCHER) {
 				if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
-					diff -= ri.energon;
+					diff -= Util.getStrengthEstimate(ri);
 				}
 			}
 		}
@@ -119,7 +119,7 @@ public class ExtendedRadarSystem {
 			int id = allyKeySet.getID(i);
 			if(center.distanceSquaredTo(allyLocationInfo[id]) <= radiusSquared) {
 				flags[id] = flagCount;
-				diff += allyEnergonInfo[id];
+				diff += allyUnitStrengthEstimate[id];
 			}
 		}
 		
@@ -131,14 +131,14 @@ public class ExtendedRadarSystem {
 			
 			if(ri.type == RobotType.SOLDIER || ri.type == RobotType.DISRUPTER || ri.type == RobotType.SCORCHER) {
 				if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
-					diff += ri.energon;
+					diff += Util.getStrengthEstimate(ri);
 				}
 			}
 		}
 		
 		// Add myself if necessary
 		if(flags[br.myID]!=flagCount && center.distanceSquaredTo(br.curLoc) <= radiusSquared) {
-			diff += br.curEnergon;
+			diff += Util.getOwnStrengthEstimate(br.rc);
 		}
 		
 		br.dbg.setIndicatorString('h', 0, toString()+"|||||   energon difference: "+diff);
@@ -223,14 +223,14 @@ public class ExtendedRadarSystem {
 		for(int i=0; i<size; i++) {
 			int id = enemyKeySet.getID(i);
 			ret+=" #"+id+", "+enemyTypeInfo[id].ordinal()+", <"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+
-					">, "+enemyEnergonInfo[id]+"   ";
+					">, "+enemyUnitStrengthEstimate[id]+"   ";
 		}
 		ret+="|||||   ";
 		size = allyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = allyKeySet.getID(i);
 			ret+=" #"+", "+allyTypeInfo[id].ordinal()+id+", <"+(allyLocationInfo[id].x-br.curLoc.x)+","+(allyLocationInfo[id].y-br.curLoc.y)+
-					">, "+allyEnergonInfo[id]+"   ";
+					">, "+allyUnitStrengthEstimate[id]+"   ";
 		}
 		return ret.substring(0, Math.min(ret.length(), 250));
 	}
