@@ -81,7 +81,10 @@ public class RadarSystem {
 	public int closestEnemyWithFluxDist;
 	
 	public RobotInfo closestLowFluxAlly;
-	public double closestLowFluxAllyDist;
+	public int closestLowFluxAllyDist;
+	
+	public RobotInfo closestAllyScout;
+	public int closestAllyScoutDist;
 	
 	final boolean cachepositions;
 	final boolean isArchon;
@@ -135,6 +138,8 @@ public class RadarSystem {
 	}
 
 	private void resetAllyStats() {
+		closestAllyScout = null;
+		closestAllyScoutDist = Integer.MAX_VALUE;
 		numAdjacentAllies = 0;
 		numAllyRobots = 0;
 		numAllyToRegenerate = 0;
@@ -278,6 +283,11 @@ public class RadarSystem {
 			alliesOnRight++;
 		if(ddir <= 1 || ddir == 7)
 			alliesInFront++;
+		
+		if(rinfo.type==RobotType.SCOUT && dist<closestAllyScoutDist) {
+			closestAllyScoutDist = dist;
+			closestAllyScout = rinfo;
+		}
 		
 		// TODO(jven): this stuff should be linked with fbs
 		if (rinfo.type != RobotType.ARCHON && rinfo.type != RobotType.SCOUT &&
@@ -498,7 +508,7 @@ public class RadarSystem {
 			shorts[0] = br.myID;
 			shorts[1] = br.curLoc.x;
 			shorts[2] = br.curLoc.y;
-			shorts[3] = 10000+(int)Math.ceil(br.curEnergon);
+			shorts[3] = 10000+(int)Math.ceil(br.curEnergon)+10;
 			shorts[4] = br.myType.ordinal();
 		}
 		for(int i=0, c=sendOwnInfo?5:0; i<numEnemyRobots; i++, c+=5) {
@@ -506,26 +516,33 @@ public class RadarSystem {
 			shorts[c] = ri.robot.getID();
 			shorts[c+1] = ri.location.x;
 			shorts[c+2] = ri.location.y;
+			double strengthEstimate;
 			switch(ri.type) {
 			case SOLDIER:
-				shorts[c+3] = (int)Math.ceil(ri.energon);
+				strengthEstimate = ri.energon+10;
 				break;
 			case DISRUPTER:
-				shorts[c+3] = (int)Math.ceil(ri.energon*0.7);
+				strengthEstimate = ri.energon*0.7+10;
 				break;
 			case SCORCHER:
-				shorts[c+3] = (int)Math.ceil(ri.energon*1.5);
+				strengthEstimate = ri.energon*1.5+10;
 				break;
 			case SCOUT:
-				shorts[c+3] = 2;
+				strengthEstimate = 2;
 				break;
 			default:
-				shorts[c+3] = 0;
+				strengthEstimate = 0;
 				break;
 			}
+			if(ri.flux < 0.15) 
+				strengthEstimate *= 0.25;
+			if(ri.roundsUntilAttackIdle > 5) 
+				strengthEstimate *= 20/(15+ri.roundsUntilAttackIdle);
+			shorts[c+3] = (int)Math.ceil(strengthEstimate);
 			shorts[c+4] = ri.type.ordinal();
 		}
-		br.er.integrateEnemyInfo(shorts);
+		if(br.myType==RobotType.SOLDIER || br.myType==RobotType.DISRUPTER || br.myType==RobotType.SCORCHER)
+			br.er.integrateEnemyInfo(shorts);
 		br.io.sendUShorts(BroadcastChannel.EXTENDED_RADAR, BroadcastType.ENEMY_INFO, shorts);
 	}
 	

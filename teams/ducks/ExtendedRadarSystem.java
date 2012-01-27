@@ -7,7 +7,7 @@ import battlecode.common.RobotType;
 
 public class ExtendedRadarSystem {
 	private static final int BUFFER_SIZE = 4096;
-	private static final int MEMORY_TIMEOUT = 15;
+	private static final int MEMORY_TIMEOUT = 16;
 	private static final RobotType[] robotTypes = RobotType.values();
 	
 	private final BaseRobot br;
@@ -135,7 +135,7 @@ public class ExtendedRadarSystem {
 			diff += br.curEnergon;
 		}
 		
-		br.dbg.setIndicatorString('h', 0, toString()+" ----- energon difference: "+diff);
+		br.dbg.setIndicatorString('h', 0, toString()+"|||||   energon difference: "+diff);
 		return diff;
 	}
 	
@@ -216,15 +216,16 @@ public class ExtendedRadarSystem {
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = enemyKeySet.getID(i);
-			ret+=" id="+id+", pos=<"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+
-					">, hp="+enemyEnergonInfo[id]+", "+enemyTypeInfo[id]+"     ";
+			ret+=" #"+id+", "+enemyTypeInfo[id].ordinal()+", <"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+
+					">, "+enemyEnergonInfo[id]+"   ";
 		}
+		ret+="|||||   ";
 		size = allyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = allyKeySet.getID(i);
-			ret+=" (ally)id="+id+", pos=<"+(allyLocationInfo[id].x-br.curLoc.x)+","+(allyLocationInfo[id].y-br.curLoc.y)+
-					">, hp="+allyEnergonInfo[id]+", "+allyTypeInfo[id]+"     ";
+			ret+=" #"+", "+allyTypeInfo[id].ordinal()+id+", <"+(allyLocationInfo[id].x-br.curLoc.x)+","+(allyLocationInfo[id].y-br.curLoc.y)+
+					">, "+allyEnergonInfo[id]+"   ";
 		}
-		return ret.substring(0, Math.min(ret.length(), 150));
+		return ret.substring(0, Math.min(ret.length(), 250));
 	}
 }

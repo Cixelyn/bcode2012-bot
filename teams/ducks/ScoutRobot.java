@@ -70,7 +70,7 @@ public class ScoutRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		if(Clock.getRoundNum()<2600) {
+		if(Clock.getRoundNum()<1000) {
 			strategy = StrategyState.SCOUT_ENEMY;
 		} else {
 			strategy = StrategyState.BATTLE;
@@ -244,9 +244,10 @@ public class ScoutRobot extends BaseRobot {
 		if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE)
 			return new MoveInfo(mapEdgeToSeek, false);
 		else if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
-//			if(radar.closestScoutDist < 25)
-//				return new MoveInfo(curLoc.directionTo(radar.closestScout).opposite(), false);
-			return new MoveInfo(nav.navigateRandomly(objective), false);
+			if(radar.closestAllyScoutDist < 25)
+				return new MoveInfo(curLoc.directionTo(radar.closestAllyScout.location).opposite(), false);
+			else
+				return new MoveInfo(nav.navigateRandomly(objective), false);
 		}
 		
 		

@@ -6,6 +6,20 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 
 public class MovementStateMachine {
+	public enum MovementState {
+		/** Movement cooldown is not active. Spawn stuff if desirable. 
+		 * Compute where to move next, and turn appropriately.*/
+		IDLE, 
+		/** Was just idle, and decided to spawn something, but needed to turn first. */
+		ABOUT_TO_SPAWN,
+		/** Was just idle, and computed where to move, and turned to move. */
+		ABOUT_TO_MOVE, 
+		/** Just moved forward or backward. Need to call mc.senseAfterMove(justMovedDir) here. */
+		JUST_MOVED, 
+		/** Waiting to be idle again. Prepare for the next navigation computation. */
+		COOLDOWN;
+	}
+
 	private static final int TURNS_STUCK_UNTIL_ROBOT_STARTS_MOVING_RANDOMLY = 16;
 	private MovementState curState;
 	private final BaseRobot br;
@@ -21,6 +35,11 @@ public class MovementStateMachine {
 		curState = MovementState.COOLDOWN;
 	}
 
+	public void reset() {
+		curState = MovementState.COOLDOWN;
+		nextMove = null;
+		turnsStuck = 0;
+	}
 	public void step() throws GameActionException {
 		curState = execute();
 		br.dbg.setIndicatorString('h',2, nextMove+", movement_state="+curState);

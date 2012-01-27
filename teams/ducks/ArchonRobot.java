@@ -177,7 +177,7 @@ public class ArchonRobot extends BaseRobot{
 			roundStartWakeupMode = curRound;
 			previousWakeupTarget = target;
 		}
-		if(curRound < roundStartWakeupMode + 10) {
+		if(curRound%6==myArchonID && curRound < roundStartWakeupMode + 20) {
 			io.sendWakeupCall();
 		}
 			
@@ -190,16 +190,18 @@ public class ArchonRobot extends BaseRobot{
 		else
 			fbs.setPoolMode();
 		
-		// Broadcast my target info to the soldier swarm
-		int[] shorts = new int[3];
-		shorts[0] = (behavior == BehaviorState.RETREAT) ? 0 : 1;
-		shorts[1] = target.x;
-		shorts[2] = target.y;
-		io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+		// Broadcast my target info to the soldier swarm every 6 turns
+		if((curRound+2)%6 == myArchonID) {
+			int[] shorts = new int[3];
+			shorts[0] = (behavior == BehaviorState.RETREAT) ? 0 : 1;
+			shorts[1] = target.x;
+			shorts[2] = target.y;
+			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.SWARM_TARGET, shorts);
+		}
 		
 		// Broadcast a possibly out of date enemy sighting every 20 turns
 		if(enemySpottedTarget != null && curRound%20 == myArchonID*3) {
-			shorts = new int[3];
+			int[] shorts = new int[3];
 			shorts[0] = enemySpottedRound;
 			shorts[1] = enemySpottedTarget.x;
 			shorts[2] = enemySpottedTarget.y;

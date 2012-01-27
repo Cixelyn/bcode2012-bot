@@ -38,6 +38,7 @@ public class SoldierRobot extends BaseRobot {
 	MapLocation previousBugTarget;
 	int closestSwarmTargetSenderDist;
 	MapLocation archonSwarmTarget;
+	int archonSwarmTime;
 	BehaviorState behavior;
 	MapLocation hibernateTarget;
 	double energonLastTurn;
@@ -66,6 +67,7 @@ public class SoldierRobot extends BaseRobot {
 		enemySpottedTarget = null;
 		enemySpottedRound = -55555;
 		roundLastWakenUp = -55555;
+		archonSwarmTime = -55555;
 		checkedBehind = false;
 	}
 
@@ -147,7 +149,7 @@ public class SoldierRobot extends BaseRobot {
 					if(adjacentMovable<=1)
 						behavior = BehaviorState.HIBERNATE;
 					
-				} else if(closestSwarmTargetSenderDist == Integer.MAX_VALUE) { 
+				} else if(curRound > archonSwarmTime+12) { 
 					// We did not receive any swarm target broadcasts from our archons
 					behavior = BehaviorState.SWARM;
 					target = dc.getClosestArchon();
@@ -218,21 +220,33 @@ public class SoldierRobot extends BaseRobot {
 			else 
 				hsys.setMode(HibernationSystem.MODE_LOW_FLUX);
 			
+			
+			msm.reset();
 			int ec = hsys.run();
+			
+			System.out.println("coming out of hibernation "+ec);
+			// Come out of hibernation
 			if(ec == HibernationSystem.EXIT_ATTACKED) {
 				radar.scan(false, true);
-				if(radar.closestEnemy==null)
+				if(radar.closestEnemy==null) {
 					behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
-				else
+					checkedBehind = false;
+				} else {
+					behavior = BehaviorState.ENEMY_DETECTED;
 					tryToAttack();
+				}
 			} else if(ec == HibernationSystem.EXIT_MESSAGED) {
 				behavior = BehaviorState.SWARM;
 			} else if(ec == HibernationSystem.EXIT_REFUELED) {
 				behavior = BehaviorState.SWARM;
 			}
 			roundLastWakenUp = curRound;
-			target = curLoc;
+			target = (behavior == BehaviorState.ENEMY_DETECTED) ? radar.closestEnemy.location : curLoc;
 			nav.setDestination(target);
+			
+			// Set debug string upon coming out of hibernation
+			dbg.setIndicatorString('e', 1, "Target=<"+(target.x-curLoc.x)+","+
+					(target.y-curLoc.y)+">, Behavior="+behavior);
 		}
 		
 		// Update end of turn variables
@@ -280,9 +294,10 @@ public class SoldierRobot extends BaseRobot {
 		case SWARM_TARGET:
 			shorts = BroadcastSystem.decodeUShorts(sb);
 			int dist = curLoc.distanceSquaredTo(BroadcastSystem.decodeSenderLoc(sb));
-			if(dist<closestSwarmTargetSenderDist) {
+			if(dist<closestSwarmTargetSenderDist || curRound > archonSwarmTime+5) {
 				closestSwarmTargetSenderDist = dist;
 				archonSwarmTarget = new MapLocation(shorts[1], shorts[2]);
+				archonSwarmTime = curRound;
 			}
 			break;
 		case ENEMY_INFO:

@@ -45,8 +45,6 @@ public enum BroadcastType {
 	/** blank message. Sent by units with no flux */
 	LOW_FLUX_HELP,
 	
-	
-	
 //	ending semicolon
 	;
 	
