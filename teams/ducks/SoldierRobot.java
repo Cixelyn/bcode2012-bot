@@ -111,8 +111,9 @@ public class SoldierRobot extends BaseRobot {
 					curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
 				// Current target is too far away, got hit from behind probably
 				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+				checkedBehind = false;
+				
 			} else {
-			
 				// If we know of an enemy, lock onto it
 				behavior = BehaviorState.ENEMY_DETECTED;
 				target = closestEnemyLocation;
@@ -120,8 +121,8 @@ public class SoldierRobot extends BaseRobot {
 				lockAcquiredRound = curRound;
 			}
 			
-		} else if(curEnergon < energonLastTurn || (behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES &&
-				!checkedBehind)) {
+		} else if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) || 
+				(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES && !checkedBehind)) {
 			// Got hurt since last turn.. look behind you
 			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
 			checkedBehind = false;
