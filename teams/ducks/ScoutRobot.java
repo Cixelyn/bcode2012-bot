@@ -109,7 +109,7 @@ public class ScoutRobot extends BaseRobot {
 		// logic for initial explore
 		if(strategy == StrategyState.INITIAL_EXPLORE) { 
 			if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
-				if(radar.closestEnemy != null) {
+			if(radar.closestEnemy != null && radar.closestEnemy.type != RobotType.SCOUT) {
 					behavior = BehaviorState.REPORT_TO_ARCHON;
 				}
 			} else if(behavior == BehaviorState.REPORT_TO_ARCHON) {

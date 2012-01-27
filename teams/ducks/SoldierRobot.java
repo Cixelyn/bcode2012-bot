@@ -22,8 +22,6 @@ public class SoldierRobot extends BaseRobot {
 		SWARM,
 		/** Heard of an enemy spotted call, but no enemy info calls yet. */
 		SEEK,
-		/** Run away from enemy forces. */
-		RETREAT, 
 		/** Far from target. Use bug to navigate. */
 		LOST,
 		/** Need to refuel. Go to nearest archon. */
@@ -42,6 +40,7 @@ public class SoldierRobot extends BaseRobot {
 	BehaviorState behavior;
 	MapLocation hibernateTarget;
 	double energonLastTurn;
+	double fluxLastTurn;
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	int roundLastWakenUp;
@@ -68,11 +67,22 @@ public class SoldierRobot extends BaseRobot {
 		enemySpottedRound = -55555;
 		roundLastWakenUp = -55555;
 		archonSwarmTime = -55555;
+		energonLastTurn = 0;
+		fluxLastTurn = 0;
 		checkedBehind = false;
 	}
 
 	@Override
 	public void run() throws GameActionException {
+		if((behavior==BehaviorState.SWARM || behavior==BehaviorState.LOOKING_TO_HIBERNATE ||
+				behavior==BehaviorState.LOST || behavior==BehaviorState.REFUEL) && 
+				rc.isMovementActive() && !msm.justMoved()) {
+			// No action if unnecessary
+			
+			energonLastTurn = curEnergon;
+			fluxLastTurn = rc.getFlux();
+			return;
+		}
 		
 		// Scan everything every turn
 		radar.scan(true, true);
@@ -91,13 +101,14 @@ public class SoldierRobot extends BaseRobot {
 			closestEnemyLocation = radarClosestEnemy.location;
 			closestEnemyType = radarClosestEnemy.type;
 		}
-		if(curRound%5 == myID%5)
+		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
 			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) <= 25);
 		
 		if(closestEnemyLocation != null) {
 			
-			if(curEnergon < energonLastTurn && curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
+			if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) && 
+					curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
 				// Current target is too far away, got hit from behind probably
 				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
 			} else {
@@ -210,8 +221,7 @@ public class SoldierRobot extends BaseRobot {
 			fbs.setPoolMode();
 		
 		// Set debug string
-		dbg.setIndicatorString('e', 1, "Target=<"+(target.x-curLoc.x)+","+
-				(target.y-curLoc.y)+">, Behavior="+behavior);
+		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(target)+", Behavior="+behavior);
 		
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE || behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
@@ -250,9 +260,8 @@ public class SoldierRobot extends BaseRobot {
 		}
 		
 		// Update end of turn variables
-		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
 		energonLastTurn = curEnergon;
-			
+		fluxLastTurn = rc.getFlux();
 	}
 	
 	private void tryToAttack() throws GameActionException {
@@ -356,27 +365,42 @@ public class SoldierRobot extends BaseRobot {
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
-			boolean weHaveBiggerFront = er.getEnergonDifference(midpoint, 24) > 0;
+			int strengthDifference = er.getStrengthDifference(midpoint, 24);
+			boolean weHaveBiggerFront = strengthDifference > 0;
 			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
-			int tooCloseCantRetreat = targetIsRanged ? 4 : 0;
 			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
 			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
 			
-			if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
+			// If we are much stronger and my energon is low, retreat to nearest archon
+			if(curEnergon <= 12 && strengthDifference > Util.getOwnStrengthEstimate(rc)+10) {
+				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()), true);
+				
+			// If we aren't turned the right way, turn towards target
+			} else if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
 				return new MoveInfo(dirToTarget);
-			} else if(distToTarget>tooCloseCantRetreat && distToTarget <= tooClose) {
-				if(rc.canMove(curDir.opposite()))
-					return new MoveInfo(curDir.opposite(), true);
+				
+			// If we are too close to the target, back off
+			} else if(distToTarget <= tooClose) {
+				if(targetIsRanged) {
+					return new MoveInfo(dirToTarget.opposite(), true);
+				} else {
+					if(rc.canMove(curDir.opposite()))
+						return new MoveInfo(curDir.opposite(), true);
+				}
+				
+			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
 			
 		} else {
+			// Go towards target
 			return new MoveInfo(nav.navigateToDestination(), false);
 		}
 		
+		// Default action is turning towards target
 		return new MoveInfo(curLoc.directionTo(target));
 	}
 }

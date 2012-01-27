@@ -144,7 +144,7 @@ public abstract class BaseRobot {
 				
 				// Update Extended Radar
 				er.step();
-
+				
 				// Check if we've already run out of bytecodes
 				if(checkClock()) {
 					rc.yield();
