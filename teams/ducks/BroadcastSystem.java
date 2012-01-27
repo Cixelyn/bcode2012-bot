@@ -503,7 +503,7 @@ public class BroadcastSystem {
 	private void memoEnemy(Message m) {
 		// log message to match observation
 		if (br.myType == RobotType.ARCHON) {
-			br.mos.rememberMessage(m, true);
+			br.mos.rememberMessage(m, false);
 		}
 		// if a scout, try to identify enemy team
 		if (br.myType == RobotType.SCOUT && br.mas.guessEnemyTeam() == -1 &&
