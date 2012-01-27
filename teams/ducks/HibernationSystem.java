@@ -51,7 +51,7 @@ public class HibernationSystem {
 		Message[] msgs;	 				// astore_3
 
 		RobotController rc = br.rc; 	// field 4
-		int time=br.myID;				// field 5
+		int time=0;						// field 5
 		boolean localLowFluxMode = this.lowFluxMode;
 	
 		double lastEnergon = rc.getEnergon();
@@ -101,7 +101,7 @@ public class HibernationSystem {
 				return EXIT_REFUELED;
 			}
 			
-			if(localLowFluxMode && time++ % 60 == 0) { // faster fail case first
+			if(localLowFluxMode && time++ % 50 == 0) { // faster fail case first
 				try{
 					rc.broadcast(helpMsg);
 				} catch(GameActionException e) {
