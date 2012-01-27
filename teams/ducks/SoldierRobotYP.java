@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -71,22 +72,40 @@ public class SoldierRobotYP extends BaseRobot {
 	public void run() throws GameActionException {
 		
 		// Scan everything every turn
+//		radar.scan(true, true);
+		int t1 = Clock.getBytecodeNum();
 		radar.scan(true, true);
+		int t2 = Clock.getBytecodeNum();
+		dbg.setIndicatorString('y', 2, "scan took "+(t2-t1));
 		
 		int closestEnemyID = er.getClosestEnemyID();
-		closestEnemyLocation = closestEnemyID==-1 ? null : 
-			er.enemyLocationInfo[closestEnemyID];
-		closestEnemyType = closestEnemyID==-1 ? null : 
-			er.enemyTypeInfo[closestEnemyID];
-		if(closestEnemyLocation!=null && rc.canSenseSquare(closestEnemyLocation))
-			closestEnemyLocation = null;
+		
 		RobotInfo radarClosestEnemy = radar.closestEnemy;
-		if(radarClosestEnemy!=null && (closestEnemyLocation==null || (radarClosestEnemy.location!=null && 
-				curLoc.distanceSquaredTo(closestEnemyLocation) <=
-				curLoc.distanceSquaredTo(radarClosestEnemy.location)))) {
+		
+		if (closestEnemyID != -1)
+		{
+			closestEnemyLocation = er.enemyLocationInfo[closestEnemyID];
+			
+			if(radarClosestEnemy!=null && (closestEnemyLocation==null || (radarClosestEnemy.location!=null && 
+					curLoc.distanceSquaredTo(closestEnemyLocation) <=
+					curLoc.distanceSquaredTo(radarClosestEnemy.location)))) {
+				closestEnemyLocation = radarClosestEnemy.location;
+				closestEnemyType = radarClosestEnemy.type;
+			} else
+			{
+				closestEnemyType = er.enemyTypeInfo[closestEnemyID];
+			}
+			
+			if (!rc.canSenseSquare(closestEnemyLocation))
+			{
+				closestEnemyType = er.enemyTypeInfo[closestEnemyID];
+			}
+		} else if (radarClosestEnemy != null)
+		{
 			closestEnemyLocation = radarClosestEnemy.location;
 			closestEnemyType = radarClosestEnemy.type;
 		}
+		
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) <= 25);
@@ -286,8 +305,8 @@ public class SoldierRobotYP extends BaseRobot {
 		case ENEMY_KILL:
 			er.integrateEnemyKill(BroadcastSystem.decodeShort(sb));
 			break;
-		default:
-			super.processMessage(msgType, sb);
+//		default:
+//			super.processMessage(msgType, sb);
 		} 
 	}
 	

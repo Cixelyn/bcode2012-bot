@@ -11,6 +11,7 @@ import java.io.PipedOutputStream;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import battlecode.common.Clock;
@@ -287,64 +288,55 @@ public class TestClass {
 	{
 int t1,t2;
 		
-		Random rnd = new Random();
-		
-		String s1 = "abcde";
-		String s2 = "vwxyz";
-		
-		Message m = new Message();
-		m.ints = new int[]{0,1,2,3};
-		m.locations = new MapLocation[]{new MapLocation(1,2)};
-		m.strings = new String[]{"wer"};
-		
+//		Random rnd = new Random();
+//		
+//		String s1 = "abcde";
+//		String s2 = "vwxyz";
+//		
+//		Message m = new Message();
+//		m.ints = new int[]{0,1,2,3};
+//		m.locations = new MapLocation[]{new MapLocation(1,2)};
+//		m.strings = new String[]{"wer"};
+//		
 //		t1 = Clock.getBytecodeNum();
 //		System.out.println(Arrays.toString(m.ints));
 //		System.out.println(Arrays.toString(m.strings));
 //		System.out.println(Arrays.toString(m.locations));
 //		t2 = Clock.getBytecodeNum();
 //		System.out.println("random: " + (t2-t1));
-//		
-//		
-//		StringBuilder b1 = new StringBuilder("abcde");
-//		StringBuilder b2 = new StringBuilder("vwxyz");
-//		
-//		t1 = Clock.getBytecodeNum();
-//		String a = s1 + s2;
-//		t2 = Clock.getBytecodeNum();
-//		
-//		t1 = Clock.getBytecodeNum();
-//		String b = s1.concat(s2);
-//		t2 = Clock.getBytecodeNum();
-//		System.out.println("random: " + (t2-t1));
-//	
-//		t1 = Clock.getBytecodeNum();
-//		b1.append(b2);
-//		t2 = Clock.getBytecodeNum();
-//		System.out.println("random: " + (t2-t1));
-//		
-//		t1 = Clock.getBytecodeNum();
-//		StringBuilder b3 = new StringBuilder(b1.toString().concat(b2.toString()));
-//		t2 = Clock.getBytecodeNum();
-//		System.out.println("random: " + (t2-t1));
+
 		
 		
-		for (int x=0; x<1000; x++)
+		Message[] ml = new Message[90];
+		int ma = 0;
+		for (int x=0; x<ml.length; x++)
 		{
-//			t1 = Clock.getBytecodeNum();
-//			System.out.println(nextRandom());
-//			t2 = Clock.getBytecodeNum();
-//			System.out.println("fast random: " + (t2-t1));
-			
-//			t1 = Clock.getBytecodeNum();
-			System.out.println(randDouble());
-//			t2 = Clock.getBytecodeNum();
-//			System.out.println("proper random: " + (t2-t1));
-			
-//			t1 = Clock.getBytecodeNum();
-//			System.out.println(Math.random());
-//			t2 = Clock.getBytecodeNum();
-//			System.out.println("Math random: " + (t2-t1));
+			ml[x] = new Message();
+			ml[x].ints = new int[]{0,1,2,3};
+			ml[x].locations = new MapLocation[]{new MapLocation(1,2)};
+			ml[x].strings = new String[]{"wer"};
 		}
+		
+		
+		t1 = Clock.getBytecodeNum();
+		ma = 0;
+		for (Message mm : ml)
+		{
+			ma += mm.ints[0];
+			ma += mm.locations[0].x;
+		}
+		t2 = Clock.getBytecodeNum();
+		System.out.println("iterator: " + (t2-t1)+" val "+ma);
+		
+		t1 = Clock.getBytecodeNum();
+		ma = 0;
+		for (int x=ml.length; --x>=0; )
+		{
+			ma += ml[x].ints[0];
+			ma += ml[x].locations[0].x;
+		}
+		t2 = Clock.getBytecodeNum();
+		System.out.println("forloop: " + (t2-t1)+" val "+ma);
 		
 		
 		
@@ -507,7 +499,7 @@ int t1,t2;
 	static int m_z;// = Clock.getBytecodeNum();
 	static int m_w;// = Clock.getRoundNum();
 	static boolean randinit = false;
-	public static void randInit()
+	private static void randInit()
 	{
 		randinit = true;
 		m_z = Clock.getBytecodeNum();
@@ -538,20 +530,20 @@ int t1,t2;
 //	t2 = Clock.getBytecodeNum();
 //	System.out.println("string writer used: "+(t2-t1));
 	
-	public static void main(String[] args) {
-		
-		randInit(1532,58);
-		
-		int count = 0;
-		for (int x=0; x<1000000; x++)
-		{
-			double gen = randDouble();
-			if (gen<0.0001) count++;
-		}
-		
-		System.out.println(count);
-		
-	}
+//	public static void main(String[] args) {
+//		
+//		randInit(1532,58);
+//		
+//		int count = 0;
+//		for (int x=0; x<1000000; x++)
+//		{
+//			double gen = randDouble();
+//			if (gen<0.0001) count++;
+//		}
+//		
+//		System.out.println(count);
+//		
+//	}
 
 	
 	static StrategyQueue sq;
