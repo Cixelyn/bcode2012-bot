@@ -491,7 +491,10 @@ public class CoryIsADuck extends BaseRobot {
 			} else {
 				Direction dir = nav.wiggleToMovableDirection(curDir);
 				if(dir!=null)
-					return new MoveInfo(RobotType.SOLDIER, dir);
+					if (Util.randDouble()<0.6)
+						return new MoveInfo(RobotType.SOLDIER, dir);
+					else
+						return new MoveInfo(RobotType.DISRUPTER, dir);
 			}
 		}
 		

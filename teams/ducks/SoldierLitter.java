@@ -56,7 +56,7 @@ public class SoldierLitter extends BaseRobot {
 		
 		lockAcquiredRound = -1;
 		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
-		nav.setNavigationMode(NavigationMode.GREEDY);
+		nav.setNavigationMode(NavigationMode.BUG);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
 				BroadcastChannel.SOLDIERS,
@@ -106,7 +106,7 @@ public class SoldierLitter extends BaseRobot {
 				// If we know of an enemy, lock onto it
 				behavior = BehaviorState.ENEMY_DETECTED;
 				target = closestEnemyLocation;
-				nav.setNavigationMode(NavigationMode.GREEDY);
+				nav.setNavigationMode(NavigationMode.BUG);
 				lockAcquiredRound = curRound;
 			}
 			
@@ -136,14 +136,18 @@ public class SoldierLitter extends BaseRobot {
 			}
 			
 			if(behavior == BehaviorState.LOOKING_TO_HIBERNATE ) {
-				// Hibernate once we're no longer adjacent to any allies
-				int adjacentMovable = 0;
-				if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
-				if(!rc.canMove(Direction.EAST)) adjacentMovable++;
-				if(!rc.canMove(Direction.WEST)) adjacentMovable++;
-				if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
-				if(adjacentMovable<=1)
-					behavior = BehaviorState.HIBERNATE;
+//				don't hibernate on powercores
+				if(rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)==null)
+				{
+					// Hibernate once we're no longer adjacent to any allies
+					int adjacentMovable = 0;
+					if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
+					if(!rc.canMove(Direction.EAST)) adjacentMovable++;
+					if(!rc.canMove(Direction.WEST)) adjacentMovable++;
+					if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
+					if(adjacentMovable<=1)
+						behavior = BehaviorState.HIBERNATE;
+				}
 				
 			} else if(behavior==BehaviorState.LOST && distToClosestArchon<65) {
 				// If all allied archons are far away, move to closest one
@@ -169,7 +173,7 @@ public class SoldierLitter extends BaseRobot {
 					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
 					hibernateTarget = target;
 				} 
-				nav.setNavigationMode(NavigationMode.GREEDY);
+				nav.setNavigationMode(NavigationMode.BUG);
 				previousBugTarget = null;
 				
 			}
@@ -314,7 +318,7 @@ public class SoldierLitter extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		if(rc.getFlux()<0.8) return null;
+		if(rc.getFlux()<0.8)  return new MoveInfo(curLoc.directionTo(target));
 		
 		if(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES) {
 			// Just turn around once
