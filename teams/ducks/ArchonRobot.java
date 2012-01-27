@@ -195,7 +195,7 @@ public class ArchonRobot extends BaseRobot{
 			fbs.setPoolMode();
 		
 		// Broadcast my target info to the soldier swarm every 6 turns
-		if((curRound+2)%6 == myArchonID) {
+		if(curRound%6 == myArchonID) {
 			int[] shorts = new int[3];
 			shorts[0] = (behavior == BehaviorState.RETREAT) ? 0 : 1;
 			shorts[1] = target.x;
