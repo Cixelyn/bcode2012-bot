@@ -59,6 +59,9 @@ public class ScoutRobot extends BaseRobot {
 
 	Direction mapEdgeToSeek;
 	
+	private final static int RETREAT_RADIUS = 3;
+	
+	
 	public ScoutRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		enemySpottedTarget = null;
@@ -289,7 +292,10 @@ public class ScoutRobot extends BaseRobot {
 	
 		// ALWAYS RETREAT FROM ENEMEY
 		if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 20) {
-			return new MoveInfo(curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite(), true);
+			
+			Direction dir = getRetreatDir();
+//			Direction dir = curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite();
+			return new MoveInfo(dir, true);
 		}
 
 		// INITIAL_EXPLORE STATES
@@ -333,4 +339,107 @@ public class ScoutRobot extends BaseRobot {
 		super.useExtraBytecodes();
 	}
 	
+	private Direction getRetreatDir()
+	{
+//		7 0 1
+//		6   2
+//		5 4 3
+		int[] wall_in_dir = new int[8];
+		
+//		now, deal with when we are close to map boundaries
+		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS)
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+			{
+//				we are near the SOUTH_EAST corner
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[4] = wall_in_dir[5] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+			{
+//				we are near the NORTH_EAST corner
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[0] = wall_in_dir[7] = 1;
+			} else
+			{
+//				we are near the EAST edge
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = 1;
+			}
+		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS)
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+			{
+//				we are near the SOUTH_WEST corner
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+			{
+//				we are near the NORTH_WEST corner
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[0] = wall_in_dir[1] = 1;
+			} else
+			{
+//				we are near the WEST edge
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = 1;
+			}
+		} else
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+			{
+//				we are near the SOUTH edge
+				wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+			{
+//				we are near the NORTH edge
+				wall_in_dir[7] = wall_in_dir[0] = wall_in_dir[1] = 1;
+			} else
+			{
+//				we are not near any wall or corner
+			}
+		}
+		
+//		dbg.setIndicatorString('y', 2, ""	+wall_in_dir[0]+wall_in_dir[1]+wall_in_dir[2]+wall_in_dir[3]
+//											+wall_in_dir[4]+wall_in_dir[5]+wall_in_dir[6]+wall_in_dir[7]
+//											+" "+mc.edgeXMax+" "+mc.edgeXMin+" "+mc.edgeYMax+" "+mc.edgeYMin+" "+mc.cacheToWorldX(mc.edgeXMax));
+		
+		Direction newdir = curLoc.directionTo(radar.closestEnemyWithFlux.location);
+		wall_in_dir[newdir.ordinal()] = 1;
+		
+		String dir =  "".concat(wall_in_dir[0]==0?"o":"x")
+						.concat(wall_in_dir[1]==0?"o":"x")
+						.concat(wall_in_dir[2]==0?"o":"x")
+						.concat(wall_in_dir[3]==0?"o":"x")
+						.concat(wall_in_dir[4]==0?"o":"x")
+						.concat(wall_in_dir[5]==0?"o":"x")
+						.concat(wall_in_dir[6]==0?"o":"x")
+						.concat(wall_in_dir[7]==0?"o":"x");
+		dir = dir.concat(dir);
+		int index;
+		
+		index = dir.indexOf("ooooooo");
+		if (index>-1)
+			return Constants.directions[(index+3)%8];
+		
+		index = dir.indexOf("oooooo");
+		if (index>-1)
+			return Constants.directions[(index+3)%8];
+		
+		index = dir.indexOf("ooooo");
+		if (index>-1)
+			return Constants.directions[(index+2)%8];
+		
+		index = dir.indexOf("oooo");
+		if (index>-1)
+			return Constants.directions[(index+2)%8];
+		
+		index = dir.indexOf("ooo");
+		if (index>-1)
+			return Constants.directions[(index+1)%8];
+		
+		index = dir.indexOf("oo");
+		if (index>-1)
+			return Constants.directions[(index+1)%8];
+		
+		index = dir.indexOf("o");
+		if (index>-1)
+			return Constants.directions[(index)%8];
+		
+		
+		return newdir.opposite();
+	}
 }
