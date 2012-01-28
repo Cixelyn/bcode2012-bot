@@ -60,7 +60,10 @@ public class MatchObservationSystem {
 		if (m.locations != null) {
 			s = s.concat(m.locations.length + DELIMITER);
 			for (MapLocation myLoc : m.locations) {
-				s = s.concat(myLoc.x + "," + myLoc.y + DELIMITER);
+				if (myLoc==null)
+					s = s.concat("null").concat(DELIMITER);
+				else
+					s = s.concat(myLoc.x + "," + myLoc.y + DELIMITER);
 			}
 		} else {
 			s = s.concat(0 + DELIMITER);
