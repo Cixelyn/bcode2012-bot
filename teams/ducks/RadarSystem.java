@@ -78,8 +78,8 @@ public class RadarSystem {
 	
 	public RobotInfo closestEnemy;
 	public int closestEnemyDist;
-	public RobotInfo closestEnemyWithFlux;
-	public int closestEnemyWithFluxDist;
+	public RobotInfo closestAAEnemyWithFlux;
+	public int closestAAEnemyWithFluxDist;
 	
 	public RobotInfo closestLowFluxAlly;
 	public int closestLowFluxAllyDist;
@@ -125,8 +125,8 @@ public class RadarSystem {
 	private void resetEnemyStats() {
 		closestEnemy = null;
 		closestEnemyDist = Integer.MAX_VALUE;
-		closestEnemyWithFlux = null;
-		closestEnemyWithFluxDist = Integer.MAX_VALUE;
+		closestAAEnemyWithFlux = null;
+		closestAAEnemyWithFluxDist = Integer.MAX_VALUE;
 		numEnemyRobots = 0;
 		numEnemyArchons = 0;
 		numEnemySoldiers = 0;
@@ -193,12 +193,12 @@ public class RadarSystem {
 		}
 
 		// Distance Stats
-		MapLocation eloc = rinfo.location;
+		MapLocation enemyLoc = rinfo.location;
 
-		centerEnemyX += eloc.x;
-		centerEnemyY += eloc.y;
+		centerEnemyX += enemyLoc.x;
+		centerEnemyY += enemyLoc.y;
 
-		int dist = eloc.distanceSquaredTo(br.curLoc);
+		int dist = enemyLoc.distanceSquaredTo(br.curLoc);
 		if (dist < closestEnemyDist) {
 			closestEnemy = rinfo;
 			closestEnemyDist = dist;
