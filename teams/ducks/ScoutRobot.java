@@ -291,7 +291,7 @@ public class ScoutRobot extends BaseRobot {
 			return null;
 	
 		// ALWAYS RETREAT FROM ENEMEY
-		if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 20) {
+		if (radar.closestAAEnemyWithFlux != null && radar.closestAAEnemyWithFluxDist <= 20) {
 
 			Direction dir = getRetreatDir();
 //			Direction dir = curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite();
@@ -398,7 +398,7 @@ public class ScoutRobot extends BaseRobot {
 //											+wall_in_dir[4]+wall_in_dir[5]+wall_in_dir[6]+wall_in_dir[7]
 //											+" "+mc.edgeXMax+" "+mc.edgeXMin+" "+mc.edgeYMax+" "+mc.edgeYMin+" "+mc.cacheToWorldX(mc.edgeXMax));
 		
-		Direction newdir = curLoc.directionTo(radar.closestEnemyWithFlux.location);
+		Direction newdir = curLoc.directionTo(radar.closestAAEnemyWithFlux.location);
 		wall_in_dir[newdir.ordinal()] = 1;
 		
 		String dir =  "".concat(wall_in_dir[0]==0?"o":"x")
