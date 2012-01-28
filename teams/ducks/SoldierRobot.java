@@ -353,7 +353,7 @@ public class SoldierRobot extends BaseRobot {
 			else
 				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			
-		} else if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
+		} else if(behavior == BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE) {
 			// If we're looking to low flux hibernate, move around randomly
 			return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 			
@@ -415,12 +415,22 @@ public class SoldierRobot extends BaseRobot {
 				
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
-				if(distToTarget >= 26)
+				if(distToTarget <= 5) {
+					if(rc.canMove(dirToTarget))
+						return new MoveInfo(dirToTarget, false);
+					else if(rc.canMove(dirToTarget.rotateLeft()) && 
+							isOptimalAdvancingDirection(dirToTarget.rotateLeft(), target, dirToTarget))
+						return new MoveInfo(dirToTarget.rotateLeft(), false);
+					else if(rc.canMove(dirToTarget.rotateRight()) && 
+							isOptimalAdvancingDirection(dirToTarget.rotateRight(), target, dirToTarget))
+						return new MoveInfo(dirToTarget.rotateRight(), false);
+					else
+						return new MoveInfo(dirToTarget);
+				} else if(distToTarget >= 26) {
 					return new MoveInfo(nav.navigateToDestination(), false);
-				else if(isOptimalAdvancingDirection(curDir, target, dirToTarget))
-					return new MoveInfo(curDir, false);
-				else
+				} else {
 					return new MoveInfo(dirToTarget, false);
+				}
 			}
 			
 		} else {
