@@ -1,30 +1,30 @@
-package verydisrupterai;
+package brutalai;
 
+import battlecode.common.Clock;
 import battlecode.common.RobotController;
+import battlecode.common.Team;
 
 public class RobotPlayer {
 	public static void run(RobotController myRC) {
 		BaseRobot br = null;
-		
-		String owner = "yp";
+		int rseed = myRC.getRobot().getID();
+		Util.randInit(rseed,rseed*Clock.getRoundNum());
 		
 		
 		try {
 			switch (myRC.getType()) {
 			case ARCHON:
-				br = new ArchonRobotYP(myRC);
+				br = new ArchonRobot(myRC);
 				break;
 			case SOLDIER:
-				br = new SoldierRobotYP(myRC);
+				br = new SoldierRobot(myRC);
 				break;
 			case SCOUT:
 				br = new ScoutRobot(myRC);
 				break;
 			case DISRUPTER:
-				br = new DisrupterRobotYP(myRC);
 				break;
 			case SCORCHER:
-				br = new ScorcherRobotYP(myRC);
 				break;
 			default:
 				break;
@@ -35,16 +35,6 @@ public class RobotPlayer {
 			br.rc.addMatchObservation(e.toString());
 		}
 		
-		
-		// Set people's indicator strings
-		if(owner.equals("haitao")) br.dbg.setOwner('h');
-		if(owner.equals("cory")) br.dbg.setOwner('c');
-		if(owner.equals("yp")) br.dbg.setOwner('y');
-		if(owner.equals("justin")) br.dbg.setOwner('j');
-		
-		
-		
-
 		//Main loop should never terminate
 		while (true) {
 			try {
