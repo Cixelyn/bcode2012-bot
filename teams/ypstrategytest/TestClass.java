@@ -11,8 +11,6 @@ import java.io.PipedOutputStream;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
 
 import battlecode.common.Clock;
 import battlecode.common.MapLocation;
@@ -499,7 +497,7 @@ int t1,t2;
 	static int m_z;// = Clock.getBytecodeNum();
 	static int m_w;// = Clock.getRoundNum();
 	static boolean randinit = false;
-	private static void randInit()
+	public static void randInit()
 	{
 		randinit = true;
 		m_z = Clock.getBytecodeNum();
