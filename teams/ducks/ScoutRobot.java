@@ -289,7 +289,7 @@ public class ScoutRobot extends BaseRobot {
 	
 		// ALWAYS RETREAT FROM ENEMEY
 		if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 20) {
-			return new MoveInfo(curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite(), true);
+			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 
 		// INITIAL_EXPLORE STATES
