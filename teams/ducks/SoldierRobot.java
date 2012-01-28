@@ -397,7 +397,7 @@ public class SoldierRobot extends BaseRobot {
 			Direction dirToTarget = curLoc.directionTo(target);
 			
 			// If we are much stronger and my energon is low, retreat to nearest archon
-			if(curEnergon <= 12 && strengthDifference > Util.getOwnStrengthEstimate(rc)+10) {
+			if(curEnergon <= 12 && strengthDifference > Util.getOwnStrengthEstimate(rc)) {
 				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()), true);
 				
 			// If we aren't turned the right way, turn towards target
