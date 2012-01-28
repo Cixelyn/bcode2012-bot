@@ -345,7 +345,6 @@ public class ScoutRobot extends BaseRobot {
 			if(helpAllyLocation == null) {
 				helpAllyLocation = BroadcastSystem.decodeSenderLoc(sb);
 				helpAllyRound = curRound;
-				System.out.println("GOING TO HEAL ALLY @ "+ helpAllyLocation.toString());
 			}
 			if(strategy == StrategyState.SUPPORT) { //go flux ally if we're in support mode
 				behavior = BehaviorState.SENDING_ALLY_FLUX;

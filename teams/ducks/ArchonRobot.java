@@ -97,36 +97,36 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		// Currently the strategy transition is based on hard-coded turn numbers
-//		if(curRound>3200) {
-//			strategy = StrategyState.CAP;
-//		} else if(curRound>1700 && myArchonID!=0) {
-//			strategy = StrategyState.CAP;
-//		} else if(curRound>1000 || 
-//				(mc.powerNodeGraph.enemyPowerCoreID != 0 && enemySpottedTarget == null)) {
-//			strategy = StrategyState.DEFEND;
-//		} else if(curRound>20) {
-//			strategy = StrategyState.RUSH;
-//		}
+		if(curRound>4000) {
+			strategy = StrategyState.CAP;
+		} else if(curRound>2400 && myArchonID!=0) {
+			strategy = StrategyState.CAP;
+		} else if(curRound>1800 || 
+				(mc.powerNodeGraph.enemyPowerCoreID != 0 && enemySpottedTarget == null)) {
+			strategy = StrategyState.DEFEND;
+		} else if(curRound>30) {
+			strategy = StrategyState.RUSH;
+		}
 		
 		// The new strategy transition
-		switch(strategy) {
-		case INITIAL_EXPLORE:
-			if(curRound > 150) 
-				strategy = StrategyState.RETURN_HOME;
-			break;
-		case RETURN_HOME:
-			if(curLoc.distanceSquaredTo(myHome) <= 64)
-				strategy = StrategyState.DEFEND;
-			break;
-		case DEFEND:
-			if(curRound > 800) 
-				strategy = StrategyState.CAP;
-			break;
-		case CAP:
-			break;
-		default:
-			break;
-		}
+//		switch(strategy) {
+//		case INITIAL_EXPLORE:
+//			if(curRound > 150) 
+//				strategy = StrategyState.RETURN_HOME;
+//			break;
+//		case RETURN_HOME:
+//			if(curLoc.distanceSquaredTo(myHome) <= 64)
+//				strategy = StrategyState.DEFEND;
+//			break;
+//		case DEFEND:
+//			if(curRound > 800) 
+//				strategy = StrategyState.CAP;
+//			break;
+//		case CAP:
+//			break;
+//		default:
+//			break;
+//		}
 
 		
 		// If insufficiently prepared, prepare
@@ -289,7 +289,7 @@ public class ArchonRobot extends BaseRobot{
 			break;
 		}
 		if(rc.getFlux() > fluxToMakeSoldierAt) {
-			if(Util.randDouble() < 0.000001 && Clock.getRoundNum() > 500 && 
+			if(Util.randDouble() < 0.07 && Clock.getRoundNum() > 1500 && 
 					rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
 				return new MoveInfo(RobotType.SCOUT, curDir);
 			} else {
