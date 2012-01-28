@@ -64,6 +64,14 @@ public class MessageAttackSystem {
 			return true;
 		}
 		
+		// 029: Tera-bull: no strings, just 5 ints and maplocs for Archons...
+		// non-Archons seem to send only 3 ints, but we'll ignore those
+		if (m.ints != null && m.ints.length == 5 && isRoundNum(m.ints[1]) &&
+				(m.strings == null || m.strings.length == 0)) {
+			enemyTeam = 29;
+			memorizedMessage = m;
+		}
+		
 		// 031: Yippee: another string user... 1 int 1 string, int is a hash...
 		// don't appear to explicitly use the current round, so we're trying a
 		// rebroadcast attack
@@ -76,7 +84,7 @@ public class MessageAttackSystem {
 		}
 		
 		// 047: fun gamers: for testing purposes only...
-		if (m.ints != null && m.ints.length == 3 && m.ints[2] == br.curRound &&
+		if (m.ints != null && m.ints.length == 3 && isRoundNum(m.ints[2]) &&
 				m.strings != null && m.strings.length == 1 &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 47;
@@ -87,8 +95,7 @@ public class MessageAttackSystem {
 		// 053: Chaos Legion: sometimes sends 1 encrypted, sometimes sends
 		// 3 ints, 3rd is round number... i'm guessing the team members are
 		// not coordinating on a common message format
-		if (m.ints != null && m.ints.length == 3 &&
-				m.ints[2] == br.curRound &&
+		if (m.ints != null && m.ints.length == 3 && isRoundNum(m.ints[2]) &&
 				(m.strings == null || m.strings.length == 0) &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 53;
@@ -104,7 +111,7 @@ public class MessageAttackSystem {
 		if ((m.ints == null || m.ints.length == 0) &&
 				m.strings != null && m.strings.length == 1 &&
 				m.locations != null && m.locations.length == 1 &&
-				m.locations[0].y == br.curRound) {
+				isRoundNum(m.locations[0].y)) {
 			enemyTeam = 96;
 			memorizedMessage = m;
 			return true;
@@ -143,6 +150,7 @@ public class MessageAttackSystem {
 			case 16:
 				load016();
 				break;
+			case 29:
 			case 31:
 			case 47:
 			case 53:
@@ -184,6 +192,10 @@ public class MessageAttackSystem {
 					m.ints = new int[] {data[0], br.curRound, data[1]};
 					m.locations = new MapLocation[] {new MapLocation(data[2], data[3])};
 				}
+				break;
+			case 29:
+				m = new Message();
+				m.ints = new int[] {1283382176, 1283794971};
 				break;
 			case 31:
 				m = memorizedMessage;
@@ -281,6 +293,10 @@ public class MessageAttackSystem {
 		messageData[10575] = new int[] {125828966, 277838490, 16402, 31334};
 		messageData[10768] = new int[] {133136254, 315456638, 16420, 31338};
 		// END AUTO GENERATED CODE
+	}
+	
+	private boolean isRoundNum(int field) {
+		return field == br.curRound || field == br.curRound - 1;
 	}
 	
 	public static void main(String[] args) {
