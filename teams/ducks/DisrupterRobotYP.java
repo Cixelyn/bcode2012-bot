@@ -134,14 +134,18 @@ public class DisrupterRobotYP extends BaseRobot {
 			} else {	
 				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && 
 						archonSwarmTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
-					// Hibernate once we're no longer adjacent to any allies
-					int adjacentMovable = 0;
-					if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
-					if(!rc.canMove(Direction.EAST)) adjacentMovable++;
-					if(!rc.canMove(Direction.WEST)) adjacentMovable++;
-					if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
-					if(adjacentMovable<=1)
-						behavior = BehaviorState.HIBERNATE;
+					// don't hibernate on powernodes
+					if (rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)==null)
+					{
+						// Hibernate once we're no longer adjacent to any allies
+						int adjacentMovable = 0;
+						if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
+						if(!rc.canMove(Direction.EAST)) adjacentMovable++;
+						if(!rc.canMove(Direction.WEST)) adjacentMovable++;
+						if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
+						if(adjacentMovable<=1)
+							behavior = BehaviorState.HIBERNATE;
+					}
 					
 				} else if(closestSwarmTargetSenderDist == Integer.MAX_VALUE) { 
 					// We did not receive any swarm target broadcasts from our archons

@@ -4,9 +4,9 @@ import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 
-public class ScorcherRobotYP extends BaseRobot {
+public class ScorcherRobotYPCamp extends BaseRobot {
 
-	public ScorcherRobotYP(RobotController myRC) throws GameActionException {
+	public ScorcherRobotYPCamp(RobotController myRC) throws GameActionException {
 		super(myRC);
 	}
 

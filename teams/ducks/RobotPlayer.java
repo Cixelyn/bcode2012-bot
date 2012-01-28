@@ -117,15 +117,15 @@ public class RobotPlayer {
 //					br = new ScorcherRobotYP(myRC);
 //					br = new ScorcherRobotYP(myRC);
 //					br = new FunBot(myRC);
-					br = new ScorcherRobotYP(myRC);
+					br = new ScorcherRobotYPCamp(myRC);
 					if (br == null)
 					{
 						if (myRC.getTeam()==Team.A)
-							br = new ScorcherRobotYP(myRC);
+							br = new ScorcherRobotYPCamp(myRC);
 //							br = new ScorcherRobotYP(myRC);
 //							br = new ScorcherRobotYP(myRC);
 						else
-							br = new ScorcherRobotYP(myRC);
+							br = new ScorcherRobotYPCamp(myRC);
 //							br = new ScorcherRobotYP(myRC);
 //							br = new ScorcherRobotYP(myRC);
 					}

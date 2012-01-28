@@ -105,14 +105,18 @@ public class SoldierRobot extends BaseRobot {
 		
 		movingTarget = true;
 		if(behavior == BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE) { 
-			// Hibernate once we're no longer adjacent to any allies
-			int adjacentMovable = 0;
-			if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
-			if(!rc.canMove(Direction.EAST)) adjacentMovable++;
-			if(!rc.canMove(Direction.WEST)) adjacentMovable++;
-			if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
-			if(adjacentMovable<=1)
-				behavior = BehaviorState.LOW_FLUX_HIBERNATE;
+			// don't hibernate on powernodes
+			if (rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)==null)
+			{
+				// Hibernate once we're no longer adjacent to any allies
+				int adjacentMovable = 0;
+				if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
+				if(!rc.canMove(Direction.EAST)) adjacentMovable++;
+				if(!rc.canMove(Direction.WEST)) adjacentMovable++;
+				if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
+				if(adjacentMovable<=1)
+					behavior = BehaviorState.LOW_FLUX_HIBERNATE;
+			}
 		} else if(closestEnemyLocation != null) {
 			if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
