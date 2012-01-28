@@ -3,7 +3,6 @@ package ducks;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
@@ -73,7 +72,7 @@ public class RadarSystem {
 	
 //	yp's variables for archon retreat code
 	public int[] closestInDir;
-	final static int[] blank_closestInDir = new int[] {99,99,99,99,99,99,99,99};
+	final static int[] blank_closestInDir = new int[] {99,99,99,99,99,99,99,99,99};
 	public int[] allies_in_dir;
 	
 	public RobotInfo closestEnemy;
@@ -102,7 +101,7 @@ public class RadarSystem {
 		needToScanEnemies = true;
 		needToScanAllies = true;
 		robots = null;
-		closestInDir = new int[8];
+		closestInDir = new int[9];
 		switch (br.myType)
 		{
 		case SOLDIER:
@@ -140,7 +139,7 @@ public class RadarSystem {
 		centerEnemyX = 0;
 		centerEnemyY = 0;
 		
-		System.arraycopy(blank_closestInDir, 0, closestInDir, 0, 8);
+		System.arraycopy(blank_closestInDir, 0, closestInDir, 0, 9);
 	}
 
 	private void resetAllyStats() {
@@ -264,10 +263,9 @@ public class RadarSystem {
 		case SOLDIER:
 		case SCORCHER:
 		case DISRUPTER:
-		{
 			if (closestInDir[dir.ordinal()] > dist)
 				closestInDir[dir.ordinal()] = dist;
-		} break;
+			break;
 		}
 	}
 	

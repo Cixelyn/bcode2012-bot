@@ -1,6 +1,7 @@
 package ducks;
 
 import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
 import battlecode.common.Message;
 import battlecode.common.RobotController;
 
@@ -57,6 +58,7 @@ public class HibernationSystem {
 		double lastEnergon = rc.getEnergon();
 		double lastFlux = rc.getFlux();
 		double curEnergon, curFlux;
+		MapLocation curLoc = rc.getLocation();
 
 		// team number check
 		int teamkey = br.io.teamkey;
@@ -123,6 +125,8 @@ public class HibernationSystem {
 				if (mints.length != 3)
 					continue;
 				if (mints[0] != teamkey)
+					continue;
+				if (curLoc.distanceSquaredTo(BroadcastSystem.intToLoc(mints[2])) > 10)
 					continue;
 				
 				br.resetClock();

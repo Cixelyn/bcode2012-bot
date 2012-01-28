@@ -385,7 +385,7 @@ public class BroadcastSystem {
 			// build wakeup call
 			if(shouldSendWakeup) {
 				m.ints = new int[3];
-				m.ints[2] = Clock.getRoundNum();
+				m.ints[2] = locToInt(br.curLoc);
 				shouldSendWakeup = false;
 			} else {
 				m.ints = new int[2];
@@ -414,7 +414,7 @@ public class BroadcastSystem {
 			Message m = new Message();
 			m.ints = new int[3];
 			m.ints[0] = teamkey;
-			m.ints[2] = Clock.getRoundNum();
+			m.ints[2] = locToInt(br.curLoc);
 			shouldSendWakeup = false;
 			try {
 				br.rc.broadcast(m);
@@ -513,6 +513,26 @@ public class BroadcastSystem {
 		}
 	}
 	
+	/**
+	 * @param data - packed maplocation where high bits are x loc, low bits are y loc
+	 * @return unpacked MapLocation
+	 */
+	public static MapLocation intToLoc(int data) {
+		return new MapLocation(
+				data >> 16,
+				data & 0xFFFF
+		);
+	}
+
+	/**
+	 * Packs a map location into an int where high bits are x loc, low bits are y loc
+	 * @param loc - maplocation
+	 * @return encoded location
+	 */
+	public static int locToInt(MapLocation loc) {
+		return (loc.x << 16) + loc.y;
+	}
+	
 
 	/**
 	 * Test code to ensure serialization / deserialization works
@@ -554,6 +574,10 @@ public class BroadcastSystem {
 		System.out.println(io.hashMessage(msg2));
 		System.out.println(io.hashMessage(msg3));
 		System.out.println(io.hashMessage(msg3));
+		
+		MapLocation b = new MapLocation(23414, 23);
+		System.out.println(BroadcastSystem.locToInt(b));
+		System.out.println(BroadcastSystem.intToLoc(BroadcastSystem.locToInt(b)));
 		
 		System.out.println(BroadcastType.decode(BroadcastType.ENEMY_ARCHON_KILL.header_c).toString());
 	}
