@@ -366,7 +366,7 @@ public class ScoutRobot extends BaseRobot {
 		if(rc.getFlux() < 0.5) 
 			return null;
 	
-		// ALWAYS RETREAT FROM ENEMEY if in range
+		// ALWAYS RETREAT FROM ENEMY if in range
 		if (radar.closestEnemyWithFlux != null)
 		{
 			if (behavior == BehaviorState.LOOK_FOR_MAP_EDGE ||
