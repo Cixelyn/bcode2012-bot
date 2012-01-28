@@ -3,6 +3,7 @@ package ducks;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
@@ -86,6 +87,11 @@ public class RadarSystem {
 	public RobotInfo closestAllyScout;
 	public int closestAllyScoutDist;
 	
+	public RobotInfo lowestFluxAllied;
+	public double lowestFlux;
+	public RobotInfo lowestEnergonAllied;
+	public double lowestEnergonRatio;
+	
 	final boolean cachepositions;
 	final boolean isArchon;
 
@@ -149,6 +155,10 @@ public class RadarSystem {
 		closestLowFluxAlly = null;
 		closestLowFluxAllyDist = Integer.MAX_VALUE;
 		allies_in_dir = new int[8];
+		lowestFluxAllied = null;
+		lowestFlux = 9000;
+		lowestEnergonAllied = null;
+		lowestEnergonRatio = 1.0;
 	}
 
 	private void addEnemy(RobotInfo rinfo) throws GameActionException {
@@ -193,9 +203,71 @@ public class RadarSystem {
 			closestEnemy = rinfo;
 			closestEnemyDist = dist;
 		}
-		if (rinfo.flux >= 0.15 && dist < closestEnemyWithFluxDist && rinfo.type==RobotType.SOLDIER) {
-			closestEnemyWithFlux = rinfo;
-			closestEnemyWithFluxDist = dist;
+	}
+	
+	private void addEnemyForScout(RobotInfo rinfo) throws GameActionException {
+		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
+			return;
+		
+		int pos = rinfo.robot.getID();
+		enemyInfos[pos] = rinfo;
+		enemyTimes[pos] = Clock.getRoundNum();
+
+		enemyRobots[numEnemyRobots++] = pos;
+		
+		// Distance Stats
+		MapLocation eloc = rinfo.location;
+
+		centerEnemyX += eloc.x;
+		centerEnemyY += eloc.y;
+		
+		int dist = eloc.distanceSquaredTo(br.curLoc);
+		
+		if (dist < closestEnemyDist) {
+			closestEnemy = rinfo;
+			closestEnemyDist = dist;
+		}
+
+		switch (rinfo.type) {
+		case ARCHON:
+			enemyArchons[numEnemyArchons++] = pos;
+			break;
+		case DISRUPTER:
+			enemyDisruptors[numEnemyDisruptors++] = pos;
+			if (rinfo.flux >= 0.15 && dist <= closestEnemyWithFluxDist ) {
+				closestEnemyWithFlux = rinfo;
+				closestEnemyWithFluxDist = dist;
+			}
+			
+			break;
+		case SCORCHER:
+			enemyScorchers[numEnemyScorchers++] = pos;
+			break;
+		case SCOUT:
+			enemyScouts[numEnemyScouts++] = pos;
+			break;
+		case SOLDIER:
+			enemySoldiers[numEnemySoldiers++] = pos;
+			if (rinfo.flux >= 0.15 && dist < closestEnemyWithFluxDist ) {
+				closestEnemyWithFlux = rinfo;
+				closestEnemyWithFluxDist = dist;
+			}
+			break;
+		case TOWER:
+			enemyTowers[numEnemyTowers++] = pos;
+			break;
+		}
+		
+		Direction dir = br.curLoc.directionTo(eloc);
+		switch (rinfo.type) {
+		case ARCHON:
+		case SOLDIER:
+		case SCORCHER:
+		case DISRUPTER:
+		{
+			if (closestInDir[dir.ordinal()] > dist)
+				closestInDir[dir.ordinal()] = dist;
+		} break;
 		}
 	}
 	
@@ -264,12 +336,12 @@ public class RadarSystem {
 		allyTimes[pos] = Clock.getRoundNum();
 
 
-		int dist = br.curLoc.distanceSquaredTo(rinfo.location);
+//		int dist = br.curLoc.distanceSquaredTo(rinfo.location);
 		
-		if ((rinfo.energon < rinfo.type.maxEnergon - 0.2) && !rinfo.regen
-				&& dist <= 5) {
-			numAllyToRegenerate++;
-		}
+//		if ((rinfo.energon < rinfo.type.maxEnergon - 0.2) && !rinfo.regen
+//				&& dist <= 5) {
+//			numAllyToRegenerate++;
+//		}
 
 		if (rinfo.location.isAdjacentTo(br.curLoc)) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
@@ -284,17 +356,80 @@ public class RadarSystem {
 		if(ddir <= 1 || ddir == 7)
 			alliesInFront++;
 		
-		if(rinfo.type==RobotType.SCOUT && dist<closestAllyScoutDist) {
-			closestAllyScoutDist = dist;
-			closestAllyScout = rinfo;
+//		if(rinfo.type==RobotType.SCOUT && dist<closestAllyScoutDist) {
+//			closestAllyScoutDist = dist;
+//			closestAllyScout = rinfo;
+//		}
+		
+//		// TODO(jven): this stuff should be linked with fbs
+//		if (rinfo.type != RobotType.ARCHON && rinfo.type != RobotType.SCOUT &&
+//				rinfo.flux < rinfo.energon / 3 &&
+//				dist < closestLowFluxAllyDist) {
+//			closestLowFluxAlly = rinfo;
+//			closestLowFluxAllyDist = dist;
+//		}
+	}
+	
+	private void addAllyForScout(RobotInfo rinfo) {
+		if (rinfo.type == RobotType.TOWER) return;
+		
+		int pos = rinfo.robot.getID();
+		allyRobots[numAllyRobots++] = pos;
+		allyInfos[pos] = rinfo;
+		allyTimes[pos] = Clock.getRoundNum();
+
+		int dist = br.curLoc.distanceSquaredTo(rinfo.location);
+		
+		if ((rinfo.energon < rinfo.type.maxEnergon - 0.2) && !rinfo.regen
+				&& dist <= RobotType.SCOUT.attackRadiusMaxSquared) {
+			numAllyToRegenerate++;
+		}
+				
+		if (rinfo.location.isAdjacentTo(br.curLoc)) {
+			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
 		
-		// TODO(jven): this stuff should be linked with fbs
-		if (rinfo.type != RobotType.ARCHON && rinfo.type != RobotType.SCOUT &&
-				rinfo.flux < rinfo.energon / 3 &&
-				dist < closestLowFluxAllyDist) {
-			closestLowFluxAlly = rinfo;
-			closestLowFluxAllyDist = dist;
+		double ratio = 2.0;
+		double flux = 9999;
+		
+		switch (rinfo.type) {
+		case ARCHON:
+			ratio = rinfo.energon/150.0;
+			break;
+		case DISRUPTER:
+			ratio = rinfo.energon/70.0;
+			flux = rinfo.flux;
+			break;
+		case SCORCHER:
+			ratio = rinfo.energon/70.0;
+			flux = rinfo.flux;
+			break;
+		case SCOUT:
+			flux = rinfo.flux;
+			
+			if(dist<closestAllyScoutDist) {
+				closestAllyScoutDist = dist;
+				closestAllyScout = rinfo;
+			}
+			break;
+		case SOLDIER:
+			ratio = rinfo.energon/40.0;
+			flux = rinfo.flux;
+			break;
+		case TOWER:
+			break;
+		}
+		
+		if (!rinfo.regen && ratio < lowestEnergonRatio)
+		{
+			lowestEnergonRatio = ratio;
+			lowestEnergonAllied = rinfo;
+		}
+		
+		if (flux < lowestFlux)
+		{
+			lowestFlux = rinfo.flux;
+			lowestFluxAllied = rinfo;
 		}
 	}
 	
@@ -377,11 +512,12 @@ public class RadarSystem {
 			// Bring some vars into local space for the raep loop
 			RobotController rc = br.rc;
 			Team myTeam = rc.getTeam();
-			
-			for (int idx = robots.length; --idx >= 0;) {
-				Robot r = robots[idx];
-				try {
-					if (isArchon){
+			switch (br.myType)
+			{
+			case ARCHON:
+				for (int idx = robots.length; --idx >= 0;) {
+					Robot r = robots[idx];
+					try {
 						if (myTeam == r.getTeam()) {
 							if (scanAllies) {
 								addAllyForArchon(rc.senseRobotInfo(r));
@@ -391,8 +527,36 @@ public class RadarSystem {
 								addEnemyForArchon(rc.senseRobotInfo(r));
 							}
 						}
-					} else
-					{
+					} catch (GameActionException e) {
+						br.rc.addMatchObservation(e.toString());
+						e.printStackTrace();
+					}
+				}
+				break;
+			case SCOUT:
+				for (int idx = robots.length; --idx >= 0;) {
+					Robot r = robots[idx];
+					try {
+						if (myTeam == r.getTeam()) {
+							if (scanAllies) {
+								addAllyForScout(rc.senseRobotInfo(r));
+							}
+						} else {
+							if (scanEnemies) {
+								addEnemyForScout(rc.senseRobotInfo(r));
+							}
+						}
+					} catch (GameActionException e) {
+						br.rc.addMatchObservation(e.toString());
+						e.printStackTrace();
+					}
+				}
+				break;
+			default:
+				for (int idx = robots.length; --idx >= 0;) {
+					Robot r = robots[idx];
+					try {
+					
 						if (myTeam == r.getTeam()) {
 							if (scanAllies) {
 								addAlly(rc.senseRobotInfo(r));
@@ -402,13 +566,13 @@ public class RadarSystem {
 								addEnemy(rc.senseRobotInfo(r));
 							}
 						}
+					} catch (GameActionException e) {
+						br.rc.addMatchObservation(e.toString());
+						e.printStackTrace();
 					}
-					
-
-				} catch (GameActionException e) {
-					br.rc.addMatchObservation(e.toString());
-					e.printStackTrace();
 				}
+				break;
+					
 			}
 			
 			if (scanEnemies)

@@ -58,8 +58,15 @@ public class ScoutRobot extends BaseRobot {
 	int helpAllyRound;
 
 	Direction mapEdgeToSeek;
+	boolean doneWithInitialScout;
+	Direction lastRetreatDir;
 	
 	private final static int RETREAT_RADIUS = 3;
+	private final static int ROUNDS_TO_EXPLORE = 500;
+	private final static double REGENRATION_FLUX_THRESHOLD = 3.0;
+	
+	private final static double THRESHOLD_TO_HEAL_ALLIES = 0.9;
+	private final static double THRESHOLD_TO_REFUEL_ALLIES = 30;
 	
 	
 	public ScoutRobot(RobotController myRC) throws GameActionException {
@@ -75,6 +82,8 @@ public class ScoutRobot extends BaseRobot {
 				BroadcastChannel.EXPLORERS
 		});
 		strategy = StrategyState.INITIAL_EXPLORE;
+		doneWithInitialScout = false;
+		lastRetreatDir = null;
 		resetBehavior();
 	}
 
@@ -91,8 +100,10 @@ public class ScoutRobot extends BaseRobot {
 		}
 	
 		// Setup strategy transitions
-		if(Clock.getRoundNum()<1000) { strategy = StrategyState.INITIAL_EXPLORE; }
-		else if(radar.numEnemyRobots > 0 || radar.numEnemyScouts < radar.numEnemyRobots) {
+		if(!doneWithInitialScout && Clock.getRoundNum() < ROUNDS_TO_EXPLORE) 
+		{
+			strategy = StrategyState.INITIAL_EXPLORE;
+		} else if(radar.numEnemyRobots > 0 || radar.numEnemyScouts < radar.numEnemyRobots) {
 			strategy = StrategyState.BATTLE;
 		} else {
 			strategy = StrategyState.SUPPORT;
@@ -104,15 +115,17 @@ public class ScoutRobot extends BaseRobot {
 		
 	
 		// report enemy info in all conditions
-		MapLocation closestEnemyLocation = radar.closestEnemy==null ? null : radar.closestEnemy.location;
+//		MapLocation closestEnemyLocation = radar.closestEnemy==null ? null : radar.closestEnemy.location;
 		if(curRound%5 == myID%5)
 			radar.broadcastEnemyInfo(false);
 		
 		
 		// logic for initial explore
-		if(strategy == StrategyState.INITIAL_EXPLORE) { 
+		if(strategy == StrategyState.INITIAL_EXPLORE) {
+			
 			if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
-			if(radar.closestEnemy != null && radar.closestEnemy.type != RobotType.SCOUT) {
+				if(radar.closestEnemy != null && radar.closestEnemy.type != RobotType.SCOUT) {
+					doneWithInitialScout = true;
 					behavior = BehaviorState.REPORT_TO_ARCHON;
 				}
 			} else if(behavior == BehaviorState.REPORT_TO_ARCHON) {
@@ -140,7 +153,9 @@ public class ScoutRobot extends BaseRobot {
 		
 		// fast behavior switch if we're going to get G'ed
 		if(rc.getFlux() < 15 || rc.getEnergon() < 7) {
-			behavior = BehaviorState.PET;
+			behavior = BehaviorState.REPORT_TO_ARCHON;
+		} else if (curLoc.distanceSquaredTo(dc.getClosestArchon())<2) {
+			resetBehavior();
 		}
 		
 		// received flux from ally
@@ -158,16 +173,15 @@ public class ScoutRobot extends BaseRobot {
 				objective = mc.guessEnemyPowerCoreLocation();
 				break;
 			case REPORT_TO_ARCHON:
-			case PET:
 				objective = dc.getClosestArchon();
 				break;
+			case PET:
+//				objective = dc.getClosestArchon();
+//				petSupport();
+				supportFrontline();
+				break;
 			case SUPPORT_FRONT_LINES:
-				if(closestEnemyLocation != null)
-					objective = closestEnemyLocation;
-				else if(enemySpottedTarget != null)
-					objective = enemySpottedTarget;
-				else
-					objective = dc.getClosestArchon();
+				supportFrontline();
 				break;
 			default:
 				break;
@@ -196,7 +210,8 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		// heal if you should
-		if (rc.getFlux() > 1.0 && ((curEnergon < myMaxEnergon - 0.2) || radar.numAllyToRegenerate > 0)) {
+		if (rc.getFlux() > REGENRATION_FLUX_THRESHOLD &&
+				((curEnergon < myMaxEnergon - 0.2) || radar.numAllyToRegenerate > 0)) {
 			rc.regenerate();
 		}
 		
@@ -219,6 +234,8 @@ public class ScoutRobot extends BaseRobot {
 		// indicator strings
 		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(objective)+
 				", Strat=" + strategy + ", Behavior="+behavior);
+		dbg.setIndicatorString('y', 2, "flux:"+radar.lowestFlux+" "+(radar.lowestFluxAllied!=null?radar.lowestFluxAllied.location:null)
+				+" energon:"+radar.lowestEnergonRatio+" "+(radar.lowestEnergonAllied!=null?radar.lowestEnergonAllied.location:null));
 	}
 	
 	private void resetBehavior() {
@@ -261,6 +278,66 @@ public class ScoutRobot extends BaseRobot {
 			
 	}
 	
+	private void petSupport()
+	{
+//		old logic
+//		if(closestEnemyLocation != null)
+//			objective = closestEnemyLocation;
+//		else if(enemySpottedTarget != null)
+//			objective = enemySpottedTarget;
+//		else
+//			objective = dc.getClosestArchon();
+		
+//		1. find unit with lowest flux and go there
+//		(code done in radar)
+		if (radar.lowestFlux < THRESHOLD_TO_REFUEL_ALLIES)
+		{
+			objective = radar.lowestFluxAllied.location;
+		} else if (radar.lowestEnergonRatio < THRESHOLD_TO_HEAL_ALLIES)
+		{
+			objective = radar.lowestEnergonAllied.location;
+		} else if(closestEnemyLocation != null)
+		{
+			objective = closestEnemyLocation;
+		} else if (enemySpottedTarget != null)
+		{
+			objective = enemySpottedTarget;
+		} else 
+		{
+			objective= dc.getClosestArchon();
+		}
+	}
+	
+	private void supportFrontline()
+	{
+//		old logic
+//		if(closestEnemyLocation != null)
+//			objective = closestEnemyLocation;
+//		else if(enemySpottedTarget != null)
+//			objective = enemySpottedTarget;
+//		else
+//			objective = dc.getClosestArchon();
+		
+//		1. find unit with lowest flux and go there
+//		(code done in radar)
+		if (radar.lowestEnergonRatio < THRESHOLD_TO_HEAL_ALLIES)
+		{
+			objective = radar.lowestEnergonAllied.location;
+		} else if (radar.lowestFlux < THRESHOLD_TO_REFUEL_ALLIES)
+		{
+			objective = radar.lowestFluxAllied.location;
+		} else if(closestEnemyLocation != null)
+		{
+			objective = closestEnemyLocation;
+		} else if (enemySpottedTarget != null)
+		{
+			objective = enemySpottedTarget;
+		} else 
+		{
+			objective= dc.getClosestArchon();
+		}
+	}
+	
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
 		switch(msgType) {
@@ -280,8 +357,8 @@ public class ScoutRobot extends BaseRobot {
 		case POWERNODE_FRAGMENTS:
 			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 			break;
-		default:
-			super.processMessage(msgType, sb);
+//		default:
+//			super.processMessage(msgType, sb);
 		}
 	}
 	
@@ -290,14 +367,76 @@ public class ScoutRobot extends BaseRobot {
 		if(rc.getFlux() < 0.5) 
 			return null;
 	
-		// ALWAYS RETREAT FROM ENEMEY
-		if (radar.closestEnemyWithFlux != null && radar.closestEnemyWithFluxDist <= 20) {
-
-			Direction dir = getRetreatDir();
-//			Direction dir = curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite();
-//			Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter()).opposite();
-			return new MoveInfo(dir, true);
+		// ALWAYS RETREAT FROM ENEMEY if in range
+		if (radar.closestEnemyWithFlux != null)
+		{
+			if (behavior == BehaviorState.LOOK_FOR_MAP_EDGE ||
+				behavior == BehaviorState.REPORT_TO_ARCHON)
+			{
+				if (radar.closestEnemyDist  <= 23)
+				{
+//					flee code
+					Direction dir = getFullRetreatDir();
+//					Direction dir = curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite();
+//					Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter()).opposite();
+					
+					lastRetreatDir = dir;
+					return new MoveInfo(dir, true);
+				}
+			}
+			
+			lastRetreatDir = null;
+			int fleedist = 0;
+			switch (radar.closestEnemyWithFlux.type)
+			{
+			case SOLDIER:
+				if (radar.closestEnemyWithFlux.roundsUntilAttackIdle >= 4)
+					fleedist = 10;
+				else
+					fleedist = 13;
+				break;
+			case DISRUPTER:
+				if (radar.closestEnemyWithFlux.roundsUntilAttackIdle >= 4)
+					fleedist = 16;
+				else
+					fleedist = 19;
+				break;
+				
+			}
+			
+			if (radar.closestEnemyWithFluxDist <= fleedist)
+			{
+//				flee code
+				Direction dir = getRetreatDir();
+//				Direction dir = curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite();
+//				Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter()).opposite();
+				
+				lastRetreatDir = dir;
+				return new MoveInfo(dir, true);
+			} else
+			{
+				lastRetreatDir = null;
+				Direction target = null;
+				// INITIAL_EXPLORE STATES
+				if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE)
+					target = mapEdgeToSeek;
+				else if(behavior == BehaviorState.SCOUT_FOR_ENEMIES) {
+					if(radar.closestAllyScoutDist < 25)
+						target = curLoc.directionTo(radar.closestAllyScout.location);
+					else
+						target = nav.navigateRandomly(objective);
+				} else
+				{
+					target = curLoc.directionTo(objective);
+				}
+				
+				if (curLoc.add(target).distanceSquaredTo(radar.closestEnemyWithFlux.location) <= fleedist)
+					return null;
+				else return new MoveInfo(target, false);
+			}
 		}
+		
+		lastRetreatDir = null;
 
 		// INITIAL_EXPLORE STATES
 		if(behavior == BehaviorState.LOOK_FOR_MAP_EDGE)
@@ -308,6 +447,10 @@ public class ScoutRobot extends BaseRobot {
 			else
 				return new MoveInfo(nav.navigateRandomly(objective), false);
 		}
+		
+		//	keep away from allied scouts
+		if(behavior != BehaviorState.REPORT_TO_ARCHON && radar.closestAllyScoutDist < 16)
+			return new MoveInfo(curLoc.directionTo(radar.closestAllyScout.location).opposite(), false);
 		
 		// Go to objective
 		return new MoveInfo(curLoc.directionTo(objective), false);
@@ -442,5 +585,127 @@ public class ScoutRobot extends BaseRobot {
 		
 		
 		return newdir.opposite();
+	}
+	
+	private Direction getFullRetreatDir()
+	{
+//		7 0 1
+//		6   2
+//		5 4 3
+		int[] wall_in_dir = new int[8];
+		int[] closest_in_dir = radar.closestInDir;
+		
+//		now, deal with when we are close to map boundaries
+		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS)
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+			{
+//				we are near the SOUTH_EAST corner
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[4] = wall_in_dir[5] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+			{
+//				we are near the NORTH_EAST corner
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = wall_in_dir[0] = wall_in_dir[7] = 1;
+			} else
+			{
+//				we are near the EAST edge
+				wall_in_dir[1] = wall_in_dir[2] = wall_in_dir[3] = 1;
+			}
+		} else if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS)
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+			{
+//				we are near the SOUTH_WEST corner
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+			{
+//				we are near the NORTH_WEST corner
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = wall_in_dir[0] = wall_in_dir[1] = 1;
+			} else
+			{
+//				we are near the WEST edge
+				wall_in_dir[7] = wall_in_dir[6] = wall_in_dir[5] = 1;
+			}
+		} else
+		{
+			if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+			{
+//				we are near the SOUTH edge
+				wall_in_dir[5] = wall_in_dir[4] = wall_in_dir[3] = 1;
+			} else if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+			{
+//				we are near the NORTH edge
+				wall_in_dir[7] = wall_in_dir[0] = wall_in_dir[1] = 1;
+			} else
+			{
+//				we are not near any wall or corner
+			}
+		}
+		
+//		dbg.setIndicatorString('y', 2, ""	+wall_in_dir[0]+wall_in_dir[1]+wall_in_dir[2]+wall_in_dir[3]
+//											+wall_in_dir[4]+wall_in_dir[5]+wall_in_dir[6]+wall_in_dir[7]
+//											+" "+mc.edgeXMax+" "+mc.edgeXMin+" "+mc.edgeYMax+" "+mc.edgeYMin+" "+mc.cacheToWorldX(mc.edgeXMax));
+		
+//		Direction newdir = curLoc.directionTo(radar.closestEnemyWithFlux.location);
+		if (lastRetreatDir != null)
+			wall_in_dir[lastRetreatDir.opposite().ordinal()] = 1;
+		
+//		String dir =  "".concat(wall_in_dir[0]==0?"o":"x")
+//						.concat(wall_in_dir[1]==0?"o":"x")
+//						.concat(wall_in_dir[2]==0?"o":"x")
+//						.concat(wall_in_dir[3]==0?"o":"x")
+//						.concat(wall_in_dir[4]==0?"o":"x")
+//						.concat(wall_in_dir[5]==0?"o":"x")
+//						.concat(wall_in_dir[6]==0?"o":"x")
+//						.concat(wall_in_dir[7]==0?"o":"x");
+//		dir = dir.concat(dir);
+		String dir =  "".concat(closest_in_dir[0]==99?(wall_in_dir[0]==0?"o":"x"):"x")
+				.concat(closest_in_dir[1]==99?(wall_in_dir[1]==0?"o":"x"):"x")
+				.concat(closest_in_dir[2]==99?(wall_in_dir[2]==0?"o":"x"):"x")
+				.concat(closest_in_dir[3]==99?(wall_in_dir[3]==0?"o":"x"):"x")
+				.concat(closest_in_dir[4]==99?(wall_in_dir[4]==0?"o":"x"):"x")
+				.concat(closest_in_dir[5]==99?(wall_in_dir[5]==0?"o":"x"):"x")
+				.concat(closest_in_dir[6]==99?(wall_in_dir[6]==0?"o":"x"):"x")
+				.concat(closest_in_dir[7]==99?(wall_in_dir[7]==0?"o":"x"):"x");
+		dir = dir.concat(dir);
+		int index;
+		
+		index = dir.indexOf("ooooooo");
+		if (index>-1)
+			return Constants.directions[(index+3)%8];
+		
+		index = dir.indexOf("oooooo");
+		if (index>-1)
+			return Constants.directions[(index+3)%8];
+		
+		index = dir.indexOf("ooooo");
+		if (index>-1)
+			return Constants.directions[(index+2)%8];
+		
+		index = dir.indexOf("oooo");
+		if (index>-1)
+			return Constants.directions[(index+2)%8];
+		
+		index = dir.indexOf("ooo");
+		if (index>-1)
+			return Constants.directions[(index+1)%8];
+		
+		index = dir.indexOf("oo");
+		if (index>-1)
+			return Constants.directions[(index+1)%8];
+		
+		index = dir.indexOf("o");
+		if (index>-1)
+			return Constants.directions[(index)%8];
+		
+		int lowest = closest_in_dir[0];
+		int lowesti = 0;
+		for (int x=1; x<8; x++)
+			if (closest_in_dir[x]>lowest)
+			{
+				lowesti = x;
+				lowest = closest_in_dir[x];
+			}
+		return Constants.directions[lowesti];
 	}
 }
