@@ -295,7 +295,7 @@ public class ScoutRobot extends BaseRobot {
 
 			Direction dir = getRetreatDir();
 //			Direction dir = curLoc.directionTo(radar.closestEnemyWithFlux.location).opposite();
-//			Direction dir = radar.getEnemySwarmCenter()).opposite();
+//			Direction dir = curLoc.directionTo(radar.getEnemySwarmCenter()).opposite();
 			return new MoveInfo(dir, true);
 		}
 
