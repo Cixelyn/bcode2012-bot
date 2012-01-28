@@ -225,6 +225,7 @@ public abstract class BaseRobot {
 	}
 	
 	public String locationToVectorString(MapLocation loc) {
+		if(loc==null) return "<null>";
 		return "<"+(loc.x-curLoc.x)+","+(loc.y-curLoc.y)+">";
 	}
 }

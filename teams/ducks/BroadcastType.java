@@ -37,7 +37,7 @@ public enum BroadcastType {
 	// (temporary)
 	SWARM_DETAILS,
 	
-	/** ushorts(15-bit), [seek_or_swarm, target_loc.x, target_loc.y, sender_loc.x, sender_loc.y] */
+	/** ushorts(15-bit), [moving_target?1:0, target_loc.x, target_loc.y] */
 	SWARM_TARGET,
 	/** ushorts(15-bit), [round_spotted, enemy_loc.x, enemy_loc.y] */
 	ENEMY_SPOTTED,
