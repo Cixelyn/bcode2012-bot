@@ -10,12 +10,12 @@ import battlecode.common.RobotType;
 import battlecode.common.Team;
 
 public abstract class BaseRobot {
-	
+
+	// Core Subsystems
 	public final RobotController rc;
 	public final DataCache dc;
 	public final MapCacheSystem mc;
 	public final NavigationSystem nav;
-	public final Micro micro;
 	public final BroadcastSystem io;
 	public final FluxBalanceSystem fbs;
 	public final SharedExplorationSystem ses;
@@ -24,7 +24,6 @@ public abstract class BaseRobot {
 	public final EnemyArchonKillCache eakc;
 	public final ArchonOwnership ao;
 	public final MovementStateMachine msm;
-	public final ScoutWireSystem sws;
 	public final DebugSystem dbg;
 	public final MatchObservationSystem mos;
 	public final HibernationSystem hsys;
@@ -46,10 +45,6 @@ public abstract class BaseRobot {
 	public Direction curDir;
 	public int curRound;
 	public boolean justRevived;
-	
-	// TODO(jven): temporary?      
-	// hmao: yea get rid of this shit, dont use it anymore
-	public Direction directionToSenseIn;
 	
 	// Internal Statistics
 	private int lastResetTime = 50;
@@ -93,7 +88,6 @@ public abstract class BaseRobot {
 		dc = new DataCache(this);
 		mc = new MapCacheSystem(this);
 		nav = new NavigationSystem(this);
-		micro = new Micro(this);
 		io = new BroadcastSystem(this);
 		radar = new RadarSystem(this);
 		er = new ExtendedRadarSystem(this);
@@ -102,7 +96,6 @@ public abstract class BaseRobot {
 		eakc = new EnemyArchonKillCache(this);
 		ao = new ArchonOwnership(this);
 		msm = new MovementStateMachine(this);
-		sws = new ScoutWireSystem(this);
 		hsys = new HibernationSystem(this);
 		tmem = new TeamMemory(this);
 		mas = new MessageAttackSystem(this);
