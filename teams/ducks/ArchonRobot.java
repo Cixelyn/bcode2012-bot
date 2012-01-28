@@ -105,7 +105,7 @@ public class ArchonRobot extends BaseRobot{
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if(curRound > 1300) 
+			if(curRound > 800) 
 				strategy = StrategyState.CAP;
 			break;
 		case CAP:

@@ -1,5 +1,7 @@
 package ducks;
 
+import battlecode.common.Clock;
+
 public class NormalBug {
 	final static int[][] d = new int[8][2];
 	static {
@@ -21,7 +23,7 @@ public class NormalBug {
 	/** the default direction to trace. Changes every time we trace too far. */
 	int defaultTraceDirection = 0;
 	/** trace threshold to reset to every time we get a new destination. */
-	static final int INITIAL_TRACE_THRESHOLD = 10;
+	static final int INITIAL_TRACE_THRESHOLD = 100;
 	/** number of turns to trace before resetting. */
 	int traceThreshold = -1;
 	/** if we've hit the edge of the map by tracing in the other direction, 
@@ -54,7 +56,7 @@ public class NormalBug {
 	
 	public void reset() {
 		tracing = -1;
-		defaultTraceDirection = (int)(Util.randDouble()+0.5);
+		defaultTraceDirection = Clock.getRoundNum()/200%2; //(int)(Util.randDouble()+0.5);
 		traceThreshold = INITIAL_TRACE_THRESHOLD;
 		hitEdgeInOtherTraceDirection = false;
 	}

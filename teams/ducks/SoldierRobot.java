@@ -6,7 +6,6 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
-import battlecode.common.RobotType;
 
 public class SoldierRobot extends BaseRobot {
 	private enum BehaviorState {
@@ -93,9 +92,10 @@ public class SoldierRobot extends BaseRobot {
 				(radar.closestEnemyDist <= curLoc.distanceSquaredTo(closestEnemyLocation)))) {
 			closestEnemyLocation = radarClosestEnemy.location;
 		}
+		boolean enemyNearby = closestEnemyLocation != null && 
+				curLoc.distanceSquaredTo(closestEnemyLocation) <= 25;
 		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
-			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
-					curLoc.distanceSquaredTo(closestEnemyLocation) <= 25);
+			radar.broadcastEnemyInfo(enemyNearby);
 		
 		if(closestEnemyLocation != null) {
 			if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) && 
@@ -104,11 +104,15 @@ public class SoldierRobot extends BaseRobot {
 				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
 				checkedBehind = false;
 				
-			} else {
+			} else if(enemyNearby) {
 				// If we know of an enemy, lock onto it
 				behavior = BehaviorState.ENEMY_DETECTED;
 				target = closestEnemyLocation;
 				lockAcquiredRound = curRound;
+			} else {
+				// Look for enemy from the ER
+				behavior = BehaviorState.SEEK;
+				target = closestEnemyLocation; 
 			}
 			
 		} else if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) || 
@@ -196,7 +200,8 @@ public class SoldierRobot extends BaseRobot {
 		}
 		
 		// Set nav target
-		if(previousBugTarget!=null && target.distanceSquaredTo(previousBugTarget)<=20)
+		if(behavior!=BehaviorState.ENEMY_DETECTED && 
+				previousBugTarget!=null && target.distanceSquaredTo(previousBugTarget)<=20)
 			target = previousBugTarget;
 		else
 			previousBugTarget = target;
