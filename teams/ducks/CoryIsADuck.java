@@ -51,8 +51,8 @@ public class CoryIsADuck extends BaseRobot {
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
 	static final int TURNS_TO_RETREAT = 30;
-	static final int DENSITY_BEFORE_MOVING = 8;
-	static final int DENSITY_BEFORE_STOPPING = 4;
+	static final int DENSITY_BEFORE_MOVING = 7;
+	static final int DENSITY_BEFORE_STOPPING = 5;
 	MapLocation lastPowerNodeGuess;
 	
 	public CoryIsADuck(RobotController myRC) throws GameActionException {
@@ -110,11 +110,11 @@ public class CoryIsADuck extends BaseRobot {
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if((curRound > 1000 && density>DENSITY_BEFORE_MOVING) || eakc.getNumEnemyArchonsAlive()<3) 
+			if((curRound > 1000 && density>=DENSITY_BEFORE_MOVING) || eakc.getNumEnemyArchonsAlive()<3) 
 				strategy = StrategyState.CAP;
 			break;
 		case CAP:
-			if((density<DENSITY_BEFORE_STOPPING) && eakc.getNumEnemyArchonsAlive()>=3)
+			if((density<=DENSITY_BEFORE_STOPPING) && eakc.getNumEnemyArchonsAlive()>=3)
 				strategy = StrategyState.DEFEND;
 			break;
 		default:
