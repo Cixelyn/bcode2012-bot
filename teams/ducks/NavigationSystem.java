@@ -31,9 +31,12 @@ public class NavigationSystem {
 	
 	/** Resets the navigator, clearing it of any state. */
 	public void reset() {
-		tangentBug.reset();
-		normalBug.reset();
-		bugTurnsBlocked=0;
+		if(mode==NavigationMode.TANGENT_BUG) {
+			tangentBug.reset();
+		} else if(mode==NavigationMode.BUG) {
+			normalBug.reset();
+			bugTurnsBlocked=0;
+		}
 	}
 	
 	public NavigationMode getNavigationMode() {
@@ -74,11 +77,20 @@ public class NavigationSystem {
 				mapCache.worldToCacheY(destination.y));
 		reset();
 	}
+	/** If we're in tangent bug mode, returns how many turns we have called prepare
+	 * with the same source position. Otherwise returns 0.
+	 */
 	public int getTurnsPrepared() {
 		if(mode==NavigationMode.TANGENT_BUG) {
 			return tangentBug.getTurnsPrepared();
 		}
 		return 0;
+	}
+	/** If we're in bug mode, returns true if bug is tracing a wall. Otherwise returns false. */
+	public boolean isBugTracing() {
+		if(mode==NavigationMode.BUG)
+			return normalBug.isTracing();
+		return false;
 	}
 	/** Does precomputation to allow the navigationToDestination() to
 	 * return a more accurate result. Only matters for tangent bug right now.
@@ -127,7 +139,7 @@ public class NavigationSystem {
 				int n = movesOnSameTarget / expectedMovesToReachTarget;
 				if(n>=2) {
 					tangentBug.resetWallTrace(Math.min(
-							TangentBug.DEFAULT_MIN_PREP_TURNS*n, 200), 0.4);
+							TangentBug.DEFAULT_MIN_PREP_TURNS*n, 50), 0.4);
 				}
 			}
 		} else if(mode==NavigationMode.DSTAR) {
