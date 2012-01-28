@@ -103,7 +103,7 @@ public class ScoutRobot extends BaseRobot {
 		if(!doneWithInitialScout && Clock.getRoundNum() < ROUNDS_TO_EXPLORE) 
 		{
 			strategy = StrategyState.INITIAL_EXPLORE;
-		} else if(radar.numEnemyRobots > 0 || radar.numEnemyScouts < radar.numEnemyRobots) {
+		} else if(radar.numEnemyScouts < radar.numEnemyRobots) {
 			strategy = StrategyState.BATTLE;
 		} else {
 			strategy = StrategyState.SUPPORT;
