@@ -46,16 +46,12 @@ public class SoldierRobot extends BaseRobot {
 	int roundLastWakenUp;
 	boolean checkedBehind;
 	
-	MapLocation closestEnemyLocation;
-	RobotType closestEnemyType;
-	
-	
 	public SoldierRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		lockAcquiredRound = -1;
 		closestSwarmTargetSenderDist = Integer.MAX_VALUE;
-		nav.setNavigationMode(NavigationMode.GREEDY);
+		nav.setNavigationMode(NavigationMode.BUG);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
 				BroadcastChannel.SOLDIERS,
@@ -84,29 +80,24 @@ public class SoldierRobot extends BaseRobot {
 			return;
 		}
 		
-		// Scan everything every turn
+		// Scan everything
 		radar.scan(true, true);
 		
 		int closestEnemyID = er.getClosestEnemyID();
-		closestEnemyLocation = closestEnemyID==-1 ? null : 
+		MapLocation closestEnemyLocation = closestEnemyID==-1 ? null : 
 			er.enemyLocationInfo[closestEnemyID];
-		closestEnemyType = closestEnemyID==-1 ? null : 
-			er.enemyTypeInfo[closestEnemyID];
 		if(closestEnemyLocation!=null && rc.canSenseSquare(closestEnemyLocation))
 			closestEnemyLocation = null;
 		RobotInfo radarClosestEnemy = radar.closestEnemy;
-		if(radarClosestEnemy!=null && (closestEnemyLocation==null || (radarClosestEnemy.location!=null && 
-				curLoc.distanceSquaredTo(closestEnemyLocation) <=
-				curLoc.distanceSquaredTo(radarClosestEnemy.location)))) {
+		if(radarClosestEnemy!=null && (closestEnemyLocation==null || 
+				(radar.closestEnemyDist <= curLoc.distanceSquaredTo(closestEnemyLocation)))) {
 			closestEnemyLocation = radarClosestEnemy.location;
-			closestEnemyType = radarClosestEnemy.type;
 		}
 		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
 			radar.broadcastEnemyInfo(closestEnemyLocation != null && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) <= 25);
 		
 		if(closestEnemyLocation != null) {
-			
 			if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) && 
 					curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
 				// Current target is too far away, got hit from behind probably
@@ -117,7 +108,6 @@ public class SoldierRobot extends BaseRobot {
 				// If we know of an enemy, lock onto it
 				behavior = BehaviorState.ENEMY_DETECTED;
 				target = closestEnemyLocation;
-				nav.setNavigationMode(NavigationMode.GREEDY);
 				lockAcquiredRound = curRound;
 			}
 			
@@ -138,16 +128,11 @@ public class SoldierRobot extends BaseRobot {
 			
 		} else {
 			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if((behavior==BehaviorState.LOST && distToClosestArchon>25) || 
+			if((behavior==BehaviorState.LOST && distToClosestArchon>32) || 
 					distToClosestArchon>64) {
 				// If all allied archons are far away, move to closest one
 				behavior = BehaviorState.LOST;
-				nav.setNavigationMode(NavigationMode.BUG);
 				target = dc.getClosestArchon();
-				if(previousBugTarget!=null && target.distanceSquaredTo(previousBugTarget)<=25)
-					target = previousBugTarget;
-				else
-					previousBugTarget = target;
 				
 			} else {	
 				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && 
@@ -180,8 +165,6 @@ public class SoldierRobot extends BaseRobot {
 					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
 					hibernateTarget = target;
 				} 
-				nav.setNavigationMode(NavigationMode.GREEDY);
-				previousBugTarget = null;
 			}
 		}
 		
@@ -213,6 +196,10 @@ public class SoldierRobot extends BaseRobot {
 		}
 		
 		// Set nav target
+		if(previousBugTarget!=null && target.distanceSquaredTo(previousBugTarget)<=20)
+			target = previousBugTarget;
+		else
+			previousBugTarget = target;
 		nav.setDestination(target);
 		
 		// Set the flux balance mode
@@ -393,7 +380,9 @@ public class SoldierRobot extends BaseRobot {
 				
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
-				if(isOptimalAdvancingDirection(curDir, target, dirToTarget))
+				if(distToTarget >= 26)
+					return new MoveInfo(nav.navigateToDestination(), false);
+				else if(isOptimalAdvancingDirection(curDir, target, dirToTarget))
 					return new MoveInfo(curDir, false);
 				else
 					return new MoveInfo(dirToTarget, false);
