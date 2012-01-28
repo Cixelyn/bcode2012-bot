@@ -19,6 +19,7 @@ public abstract class BaseRobot {
 	public final BroadcastSystem io;
 	public final FluxBalanceSystem fbs;
 	public final SharedExplorationSystem ses;
+	public final TeamMemory tmem;
 	public final RadarSystem radar;
 	public final ExtendedRadarSystem er;
 	public final EnemyArchonKillCache eakc;
@@ -27,7 +28,6 @@ public abstract class BaseRobot {
 	public final DebugSystem dbg;
 	public final MatchObservationSystem mos;
 	public final HibernationSystem hsys;
-	public final TeamMemory tmem;
 	public final MessageAttackSystem mas;
 	
 	// Robot Statistics - Permanent
@@ -89,6 +89,7 @@ public abstract class BaseRobot {
 		mc = new MapCacheSystem(this);
 		nav = new NavigationSystem(this);
 		io = new BroadcastSystem(this);
+		tmem = new TeamMemory(this);
 		radar = new RadarSystem(this);
 		er = new ExtendedRadarSystem(this);
 		fbs = new FluxBalanceSystem(this);
@@ -97,7 +98,6 @@ public abstract class BaseRobot {
 		ao = new ArchonOwnership(this);
 		msm = new MovementStateMachine(this);
 		hsys = new HibernationSystem(this);
-		tmem = new TeamMemory(this);
 		mas = new MessageAttackSystem(this);
 		
 		mc.senseAll();

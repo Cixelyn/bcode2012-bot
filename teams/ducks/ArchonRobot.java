@@ -82,6 +82,19 @@ public class ArchonRobot extends BaseRobot{
 	@Override
 	public void run() throws GameActionException {
 		
+		// example of enemy unit composition memory
+		if (myArchonID == 0 && Clock.getRoundNum() < 7) {
+			dbg.println('e', "Enemies seen last round:");
+			dbg.println('e', "Soldiers: " + tmem.getNumEnemiesLastRound(
+					RobotType.SOLDIER));
+			dbg.println('e', "Scouts: " + tmem.getNumEnemiesLastRound(
+					RobotType.SCOUT));
+			dbg.println('e', "Disrupters: " + tmem.getNumEnemiesLastRound(
+					RobotType.DISRUPTER));
+			dbg.println('e', "Scorchers: " + tmem.getNumEnemiesLastRound(
+					RobotType.SCORCHER));
+		}
+		
 		// Currently the strategy transition is based on hard-coded turn numbers
 //		if(curRound>3200) {
 //			strategy = StrategyState.CAP;

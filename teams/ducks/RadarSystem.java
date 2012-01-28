@@ -302,6 +302,10 @@ public class RadarSystem {
 			break;
 		}
 		
+		// TODO(jven): archonID is not exposed here so right now all archons are
+		// competing for the same slot
+		br.tmem.rememberEnemy(0, rinfo.robot.getID(), rinfo.type);
+		
 		// Distance Stats
 		MapLocation eloc = rinfo.location;
 		Direction dir = br.curLoc.directionTo(eloc);
