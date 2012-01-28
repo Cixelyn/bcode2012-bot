@@ -219,8 +219,9 @@ public abstract class BaseRobot {
 			io.sendAll();
 		
 		if(Clock.getRoundNum()==curRound && (Clock.getBytecodesLeft()>4000 ||
-				radar.hasScannedAllies() && Clock.getBytecodesLeft()>1200)) {
-			fbs.manageFlux();
+				(radar.hasScannedAllies() && Clock.getBytecodesLeft()>1500))) {
+			if(!rc.isMovementActive() || msm.justMoved())
+				fbs.manageFlux();
 		}
 	}
 	

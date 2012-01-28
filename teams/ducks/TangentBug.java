@@ -2,6 +2,7 @@ package ducks;
 
 
 
+
 public class TangentBug {
 	final static int[][] d = new int[][] {{-1,-1}, {0,-1}, {1,-1}, {1,0}, 
 		{1,1}, {0,1}, {-1,1}, {-1,0}};
@@ -65,9 +66,6 @@ public class TangentBug {
 	int hitWallX = -1;
 	int hitWallY = -1;
 	int hitWallPos = -1;
-	int firstWallHitX = -1;
-	int firstWallHitY = -1;
-	int firstWallHitDir = -1;
 	int scanx = -1;
 	int scany = -1;
 	int[] bpos = new int[2];
@@ -129,9 +127,6 @@ public class TangentBug {
 		hitWallX = -1;
 		hitWallY = -1;
 		hitWallPos = -1;
-		firstWallHitX = -1;
-		firstWallHitY = -1;
-		firstWallHitDir = -1;
 		scanx = -1;
 		scany = -1;
 		for(int traceDir=0; traceDir<=1; traceDir++) {
@@ -205,7 +200,8 @@ public class TangentBug {
 						
 						findTangentsHelper(pos, traceDir, sx, sy);
 					}
-					if(!flag) { break; }
+					if(!flag)
+						break;
 				}
 				findTangentProgress = i;
 			}
@@ -225,10 +221,9 @@ public class TangentBug {
 				scanx += d[dirTowards][0];
 				scany += d[dirTowards][1];
 				
-				if(firstWallHitX==-1 && map[scanx][scany]) {
+				if(map[scanx][scany]) {
 					// we've hit a wall! start tracing
-					startTraceHelper(scanx - d[dirTowards][0], 
-							scany - d[dirTowards][1], 
+					startTraceHelper(scanx - d[dirTowards][0], scany - d[dirTowards][1], 
 							dirTowards);
 					turnsPreparedBeforeMoving = 0;
 					startedTracingDuringCurrentPrepCycle = true;
@@ -256,7 +251,6 @@ public class TangentBug {
 			clearPreparatoryVariables();
 			return new int[] {tx-sx, ty-sy};
 		}
-		
 //		 if(tracing) {StringBuilder sb = new StringBuilder(); for(int y=0; y<ymax; y++) { for(int x=0; x<xmax; x++) sb.append((wallCache[x][y]==curWallCacheID*BUFFER_LENGTH)?'#':(wallCache[x][y]>curWallCacheID*BUFFER_LENGTH)?'o':'.'); sb.append("\n"); } System.out.print(sb);}
 //		 if(tracing) for(int i=BUFFER_START-30; i<=BUFFER_START+30; i++) System.out.println("  "+i+" "+buffer[i][0]+","+buffer[i][1]);
 		

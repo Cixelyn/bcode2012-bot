@@ -61,6 +61,10 @@ public class NormalBug {
 		hitEdgeInOtherTraceDirection = false;
 	}
 	
+	public boolean isTracing() {
+		return tracing!=-1;
+	}
+	
 	/** Returns a (dx, dy) indicating which way to move. 
 	 * <br/>
 	 * <br/>May return null for various reasons:
