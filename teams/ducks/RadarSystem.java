@@ -72,7 +72,7 @@ public class RadarSystem {
 	
 //	yp's variables for archon retreat code
 	public int[] closestInDir;
-	final static int[] blank_closestInDir = new int[] {99,99,99,99,99,99,99,99,99};
+	final static int[] blank_closestInDir = new int[] {99,99,99,99,99,99,99,99,99,99};
 	public int[] allies_in_dir;
 	
 	public RobotInfo closestEnemy;
@@ -101,7 +101,7 @@ public class RadarSystem {
 		needToScanEnemies = true;
 		needToScanAllies = true;
 		robots = null;
-		closestInDir = new int[9];
+		closestInDir = new int[10];
 		switch (br.myType)
 		{
 		case SOLDIER:
@@ -139,7 +139,7 @@ public class RadarSystem {
 		centerEnemyX = 0;
 		centerEnemyY = 0;
 		
-		System.arraycopy(blank_closestInDir, 0, closestInDir, 0, 9);
+		System.arraycopy(blank_closestInDir, 0, closestInDir, 0, 10);
 	}
 
 	private void resetAllyStats() {
