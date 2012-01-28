@@ -290,7 +290,7 @@ public class ScoutRobot extends BaseRobot {
 		if(rc.getFlux() < 0.5) 
 			return null;
 	
-		// ALWAYS RETREAT FROM ENEMEY
+		// ALWAYS RETREAT FROM ENEMY
 		if (radar.closestAAEnemyWithFlux != null && radar.closestAAEnemyWithFluxDist <= 20) {
 
 			Direction dir = getRetreatDir();
