@@ -93,6 +93,9 @@ public class RadarSystem {
 	
 	final boolean cachepositions;
 	final boolean isArchon;
+	
+	private final double[] allyTowerHealth = new double[MAX_ROBOTS];
+	private final int[] allyTowerTime = new int[MAX_ROBOTS];
 
 	public RadarSystem(BaseRobot br) {
 		this.
@@ -329,7 +332,10 @@ public class RadarSystem {
 	}
 
 	private void addAlly(RobotInfo rinfo) {
-		if (rinfo.type == RobotType.TOWER) return;
+		if (rinfo.type == RobotType.TOWER) {
+			checkAlliedTower(rinfo);
+			return;
+		}
 		
 		int pos = rinfo.robot.getID();
 		allyRobots[numAllyRobots++] = pos;
@@ -372,7 +378,10 @@ public class RadarSystem {
 	}
 	
 	private void addAllyForScout(RobotInfo rinfo) {
-		if (rinfo.type == RobotType.TOWER) return;
+		if (rinfo.type == RobotType.TOWER) {
+			checkAlliedTower(rinfo);
+			return;
+		}
 		
 		int pos = rinfo.robot.getID();
 		allyRobots[numAllyRobots++] = pos;
@@ -435,7 +444,10 @@ public class RadarSystem {
 	}
 	
 	private void addAllyForArchon(RobotInfo rinfo) {
-		if (rinfo.type == RobotType.TOWER) return;
+		if (rinfo.type == RobotType.TOWER) {
+			checkAlliedTower(rinfo);
+			return;
+		}
 		
 		int pos = rinfo.robot.getID();
 		allyInfos[pos] = rinfo;
@@ -691,6 +703,30 @@ public class RadarSystem {
 		if(br.myType==RobotType.SOLDIER || br.myType==RobotType.DISRUPTER || br.myType==RobotType.SCORCHER)
 			br.er.integrateEnemyInfo(shorts);
 		br.io.sendUShorts(BroadcastChannel.EXTENDED_RADAR, BroadcastType.ENEMY_INFO, shorts);
+	}
+	
+
+	/**
+	 * this method checks allied towers for loss of health
+	 * and sets the appropriate doomsday flag in baserobot
+	 * @param rinfo
+	 */
+	private void checkAlliedTower(RobotInfo rinfo) {
+		int id = rinfo.robot.getID();
+		double curEnergon = rinfo.energon;
+		double oldEnergon = allyTowerHealth[id];
+		
+		// if we've taken damage less than 1 energon damage per round
+		if(Clock.getRoundNum() - 2 >= allyTowerTime[id]) {
+			
+			// minimum damage possible / round is 1.7(R) - 0.2(C)
+			if((oldEnergon-curEnergon) > 0.0 && (oldEnergon-curEnergon < 1.0)) {
+				
+			}
+		}
+		
+		allyTowerHealth[id] = curEnergon;
+		allyTowerTime[id] = Clock.getRoundNum();
 	}
 	
 
