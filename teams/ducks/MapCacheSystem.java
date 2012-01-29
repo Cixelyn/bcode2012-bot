@@ -162,6 +162,7 @@ public class MapCacheSystem {
 		int x = xminGuess+xmaxGuess-POWER_CORE_POSITION;
 		int y = yminGuess+ymaxGuess-POWER_CORE_POSITION;
 		MapLocation guess = new MapLocation(cacheToWorldX(x), cacheToWorldY(y));
+		br.dbg.setIndicatorString('e', 0, guess+" "+getEnemyPowerCoreLocation());
 		if(!isSensed(guess))
 			return guess;
 		x = xminGuess+xmaxGuess-POWER_CORE_POSITION;
@@ -306,7 +307,6 @@ public class MapCacheSystem {
 		int xblock = block / 64;
 		int yblock = block % 64;
 		if(packedSensed[xblock][yblock]!=packedSensedInfo) {
-			//System.out.println("receiving map info on block: "+xblock+","+yblock);
 			packedDataUpdated.add(block);
 			packedIsWall[xblock][yblock] |= packedIsWallInfo;
 			packedSensed[xblock][yblock] |= packedSensedInfo;
@@ -444,7 +444,6 @@ public class MapCacheSystem {
 					powerNodeGraph.nodeLocations[neighborID] = neighborLoc;
 					int x = worldToCacheX(neighborLoc.x);
 					int y = worldToCacheY(neighborLoc.y);
-					insertArtificialWall(x, y);
 					powerNodeID[x][y] = neighborID;
 				}
 				powerNodeGraph.adjacencyList[id][powerNodeGraph.degreeCount[id]++] = neighborID;
@@ -468,7 +467,6 @@ public class MapCacheSystem {
 				powerNodeGraph.nodeLocations[coreID] = new MapLocation(coreX, coreY);
 				int x = worldToCacheX(coreX);
 				int y = worldToCacheY(coreY);
-				insertArtificialWall(x, y);
 				powerNodeID[x][y] = coreID;
 			} 
 			powerNodeGraph.enemyPowerCoreID = coreID;
@@ -501,7 +499,6 @@ public class MapCacheSystem {
 				powerNodeGraph.nodeLocations[neighborID] = neighborLoc;
 				int x = worldToCacheX(neighborX);
 				int y = worldToCacheY(neighborY);
-				insertArtificialWall(x, y);
 				powerNodeID[x][y] = neighborID;
 			}
 			powerNodeGraph.adjacencyList[id][powerNodeGraph.degreeCount[id]++] = neighborID;
