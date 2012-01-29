@@ -214,8 +214,21 @@ public class MapCacheSystem {
 	
 	public MapLocation getEndGamePowerNodeToCapture() {
 		MapLocation[] nodeLocs = br.dc.getCapturablePowerCores();
-		int randomIndex = (Util.randInt()%nodeLocs.length+nodeLocs.length)%nodeLocs.length;
-		return nodeLocs[randomIndex];
+		if(Util.randDouble()<0.5) {
+			int randomIndex = (Util.randInt()%nodeLocs.length+nodeLocs.length)%nodeLocs.length;
+			return nodeLocs[randomIndex];
+		} else {
+			int closestIndex = -1;
+			int closestDist = Integer.MAX_VALUE;
+			for(int i=0; i<nodeLocs.length; i++) {
+				int dist = br.curLoc.distanceSquaredTo(nodeLocs[i]);
+				if(dist < closestDist) {
+					closestIndex = i;
+					closestDist = dist;
+				}
+			}
+			return nodeLocs[closestIndex];
+		}
 	}
 	
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
