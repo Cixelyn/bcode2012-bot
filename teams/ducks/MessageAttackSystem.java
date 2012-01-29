@@ -92,11 +92,9 @@ public class MessageAttackSystem {
 			return true;
 		}
 		
-		// 053: Chaos Legion: sometimes sends 1 encrypted, sometimes sends
-		// 3 ints, 3rd is round number... i'm guessing the team members are
-		// not coordinating on a common message format
-		if (m.ints != null && m.ints.length == 3 && isRoundNum(m.ints[2]) &&
-				(m.strings == null || m.strings.length == 0) &&
+		// 053: Chaos Legion: sends 1 encrypted string
+		if ((m.ints == null || m.ints.length == 0) &&
+				m.strings != null && m.strings.length == 1 &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 53;
 			memorizedMessage = m;
@@ -194,8 +192,8 @@ public class MessageAttackSystem {
 				}
 				break;
 			case 29:
-				m = new Message();
-				m.ints = new int[] {1283382176, 1283794971};
+				m = memorizedMessage;
+				m.ints[1] = br.curRound;
 				break;
 			case 31:
 				m = memorizedMessage;
@@ -206,8 +204,8 @@ public class MessageAttackSystem {
 				m.strings = new String[] {"Robert'); DROP TABLE Students;--"};
 				break;
 			case 53:
-				m = new Message();
-				m.ints = new int[] {653608212, 0, br.curRound};
+				m = memorizedMessage;
+				m.strings[0] = "!sup!" + m.strings[0];
 				break;
 			case 96:
 				m = new Message();
