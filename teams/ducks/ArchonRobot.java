@@ -91,10 +91,6 @@ public class ArchonRobot extends BaseRobot{
 		lastFlee = null;
 		detectedGameEnd = false;
 		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
-		
-		
-		for(MapLocation loc: neighborsOfPowerCore) 
-			System.out.println(locationToVectorString(loc));
 	}
 	
 	boolean gotOutput = false;
