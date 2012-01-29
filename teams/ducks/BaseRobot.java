@@ -39,7 +39,7 @@ public abstract class BaseRobot {
 	public final int birthday;
 	public final MapLocation birthplace;
 	public int myArchonID = -1;
-	boolean detectedGameEnd = false;
+	public boolean detectedGameEnd = false;
 	
 	// Robot Statistics - updated per turn
 	public double curEnergon;
