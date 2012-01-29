@@ -18,8 +18,6 @@ public class ArchonRobot extends BaseRobot{
 		RETURN_HOME,
 		/** Defend the power core. */
 		DEFEND,
-		/** Power core is connected to enemy. Defend it at all costs! */
-		SAVE_POWER_CORE,
 		/** Seek and destroy towards a target. */
 		RUSH, 
 		/** Take power nodes of distance <= 15 adjacent to power core. */
@@ -49,7 +47,6 @@ public class ArchonRobot extends BaseRobot{
 	MapLocation previousWakeupTarget;
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
-	boolean detectedGameEnd;
 	MapLocation[] neighborsOfPowerCore;
 	
 	Direction lastFlee;
@@ -89,13 +86,12 @@ public class ArchonRobot extends BaseRobot{
 		enemySpottedTarget = null;
 		lastPowerNodeGuess = null;
 		lastFlee = null;
-		detectedGameEnd = false;
 		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
 	}
 	
-	boolean gotOutput = false;
 	@Override
 	public void run() throws GameActionException {
+		MapLocation adjNode = getNextPowerNodeAdjacentToCore();
 		
 		// Currently the strategy transition is based on hard-coded turn numbers
 //		if(curRound>4000) {
@@ -125,13 +121,13 @@ public class ArchonRobot extends BaseRobot{
 			if(curRound > 800) 
 				strategy = StrategyState.ADJACENT_CAP;
 			break;
-		case SAVE_POWER_CORE:
-			break;
 		case ADJACENT_CAP:
-			if(getNextPowerNodeAdjacentToCore()==null)
+			if(adjNode==null)
 				strategy = StrategyState.EFFICIENT_CAP;
 			break;
 		case EFFICIENT_CAP:
+			if(adjNode!=null)
+				strategy = StrategyState.RETURN_HOME;
 			break;
 		case ENDGAME_CAP:
 			break;
@@ -205,7 +201,7 @@ public class ArchonRobot extends BaseRobot{
 				computeExploreTarget();
 				break;
 			case ADJACENT_CAP:
-				target = getNextPowerNodeAdjacentToCore();
+				target = adjNode;
 				break;
 			case EFFICIENT_CAP:
 				target = mc.guessBestPowerNodeToCapture();
@@ -326,7 +322,6 @@ public class ArchonRobot extends BaseRobot{
 
 			return new MoveInfo(getDirAwayFromAlliedArchons(400), false);
 		
-		case SAVE_POWER_CORE:
 		case RETURN_HOME:
 			return new MoveInfo(nav.navigateToDestination(), false);
 			
