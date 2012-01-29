@@ -23,10 +23,10 @@ public class RobotPlayer {
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
 //					br = new ArchonRobotYP(myRC);
-					br = new ArchonRobotYPRB(myRC);
+//					br = new ArchonRobotYPRB(myRC);
 //					br = new ArchonRobotHT(myRC);
 //					br = new FunBot(myRC);
-//					br = new ArchonRobot(myRC);
+					br = new ArchonRobot(myRC);
 //					br = new CoryIsADuck(myRC);
 					if (br==null)
 					{

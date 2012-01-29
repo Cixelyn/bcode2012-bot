@@ -47,7 +47,7 @@ public class ArchonRobot extends BaseRobot{
 	Direction lastFlee;
 	
 	static final int RETREAT_RADIUS = 6;
-	static final int RETREAT_DISTANCE = 6;
+	static final int RETREAT_DISTANCE = 8;
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
 	static final int TURNS_TO_RETREAT = 30;
@@ -542,11 +542,10 @@ public class ArchonRobot extends BaseRobot{
 		if (index>-1)
 		{
 			newdir = Constants.directions[(index+3)%8];
-			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
 			{
 				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -555,11 +554,10 @@ public class ArchonRobot extends BaseRobot{
 		if (index>-1)
 		{
 			newdir = Constants.directions[(index+3)%8];
-			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
 			{
 				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -568,11 +566,10 @@ public class ArchonRobot extends BaseRobot{
 		if (index>-1)
 		{
 			newdir = Constants.directions[(index+2)%8];
-			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
 			{
 				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -581,11 +578,10 @@ public class ArchonRobot extends BaseRobot{
 		if (index>-1)
 		{
 			newdir = Constants.directions[(index+2)%8];
-			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
 			{
 				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -594,11 +590,10 @@ public class ArchonRobot extends BaseRobot{
 		if (index>-1)
 		{
 			newdir = Constants.directions[(index+1)%8];
-			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
 			{
 				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -607,11 +602,10 @@ public class ArchonRobot extends BaseRobot{
 		if (index>-1)
 		{
 			newdir = Constants.directions[(index+1)%8];
-			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
 			{
 				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -620,11 +614,10 @@ public class ArchonRobot extends BaseRobot{
 		if (index>-1)
 		{
 			newdir = Constants.directions[(index)%8];
-			if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
 			{
 				lastFlee = targetDir = newdir;
 				target = curLoc.add(targetDir, RETREAT_DISTANCE);
-				while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			}
 			return dir;
 		}
@@ -641,14 +634,18 @@ public class ArchonRobot extends BaseRobot{
 //		target = radar.getEnemySwarmTarget();
 //		newdir = target.directionTo(curLoc);
 		newdir = Constants.directions[lowesti];
-		if (newdir != targetDir || curLoc.distanceSquaredTo(target) < 10)
+		if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
 		{
 			lastFlee = targetDir = newdir;
 			target = curLoc.add(targetDir, RETREAT_DISTANCE);
-			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 			return null;
 		}
 		return null;
+	}
+	
+	private boolean isAdjacent(Direction d1, Direction d2)
+	{
+		return (d1.ordinal()-d2.ordinal()+9)%8<2;
 	}
 	
 	private void updateRetreatTarget()
