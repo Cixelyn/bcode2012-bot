@@ -30,7 +30,7 @@ public abstract class BaseRobot {
 	public final HibernationSystem hsys;
 	public final MessageAttackSystem mas;
 	
-	// Robot Statistics - Permanent
+	// Robot Statistics - permanent variables
 	public final RobotType myType;
 	public final double myMaxEnergon, myMaxFlux;
 	public final Team myTeam;
@@ -39,14 +39,16 @@ public abstract class BaseRobot {
 	public final int birthday;
 	public final MapLocation birthplace;
 	public int myArchonID = -1;
-	public boolean detectedGameEnd = false;
 	
 	// Robot Statistics - updated per turn
 	public double curEnergon;
 	public MapLocation curLoc, curLocInFront, curLocInBack;
 	public Direction curDir;
 	public int curRound;
+	
+	// Robot Flags - toggle important behavior changes
 	public boolean justRevived;
+	public boolean detectedGameEnd = false;
 	
 	// Internal Statistics
 	private int lastResetTime = 50;
@@ -129,7 +131,6 @@ public abstract class BaseRobot {
 			// Flush our send queue (if messages remaining because we went over bytecodes)
 			io.flushSendQueue();
 			
-
 			// Message Receive Loop - in its own try-catch to protect against messaging attacks
 			try {
 				if(justRevived)
@@ -183,6 +184,7 @@ public abstract class BaseRobot {
 		curLocInBack = curLoc.add(curDir.opposite());
 
 		justRevived = (lastResetTime < executeStartTime - 3);
+		if (curRound > GameConstants.MAX_ROUND_LIMIT) detectedGameEnd = true;
 	}
 	
 	/**
@@ -196,12 +198,14 @@ public abstract class BaseRobot {
 	public int getAge() { 
 		return birthday - curRound; 
 	}
+	
 	/** Resets the internal bytecode counter. */
 	public void resetClock() {
 		lastResetTime = executeStartTime;
 		executeStartTime = Clock.getRoundNum();
 		executeStartByte = Clock.getBytecodeNum();
 	}
+	
 	/** Prints a warning if we ran over bytecodes. 
 	 * @return whether we run out of bytecodes this round.
 	 */
@@ -210,7 +214,7 @@ public abstract class BaseRobot {
         	return false;
         int currRound = Clock.getRoundNum();
         int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
-        dbg.println('e', "Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+        dbg.println('e', "Warning: Over Bytecode @"+executeStartTime+"-"+currRound +":"+ byteCount);
         return true;
 	}
 	
@@ -222,7 +226,7 @@ public abstract class BaseRobot {
 	}
 	
 	/** If there are bytecodes left to use this turn, will call this function
-	 * a single time. Function should very hard not to run over bytecodes.
+	 * a single time. Function should try very hard not to run over bytecodes.
 	 * Overriding functions should make sure to call super.
 	 * @throws GameActionException 
 	 */
