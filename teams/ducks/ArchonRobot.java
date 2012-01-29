@@ -78,7 +78,7 @@ public class ArchonRobot extends BaseRobot{
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		
 		// init starting behaviors
-		strategy = StrategyState.INITIAL_EXPLORE;
+		strategy = StrategyState.ENDGAME_CAP;
 		behavior = BehaviorState.SWARM;
 		
 		// init state variables
@@ -299,7 +299,10 @@ public class ArchonRobot extends BaseRobot{
 		case SWARM: fluxToMakeSoldierAt = 280; break;
 		case RETREAT: fluxToMakeSoldierAt = 130; break;
 		default:
-			fluxToMakeSoldierAt = (strategy==StrategyState.EFFICIENT_CAP) ? 225 : 150; 
+			fluxToMakeSoldierAt = (strategy==StrategyState.EFFICIENT_CAP || 
+					strategy==StrategyState.ADJACENT_CAP || 
+					strategy==StrategyState.ENDGAME_CAP) ? 
+					225 : 150; 
 			break;
 		}
 		if(rc.getFlux() > fluxToMakeSoldierAt) {
