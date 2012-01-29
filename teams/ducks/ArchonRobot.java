@@ -78,6 +78,8 @@ public class ArchonRobot extends BaseRobot{
 		// set subsystem modes
 		fbs.setPoolMode();
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
+		
+		// init starting behaviors
 		strategy = StrategyState.ADJACENT_CAP;
 		behavior = BehaviorState.SWARM;
 		
