@@ -94,21 +94,24 @@ public class HibernationSystem {
 				return EXIT_ATTACKED;
 			}      
 			
-			// low flux mode checks
-			// we check the boolean only on special events so that
-			// our bytecode usage is lower in low flux mode
-			if(curFlux > lastFlux && localLowFluxMode) {
-				br.resetClock();
-				br.updateRoundVariables();
-				return EXIT_REFUELED;
-			}
-			
-			if(localLowFluxMode && time++ % 50 == 0) { // faster fail case first
-				try{
-					rc.broadcast(helpMsg);
-				} catch(GameActionException e) {
-					br.dbg.println('c', "I ran out of flux and killed myself.");
-//					rc.addMatchObservation(e.toString());
+			// low flux mode special effects
+			if(localLowFluxMode) {
+				
+				// wakeup on being refueled
+				if(curFlux > lastFlux) {
+					br.resetClock();
+					br.updateRoundVariables();
+					return EXIT_REFUELED;
+				}
+				
+				// send a help message
+				if(time++ % 50 == 0) {
+					try{
+						rc.broadcast(helpMsg);
+					} catch(GameActionException e) {
+						br.dbg.println('e', "I ran out of flux and killed myself.");
+						rc.addMatchObservation(e.toString());
+					}
 				}
 			}
 			
@@ -127,7 +130,7 @@ public class HibernationSystem {
 				if (mints[0] != teamkey)
 					continue;
 				
-				// don't wake up far away units in low flux mode
+				// only units low on flux ignore far away messages
 				if (localLowFluxMode && curLoc.distanceSquaredTo(BroadcastSystem.intToLoc(mints[2])) > 10)
 					continue;
 				
