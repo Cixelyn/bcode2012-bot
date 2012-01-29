@@ -3,10 +3,13 @@ package ducks;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
+import battlecode.common.PowerNode;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import battlecode.common.Team;
 
@@ -331,7 +334,7 @@ public class RadarSystem {
 		}
 	}
 
-	private void addAlly(RobotInfo rinfo) {
+	private void addAlly(RobotInfo rinfo) throws GameActionException{
 		if (rinfo.type == RobotType.TOWER) {
 			checkAlliedTower(rinfo);
 			return;
@@ -377,7 +380,7 @@ public class RadarSystem {
 //		}
 	}
 	
-	private void addAllyForScout(RobotInfo rinfo) {
+	private void addAllyForScout(RobotInfo rinfo) throws GameActionException {
 		if (rinfo.type == RobotType.TOWER) {
 			checkAlliedTower(rinfo);
 			return;
@@ -443,7 +446,7 @@ public class RadarSystem {
 		}
 	}
 	
-	private void addAllyForArchon(RobotInfo rinfo) {
+	private void addAllyForArchon(RobotInfo rinfo) throws GameActionException{
 		if (rinfo.type == RobotType.TOWER) {
 			checkAlliedTower(rinfo);
 			return;
@@ -711,24 +714,33 @@ public class RadarSystem {
 	 * and sets the appropriate doomsday flag in baserobot
 	 * @param rinfo
 	 */
-	private void checkAlliedTower(RobotInfo rinfo) {
-		int id = rinfo.robot.getID();
-		double curEnergon = rinfo.energon;
-		double oldEnergon = allyTowerHealth[id];
+	private void checkAlliedTower(RobotInfo rinfo) throws GameActionException {
 		
-		// if we've taken damage less than 1 energon damage per round
-		if(Clock.getRoundNum() - 2 >= allyTowerTime[id]) {
-			
-			// minimum damage possible / round is 1.7(R) - 0.2(C)
-			if((oldEnergon-curEnergon) > 0.0 && (oldEnergon-curEnergon < 1.0)) {
+		int round = Clock.getRoundNum();
+		
+		if(!br.detectedGameEnd && round >= 1990) {
+			int id = rinfo.robot.getID();
+			double curEnergon = rinfo.energon;
+			double oldEnergon = allyTowerHealth[id];
+		
+			// if within two rounds
+			if(allyTowerTime[id] >= round - 3) {
 				
+				// minimum damage possible / round is 1.7(R) - 0.2(C)
+				if((oldEnergon-curEnergon) > 0.0 && (oldEnergon-curEnergon < 1.0)) {
+			
+					// if we're connected
+					PowerNode pn = (PowerNode) br.rc.senseObjectAtLocation(rinfo.location, RobotLevel.POWER_NODE);
+					if(br.rc.senseConnected(pn)) {
+						br.detectedGameEnd = true;
+						br.dbg.println('e', "HOLY SHIT I DETECTED THAT GAME IS ENDING SOON!!!");
+					}
+				}
 			}
+			
+			allyTowerHealth[id] = curEnergon;
+			allyTowerTime[id] = round;
 		}
-		
-		allyTowerHealth[id] = curEnergon;
-		allyTowerTime[id] = Clock.getRoundNum();
 	}
-	
-
 
 }
