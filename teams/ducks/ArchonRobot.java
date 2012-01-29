@@ -305,52 +305,29 @@ public class ArchonRobot extends BaseRobot{
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
-		// Initial explore behavior
-		if(strategy == StrategyState.INITIAL_EXPLORE) {
+		switch(strategy) {
+		case INITIAL_EXPLORE:
 			if(curRound > 80 && Util.randDouble()<0.3) 
 				return new MoveInfo(nav.navigateCompletelyRandomly(), false);
 
-			boolean[] movable = dc.getMovableDirections();
-			Direction bestDir = null;
-			int bestDist = 0;
-			for(int i=0; i<=8; i++) {
-				if(i!=8 && !movable[i]) continue;
-				Direction dir = i==8 ? null : Constants.directions[i];
-				MapLocation pos = i==8 ? curLoc : curLoc.add(dir);
-				int dist = Integer.MAX_VALUE;
-				for(MapLocation loc: dc.getAlliedArchons()) {
-					if(loc.equals(curLoc)) continue;
-					dist = Math.min(dist, loc.distanceSquaredTo(pos));
-				}
-				if(dist > bestDist) {
-					bestDist = dist;
-					bestDir = dir;
-				}
-			}
-			return new MoveInfo(bestDir, false);
-			
-		// Return home behavior
-		} else if(strategy == StrategyState.RETURN_HOME) {
+			return new MoveInfo(getDirAwayFromAlliedArchons(400), false);
+		
+		case RETURN_HOME:
 			return new MoveInfo(nav.navigateToDestination(), false);
 			
-		// Defend behavior
-		} else if(strategy == StrategyState.DEFEND) {
+		case DEFEND:
 			if(curLoc.distanceSquaredTo(myHome) <= 100) {
 				if(Util.randDouble()<0.02) 
 					return new MoveInfo(nav.navigateCompletelyRandomly(), false);
-				
-				Direction bestDir = getDirAwayFromAlliedArchons();
-				return new MoveInfo(bestDir, false);
+				else
+					return new MoveInfo(getDirAwayFromAlliedArchons(32), false);
 			} else {
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
-			
-		// Normal behavior (cap and rush)
-		} else {
+		
+		case CAP:
 			// If we can build a tower at our target node, do so
-			if(strategy == StrategyState.CAP && 
-					rc.canMove(curDir) && 
-					curLocInFront.equals(target) && 
+			if(rc.canMove(curDir) && curLocInFront.equals(target) && 
 					mc.isPowerNode(curLocInFront)) {
 				if(rc.getFlux() > 200) 
 					return new MoveInfo(RobotType.TOWER, curDir);
@@ -358,43 +335,41 @@ public class ArchonRobot extends BaseRobot{
 			}
 			
 			// If we are on top of our target node, move backwards randomly
-			if(strategy == StrategyState.CAP && 
-					curLoc.equals(target) && mc.isPowerNode(curLoc)) {
+			if(curLoc.equals(target) && mc.isPowerNode(curLoc)) {
 				return new MoveInfo(nav.navigateCompletelyRandomly(), true);
 			} 
 			
+			// If I'm the closest archon to my target...
 			MapLocation closestToTarget = null;
-			int bestDist = Integer.MAX_VALUE;
+			int minDist = Integer.MAX_VALUE;
 			for(MapLocation loc: dc.getAlliedArchons()) {
 				int dist = loc.distanceSquaredTo(target);
-				if(dist < bestDist) {
+				if(dist < minDist) {
 					closestToTarget = loc;
-					bestDist = dist;
+					minDist = dist;
 				}
 			}
-			// If I'm the closest archon to my target...
 			if(curLoc.equals(closestToTarget)) {
-				
 				// If there are no allies in front, slow down (maintain compact swarm)
-				if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && Util.randDouble()<0.8) {
+				if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && 
+						Util.randDouble()<0.8)
 					return null;
-				}
 				
 			// If I'm NOT the closest archon to my target...
 			} else {
 				// If I'm too close to an allied archon, disperse probabilistically
 				if(dc.getClosestArchon()!=null) {
 					int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-					if(distToNearestArchon <= 25 && Util.randDouble() < 1.05-Math.sqrt(distToNearestArchon)/10) {
-						Direction bestDir = getDirAwayFromAlliedArchons();
-						return new MoveInfo(bestDir, false);
+					if(distToNearestArchon <= 25 && 
+							Util.randDouble() < 1.05-Math.sqrt(distToNearestArchon)/10) {
+						return new MoveInfo(getDirAwayFromAlliedArchons(32), false);
 					}
 				}
 			}
 			
 			
 			
-			// None of the above conditions were met, move to the destination
+			// By default, move to the destination
 			Direction dir = nav.navigateToDestination();
 			if(dir==null) 
 				return null;
@@ -402,6 +377,8 @@ public class ArchonRobot extends BaseRobot{
 				return new MoveInfo(dir);
 			else
 				return new MoveInfo(dir, false);
+		default:
+			return null;
 		}
 	}
 	
@@ -758,8 +735,10 @@ public class ArchonRobot extends BaseRobot{
 	
 	/** Returns the direction that will help most in keeping the archons
 	 * at least 16 dist apart.
+	 * @param minKeepApartDistSquared the distance we try to keep our archons apart by. <br>
+	 * Above this distance, we don't care how separated the archons are.
 	 */
-	private Direction getDirAwayFromAlliedArchons() {
+	private Direction getDirAwayFromAlliedArchons(int minKeepApartDistSquared) {
 		boolean[] movable = dc.getMovableDirections();
 		Direction bestDir = null;
 		int bestDist = 0;
@@ -772,11 +751,12 @@ public class ArchonRobot extends BaseRobot{
 				if(loc.equals(curLoc)) continue;
 				dist = Math.min(dist, loc.distanceSquaredTo(newLoc));
 			}
-			if(bestDist < 25 && dist > bestDist) {
+			if(bestDist <= minKeepApartDistSquared && dist > bestDist) {
 				bestDist = dist;
 				bestDir = dir;
 			}
 		}
 		return bestDir;
 	}
+	
 }
