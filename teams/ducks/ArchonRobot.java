@@ -4,6 +4,7 @@ import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.PowerNode;
 import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
@@ -17,10 +18,16 @@ public class ArchonRobot extends BaseRobot{
 		RETURN_HOME,
 		/** Defend the power core. */
 		DEFEND,
+		/** Power core is connected to enemy. Defend it at all costs! */
+		SAVE_POWER_CORE,
 		/** Seek and destroy towards a target. */
 		RUSH, 
-		/** Take power nodes. */
-		CAP,
+		/** Take power nodes of distance <= 15 adjacent to power core. */
+		ADJACENT_CAP,
+		/** Take power nodes efficiently. */
+		EFFICIENT_CAP,
+		/** Game is about to end. Cap as many towers as possible! */
+		ENDGAME_CAP,
 	}
 	private enum BehaviorState {
 		/** No enemies to deal with. */
@@ -43,6 +50,8 @@ public class ArchonRobot extends BaseRobot{
 	MapLocation previousWakeupTarget;
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
+	boolean detectedGameEnd;
+	MapLocation[] neighborsOfPowerCore;
 	
 	Direction lastFlee;
 	
@@ -71,12 +80,14 @@ public class ArchonRobot extends BaseRobot{
 		});
 		fbs.setPoolMode();
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
-		strategy = StrategyState.INITIAL_EXPLORE;
-		behavior = BehaviorState.BATTLE;
+		strategy = StrategyState.ADJACENT_CAP;
+		behavior = BehaviorState.SWARM;
 		enemySpottedRound = -55555;
 		enemySpottedTarget = null;
 		lastPowerNodeGuess = null;
 		lastFlee = null;
+		detectedGameEnd = false;
+		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
 		
 		// example of enemy unit composition memory
 		if (myArchonID == 0) {
@@ -90,6 +101,9 @@ public class ArchonRobot extends BaseRobot{
 			dbg.println('j', "Scorchers: " + tmem.getNumEnemiesLastRound(
 					RobotType.SCORCHER));
 		}
+		
+		for(MapLocation loc: neighborsOfPowerCore) 
+			System.out.println(locationToVectorString(loc));
 	}
 	
 	boolean gotOutput = false;
@@ -109,6 +123,8 @@ public class ArchonRobot extends BaseRobot{
 //		}
 		
 //		 The new strategy transition
+		if(detectedGameEnd)
+			strategy = StrategyState.ENDGAME_CAP;
 		switch(strategy) {
 		case INITIAL_EXPLORE:
 			if(curRound > 150) 
@@ -120,9 +136,17 @@ public class ArchonRobot extends BaseRobot{
 			break;
 		case DEFEND:
 			if(curRound > 800) 
-				strategy = StrategyState.CAP;
+				strategy = StrategyState.ADJACENT_CAP;
 			break;
-		case CAP:
+		case SAVE_POWER_CORE:
+			break;
+		case ADJACENT_CAP:
+			if(getNextPowerNodeAdjacentToCore()==null)
+				strategy = StrategyState.EFFICIENT_CAP;
+			break;
+		case EFFICIENT_CAP:
+			break;
+		case ENDGAME_CAP:
 			break;
 		default:
 			break;
@@ -193,7 +217,10 @@ public class ArchonRobot extends BaseRobot{
 			case RUSH:
 				computeExploreTarget();
 				break;
-			case CAP:
+			case ADJACENT_CAP:
+				target = getNextPowerNodeAdjacentToCore();
+				break;
+			case EFFICIENT_CAP:
 				target = mc.guessBestPowerNodeToCapture();
 				break;
 			default:
@@ -286,7 +313,7 @@ public class ArchonRobot extends BaseRobot{
 		case SWARM: fluxToMakeSoldierAt = 280; break;
 		case RETREAT: fluxToMakeSoldierAt = 130; break;
 		default:
-			fluxToMakeSoldierAt = (strategy==StrategyState.CAP) ? 225 : 150; 
+			fluxToMakeSoldierAt = (strategy==StrategyState.EFFICIENT_CAP) ? 225 : 150; 
 			break;
 		}
 		if(rc.getFlux() > fluxToMakeSoldierAt) {
@@ -312,6 +339,7 @@ public class ArchonRobot extends BaseRobot{
 
 			return new MoveInfo(getDirAwayFromAlliedArchons(400), false);
 		
+		case SAVE_POWER_CORE:
 		case RETURN_HOME:
 			return new MoveInfo(nav.navigateToDestination(), false);
 			
@@ -325,7 +353,9 @@ public class ArchonRobot extends BaseRobot{
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
 		
-		case CAP:
+		case ADJACENT_CAP:
+		case ENDGAME_CAP:
+		case EFFICIENT_CAP:
 			// If we can build a tower at our target node, do so
 			if(rc.canMove(curDir) && curLocInFront.equals(target) && 
 					mc.isPowerNode(curLocInFront)) {
@@ -759,4 +789,24 @@ public class ArchonRobot extends BaseRobot{
 		return bestDir;
 	}
 	
+	/** Returns a location of a power node adjacent to our power core that we
+	 * do not control. If we control them all, returns null.
+	 */
+	private MapLocation getNextPowerNodeAdjacentToCore() {
+		PowerNode[] nodes = dc.getAlliedPowerNodes();
+		for(int i=0; i<neighborsOfPowerCore.length; i++) {
+			MapLocation loc = neighborsOfPowerCore[i];
+			if(myHome.distanceSquaredTo(loc) > 400 || mc.isDeadEndPowerNode(loc))
+				continue;
+			boolean flag = false;
+			for(int j=0; j<nodes.length; j++) {
+				if(loc.equals(nodes[j].getLocation())) {
+					flag = true;
+					break;
+				}
+			}
+			if(!flag) return loc;
+		}
+		return null;
+	}
 }
