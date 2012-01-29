@@ -273,36 +273,35 @@ public class RadarSystem {
 		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
 			return;
 		
-		int pos = rinfo.robot.getID();
-		enemyInfos[pos] = rinfo;
-		enemyTimes[pos] = Clock.getRoundNum();
+		int rid = rinfo.robot.getID();
+		enemyInfos[rid] = rinfo;
+		enemyTimes[rid] = Clock.getRoundNum();
 
-		enemyRobots[numEnemyRobots++] = pos;
+		enemyRobots[numEnemyRobots++] = rid;
 
 		switch (rinfo.type) {
 		case ARCHON:
-			enemyArchons[numEnemyArchons++] = pos;
+			enemyArchons[numEnemyArchons++] = rid;
 			break;
 		case DISRUPTER:
-			enemyDisruptors[numEnemyDisruptors++] = pos;
+			enemyDisruptors[numEnemyDisruptors++] = rid;
 			break;
 		case SCORCHER:
-			enemyScorchers[numEnemyScorchers++] = pos;
+			enemyScorchers[numEnemyScorchers++] = rid;
 			break;
 		case SCOUT:
-			enemyScouts[numEnemyScouts++] = pos;
+			enemyScouts[numEnemyScouts++] = rid;
 			break;
 		case SOLDIER:
-			enemySoldiers[numEnemySoldiers++] = pos;
+			enemySoldiers[numEnemySoldiers++] = rid;
 			break;
 		case TOWER:
-			enemyTowers[numEnemyTowers++] = pos;
+			enemyTowers[numEnemyTowers++] = rid;
 			break;
 		}
 		
-		// TODO(jven): archonID is not exposed here so right now all archons are
-		// competing for the same slot
-		br.tmem.rememberEnemy(br.myArchonID, rinfo.robot.getID(), rinfo.type);
+		// Remember the enemy type
+		br.tmem.countEnemy(rid, rinfo.type);
 		
 		// Distance Stats
 		MapLocation eloc = rinfo.location;

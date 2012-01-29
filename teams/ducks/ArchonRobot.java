@@ -64,18 +64,25 @@ public class ArchonRobot extends BaseRobot{
 	public ArchonRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
-		stayTargetLockedUntilRound = -Integer.MAX_VALUE;
-		// advance the round counter
-		if(myArchonID==0) tmem.advanceRound();
+		// bind radio channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
 				BroadcastChannel.ARCHONS,
 				BroadcastChannel.EXPLORERS
 		});
+		
+		// read/write team memory
+		if(myArchonID==0) tmem.advanceRound();
+		tmem.initReadEnemyCount();
+		
+		// set subsystem modes
 		fbs.setPoolMode();
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		strategy = StrategyState.ADJACENT_CAP;
 		behavior = BehaviorState.SWARM;
+		
+		// init state variables
+		stayTargetLockedUntilRound = -Integer.MAX_VALUE;
 		enemySpottedRound = -55555;
 		enemySpottedTarget = null;
 		lastPowerNodeGuess = null;
@@ -83,18 +90,6 @@ public class ArchonRobot extends BaseRobot{
 		detectedGameEnd = false;
 		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
 		
-		// example of enemy unit composition memory
-		if (myArchonID == 0) {
-			dbg.println('j', "Enemies seen last round:");
-			dbg.println('j', "Soldiers: " + tmem.getNumEnemiesLastRound(
-					RobotType.SOLDIER));
-			dbg.println('j', "Scouts: " + tmem.getNumEnemiesLastRound(
-					RobotType.SCOUT));
-			dbg.println('j', "Disrupters: " + tmem.getNumEnemiesLastRound(
-					RobotType.DISRUPTER));
-			dbg.println('j', "Scorchers: " + tmem.getNumEnemiesLastRound(
-					RobotType.SCORCHER));
-		}
 		
 		for(MapLocation loc: neighborsOfPowerCore) 
 			System.out.println(locationToVectorString(loc));
@@ -442,6 +437,9 @@ public class ArchonRobot extends BaseRobot{
 				ses.broadcastMapEdges();
 		}
 		super.useExtraBytecodes();
+		if(Clock.getRoundNum()==curRound && Clock.getRoundNum() > tmem.timeCountWritten + 10) {
+			tmem.writeEnemyCount();
+		}
 		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>3000) 
 			nav.prepare();
 		while(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>1000) 
