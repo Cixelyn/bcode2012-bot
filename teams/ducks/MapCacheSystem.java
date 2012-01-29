@@ -293,6 +293,13 @@ public class MapCacheSystem {
 		}
 	}
 	
+	private void insertArtificialWall(int cacheX, int cacheY) {
+		isWall[cacheX][cacheY] = true;
+		sensed[cacheX][cacheY] = true;
+		packedIsWall[cacheX/4][cacheY/4] |= (1 << (cacheX%4*4+cacheY%4));
+		packedSensed[cacheX/4][cacheY/4] |= (1 << (cacheX%4*4+cacheY%4));
+	}
+	
 	/** Combines packed terrain data with existing packed terrain data. */
 	public void integrateTerrainInfo(int packedIsWallInfo, int packedSensedInfo) {
 		int block = (packedIsWallInfo >> 16);
@@ -414,13 +421,14 @@ public class MapCacheSystem {
 			short id = getPowerNodeID(nodeLoc);
 			if(powerNodeGraph.nodeSensed[id])
 				continue;
+			
 			if(id==0) {
 				powerNodeGraph.nodeCount++;
 				id = powerNodeGraph.nodeCount;
 				powerNodeGraph.nodeLocations[id] = nodeLoc;
 				int x = worldToCacheX(nodeLoc.x);
 				int y = worldToCacheY(nodeLoc.y);
-				isWall[x][y] = true;
+				insertArtificialWall(x, y);
 				powerNodeID[x][y] = id;
 			}
 			if(node.powerCoreTeam()!=null && node.powerCoreTeam()!=br.myTeam) {
@@ -436,7 +444,7 @@ public class MapCacheSystem {
 					powerNodeGraph.nodeLocations[neighborID] = neighborLoc;
 					int x = worldToCacheX(neighborLoc.x);
 					int y = worldToCacheY(neighborLoc.y);
-					isWall[x][y] = true;
+					insertArtificialWall(x, y);
 					powerNodeID[x][y] = neighborID;
 				}
 				powerNodeGraph.adjacencyList[id][powerNodeGraph.degreeCount[id]++] = neighborID;
@@ -460,7 +468,7 @@ public class MapCacheSystem {
 				powerNodeGraph.nodeLocations[coreID] = new MapLocation(coreX, coreY);
 				int x = worldToCacheX(coreX);
 				int y = worldToCacheY(coreY);
-				isWall[x][y] = true;
+				insertArtificialWall(x, y);
 				powerNodeID[x][y] = coreID;
 			} 
 			powerNodeGraph.enemyPowerCoreID = coreID;
@@ -471,11 +479,15 @@ public class MapCacheSystem {
 		short id = br.mc.getPowerNodeID(nodeLoc);
 		if(powerNodeGraph.nodeSensed[id])
 			return;
+		br.dbg.println('e', " integrated new node at: "+br.locationToVectorString(nodeLoc));
 		if(id==0) {
 			powerNodeGraph.nodeCount++;
 			id = powerNodeGraph.nodeCount;
 			powerNodeGraph.nodeLocations[id] = nodeLoc;
-			powerNodeID[worldToCacheX(nodeX)][worldToCacheY(nodeY)] = id;
+			int x = worldToCacheX(nodeX);
+			int y = worldToCacheY(nodeY);
+			insertArtificialWall(x, y);
+			powerNodeID[x][y] = id;
 		}
 		for(int i=2; i<data.length; i++) {
 			int neighborX = data[i] >> 15;
@@ -490,7 +502,7 @@ public class MapCacheSystem {
 				powerNodeGraph.nodeLocations[neighborID] = neighborLoc;
 				int x = worldToCacheX(neighborX);
 				int y = worldToCacheY(neighborY);
-				isWall[x][y] = true;
+				insertArtificialWall(x, y);
 				powerNodeID[x][y] = neighborID;
 			}
 			powerNodeGraph.adjacencyList[id][powerNodeGraph.degreeCount[id]++] = neighborID;

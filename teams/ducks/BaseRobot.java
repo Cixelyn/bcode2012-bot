@@ -154,7 +154,7 @@ public abstract class BaseRobot {
 		
 			// End of Turn
 			if(checkClock())
-				System.out.println("Very bad! useExcessBytecodes() ran over the bytecode limit. " +
+				dbg.println('e', "Very bad! useExcessBytecodes() ran over the bytecode limit. " +
 						"You must fix this so it only uses the available bytecodes and no more.");
 			rc.yield();
 		}
@@ -197,7 +197,7 @@ public abstract class BaseRobot {
         	return false;
         int currRound = Clock.getRoundNum();
         int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
-        System.out.println("Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
+        dbg.println('e', "Warning: Unit over Bytecode Limit @"+executeStartTime+"-"+currRound +":"+ byteCount);
         return true;
 	}
 	
