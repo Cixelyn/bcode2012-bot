@@ -540,7 +540,13 @@ public class MapCacheSystem {
 	}
 	/** Returns true iff the robot knows of a power node at the given location. */
 	public boolean isPowerNode(MapLocation loc) {
-		return powerNodeID[worldToCacheX(loc.x)][worldToCacheY(loc.y)]!=0;
+		return getPowerNodeID(loc)!=0;
+	}
+	/** Returns true if we know there is a dead end power node at the given location. */
+	public boolean isDeadEndPowerNode(MapLocation loc) {
+		int id = getPowerNodeID(loc);
+		if(id==0 || !powerNodeGraph.nodeSensed[id]) return false;
+		return powerNodeGraph.degreeCount[id]<=1;
 	}
 	
 	/** Converts from world x coordinates to cache x coordinates. */
