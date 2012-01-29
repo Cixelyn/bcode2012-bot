@@ -130,9 +130,9 @@ public class NavigationSystem {
 				dir = navigateGreedy(destination);
 		} else if(mode==NavigationMode.BUG) {
 			dir = navigateBug();
-			if(movesOnSameTarget % (3*expectedMovesToReachTarget) == 0) {
-				normalBug.reset();
-			}
+//			if(movesOnSameTarget % (3*expectedMovesToReachTarget) == 0) {
+//				normalBug.reset();
+//			}
 		} else if(mode==NavigationMode.TANGENT_BUG) {
 			dir = navigateTangentBug();
 			if(movesOnSameTarget % expectedMovesToReachTarget == 0) {
