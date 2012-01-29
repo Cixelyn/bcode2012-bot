@@ -38,6 +38,7 @@ public abstract class BaseRobot {
 	public final MapLocation myHome;
 	public final int birthday;
 	public final MapLocation birthplace;
+	public int myArchonID = -1;
 	
 	// Robot Statistics - updated per turn
 	public double curEnergon;
@@ -65,7 +66,11 @@ public abstract class BaseRobot {
 		birthplace = rc.getLocation();
 		updateRoundVariables();
 		
+		
+		// archon specific initializers
 		if(myType==RobotType.ARCHON) {
+			
+			// hardcoded split
 			Direction dir = curLoc.directionTo(myHome).opposite();
 			if(rc.canMove(dir)) {
 				if(curDir==dir) rc.moveForward();
@@ -78,7 +83,14 @@ public abstract class BaseRobot {
 				rc.yield();
 				updateRoundVariables();
 			}
+			
+			// compute archon ID
+			MapLocation[] alliedArchons = myRC.senseAlliedArchons();
+			for(int i=alliedArchons.length; --i>=0; )
+				if(alliedArchons[i].equals(curLoc))
+					myArchonID = i;
 		}
+			
 		
 		// DO NOT CHANGE THE ORDER OF THESE DECLARATIONS
 		// SOME CONTRUCTORS NEED OTHERS TO ALREADY BE DECLARED

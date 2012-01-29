@@ -37,7 +37,6 @@ public class ArchonRobot extends BaseRobot{
 		/** Fight the enemy forces. Micro, maybe kite. */
 		BATTLE, 
 	}
-	int myArchonID;
 	
 	/** round we are releasing our lock */
 	int stayTargetLockedUntilRound;
@@ -66,11 +65,6 @@ public class ArchonRobot extends BaseRobot{
 		super(myRC);
 		
 		stayTargetLockedUntilRound = -Integer.MAX_VALUE;
-		// compute archon ID
-		MapLocation[] alliedArchons = dc.getAlliedArchons();
-		for(int i=alliedArchons.length; --i>=0; )
-			if(alliedArchons[i].equals(curLoc))
-				myArchonID = i;
 		// advance the round counter
 		if(myArchonID==0) tmem.advanceRound();
 		io.setChannels(new BroadcastChannel[] {

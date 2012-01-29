@@ -5,42 +5,40 @@ import battlecode.common.RobotType;
 /**
  * Archon memory between rounds. We have 32 longs available. Here is a list of
  * what each long represents:
- * 
- * 0 = round number (0, 1, or 2), touched only by archon 0
- * 1 = enemies seen by archon 0
- * 2 = enemies seen by archon 1
- * 3 = enemies seen by archon 2
- * 4 = enemies seen by archon 3
- * 5 = enemies seen by archon 4
- * 6 = enemies seen by archon 5
- * 7 = UNUSED
- * 8 = UNUSED
- * 9 = UNUSED
- * 10 = UNUSED
- * 11 = UNUSED
- * 12 = UNUSED
- * 13 = UNUSED
- * 14 = UNUSED
- * 15 = UNUSED
- * 16 = UNUSED
- * 17 = UNUSED
- * 18 = UNUSED
- * 19 = UNUSED
- * 20 = UNUSED
- * 21 = UNUSED
- * 22 = UNUSED
- * 23 = UNUSED
- * 24 = UNUSED
- * 25 = UNUSED
- * 26 = UNUSED
- * 27 = UNUSED
- * 28 = UNUSED
- * 29 = UNUSED
- * 30 = UNUSED
- * 31 = UNUSED
- * 
- * @author coryli, jven
- *
+ * <ul>
+ * <li> 0 = round number (0, 1, or 2), touched only by archon 0
+ * <li> 1 = enemies seen by archon 0
+ * <li> 2 = enemies seen by archon 1
+ * <li> 3 = enemies seen by archon 2
+ * <li> 4 = enemies seen by archon 3
+ * <li> 5 = enemies seen by archon 4
+ * <li> 6 = enemies seen by archon 5
+ * <li> 7 = UNUSED
+ * <li> 8 = UNUSED
+ * <li> 9 = UNUSED
+ * <li> 10 = UNUSED
+ * <li> 11 = UNUSED
+ * <li> 12 = UNUSED
+ * <li> 13 = UNUSED
+ * <li> 14 = UNUSED
+ * <li> 15 = UNUSED
+ * <li> 16 = UNUSED
+ * <li> 17 = UNUSED
+ * <li> 18 = UNUSED
+ * <li> 19 = UNUSED
+ * <li> 20 = UNUSED
+ * <li> 21 = UNUSED
+ * <li> 22 = UNUSED
+ * <li> 23 = UNUSED
+ * <li> 24 = UNUSED
+ * <li> 25 = UNUSED
+ * <li> 26 = UNUSED
+ * <li> 27 = UNUSED
+ * <li> 28 = UNUSED
+ * <li> 29 = UNUSED
+ * <li> 30 = UNUSED
+ * <li> 31 = UNUSED
+ * </ul>
  */
 public class TeamMemory {
 
