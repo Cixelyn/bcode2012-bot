@@ -82,17 +82,18 @@ public class ArchonRobot extends BaseRobot{
 	boolean gotOutput = false;
 	@Override
 	public void run() throws GameActionException {
-		
+		if(Clock.getRoundNum()%50==0 && Clock.getRoundNum()<500 && myID==12)
+			dbg.println('h', mc.toString());
 		// example of enemy unit composition memory
 		if (myArchonID == 0 && Clock.getRoundNum() < 7) {
-			dbg.println('e', "Enemies seen last round:");
-			dbg.println('e', "Soldiers: " + tmem.getNumEnemiesLastRound(
+			dbg.println('j', "Enemies seen last round:");
+			dbg.println('j', "Soldiers: " + tmem.getNumEnemiesLastRound(
 					RobotType.SOLDIER));
-			dbg.println('e', "Scouts: " + tmem.getNumEnemiesLastRound(
+			dbg.println('j', "Scouts: " + tmem.getNumEnemiesLastRound(
 					RobotType.SCOUT));
-			dbg.println('e', "Disrupters: " + tmem.getNumEnemiesLastRound(
+			dbg.println('j', "Disrupters: " + tmem.getNumEnemiesLastRound(
 					RobotType.DISRUPTER));
-			dbg.println('e', "Scorchers: " + tmem.getNumEnemiesLastRound(
+			dbg.println('j', "Scorchers: " + tmem.getNumEnemiesLastRound(
 					RobotType.SCORCHER));
 		}
 		

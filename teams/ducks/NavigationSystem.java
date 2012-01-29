@@ -69,7 +69,7 @@ public class NavigationSystem {
 			return;
 		movesOnSameTarget = 0;
 		expectedMovesToReachTarget = (int)(Math.sqrt(br.curLoc.distanceSquaredTo(destination)) *
-				TangentBug.MAP_UGLINESS_WEIGHT)+1;
+				TangentBug.MAP_UGLINESS_WEIGHT)+10;
 		this.destination = destination;
 		normalBug.setTarget(mapCache.worldToCacheX(destination.x), 
 				mapCache.worldToCacheY(destination.y));
