@@ -73,6 +73,7 @@ public class SoldierRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
+		boolean gotHitLastRound = curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1;
 		if((behavior==BehaviorState.SWARM || behavior==BehaviorState.LOOKING_TO_HIBERNATE ||
 				behavior==BehaviorState.LOST || behavior==BehaviorState.REFUEL) && 
 				rc.isMovementActive() && !msm.justMoved()) {
@@ -103,28 +104,28 @@ public class SoldierRobot extends BaseRobot {
 		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
 			radar.broadcastEnemyInfo(enemyNearby);
 		
+		int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 		movingTarget = true;
 		if(behavior == BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE) { 
-			// don't hibernate on powernodes
-			if (rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)==null)
-			{
-				// Hibernate once we're no longer adjacent to any allies
-				int adjacentMovable = 0;
-				if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
-				if(!rc.canMove(Direction.EAST)) adjacentMovable++;
-				if(!rc.canMove(Direction.WEST)) adjacentMovable++;
-				if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
-				if(adjacentMovable<=1)
-					behavior = BehaviorState.LOW_FLUX_HIBERNATE;
-			}
+			// Hibernate once we're on a non-blocking spot
+			int adjacentMovable = 0;
+			if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
+			if(!rc.canMove(Direction.EAST)) adjacentMovable++;
+			if(!rc.canMove(Direction.WEST)) adjacentMovable++;
+			if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
+			boolean onPowerNode = rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)!=null;
+			if(adjacentMovable<=1 && !onPowerNode)
+				behavior = BehaviorState.LOW_FLUX_HIBERNATE;
+			
+		} else if((gotHitLastRound && (closestEnemyLocation==null || 
+				curLoc.distanceSquaredTo(closestEnemyLocation) > 20) || 
+				(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES && !checkedBehind))) {
+			// Got hurt since last turn.. look behind you
+			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
+			checkedBehind = false;
+			
 		} else if(closestEnemyLocation != null) {
-			if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) && 
-					curLoc.distanceSquaredTo(closestEnemyLocation) > 20) {
-				// Current target is too far away, got hit from behind probably
-				behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
-				checkedBehind = false;
-				
-			} else if(enemyNearby) {
+			if(enemyNearby) {
 				// If we know of an enemy, lock onto it
 				behavior = BehaviorState.ENEMY_DETECTED;
 				target = closestEnemyLocation;
@@ -134,12 +135,6 @@ public class SoldierRobot extends BaseRobot {
 				behavior = BehaviorState.SEEK;
 				target = closestEnemyLocation; 
 			}
-			
-		} else if((curEnergon < energonLastTurn || rc.getFlux() < fluxLastTurn-1) || 
-				(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES && !checkedBehind)) {
-			// Got hurt since last turn.. look behind you
-			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
-			checkedBehind = false;
 			
 		} else if(behavior == BehaviorState.ENEMY_DETECTED && curRound < lockAcquiredRound + 12) {
 			// Don't know of any enemies, stay chasing the last enemy we knew of
@@ -151,47 +146,47 @@ public class SoldierRobot extends BaseRobot {
 			target = enemySpottedTarget;
 			movingTarget = false;
 			
-		} else {
-			int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-			if((behavior==BehaviorState.LOST && distToClosestArchon>32) || 
-					distToClosestArchon>64) {
-				// If all allied archons are far away, move to closest one
-				behavior = BehaviorState.LOST;
-				target = dc.getClosestArchon();
-				
-			} else {	
-				if(behavior == BehaviorState.LOOKING_TO_HIBERNATE && 
-						archonSwarmTarget.equals(hibernateTarget) && !curLoc.equals(hibernateTarget)) {
-					// Hibernate once we're no longer adjacent to any allies
-					int adjacentMovable = 0;
-					if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
-					if(!rc.canMove(Direction.EAST)) adjacentMovable++;
-					if(!rc.canMove(Direction.WEST)) adjacentMovable++;
-					if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
-					if(adjacentMovable<=1)
-						behavior = BehaviorState.HIBERNATE;
-					
-				} else if(curRound > archonSwarmTime+12) { 
-					// We did not receive any swarm target broadcasts from our archons
-					behavior = BehaviorState.SWARM;
-					target = dc.getClosestArchon();
-					
-				} else {
-					// Follow target of closest archon's broadcast
-					behavior = BehaviorState.SWARM ;
-					target = archonSwarmTarget;
-					movingTarget = archonSwarmTargetIsMoving;
-				}
-				
-				if(behavior == BehaviorState.SWARM && 
-						closestSwarmTargetSenderDist <= 18 && 
-						curLoc.distanceSquaredTo(target) <= 26 && 
-						curRound > roundLastWakenUp + 10) { 
-					// Close enough to swarm target, look for a place to hibernate
-					behavior = BehaviorState.LOOKING_TO_HIBERNATE;
-					hibernateTarget = target;
-				} 
-			}
+		} else if(behavior == BehaviorState.LOOKING_TO_HIBERNATE) {
+			// Hibernate once we're on a non-blocking spot
+			int adjacentMovable = 0;
+			if(!rc.canMove(Direction.NORTH)) adjacentMovable++;
+			if(!rc.canMove(Direction.EAST)) adjacentMovable++;
+			if(!rc.canMove(Direction.WEST)) adjacentMovable++;
+			if(!rc.canMove(Direction.SOUTH)) adjacentMovable++;
+			boolean onPowerNode = rc.senseObjectAtLocation(curLoc, RobotLevel.POWER_NODE)!=null;
+			if(adjacentMovable<=1 && !onPowerNode)
+				behavior = BehaviorState.HIBERNATE;
+			
+		} else if(behavior==BehaviorState.LOST && distToClosestArchon>32) {
+			// If all allied archons are far away, move to closest one
+			behavior = BehaviorState.LOST;
+			target = dc.getClosestArchon();
+			
+		} else if(curRound <= archonSwarmTime+12) { 
+			// Follow target of closest archon's broadcast
+			behavior = BehaviorState.SWARM ;
+			target = archonSwarmTarget;
+			movingTarget = archonSwarmTargetIsMoving;
+			
+			if(closestSwarmTargetSenderDist <= 18 && 
+					curLoc.distanceSquaredTo(target) <= 26 && 
+					curRound > roundLastWakenUp + 10) { 
+				// Close enough to swarm target, look for a place to hibernate
+				behavior = BehaviorState.LOOKING_TO_HIBERNATE;
+				hibernateTarget = target;
+			} 
+			
+		} else if(distToClosestArchon>225) {
+			// If all allied archons are very far away, look to hibernate
+			behavior = BehaviorState.LOOKING_TO_HIBERNATE;
+			target = curLoc;
+			hibernateTarget = target;
+			
+		} else {	
+			// Received no swarm target broadcasts, enter lost mode
+			behavior = BehaviorState.LOST;
+			target = dc.getClosestArchon();
+			
 		}
 		
 		// Check if we need more flux
@@ -392,8 +387,8 @@ public class SoldierRobot extends BaseRobot {
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
 			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
-			int strengthDifference = er.getStrengthDifference(midpoint, 24);
-			boolean weHaveBiggerFront = strengthDifference > 0;
+			int strengthDifference = er.getStrengthDifference(target, 24);
+			boolean weHaveBiggerFront = strengthDifference > 6;
 			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
 			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
 			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
@@ -401,7 +396,7 @@ public class SoldierRobot extends BaseRobot {
 			Direction dirToTarget = curLoc.directionTo(target);
 			
 			// If we are much stronger and my energon is low, retreat to nearest archon
-			if(curEnergon <= 12 && strengthDifference > Util.getOwnStrengthEstimate(rc)) {
+			if(curEnergon <= 12 && strengthDifference > Util.getOwnStrengthEstimate(rc)+6) {
 				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()), true);
 				
 			// If we aren't turned the right way, turn towards target

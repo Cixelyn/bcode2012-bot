@@ -479,7 +479,6 @@ public class MapCacheSystem {
 		short id = br.mc.getPowerNodeID(nodeLoc);
 		if(powerNodeGraph.nodeSensed[id])
 			return;
-		br.dbg.println('e', " integrated new node at: "+br.locationToVectorString(nodeLoc));
 		if(id==0) {
 			powerNodeGraph.nodeCount++;
 			id = powerNodeGraph.nodeCount;
