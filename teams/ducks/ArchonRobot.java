@@ -48,6 +48,7 @@ public class ArchonRobot extends BaseRobot{
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	MapLocation[] neighborsOfPowerCore;
+	MapLocation nextRandomCapTarget;
 	
 	Direction lastFlee;
 	
@@ -77,7 +78,7 @@ public class ArchonRobot extends BaseRobot{
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		
 		// init starting behaviors
-		strategy = StrategyState.ADJACENT_CAP;
+		strategy = StrategyState.INITIAL_EXPLORE;
 		behavior = BehaviorState.SWARM;
 		
 		// init state variables
@@ -86,6 +87,7 @@ public class ArchonRobot extends BaseRobot{
 		enemySpottedTarget = null;
 		lastPowerNodeGuess = null;
 		lastFlee = null;
+		nextRandomCapTarget = null;
 		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
 	}
 	
@@ -193,10 +195,6 @@ public class ArchonRobot extends BaseRobot{
 			behavior = BehaviorState.SWARM;
 			movingTarget = false;
 			switch(strategy) {
-			case DEFEND:
-			case RETURN_HOME:
-				target = myHome;
-				break;
 			case RUSH:
 				computeExploreTarget();
 				break;
@@ -205,6 +203,11 @@ public class ArchonRobot extends BaseRobot{
 				break;
 			case EFFICIENT_CAP:
 				target = mc.guessBestPowerNodeToCapture();
+				break;
+			case ENDGAME_CAP:
+				if(nextRandomCapTarget==null || !isCapturableNode(nextRandomCapTarget))
+					nextRandomCapTarget = mc.getEndGamePowerNodeToCapture();
+				target = nextRandomCapTarget;
 				break;
 			default:
 				target = myHome;
@@ -793,5 +796,14 @@ public class ArchonRobot extends BaseRobot{
 			if(!flag) return loc;
 		}
 		return null;
+	}
+	
+	/** Returns true if the given location is the location of a capturable power node. */
+	private boolean isCapturableNode(MapLocation loc) {
+		MapLocation[] locs = dc.getCapturablePowerCores();
+		for(MapLocation x: locs)
+			if(x.equals(loc))
+				return true;
+		return false;
 	}
 }
