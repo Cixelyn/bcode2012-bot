@@ -541,7 +541,8 @@ public class ScoutRobot extends BaseRobot {
 //											+" "+mc.edgeXMax+" "+mc.edgeXMin+" "+mc.edgeYMax+" "+mc.edgeYMin+" "+mc.cacheToWorldX(mc.edgeXMax));
 		
 		Direction newdir = curLoc.directionTo(radar.closestEnemyWithFlux.location);
-		wall_in_dir[newdir.ordinal()] = 1;
+		if (newdir.ordinal()<8)
+			wall_in_dir[newdir.ordinal()] = 1;
 		
 		String dir =  "".concat(wall_in_dir[0]==0?"o":"x")
 						.concat(wall_in_dir[1]==0?"o":"x")
