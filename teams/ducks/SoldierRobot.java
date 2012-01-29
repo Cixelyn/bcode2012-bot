@@ -386,7 +386,6 @@ public class SoldierRobot extends BaseRobot {
 			
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
-			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
 			int strengthDifference = er.getStrengthDifference(target, 24);
 			boolean weHaveBiggerFront = strengthDifference > 6;
 			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
