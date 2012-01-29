@@ -1,5 +1,6 @@
 package ducks;
 
+import battlecode.common.Clock;
 import battlecode.common.RobotType;
 
 /**
@@ -17,43 +18,37 @@ import battlecode.common.RobotType;
  * <li> 8 = UNUSED
  * <li> 9 = UNUSED
  * <li> 10 = UNUSED
- * <li> 11 = UNUSED
- * <li> 12 = UNUSED
- * <li> 13 = UNUSED
- * <li> 14 = UNUSED
- * <li> 15 = UNUSED
- * <li> 16 = UNUSED
- * <li> 17 = UNUSED
- * <li> 18 = UNUSED
- * <li> 19 = UNUSED
- * <li> 20 = UNUSED
- * <li> 21 = UNUSED
- * <li> 22 = UNUSED
- * <li> 23 = UNUSED
- * <li> 24 = UNUSED
- * <li> 25 = UNUSED
- * <li> 26 = UNUSED
- * <li> 27 = UNUSED
- * <li> 28 = UNUSED
- * <li> 29 = UNUSED
- * <li> 30 = UNUSED
- * <li> 31 = UNUSED
+ * <li> 11 - 31 = UNUSED
  * </ul>
  */
 public class TeamMemory {
 
+	// private vars
 	private final BaseRobot br;
 	private final long[] mem;
-	private final boolean[][] enemySeenByArchon;
-	private int soldiersSeen;
-	private int scoutsSeen;
-	private int disruptersSeen;
-	private int scorchersSeen;
+	private final boolean[] enemySeen;
+	
+	// current counts
+	public int curSoldierCount;
+	public int curScoutCount;
+	public int curDisrupterCount;
+	public int curScorcherCount;
+	
+	// previous counts
+	public int lastSoldierCount;
+	public int lastScoutCount;
+	public int lastDisrupterCount;
+	public int lastScorcherCount;
+	
+	// count metadata
+	public int timeCountWritten;
 	
 	public TeamMemory(BaseRobot br) {
 		this.br = br;
 		mem = br.rc.getTeamMemory();
-		enemySeenByArchon = new boolean[6][65536];
+		enemySeen = new boolean[4096];
+		
+		timeCountWritten = 0;
 	}
 
 	/** @return the current round number (0th, 1st, 2nd match) */
@@ -70,38 +65,43 @@ public class TeamMemory {
 	 * Call this method when you see an enemy. Next round's units will
 	 * have access to the number of enemies seen in the previous round for each
 	 * RobotType. Called in Radar.
-	 * @param archonID The Archon (0-5) reporting the enemy
-	 * @param enemyID The ID of the enemy being reported
-	 * @param type The RobotType of the enemy being reported
+	 * @param archonID - reporting archon's ID (0-5)
+	 * @param enemyID - reported enemy's ID
+	 * @param type - reported enemy's type
 	 */
-	public void rememberEnemy(int archonID, int enemyID, RobotType type) {
-		if (archonID < 0 || archonID > 5 || getRound() < 0 || getRound() > 1 ||
-				enemySeenByArchon[archonID][enemyID % 65536]) {
-			return;
-		}
-		enemySeenByArchon[archonID][enemyID % 65536] = true;
+	public void countEnemy(int enemyID, RobotType type) {
+		if (enemySeen[enemyID]) return;
+		
+		enemySeen[enemyID] = true;
 		switch (type) {
 			case SOLDIER:
-				soldiersSeen++;
+				curSoldierCount++;
 				break;
 			case SCOUT:
-				scoutsSeen++;
+				curScoutCount++;
 				break;
 			case DISRUPTER:
-				disruptersSeen++;
+				curDisrupterCount++;
 				break;
 			case SCORCHER:
-				scorchersSeen++;
+				curScorcherCount++;
 				break;
-			case ARCHON:
-			case TOWER:
 			default:
 				break;
 		}
-		br.rc.setTeamMemory(1 + archonID, ((long)soldiersSeen << 48) +
-				((long)scoutsSeen << 32) + ((long)disruptersSeen << 16) +
-				(long)scorchersSeen);
 	}
+	
+
+	/**
+	 * Write our current enemy counts to file. Do when you have spare bytecodes
+	 */
+	public void writeEnemyCount() {
+		br.rc.setTeamMemory(1 + br.myArchonID, ((long)curSoldierCount << 48) +
+				((long)curScoutCount << 32) + ((long)curDisrupterCount << 16) +
+				(long)curScorcherCount);
+		timeCountWritten = Clock.getRoundNum();
+	}
+	
 
 	/**
 	 * Returns the average number of enemies of the given RobotType in the
@@ -111,7 +111,7 @@ public class TeamMemory {
 	 * @return The average number of enemies of the given type seen the
 	 * previous round, over each Archon.
 	 */
-	public int getNumEnemiesLastRound(RobotType type) {
+	public void initReadEnemyCount() {
 		int totalSoldiersSeen = 0;
 		int totalScoutsSeen = 0;
 		int totalDisruptersSeen = 0;
@@ -123,26 +123,20 @@ public class TeamMemory {
 			totalDisruptersSeen += (int) ((archonReport >> 16) & 0xFFFF);
 			totalScorchersSeen += (int) (archonReport & 0xFFFF);
 		}
-		// TODO(jven): right now, calls to rememberEnemy are made in radar, from
-		// which we do not have access to archonID, so that only one of the
-		// archon report fields is being populated
-		switch (type) {
-			case SOLDIER:
-//				return totalSoldiersSeen / 6;
-				return totalSoldiersSeen;
-			case SCOUT:
-//				return totalScoutsSeen / 6;
-				return totalScoutsSeen;
-			case DISRUPTER:
-//				return totalDisruptersSeen / 6;
-				return totalDisruptersSeen;
-			case SCORCHER:
-//				return totalScorchersSeen / 6;
-				return totalScorchersSeen;
-			case ARCHON:
-			case TOWER:
-			default:
-				return 0;
-		}
+		
+		// calculate last value averages
+		lastSoldierCount = totalSoldiersSeen / 6;
+		lastScoutCount = totalScoutsSeen / 6;
+		lastDisrupterCount = totalDisruptersSeen / 6;
+		lastScorcherCount = totalScorchersSeen / 6;
+		
+		// seed our initial w/ scaling
+		curSoldierCount += (int)Math.ceil(lastSoldierCount / 5.0);
+		curScoutCount += (int)Math.ceil(lastScoutCount / 5.0);
+		curDisrupterCount += (int)Math.ceil(lastDisrupterCount / 5.0);
+		curScorcherCount += (int)Math.ceil(lastScorcherCount / 5.0);
+		
+		br.dbg.println('e',"Starting Counters - S:" + curSoldierCount + " R:" + curScorcherCount +
+				" C:"+curScoutCount + " D:" + curDisrupterCount);
 	}
 }
