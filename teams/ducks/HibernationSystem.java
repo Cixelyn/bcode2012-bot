@@ -126,7 +126,9 @@ public class HibernationSystem {
 					continue;
 				if (mints[0] != teamkey)
 					continue;
-				if (curLoc.distanceSquaredTo(BroadcastSystem.intToLoc(mints[2])) > 10)
+				
+				// don't wake up far away units in low flux mode
+				if (localLowFluxMode && curLoc.distanceSquaredTo(BroadcastSystem.intToLoc(mints[2])) > 10)
 					continue;
 				
 				br.resetClock();
