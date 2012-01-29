@@ -212,6 +212,12 @@ public class MapCacheSystem {
 		return bestLoc;
 	}
 	
+	public MapLocation getEndGamePowerNodeToCapture() {
+		MapLocation[] nodeLocs = br.dc.getCapturablePowerCores();
+		int randomIndex = (Util.randInt()%nodeLocs.length+nodeLocs.length)%nodeLocs.length;
+		return nodeLocs[randomIndex];
+	}
+	
 	/** Sense all tiles, all map edges, and all power nodes in the robot's sensing range. */
 	public void senseAll() {
 		if(br.myType != RobotType.ARCHON && br.myType != RobotType.SCOUT)
