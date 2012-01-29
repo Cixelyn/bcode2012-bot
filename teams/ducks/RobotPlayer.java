@@ -23,9 +23,10 @@ public class RobotPlayer {
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
 //					br = new ArchonRobotYP(myRC);
+					br = new ArchonRobotYPRB(myRC);
 //					br = new ArchonRobotHT(myRC);
 //					br = new FunBot(myRC);
-					br = new ArchonRobot(myRC);
+//					br = new ArchonRobot(myRC);
 //					br = new CoryIsADuck(myRC);
 					if (br==null)
 					{
@@ -115,17 +116,18 @@ public class RobotPlayer {
 				else if (owner.equals("yp"))
 				{
 //					br = new ScorcherRobotYP(myRC);
-//					br = new ScorcherRobotYP(myRC);
-//					br = new FunBot(myRC);
 					br = new ScorcherRobotYP(myRC);
+//					br = new FunBot(myRC);
+//					br = new ScorcherRobotYPCamp(myRC);
 					if (br == null)
 					{
+						br = new ScorcherRobotYP(myRC);
 						if (myRC.getTeam()==Team.A)
-							br = new ScorcherRobotYP(myRC);
+							br = new ScorcherRobotYPCamp(myRC);
 //							br = new ScorcherRobotYP(myRC);
 //							br = new ScorcherRobotYP(myRC);
 						else
-							br = new ScorcherRobotYP(myRC);
+							br = new ScorcherRobotYPCamp(myRC);
 //							br = new ScorcherRobotYP(myRC);
 //							br = new ScorcherRobotYP(myRC);
 					}
