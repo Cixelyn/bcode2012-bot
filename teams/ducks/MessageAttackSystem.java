@@ -4,10 +4,10 @@ import battlecode.common.MapLocation;
 import battlecode.common.Message;
 
 /**
- * Messaging attack stuff. We replay messages to other teams from our previous
- * matches vs them in an attempt to screw up their units.
- * 
- * His messages (at the time of this writing) consist of 3 ints and a map loc.
+ * Messaging attack stuff. We attempt to detect what team we are playing
+ * against based on their message format and message dumps from the scrim
+ * server/seeding tournament. We then periodically broadcast some "fake"
+ * enemy message.
  * 
  * @author jven
  */
@@ -17,8 +17,10 @@ public class MessageAttackSystem {
 	
 	/** Memorized message. */
 	private Message memorizedMessage;
+	/** The time the memorized message was sent. */
+	private int memorizedMessageTime;
 	
-	/** The enemy team number. */
+	/** The enemy team number, -1 if we don't know. */
 	private int enemyTeam;
 	
 	/** Maps round number to ints used in generating an enemy message. */
@@ -30,6 +32,7 @@ public class MessageAttackSystem {
 	public MessageAttackSystem(BaseRobot myBR) {
 		br = myBR;
 		memorizedMessage = null;
+		memorizedMessageTime = -1;
 		enemyTeam = -1;
 		messageData = new int[16384][0];
 		loaded = false;
@@ -60,63 +63,62 @@ public class MessageAttackSystem {
 				(m.strings == null || m.strings.length == 0) &&
 				m.locations != null && m.locations.length == 1) {
 			enemyTeam = 16;
-			memorizedMessage = m;
-			return true;
-		}
 		
 		// 029: Tera-bull: no strings, just 5 ints and maplocs for Archons...
 		// non-Archons seem to send only 3 ints, but we'll ignore those
-		if (m.ints != null && m.ints.length == 5 && isRoundNum(m.ints[1]) &&
+		} else if (m.ints != null && m.ints.length == 5 && isRoundNum(m.ints[1]) &&
 				(m.strings == null || m.strings.length == 0)) {
 			enemyTeam = 29;
-			memorizedMessage = m;
-		}
 		
 		// 031: Yippee: another string user... 1 int 1 string, int is a hash...
 		// don't appear to explicitly use the current round, so we're trying a
 		// rebroadcast attack
-		if (m.ints != null && m.ints.length == 1 &&
+		} else if (m.ints != null && m.ints.length == 1 &&
 				m.strings != null && m.strings.length == 1 &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 31;
-			memorizedMessage = m;
-			return true;
-		}
 		
 		// 047: fun gamers: for testing purposes only...
-		if (m.ints != null && m.ints.length == 3 && isRoundNum(m.ints[2]) &&
+		} else if (m.ints != null && m.ints.length == 3 && isRoundNum(m.ints[2]) &&
 				m.strings != null && m.strings.length == 1 &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 47;
-			memorizedMessage = m;
-			return true;
-		}
 		
 		// 053: Chaos Legion: sends 1 encrypted string
-		if ((m.ints == null || m.ints.length == 0) &&
+		} else if ((m.ints == null || m.ints.length == 0) &&
 				m.strings != null && m.strings.length == 1 &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 53;
-			memorizedMessage = m;
-			return true;
-		}
+		
+		// 056: PhysicsBot: 4 ints, 5 strings, lots of maplocs... so much flux
+		// ... also, i think the first int is the hash and that it is (something) +
+		// 17 * roundNum
+		} else if (m.ints != null && m.ints.length == 4 &&
+				m.strings != null && m.strings.length == 5) {
+			enemyTeam = 56;
 		
 		// 096: Apathy: although apathy is closed to any sort of naive message
 		// attacks, his messages are very distinctive in that the round number
 		// is encoded in the map location (the y coordinate)
 		//
 		// thanks to boxdrop for their message dumps from the seeding tourney <3
-		if ((m.ints == null || m.ints.length == 0) &&
+		} else if ((m.ints == null || m.ints.length == 0) &&
 				m.strings != null && m.strings.length == 1 &&
 				m.locations != null && m.locations.length == 1 &&
 				isRoundNum(m.locations[0].y)) {
 			enemyTeam = 96;
-			memorizedMessage = m;
-			return true;
 		}
 		
+		// memorize the message that tipped us off and the time we got it
+		if (enemyTeam != -1) {
+			memorizedMessage = m;
+			memorizedMessageTime = br.curRound;
+			return true;
+			
 		// no match :(
-		return false;
+		} else {
+			return false;
+		}
 	}
 	
 	/**
@@ -152,6 +154,7 @@ public class MessageAttackSystem {
 			case 31:
 			case 47:
 			case 53:
+			case 56:
 			default:
 				break;
 		}
@@ -206,6 +209,10 @@ public class MessageAttackSystem {
 			case 53:
 				m = memorizedMessage;
 				m.strings[0] = "!sup!" + m.strings[0];
+				break;
+			case 56:
+				m = memorizedMessage;
+				m.ints[0] = m.ints[0] + 17 * (br.curRound - memorizedMessageTime);
 				break;
 			case 96:
 				m = new Message();
