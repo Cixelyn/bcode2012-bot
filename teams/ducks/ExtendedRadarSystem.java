@@ -109,7 +109,7 @@ public class ExtendedRadarSystem {
 			
 			if(ri.type == RobotType.SOLDIER || ri.type == RobotType.DISRUPTER || ri.type == RobotType.SCORCHER) {
 				if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
-					diff -= Util.getStrengthEstimate(ri);
+					diff -= Util.getEnemyStrengthEstimate(ri);
 				}
 			}
 		}
@@ -131,7 +131,7 @@ public class ExtendedRadarSystem {
 			
 			if(ri.type == RobotType.SOLDIER || ri.type == RobotType.DISRUPTER || ri.type == RobotType.SCORCHER) {
 				if(center.distanceSquaredTo(ri.location) <= radiusSquared) {
-					diff += Util.getStrengthEstimate(ri);
+					diff += Util.getEnemyStrengthEstimate(ri);
 				}
 			}
 		}

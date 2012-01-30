@@ -461,8 +461,8 @@ public class SoldierRobot extends BaseRobot {
 			else if(dy==-1) return dir==Direction.WEST || dir==Direction.NORTH_WEST;
 			break;
 		case -1:
-			if(dy==1) return dir==Direction.SOUTH || dir==Direction.SOUTH_WEST;
-			else if(dy==-1) return dir==Direction.NORTH || dir==Direction.NORTH_WEST;
+			if(dy==2) return dir==Direction.SOUTH || dir==Direction.SOUTH_WEST;
+			else if(dy==-2) return dir==Direction.NORTH || dir==Direction.NORTH_WEST;
 			break;
 		case 1:
 			if(dy==2) return dir==Direction.SOUTH || dir==Direction.SOUTH_EAST;
