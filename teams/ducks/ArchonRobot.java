@@ -55,7 +55,8 @@ public class ArchonRobot extends BaseRobot{
 	
 	Direction lastFlee;
 	
-	static final int RETREAT_RADIUS = 3;
+	static final int RETREAT_RADIUS = 5;
+	static final int RETREAT_RADIUS_CLOSE = 3;
 	static final int RETREAT_DISTANCE = 8;
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
