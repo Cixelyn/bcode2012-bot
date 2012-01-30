@@ -579,7 +579,7 @@ public class BroadcastSystem {
 		System.out.println(BroadcastSystem.locToInt(b));
 		System.out.println(BroadcastSystem.intToLoc(BroadcastSystem.locToInt(b)));
 		
-		System.out.println(BroadcastType.decode(BroadcastType.ENEMY_ARCHON_KILL.header_c).toString());
+		System.out.println(BroadcastType.decode(BroadcastType.NONE.header_c).toString());
 	}
 	
 	
