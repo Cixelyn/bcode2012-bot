@@ -93,7 +93,7 @@ public class ArchonRobot extends BaseRobot{
 		lastPowerNodeGuess = null;
 		lastFlee = null;
 		nextRandomCapTarget = null;
-		nextUnitToMake = RobotType.SOLDIER;
+		nextUnitToMake = getNextUnitToSpawn();
 		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
 	}
 	
@@ -1589,11 +1589,14 @@ public class ArchonRobot extends BaseRobot{
 	}
 	
 	private RobotType getNextUnitToSpawn() {
+		return RobotType.DISRUPTER;
+		/*
 		if(curRound<1500)
 			return RobotType.SOLDIER;
 		if(curRound<2500) 
 			return Util.randDouble() < 0.1 ? RobotType.SCOUT : RobotType.SOLDIER;
 		
 		return Util.randDouble() < 0.05 ? RobotType.SCOUT : (Util.randDouble() < 0.5 ? RobotType.DISRUPTER : RobotType.SOLDIER);	
+		*/
 	}
 }
