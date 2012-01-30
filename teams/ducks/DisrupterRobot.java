@@ -217,7 +217,7 @@ public class DisrupterRobot extends BaseRobot {
 		
 		// Check if we have too much flux
 		if(behavior == BehaviorState.ENEMY_DETECTED || behavior == BehaviorState.SEEK) {
-			if(rc.getFlux() > myMaxEnergon*2/3+5) {
+			if(rc.getFlux() > myMaxEnergon*2/3+15) {
 				behavior = BehaviorState.POOL;
 				target = dc.getClosestArchon();
 				movingTarget = true;
