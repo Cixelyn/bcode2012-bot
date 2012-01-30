@@ -346,7 +346,10 @@ public class ScoutRobot extends BaseRobot {
 //			objective = radar.lowestEnergonAllied.location;
 //			objective = getBestRegenSquare();
 //			objective = getBestRegenSquareFast();
-			objective = getBestRegenSquareFastFull();
+			if (gameEndNow)
+				objective = radar.lowestEnergonAllied.location;
+			else
+				objective = getBestRegenSquareFastFull();
 			if (objective == null) {
 				objective = radar.lowestEnergonAllied.location;
 			}
@@ -367,24 +370,27 @@ public class ScoutRobot extends BaseRobot {
 	
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
-		switch(msgType) {
-		case LOW_FLUX_HELP:
-			if(helpAllyLocation == null) {
-				helpAllyLocation = BroadcastSystem.decodeSenderLoc(sb);
-				helpAllyRound = curRound;
+		if (!gameEndNow)
+		{
+			switch(msgType) {
+			case LOW_FLUX_HELP:
+				if(helpAllyLocation == null) {
+					helpAllyLocation = BroadcastSystem.decodeSenderLoc(sb);
+					helpAllyRound = curRound;
+				}
+				if(strategy == StrategyState.SUPPORT) { //go flux ally if we're in support mode
+					behavior = BehaviorState.SENDING_ALLY_FLUX;
+				}
+				break;
+			case MAP_EDGES:
+				ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
+				break;
+			case POWERNODE_FRAGMENTS:
+				ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
+				break;
+			default:
+				super.processMessage(msgType, sb);
 			}
-			if(strategy == StrategyState.SUPPORT) { //go flux ally if we're in support mode
-				behavior = BehaviorState.SENDING_ALLY_FLUX;
-			}
-			break;
-		case MAP_EDGES:
-			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
-			break;
-		case POWERNODE_FRAGMENTS:
-			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
-			break;
-		default:
-			super.processMessage(msgType, sb);
 		}
 	}
 	
