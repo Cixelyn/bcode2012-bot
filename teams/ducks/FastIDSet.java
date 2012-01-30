@@ -23,14 +23,16 @@ public class FastIDSet {
 		numBlocks = 0;
 	}
 	
-	
 	public void addID(int robotID) {
 		curBlock = curBlock.concat(String.valueOf((char) robotID));
 	}
 	
-	
 	public void removeID(int robotID) {
 		mergeSet.remove(robotID);
+	}
+	
+	public boolean containsID(int robotID) {
+		return mergeSet.contains(robotID) || (curBlock.indexOf((char)robotID)>=0);
 	}
 	
 	public void endRound() {
@@ -41,7 +43,6 @@ public class FastIDSet {
 		}
 	}
 	
-	
 	public int size() {
 		return mergeSet.size();
 	}
@@ -49,6 +50,7 @@ public class FastIDSet {
 	public int getID(int index) {
 		return mergeSet.get(index);
 	}
+	
 	
 	
 	private void addIDBlock(String block) {
@@ -109,6 +111,7 @@ public class FastIDSet {
 		System.out.println("RAW: " + rawBlockSet);
 		System.out.println("SET: " + mergeSet);
 		System.out.println("NUM: " + numBlocks);
+		System.out.println("C?b: " + this.containsID((int)'b'));
 	}
 	
 	public static void main(String[] args) {
