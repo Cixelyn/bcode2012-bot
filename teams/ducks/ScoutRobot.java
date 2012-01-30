@@ -341,7 +341,10 @@ public class ScoutRobot extends BaseRobot {
 		if (radar.lowestEnergonRatio < THRESHOLD_TO_HEAL_ALLIES)
 		{
 //			objective = radar.lowestEnergonAllied.location;
+			int t1 = Clock.getBytecodeNum();
 			objective = getBestRegenSquare();
+			t1 = Clock.getBytecodeNum()-t1;
+			dbg.println('y', ">>"+t1);
 			if (objective == null) {
 				objective = radar.lowestEnergonAllied.location;
 			}
@@ -806,40 +809,51 @@ public class ScoutRobot extends BaseRobot {
 		for (int idx = 0; idx < radar.numAllyRobots; idx++) {
 			RobotInfo ally = radar.allyInfos[radar.allyRobots[idx]];
 			// ignore if he's not damaged
-			if (ally.energon >= ally.type.maxEnergon) {
+			if (ally.energon >= ally.type.maxEnergon || ally.regen) {
 				continue;
 			}
 			// get relative location of ally
 			int dx = ally.location.x - curLoc.x + 5;
 			int dy = ally.location.y - curLoc.y + 5;
 			// set initial bits
-			rows[dy] += (0x1L << (50 - dx * 5));
+			rows[dy] |= (0x1L << (dx * 5));
 		}
 		// pre-shift lefts and rights
 		for (int y = 0; y < 11; y++) {
-			rows[y] += (rows[y] << 5) + (rows[y] >> 5);
+			rows[y] += (rows[y] << 5) + (rows[y] >> 5) + (rows[y] << 10) + (rows[y] >> 10);
 		}
-		// sum consecutive 3 rows
-		for (int y = 1; y < 10; y++) {
-			ans[y] = rows[y - 1] + rows[y] + rows[y + 1];
-		}
+		
+//		// sum consecutive 3 rows
+//		for (int y = 1; y < 10; y++) {
+//			ans[y] = rows[y - 1] + rows[y] + rows[y + 1];
+//		}
+		ans[1] = rows[0] + rows[1] + rows[2] + rows[3];
+		ans[2] = ans[1] + rows[4];
+		ans[3] = ans[2] + rows[5] - rows[0];
+		ans[4] = ans[3] + rows[6] - rows[1];
+		ans[5] = ans[4] + rows[7] - rows[2];
+		ans[6] = ans[5] + rows[8] - rows[3];
+		ans[7] = ans[6] + rows[9] - rows[4];
+		ans[8] = ans[7] + rows[10] - rows[5];
+		ans[9] = ans[8] - rows[6];
+		
 		// get max
 		int maxX = 0;
 		int maxY = 0;
 		int maxDamagedAllies = 0;
 		for (int xf = 5; xf < 50; xf += 5) {
 			for (int y = 1; y < 10; y++) {
-				int damagedAllies = (int)((ans[y] >> (50 - xf)) % 32);
-				if (damagedAllies > 2)
+				int damagedAllies = (int)(((ans[y] >> (xf)) & 0x1fl));
+//				if (damagedAllies > 2)
 				if (damagedAllies > maxDamagedAllies) {
-					maxX = xf / 5 - 5;
-					maxY = y - 5;
+					maxX = xf;
+					maxY = y;
 					maxDamagedAllies = damagedAllies;
 				}
 			}
 		}
 		if (maxDamagedAllies > 0) {
-			return curLoc.add(maxX, maxY);
+			return curLoc.add(maxX/5-5, maxY-5);
 		} else {
 			return null;
 		}
