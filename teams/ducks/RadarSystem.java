@@ -3,7 +3,6 @@ package ducks;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
 import battlecode.common.Robot;
@@ -65,6 +64,9 @@ public class RadarSystem {
 
 	public int centerEnemyX;
 	public int centerEnemyY;
+	
+	public int centerAllyX;
+	public int centerAllyY;
 
 	public int roundsSinceEnemySighted;
 
@@ -169,6 +171,9 @@ public class RadarSystem {
 		lowestFlux = 9000;
 		lowestEnergonAllied = null;
 		lowestEnergonRatio = 1.0;
+
+		centerAllyX = 0;
+		centerAllyY = 0;
 	}
 
 	private void addEnemy(RobotInfo rinfo) throws GameActionException {
@@ -463,6 +468,7 @@ public class RadarSystem {
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
 		
+		MapLocation aloc = rinfo.location;
 
 		numAllyRobots++;
 
@@ -470,9 +476,10 @@ public class RadarSystem {
 			numAllyToRegenerate++;
 		}
 
-		if (rinfo.location.distanceSquaredTo(br.curLoc) <= 2) {
+		if (aloc.distanceSquaredTo(br.curLoc) <= 2) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
+		
 		
 		
 		switch (rinfo.type) {
@@ -482,7 +489,9 @@ public class RadarSystem {
 		case DISRUPTER:
 		{
 			numAllyFighters++;
-			allies_in_dir[br.curLoc.directionTo(rinfo.location).ordinal()]++;
+			allies_in_dir[br.curLoc.directionTo(aloc).ordinal()]++;
+			centerAllyX += aloc.x;
+			centerAllyY += aloc.y;
 		} break;
 		}
 	}
@@ -619,6 +628,17 @@ public class RadarSystem {
 					roundsSinceEnemySighted = 0;
 				}
 			}
+			
+			if (scanAllies)
+			{
+				if (numAllyFighters == 0) {
+					centerAllyX = centerAllyY = -1;
+				} else
+				{
+					centerAllyX = centerAllyX/numAllyFighters;
+					centerAllyY = centerAllyY/numAllyFighters;
+				}
+			}
 		}
 	}
 	
@@ -672,6 +692,20 @@ public class RadarSystem {
 
 	}
 	
+	/**
+	 * Gets the calculated enemy swarm center
+	 */
+	public MapLocation getEnemySwarmCenter() {
+		return new MapLocation(centerEnemyX, centerEnemyY);
+	}
+	
+	/**
+	 * Gets the calculated ally swarm center
+	 */
+	public MapLocation getAllySwarmCenter() {
+		return new MapLocation(centerAllyX, centerAllyY);
+	}
+	
 	public int getAlliesInDirection(Direction dir)
 	{
 		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI)
@@ -680,12 +714,7 @@ public class RadarSystem {
 				allies_in_dir[(dir.ordinal()+7)%8];
 	}
 
-	/**
-	 * Gets the calculated enemy swarm center
-	 */
-	public MapLocation getEnemySwarmCenter() {
-		return new MapLocation(centerEnemyX, centerEnemyY);
-	}
+	
 	
 	/** Gets the enemy info from the radar into your own and nearby robots' extended radar. */
 	public void broadcastEnemyInfo(boolean sendOwnInfo) {
