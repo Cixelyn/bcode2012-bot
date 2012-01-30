@@ -512,7 +512,7 @@ public class ScoutRobot extends BaseRobot {
 		if (mas.guessEnemyTeam() != -1 && !mas.isLoaded() &&
 				Clock.getBytecodesLeft() > 5000) {
 			mos.rememberString("I think we are facing team " +
-				mas.guessEnemyTeam() + ".", true);
+				mas.guessEnemyTeam() + ".");
 			mas.load();
 		}
 		super.useExtraBytecodes();

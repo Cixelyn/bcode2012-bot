@@ -22,8 +22,6 @@ public abstract class BaseRobot {
 	public final TeamMemory tmem;
 	public final RadarSystem radar;
 	public final ExtendedRadarSystem er;
-	public final EnemyArchonKillCache eakc;
-	public final ArchonOwnership ao;
 	public final MovementStateMachine msm;
 	public final DebugSystem dbg;
 	public final MatchObservationSystem mos;
@@ -100,7 +98,7 @@ public abstract class BaseRobot {
 		// DO NOT CHANGE THE ORDER OF THESE DECLARATIONS
 		// SOME CONTRUCTORS NEED OTHERS TO ALREADY BE DECLARED
 		// the boolean is whether to encrypt (222 bytecodes)
-		dbg = new DebugSystem(this, false);
+		dbg = new DebugSystem(this);
 		mos = new MatchObservationSystem(this);
 		dc = new DataCache(this);
 		mc = new MapCacheSystem(this);
@@ -111,8 +109,6 @@ public abstract class BaseRobot {
 		er = new ExtendedRadarSystem(this);
 		fbs = new FluxBalanceSystem(this);
 		ses = new SharedExplorationSystem(this);
-		eakc = new EnemyArchonKillCache(this);
-		ao = new ArchonOwnership(this);
 		msm = new MovementStateMachine(this);
 		hsys = new HibernationSystem(this);
 		mas = new MessageAttackSystem(this);

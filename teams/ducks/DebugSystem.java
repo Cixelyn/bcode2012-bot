@@ -7,7 +7,7 @@ public class DebugSystem {
 	private char launch_owner;
 	private boolean encrypted;
 	
-	public DebugSystem(BaseRobot br, boolean encrypted) {
+	public DebugSystem(BaseRobot br) {
 		this.br = br;
 		this.launch_owner = 'e';
 		this.encrypted = encrypted;
@@ -24,9 +24,6 @@ public class DebugSystem {
 	
 	public void setIndicatorString(char owner, int position, String msg) {
 		if(launch_owner == owner || owner == 'e') {
-			if (encrypted) {
-				msg = Encryption.encryptString(msg, br.curRound);
-			}
 			br.rc.setIndicatorString(position,msg);
 		}
 	}
