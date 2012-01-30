@@ -46,6 +46,7 @@ public class SoldierRobot extends BaseRobot {
 	MapLocation enemySpottedTarget;
 	int enemySpottedRound;
 	int roundLastWakenUp;
+	int lastRoundTooClose;
 	boolean checkedBehind;
 	boolean movingTarget;
 	
@@ -66,6 +67,7 @@ public class SoldierRobot extends BaseRobot {
 		enemySpottedRound = -55555;
 		roundLastWakenUp = -55555;
 		archonSwarmTime = -55555;
+		lastRoundTooClose = -55555;
 		energonLastTurn = 0;
 		fluxLastTurn = 0;
 		checkedBehind = false;
@@ -102,7 +104,7 @@ public class SoldierRobot extends BaseRobot {
 		boolean enemyNearby = closestEnemyLocation != null && 
 				curLoc.distanceSquaredTo(closestEnemyLocation) <= 25;
 		if(curRound%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT == myID%ExtendedRadarSystem.ALLY_MEMORY_TIMEOUT)
-			radar.broadcastEnemyInfo(enemyNearby);
+			radar.broadcastEnemyInfo(enemyNearby && curEnergon > 12);
 		
 		int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 		movingTarget = true;
@@ -393,7 +395,8 @@ public class SoldierRobot extends BaseRobot {
 			
 		} else if(behavior == BehaviorState.ENEMY_DETECTED) {
 			// Fighting an enemy, kite target
-			int strengthDifference = er.getStrengthDifference(target, 24);
+			MapLocation midpoint = new MapLocation((curLoc.x+target.x)/2, (curLoc.y+target.y)/2);
+			int strengthDifference = er.getStrengthDifference(midpoint, 24);
 			boolean weHaveBiggerFront = strengthDifference > 6;
 			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
 			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
@@ -401,8 +404,8 @@ public class SoldierRobot extends BaseRobot {
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
 			
-			// If we are much stronger and my energon is low, retreat to nearest archon
-			if(curEnergon <= 12 && strengthDifference > Util.getOwnStrengthEstimate(rc)+6) {
+			// If my energon is low, retreat to nearest archon
+			if(curEnergon <= 12) {
 				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()), true);
 				
 			// If we aren't turned the right way, turn towards target
@@ -411,6 +414,7 @@ public class SoldierRobot extends BaseRobot {
 				
 			// If we are too close to the target, back off
 			} else if(distToTarget <= tooClose) {
+				lastRoundTooClose = curRound;
 				if(rc.canMove(curDir.opposite()))
 					return new MoveInfo(curDir.opposite(), true);
 				Direction opp = curDir.opposite();
@@ -431,6 +435,8 @@ public class SoldierRobot extends BaseRobot {
 				
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
+				if(curRound < lastRoundTooClose + 12)
+					return new MoveInfo(curLoc.directionTo(target));
 				if(distToTarget <= 5) {
 					if(rc.canMove(dirToTarget))
 						return new MoveInfo(dirToTarget, false);
@@ -489,11 +495,11 @@ public class SoldierRobot extends BaseRobot {
 	}
 	
 	private boolean isOptimalRetreatingDirection(Direction dir, MapLocation target) {
-		int dx = target.x-curLoc.x;
-		int dy = target.y-curLoc.y;
+		int dx = curLoc.x-target.x;
+		int dy = curLoc.y-target.y;
 		if(dx==0) {
 			if(dy==0) return true;
-			if(dy<0) return dir==Direction.SOUTH || dir==Direction.SOUTH_EAST || dir==Direction.SOUTH_WEST;
+			if(dy>0) return dir==Direction.SOUTH || dir==Direction.SOUTH_EAST || dir==Direction.SOUTH_WEST;
 			return dir==Direction.NORTH || dir==Direction.NORTH_EAST || dir==Direction.NORTH_WEST;
 		}
 		if(dx>0) {

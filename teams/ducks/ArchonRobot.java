@@ -101,7 +101,7 @@ public class ArchonRobot extends BaseRobot{
 		adjNode = getNextPowerNodeAdjacentToCore();
 		
 		// The new strategy transition
-		if(gameEndNow)
+		if(gameEndNow && myArchonID<=3)
 			strategy = StrategyState.ENDGAME_CAP;
 		switch(strategy) {
 		case INITIAL_EXPLORE:
@@ -113,7 +113,7 @@ public class ArchonRobot extends BaseRobot{
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if(curRound > 2500) {
+			if(curRound > 1500) {
 				if(adjNode==null)
 					strategy = StrategyState.EFFICIENT_CAP;
 				else if(myArchonID!=0)
@@ -1598,14 +1598,13 @@ public class ArchonRobot extends BaseRobot{
 	}
 	
 	private RobotType getNextUnitToSpawn() {
-		return RobotType.DISRUPTER;
-		/*
-		if(curRound<1500)
+		if(behavior == BehaviorState.BATTLE)
+			return Util.randDouble() < 0.15 ? RobotType.SCOUT : RobotType.SOLDIER;
+		if(curRound<1000)
 			return RobotType.SOLDIER;
-		if(curRound<2500) 
+		if(curRound<2000) 
 			return Util.randDouble() < 0.1 ? RobotType.SCOUT : RobotType.SOLDIER;
 		
-		return Util.randDouble() < 0.05 ? RobotType.SCOUT : (Util.randDouble() < 0.5 ? RobotType.DISRUPTER : RobotType.SOLDIER);	
-		*/
+		return Util.randDouble() < 0.05 ? RobotType.SCOUT : (Util.randDouble() < 0.3 ? RobotType.DISRUPTER : RobotType.SOLDIER);
 	}
 }
