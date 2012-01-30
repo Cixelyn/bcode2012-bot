@@ -166,6 +166,20 @@ public class ScoutRobot extends BaseRobot {
 				resetBehavior();
 		}
 		
+		// if we're in battle mode, check behavior every turn
+		if (strategy == StrategyState.BATTLE) {
+			// if there are no enemy soldiers or disrupters around and an enemy
+			// archon or scorcher is in range, harass them...
+			if (radar.numEnemySoldiers + radar.numEnemyDisruptors == 0 &&
+					radar.numEnemyArchons + radar.numEnemyScorchers > 0) {
+				behavior = BehaviorState.HARASS;
+				
+			// ... otherwise, help your friends!
+			} else {
+				behavior = BehaviorState.SUPPORT_FRONT_LINES;
+			}
+		}
+		
 		// set objective based on behavior
 		switch (behavior) {
 			case SENDING_ALLY_FLUX:
@@ -185,6 +199,8 @@ public class ScoutRobot extends BaseRobot {
 			case SUPPORT_FRONT_LINES:
 				supportFrontline();
 				break;
+			case HARASS:
+				// all targets in this mode are temporary so we don't set objective
 			default:
 				break;
 		}
@@ -266,17 +282,7 @@ public class ScoutRobot extends BaseRobot {
 			}
 			break;
 		case BATTLE:
-			// if there are no enemy soldiers or disrupters around and an enemy
-			// archon or scorcher is in range, harass them...
-			if (radar.numEnemySoldiers + radar.numEnemyDisruptors == 0 &&
-					radar.numEnemyArchons + radar.numEnemyScorchers > 0) {
-				dbg.println('e', "Harassing");
-				behavior = BehaviorState.HARASS;
-				
-			// ... otherwise, help your friends!
-			} else {
-				behavior = BehaviorState.SUPPORT_FRONT_LINES;
-			}
+			// these behaviors are set every turn in the run method
 			break;
 		case SUPPORT:
 			if(helpAllyLocation != null)
@@ -386,7 +392,7 @@ public class ScoutRobot extends BaseRobot {
 				// correctly!
 				return new MoveInfo(nav.navigateGreedy(dc.getClosestArchon()), false);
 			} else {
-				return new MoveInfo(nav.navigateGreedy(enemyToHarass.location));
+				return new MoveInfo(nav.navigateGreedy(enemyToHarass.location), false);
 			}
 		}
 		
@@ -744,7 +750,8 @@ public class ScoutRobot extends BaseRobot {
 		RobotInfo closestEnemyScorcher = null;
 		int closestEnemyArchonDist = Integer.MAX_VALUE;
 		int closestEnemyScorcherDist = Integer.MAX_VALUE;
-		for (RobotInfo enemy : radar.enemyInfos) {
+		for (int idx = 0; idx < radar.numEnemyRobots; idx++) {
+			RobotInfo enemy = radar.enemyInfos[radar.enemyRobots[idx]];
 			// make sure non-null
 			if (enemy == null) {
 				continue;
