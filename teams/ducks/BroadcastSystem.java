@@ -502,6 +502,8 @@ public class BroadcastSystem {
 	
 	private void memoEnemy(Message m) {
 		// log message to match observation
+		
+		// TODO: KILL ME FOR PERFORMANCE PLZ
 		if (br.myType == RobotType.ARCHON) {
 			br.mos.rememberMessage(m);
 		}
