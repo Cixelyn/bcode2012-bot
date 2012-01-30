@@ -184,12 +184,12 @@ public class ArchonRobot extends BaseRobot{
 			
 		// If someone else told us of a recent enemy spotting, go to that location
 		} else if(curRound < enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT) {
-			if(strategy == StrategyState.DEFEND || 
-					strategy == StrategyState.RETURN_HOME || 
+			if(strategy == StrategyState.RETURN_HOME || 
 					strategy == StrategyState.ENDGAME_CAP) {
 				resetTarget();
 			} else {
-				behavior = BehaviorState.SWARM;
+				behavior = curLoc.distanceSquaredTo(enemySpottedTarget) <= 256 ? 
+						BehaviorState.BATTLE : BehaviorState.SWARM;
 				target = enemySpottedTarget;
 				movingTarget = true;
 				if(curLoc.distanceSquaredTo(enemySpottedTarget) <= 16) {
@@ -403,18 +403,30 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
+		MapLocation newLoc;
+		int enemyDist;
 		switch(msgType) {
 		case ENEMY_SPOTTED:
 			int[] shorts = BroadcastSystem.decodeUShorts(sb);
-			if(shorts[0] > enemySpottedRound) {
+			newLoc = new MapLocation(shorts[1], shorts[2]);
+			enemyDist = enemySpottedTarget==null ? 55555 : 
+				curLoc.distanceSquaredTo(enemySpottedTarget);
+			if(enemyDist<=16) break;
+			if(curRound > enemySpottedRound+20 && shorts[0] > enemySpottedRound || 
+					enemyDist > curLoc.distanceSquaredTo(newLoc)) {
 				enemySpottedRound = shorts[0];
-				enemySpottedTarget = new MapLocation(shorts[1], shorts[2]);
+				enemySpottedTarget = newLoc;
 			}
 			break;
 		case ENEMY_INFO:
-			if(curRound > enemySpottedRound) {
+			newLoc = BroadcastSystem.decodeSenderLoc(sb);
+			enemyDist = enemySpottedTarget==null ? 55555 : 
+				curLoc.distanceSquaredTo(enemySpottedTarget);
+			if(enemyDist<=16) break;
+			if(curRound > enemySpottedRound+20 || 
+					enemyDist > curLoc.distanceSquaredTo(newLoc)) {
 				enemySpottedRound = curRound;
-				enemySpottedTarget = BroadcastSystem.decodeSenderLoc(sb);
+				enemySpottedTarget = newLoc;
 			}
 			break;
 		case MAP_EDGES:
@@ -1117,9 +1129,8 @@ public class ArchonRobot extends BaseRobot{
 	private RobotType getNextUnitToSpawn() {
 		if(curRound<1500)
 			return RobotType.SOLDIER;
-		if(curRound<2500) {
+		if(curRound<2500) 
 			return Util.randDouble() < 0.1 ? RobotType.SCOUT : RobotType.SOLDIER;
-		}
 		
 		return Util.randDouble() < 0.05 ? RobotType.SCOUT : RobotType.SOLDIER;	
 	}
