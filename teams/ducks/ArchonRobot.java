@@ -1122,6 +1122,7 @@ public class ArchonRobot extends BaseRobot{
 		int[] wall_in_dir = new int[8];
 		int[] s = new int[8];
 		int[] score_aggregate = new int[8];
+		int[] movable = new int[8];
 		int dd;
 		
 //		now, deal with when we are close to map boundaries
@@ -1129,10 +1130,16 @@ public class ArchonRobot extends BaseRobot{
 		{
 //			we are near the EAST edge
 			wall_in_dir[2] = 1;
+//			if (mc.cacheToWorldX(mc.edgeXMax) <= curLoc.x+1)
+//			{
+//				wall_in_dir[1] = wall_in_dir[3] = 3;
+//				wall_in_dir[2] = 5;
+//			} else 
 			if (mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS_CLOSE)
 			{
 				wall_in_dir[1] = wall_in_dir[3] = 1;
 				wall_in_dir[2] = 2;
+				movable[1] = movable[2] = movable[3] = 1;
 			}
 		}
 		
@@ -1140,10 +1147,16 @@ public class ArchonRobot extends BaseRobot{
 		{
 //			we are near the WEST edge
 			wall_in_dir[6] = 1;
+//			if (mc.cacheToWorldX(mc.edgeXMin) <= curLoc.x-1)
+//			{
+//				wall_in_dir[7] = wall_in_dir[5] = 3;
+//				wall_in_dir[6] = 5;
+//			} else 
 			if (mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS_CLOSE)
 			{
 				wall_in_dir[7] = wall_in_dir[5] = 1;
 				wall_in_dir[6] = 2;
+				movable[5] = movable[6] = movable[7] = 1;
 			}
 		}
 		
@@ -1151,10 +1164,16 @@ public class ArchonRobot extends BaseRobot{
 		{
 //			we are near the SOUTH edge
 			wall_in_dir[4] = 1;
+//			if (mc.cacheToWorldY(mc.edgeYMax) <= curLoc.y+1)
+//			{
+//				wall_in_dir[3] = wall_in_dir[5] = 3;
+//				wall_in_dir[4] = 5;
+//			} else 
 			if (mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS_CLOSE)
 			{
 				wall_in_dir[3] = wall_in_dir[5] = 1;
 				wall_in_dir[4] = 2;
+				movable[3] = movable[4] = movable[5] = 1;
 			}
 		}
 		
@@ -1162,10 +1181,16 @@ public class ArchonRobot extends BaseRobot{
 		{
 //			we are near the NORTH edge
 			wall_in_dir[0] = 1;
+//			if (mc.cacheToWorldY(mc.edgeYMin) >= curLoc.y-1)
+//			{
+//				wall_in_dir[1] = wall_in_dir[7] = 3;
+//				wall_in_dir[0] = 5;
+//			} else 
 			if (mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS_CLOSE)
 			{
 				wall_in_dir[1] = wall_in_dir[7] = 1;
 				wall_in_dir[0] = 2;
+				movable[7] = movable[0] = movable[1] = 1;
 			}
 		}
 		
@@ -1190,23 +1215,33 @@ public class ArchonRobot extends BaseRobot{
 		s[6] = wall_in_dir[6] + radar.numEnemyInDir[6] - radar.allies_in_dir[6];
 		s[7] = wall_in_dir[7] + radar.numEnemyInDir[7] - radar.allies_in_dir[7];
 		
-		score_aggregate[0] = s[6]+s[7]+s[0]+s[1]+s[2];
-		score_aggregate[1] = s[3]+s[7]+s[0]+s[1]+s[2];
-		score_aggregate[2] = s[3]+s[4]+s[0]+s[1]+s[2];
-		score_aggregate[3] = s[3]+s[4]+s[5]+s[1]+s[2];
-		score_aggregate[4] = s[3]+s[4]+s[5]+s[6]+s[2];
-		score_aggregate[5] = s[3]+s[4]+s[5]+s[6]+s[7];
-		score_aggregate[6] = s[0]+s[4]+s[5]+s[6]+s[7];
-		score_aggregate[7] = s[0]+s[1]+s[5]+s[6]+s[7];
+//		score_aggregate[0] = s[6]+s[7]+s[0]+s[1]+s[2];
+//		score_aggregate[1] = s[3]+s[7]+s[0]+s[1]+s[2];
+//		score_aggregate[2] = s[3]+s[4]+s[0]+s[1]+s[2];
+//		score_aggregate[3] = s[3]+s[4]+s[5]+s[1]+s[2];
+//		score_aggregate[4] = s[3]+s[4]+s[5]+s[6]+s[2];
+//		score_aggregate[5] = s[3]+s[4]+s[5]+s[6]+s[7];
+//		score_aggregate[6] = s[0]+s[4]+s[5]+s[6]+s[7];
+//		score_aggregate[7] = s[0]+s[1]+s[5]+s[6]+s[7];
 		
-		int min = score_aggregate[0];
-		if (score_aggregate[1]<min) min=score_aggregate[1];
-		if (score_aggregate[2]<min) min=score_aggregate[2];
-		if (score_aggregate[3]<min) min=score_aggregate[3];
-		if (score_aggregate[4]<min) min=score_aggregate[4];
-		if (score_aggregate[5]<min) min=score_aggregate[5];
-		if (score_aggregate[6]<min) min=score_aggregate[6];
-		if (score_aggregate[7]<min) min=score_aggregate[7];
+		score_aggregate[0] = s[7]+s[0]+s[1];
+		score_aggregate[1] = s[0]+s[1]+s[2];
+		score_aggregate[2] = s[3]+s[1]+s[2];
+		score_aggregate[3] = s[3]+s[4]+s[5];
+		score_aggregate[4] = s[3]+s[4]+s[5];
+		score_aggregate[5] = s[4]+s[5]+s[6];
+		score_aggregate[6] = s[5]+s[6]+s[7];
+		score_aggregate[7] = s[0]+s[6]+s[7];
+		
+		int min = 9999;
+		if (movable[0]==0 && score_aggregate[0]<min) min=score_aggregate[0];
+		if (movable[1]==0 && score_aggregate[1]<min) min=score_aggregate[1];
+		if (movable[2]==0 && score_aggregate[2]<min) min=score_aggregate[2];
+		if (movable[3]==0 && score_aggregate[3]<min) min=score_aggregate[3];
+		if (movable[4]==0 && score_aggregate[4]<min) min=score_aggregate[4];
+		if (movable[5]==0 && score_aggregate[5]<min) min=score_aggregate[5];
+		if (movable[6]==0 && score_aggregate[6]<min) min=score_aggregate[6];
+		if (movable[7]==0 && score_aggregate[7]<min) min=score_aggregate[7];
 		
 		
 		
@@ -1399,34 +1434,39 @@ public class ArchonRobot extends BaseRobot{
 		{
 			target = target.add(target.directionTo(curLoc));
 		}
-//		
-//		int x = target.x;
-//		int y = target.y;
-////		now, deal with when we are close to map boundaries
-//		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) <= x)
-//		{
-////			we are near the EAST edge
-//			x = mc.cacheToWorldX(mc.edgeXMax)-1;
-//		}
-//		
-//		if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) >= x)
-//		{
-////			we are near the WEST edge
-//			x = mc.cacheToWorldX(mc.edgeXMin)+1;
-//		}
-//		
-//		if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) <= y)
-//		{
-////			we are near the SOUTH edge
-//			y = mc.cacheToWorldY(mc.edgeYMax)-1;
-//		}
-//		
-//		if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) >= y)
-//		{
-////			we are near the NORTH edge
-//			y = mc.cacheToWorldY(mc.edgeYMin)+1;
-//		}
-//		target = new MapLocation(x, y);
+		
+		int x = target.x;
+		int y = target.y;
+//		now, deal with when we are close to map boundaries
+		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) <= x)
+		{
+//			we are near the EAST edge
+			x = mc.cacheToWorldX(mc.edgeXMax)-1;
+		}
+		
+		if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) >= x)
+		{
+//			we are near the WEST edge
+			x = mc.cacheToWorldX(mc.edgeXMin)+1;
+		}
+		
+		if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) <= y)
+		{
+//			we are near the SOUTH edge
+			y = mc.cacheToWorldY(mc.edgeYMax)-1;
+		}
+		
+		if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) >= y)
+		{
+//			we are near the NORTH edge
+			y = mc.cacheToWorldY(mc.edgeYMin)+1;
+		}
+		target = new MapLocation(x, y);
+		
+		while (mc.isWall(target))
+		{
+			target = target.add(target.directionTo(curLoc));
+		}
 	}
 	
 	private void computeBattleTarget()
