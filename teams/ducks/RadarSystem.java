@@ -696,9 +696,10 @@ public class RadarSystem {
 	
 	/** Gets the enemy info from the radar into your own and nearby robots' extended radar. */
 	public void broadcastEnemyInfo(boolean sendOwnInfo) {
-		if(numEnemyRobots==0 && !sendOwnInfo)
+		int localNumEnemyRobots = numEnemyRobots;
+		if(localNumEnemyRobots==0 && !sendOwnInfo)
 			return;
-		int[] shorts = new int[(numEnemyRobots)*5+(sendOwnInfo?5:0)];
+		int[] shorts = new int[(localNumEnemyRobots)*5+(sendOwnInfo?5:0)];
 		if(sendOwnInfo) {
 			shorts[0] = br.myID;
 			shorts[1] = br.curLoc.x;
@@ -706,7 +707,7 @@ public class RadarSystem {
 			shorts[3] = 10000+(int)Math.ceil(Util.getOwnStrengthEstimate(br.rc));
 			shorts[4] = br.myType.ordinal();
 		}
-		for(int i=0, c=sendOwnInfo?5:0; i<numEnemyRobots; i++, c+=5) {
+		for(int i=0, c=sendOwnInfo?5:0; i<localNumEnemyRobots; i++, c+=5) {
 			RobotInfo ri = enemyInfos[enemyRobots[i]];
 			shorts[c] = ri.robot.getID();
 			shorts[c+1] = ri.location.x;
