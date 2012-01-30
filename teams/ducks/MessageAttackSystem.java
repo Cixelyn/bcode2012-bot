@@ -187,11 +187,14 @@ public class MessageAttackSystem {
 		switch (enemyTeam) {
 			case 16:
 				int[] data = messageData[br.curRound];
-				// if we don't have any message data for this round, return null
+				// if we don't have any message data for this round, return old message
 				if (data != null) {
 					m = new Message();
 					m.ints = new int[] {data[0], br.curRound, data[1]};
 					m.locations = new MapLocation[] {new MapLocation(data[2], data[3])};
+				} else {
+					m = memorizedMessage;
+					m.ints[1] = br.curRound;
 				}
 				break;
 			case 29:
@@ -215,10 +218,7 @@ public class MessageAttackSystem {
 				m.ints[0] = m.ints[0] + 17 * (br.curRound - memorizedMessageTime);
 				break;
 			case 96:
-				m = new Message();
-				m.strings = new String[] {"^sup^&^sup^&"};
-				m.locations = new MapLocation[] {new MapLocation(
-						m.strings.hashCode() + br.curRound, br.curRound)};
+				m = memorizedMessage;
 				break;
 			default:
 				break;
