@@ -510,6 +510,8 @@ public class ScoutRobot extends BaseRobot {
 				ses.broadcastMapEdges();
 			}
 		}
+		super.useExtraBytecodes();
+		
 		// If we have identified the enemy team, load past message data.
 		// This method call will occur at most once per Scout.
 		if (mas.guessEnemyTeam() != -1 && !mas.isLoaded() &&
@@ -518,7 +520,6 @@ public class ScoutRobot extends BaseRobot {
 				mas.guessEnemyTeam() + ".");
 			mas.load();
 		}
-		super.useExtraBytecodes();
 	}
 	
 	private Direction getRetreatDir()
