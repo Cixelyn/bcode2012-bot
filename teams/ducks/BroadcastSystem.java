@@ -29,6 +29,7 @@ public class BroadcastSystem {
 	public int teamkey;
 	
 	private boolean shouldSendWakeup;
+	private final boolean activateMAS;
 
 	StringBuilder msgContainer;
 	
@@ -37,6 +38,8 @@ public class BroadcastSystem {
 		System.out.println("WARNING: RADIO NOT BOUND TO BASEROBOT");
 		msgContainer = new StringBuilder();
 		teamkey = 1;
+		
+		activateMAS = false;
 	}
 
 	
@@ -48,6 +51,8 @@ public class BroadcastSystem {
 		
 		msgContainer = new StringBuilder();
 		shouldSendWakeup = false;
+		
+		activateMAS = (br.myType == RobotType.SCOUT);
 	}
 
 	/**
@@ -508,7 +513,7 @@ public class BroadcastSystem {
 //			br.mos.rememberMessage(m);
 //		}
 		// if a scout, try to identify enemy team
-		if (br.myType == RobotType.SCOUT && br.mas.guessEnemyTeam() == -1 &&
+		if (activateMAS && br.mas.guessEnemyTeam() == -1 &&
 				Util.randDouble() < 0.01) {
 			// the boolean determines whether we encrypt or not
 			br.mas.detectTeam(m);
