@@ -1524,20 +1524,36 @@ public class ScoutRobot extends BaseRobot {
 			int dy = ally.location.y - localCurLocY + 5;
 			
 			// set initial bits
-			switch (dy)
-			{
-			case 0: 	r0 |= (0x1L << (dx * 5)); break;
-			case 1: 	r1 |= (0x1L << (dx * 5)); break;
-			case 2: 	r2 |= (0x1L << (dx * 5)); break;
-			case 3: 	r3 |= (0x1L << (dx * 5)); break;
-			case 4: 	r4 |= (0x1L << (dx * 5)); break;
-			case 5: 	r5 |= (0x1L << (dx * 5)); break;
-			case 6: 	r6 |= (0x1L << (dx * 5)); break;
-			case 7: 	r7 |= (0x1L << (dx * 5)); break;
-			case 8: 	r8 |= (0x1L << (dx * 5)); break;
-			case 9: 	r9 |= (0x1L << (dx * 5)); break;
-			case 10: 	r10 |= (0x1L << (dx * 5)); break;
-			}
+			if (ally.type==RobotType.ARCHON)
+				switch (dy)
+				{
+				case 0: 	r0 |= (0x2L << (dx * 5)); break;
+				case 1: 	r1 |= (0x2L << (dx * 5)); break;
+				case 2: 	r2 |= (0x2L << (dx * 5)); break;
+				case 3: 	r3 |= (0x2L << (dx * 5)); break;
+				case 4: 	r4 |= (0x2L << (dx * 5)); break;
+				case 5: 	r5 |= (0x2L << (dx * 5)); break;
+				case 6: 	r6 |= (0x2L << (dx * 5)); break;
+				case 7: 	r7 |= (0x2L << (dx * 5)); break;
+				case 8: 	r8 |= (0x2L << (dx * 5)); break;
+				case 9: 	r9 |= (0x2L << (dx * 5)); break;
+				case 10: 	r10 |= (0x2L << (dx * 5)); break;
+				}
+			else
+				switch (dy)
+				{
+				case 0: 	r0 |= (0x1L << (dx * 5)); break;
+				case 1: 	r1 |= (0x1L << (dx * 5)); break;
+				case 2: 	r2 |= (0x1L << (dx * 5)); break;
+				case 3: 	r3 |= (0x1L << (dx * 5)); break;
+				case 4: 	r4 |= (0x1L << (dx * 5)); break;
+				case 5: 	r5 |= (0x1L << (dx * 5)); break;
+				case 6: 	r6 |= (0x1L << (dx * 5)); break;
+				case 7: 	r7 |= (0x1L << (dx * 5)); break;
+				case 8: 	r8 |= (0x1L << (dx * 5)); break;
+				case 9: 	r9 |= (0x1L << (dx * 5)); break;
+				case 10: 	r10 |= (0x1L << (dx * 5)); break;
+				}
 		}
 		
 		p0 = (r0<<5)+r0+(r0>>5);
