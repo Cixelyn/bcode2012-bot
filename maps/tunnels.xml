@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map height="43" width="60">
+    <game seed="1876490701" rounds="5665"/>
+    <symbols>
+        <symbol terrain="LAND" type="TERRAIN" character="."/>
+        <symbol terrain="VOID" type="TERRAIN" character="#"/>
+        <symbol team="NEUTRAL" type="NODE" character="@"/>
+        <symbol team="A" type="NODE" character="N"/>
+        <symbol team="B" type="NODE" character="n"/>
+        <symbol team="A" type="ARCHON" character="A"/>
+        <symbol team="B" type="ARCHON" character="a"/>
+    </symbols>
+    <nodelinks>
+        <nodelink from="53,28" to="47,36"/>
+	<nodelink from="30,13" to="34,23"/>
+	<nodelink from="47,13" to="47,20"/>
+	<nodelink from="6,14" to="12,22"/>
+	<nodelink from="12,29" to="29,29"/>
+	<nodelink from="30,13" to="25,19"/>
+	<nodelink from="30,13" to="47,13"/>
+	<nodelink from="47,20" to="53,28"/>
+	<nodelink from="42,29" to="31,37"/>
+	<nodelink from="34,23" to="42,29"/>
+	<nodelink from="48,8" to="47,13"/>
+	<nodelink from="28,5" to="12,6"/>
+	<nodelink from="53,28" to="42,29"/>
+	<nodelink from="47,36" to="31,37"/>
+	<nodelink from="17,13" to="12,22"/>
+	<nodelink from="34,23" to="29,29"/>
+	<nodelink from="42,29" to="47,36"/>
+	<nodelink from="11,34" to="31,37"/>
+	<nodelink from="12,29" to="11,34"/>
+	<nodelink from="25,19" to="29,29"/>
+	<nodelink from="12,22" to="12,29"/>
+	<nodelink from="50,2" to="48,8"/>
+	<nodelink from="12,6" to="6,14"/>
+	<nodelink from="25,19" to="12,22"/>
+	<nodelink from="11,34" to="9,40"/>
+	<nodelink from="28,5" to="30,13"/>
+	<nodelink from="12,6" to="17,13"/>
+	<nodelink from="47,20" to="34,23"/>
+	<nodelink from="28,5" to="17,13"/>
+	<nodelink from="17,13" to="6,14"/>
+	<nodelink from="25,19" to="34,23"/>
+	<nodelink from="17,13" to="25,19"/>
+	<nodelink from="29,29" to="31,37"/>
+	<nodelink from="28,5" to="48,8"/>
+	<nodelink from="47,20" to="42,29"/>
+    </nodelinks>
+    <data>
+<![CDATA[
+.........#..#...............................................
+.##.................###.....#.....................AA........
+.##...................##...###.....###...........ANA........
+######.........#.......#####.####.........#......AA........#
+.#######.......#........#.#.....###.#...###................#
+.##...#.................#...@....####...#.........###.......
+.#....#.....@....................##.....##...######.#####...
+.#..................#######....###.....####.............##..
+.....................######....#.....######.....@........#..
+...................................####.#####......###...#..
+...........#.......................#....########...#######..
+.###.....###...........#.........###..........##...##...##..
+.#........##...........#...........................##...##..
+.#........##.....@.....##.....@....###....##...@...##...##..
+.#....@....###..........##...........#....##........##..##..
+.#.........#.........................#.....#..##....##......
+...........#######....########.......##....#...#....####....
+#................######.....##.......##....#...###....##...#
+.....................##..........#...##....#.....###...#....
+..........######......##.@.......###.##....##......###.##...
+....##........##......##.........######....##..@.....#.##...
+..#####.......##......#####......#####......##.......#####..
+...##.#.....@..##....######.........##......##........##....
+...##.###......##....##.###.......@.##......######..........
+....#...###.....#....##...#..........##.....................
+#...##....###...#....##.......##.....######................#
+....####....#...#....##.......########....#######...........
+......##....##..#.....#.........................#.........#.
+..##..##........##....#...........##..........###....@....#.
+..##...##...@...##....###....@.....##.....@.....##........#.
+..##...##...........................#...........##........#.
+..##...##...##..........###.........#...........###.....###.
+..#######...########....#.......................#...........
+..#...###......#####.####...................................
+..#........@.....######.....#....######.....................
+..##.............####.....###....#######..................#.
+...#####.######...##.....##....................@.....#....#.
+.......###.........#...####....@...#.................#...##.
+#................###...#.###.....#.#........#.......#######.
+#........aa......#.........####.#####.......#.........######
+........ana...........###.....###...##...................##.
+........aa.....................#.....###.................##.
+...............................................#..#.........
+]]>
+    </data>
+    <height>
+<![CDATA[
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+
+]]>
+    </height>
+</map>
