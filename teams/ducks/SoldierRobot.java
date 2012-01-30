@@ -412,12 +412,23 @@ public class SoldierRobot extends BaseRobot {
 				
 			// If we are too close to the target, back off
 			} else if(distToTarget <= tooClose) {
-				if(targetIsRanged) {
+				if(rc.canMove(curDir.opposite()))
+					return new MoveInfo(curDir.opposite(), true);
+				Direction opp = curDir.opposite();
+				Direction dir = opp.rotateLeft();
+				if(isOptimalRetreatingDirection(dir, target) && rc.canMove(dir))
+					return new MoveInfo(dir, true);
+				dir = opp.rotateRight();
+				if(isOptimalRetreatingDirection(dir, target) && rc.canMove(dir))
+					return new MoveInfo(dir, true);
+				dir = opp.rotateLeft().rotateLeft();
+				if(isOptimalRetreatingDirection(dir, target) && rc.canMove(dir))
+					return new MoveInfo(dir, true);
+				dir = opp.rotateLeft().rotateRight();
+				if(isOptimalRetreatingDirection(dir, target) && rc.canMove(dir))
+					return new MoveInfo(dir, true);
+				if(targetIsRanged)
 					return new MoveInfo(dirToTarget.opposite(), true);
-				} else {
-					if(rc.canMove(curDir.opposite()))
-						return new MoveInfo(curDir.opposite(), true);
-				}
 				
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
@@ -476,6 +487,33 @@ public class SoldierRobot extends BaseRobot {
 			break;
 		}
 		return dir == dirToTarget;
+	}
+	
+	private boolean isOptimalRetreatingDirection(Direction dir, MapLocation target) {
+		int dx = target.x-curLoc.x;
+		int dy = target.y-curLoc.y;
+		if(dx==0) {
+			if(dy==0) return true;
+			if(dy<0) return dir==Direction.SOUTH || dir==Direction.SOUTH_EAST || dir==Direction.SOUTH_WEST;
+			return dir==Direction.NORTH || dir==Direction.NORTH_EAST || dir==Direction.NORTH_WEST;
+		}
+		if(dx>0) {
+			if(dy>dx) return dir==Direction.SOUTH_EAST || dir==Direction.SOUTH;
+			if(dy==dx) return dir==Direction.SOUTH_EAST || dir==Direction.SOUTH || dir==Direction.EAST;
+			if(dy>0) return dir==Direction.EAST || dir==Direction.SOUTH_EAST;
+			if(dy==0) return dir==Direction.EAST || dir==Direction.NORTH_EAST || dir==Direction.SOUTH_EAST;
+			if(dy>-dx) return dir==Direction.EAST || dir==Direction.NORTH_EAST;
+			if(dy==-dx) return dir==Direction.EAST || dir==Direction.NORTH_EAST || dir==Direction.NORTH;
+			return dir==Direction.NORTH || dir==Direction.NORTH_EAST;
+		}
+		dx = -dx;
+		if(dy>dx) return dir==Direction.SOUTH_WEST || dir==Direction.SOUTH;
+		if(dy==dx) return dir==Direction.SOUTH_WEST || dir==Direction.SOUTH || dir==Direction.WEST;
+		if(dy>0) return dir==Direction.WEST || dir==Direction.SOUTH_WEST;
+		if(dy==0) return dir==Direction.WEST || dir==Direction.NORTH_WEST || dir==Direction.SOUTH_WEST;
+		if(dy>-dx) return dir==Direction.WEST || dir==Direction.NORTH_WEST;
+		if(dy==-dx) return dir==Direction.WEST || dir==Direction.NORTH_WEST || dir==Direction.NORTH;
+		return dir==Direction.NORTH || dir==Direction.NORTH_WEST;
 	}
 	
 	@Override
