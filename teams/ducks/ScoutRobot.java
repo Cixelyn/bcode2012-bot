@@ -487,8 +487,8 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		//	keep away from allied scouts
-//		if(behavior != BehaviorState.REPORT_TO_ARCHON && radar.closestAllyScoutDist < 16)
-//			return new MoveInfo(curLoc.directionTo(radar.closestAllyScout.location).opposite(), false);
+		if(behavior != BehaviorState.REPORT_TO_ARCHON && radar.closestAllyScoutDist < 10)
+			return new MoveInfo(curLoc.directionTo(radar.closestAllyScout.location).opposite(), false);
 		
 		// Go to objective
 		return new MoveInfo(curLoc.directionTo(objective), false);
@@ -819,7 +819,10 @@ public class ScoutRobot extends BaseRobot {
 			int dx = ally.location.x - curLoc.x + 5;
 			int dy = ally.location.y - curLoc.y + 5;
 			// set initial bits
-			rows[dy] |= (0x1L << (dx * 5));
+			if (ally.type==RobotType.ARCHON)
+				rows[dy] |= (0x2L << (dx * 5));
+			else
+				rows[dy] |= (0x1L << (dx * 5));
 		}
 		// pre-shift lefts and rights
 		for (int y = 0; y < 11; y++) {
@@ -880,20 +883,36 @@ public class ScoutRobot extends BaseRobot {
 			int dx = ally.location.x - curLoc.x + 5;
 			int dy = ally.location.y - curLoc.y + 5;
 			// set initial bits
-			switch (dy)
-			{
-			case 0: 	r0 |= (0x1L << (dx * 5)); break;
-			case 1: 	r1 |= (0x1L << (dx * 5)); break;
-			case 2: 	r2 |= (0x1L << (dx * 5)); break;
-			case 3: 	r3 |= (0x1L << (dx * 5)); break;
-			case 4: 	r4 |= (0x1L << (dx * 5)); break;
-			case 5: 	r5 |= (0x1L << (dx * 5)); break;
-			case 6: 	r6 |= (0x1L << (dx * 5)); break;
-			case 7: 	r7 |= (0x1L << (dx * 5)); break;
-			case 8: 	r8 |= (0x1L << (dx * 5)); break;
-			case 9: 	r9 |= (0x1L << (dx * 5)); break;
-			case 10: 	r10 |= (0x1L << (dx * 5)); break;
-			}
+			if (ally.type==RobotType.ARCHON)
+				switch (dy)
+				{
+				case 0: 	r0 |= (0x2L << (dx * 5)); break;
+				case 1: 	r1 |= (0x2L << (dx * 5)); break;
+				case 2: 	r2 |= (0x2L << (dx * 5)); break;
+				case 3: 	r3 |= (0x2L << (dx * 5)); break;
+				case 4: 	r4 |= (0x2L << (dx * 5)); break;
+				case 5: 	r5 |= (0x2L << (dx * 5)); break;
+				case 6: 	r6 |= (0x2L << (dx * 5)); break;
+				case 7: 	r7 |= (0x2L << (dx * 5)); break;
+				case 8: 	r8 |= (0x2L << (dx * 5)); break;
+				case 9: 	r9 |= (0x2L << (dx * 5)); break;
+				case 10: 	r10 |= (0x2L << (dx * 5)); break;
+				}
+			else
+				switch (dy)
+				{
+				case 0: 	r0 |= (0x1L << (dx * 5)); break;
+				case 1: 	r1 |= (0x1L << (dx * 5)); break;
+				case 2: 	r2 |= (0x1L << (dx * 5)); break;
+				case 3: 	r3 |= (0x1L << (dx * 5)); break;
+				case 4: 	r4 |= (0x1L << (dx * 5)); break;
+				case 5: 	r5 |= (0x1L << (dx * 5)); break;
+				case 6: 	r6 |= (0x1L << (dx * 5)); break;
+				case 7: 	r7 |= (0x1L << (dx * 5)); break;
+				case 8: 	r8 |= (0x1L << (dx * 5)); break;
+				case 9: 	r9 |= (0x1L << (dx * 5)); break;
+				case 10: 	r10 |= (0x1L << (dx * 5)); break;
+				}
 		}
 		
 		

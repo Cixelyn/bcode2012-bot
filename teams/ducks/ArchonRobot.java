@@ -1143,6 +1143,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 //			we are near the EAST edge
 			wall_in_dir[2] = 1;
+			movable[2] = 1;
 //			if (mc.cacheToWorldX(mc.edgeXMax) <= curLoc.x+1)
 //			{
 //				wall_in_dir[1] = wall_in_dir[3] = 3;
@@ -1160,6 +1161,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 //			we are near the WEST edge
 			wall_in_dir[6] = 1;
+			movable[6] = 1;
 //			if (mc.cacheToWorldX(mc.edgeXMin) <= curLoc.x-1)
 //			{
 //				wall_in_dir[7] = wall_in_dir[5] = 3;
@@ -1177,6 +1179,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 //			we are near the SOUTH edge
 			wall_in_dir[4] = 1;
+			movable[4] = 1;
 //			if (mc.cacheToWorldY(mc.edgeYMax) <= curLoc.y+1)
 //			{
 //				wall_in_dir[3] = wall_in_dir[5] = 3;
@@ -1194,6 +1197,7 @@ public class ArchonRobot extends BaseRobot{
 		{
 //			we are near the NORTH edge
 			wall_in_dir[0] = 1;
+			movable[0] = 1;
 //			if (mc.cacheToWorldY(mc.edgeYMin) >= curLoc.y-1)
 //			{
 //				wall_in_dir[1] = wall_in_dir[7] = 3;
@@ -1228,23 +1232,23 @@ public class ArchonRobot extends BaseRobot{
 		s[6] = wall_in_dir[6] + radar.numEnemyInDir[6] - radar.allies_in_dir[6];
 		s[7] = wall_in_dir[7] + radar.numEnemyInDir[7] - radar.allies_in_dir[7];
 		
-//		score_aggregate[0] = s[6]+s[7]+s[0]+s[1]+s[2];
-//		score_aggregate[1] = s[3]+s[7]+s[0]+s[1]+s[2];
-//		score_aggregate[2] = s[3]+s[4]+s[0]+s[1]+s[2];
-//		score_aggregate[3] = s[3]+s[4]+s[5]+s[1]+s[2];
-//		score_aggregate[4] = s[3]+s[4]+s[5]+s[6]+s[2];
-//		score_aggregate[5] = s[3]+s[4]+s[5]+s[6]+s[7];
-//		score_aggregate[6] = s[0]+s[4]+s[5]+s[6]+s[7];
-//		score_aggregate[7] = s[0]+s[1]+s[5]+s[6]+s[7];
+		score_aggregate[0] = s[6]+s[7]+s[0]+s[1]+s[2];
+		score_aggregate[1] = s[3]+s[7]+s[0]+s[1]+s[2];
+		score_aggregate[2] = s[3]+s[4]+s[0]+s[1]+s[2];
+		score_aggregate[3] = s[3]+s[4]+s[5]+s[1]+s[2];
+		score_aggregate[4] = s[3]+s[4]+s[5]+s[6]+s[2];
+		score_aggregate[5] = s[3]+s[4]+s[5]+s[6]+s[7];
+		score_aggregate[6] = s[0]+s[4]+s[5]+s[6]+s[7];
+		score_aggregate[7] = s[0]+s[1]+s[5]+s[6]+s[7];
 		
-		score_aggregate[0] = s[7]+s[0]+s[1];
-		score_aggregate[1] = s[0]+s[1]+s[2];
-		score_aggregate[2] = s[3]+s[1]+s[2];
-		score_aggregate[3] = s[3]+s[4]+s[5];
-		score_aggregate[4] = s[3]+s[4]+s[5];
-		score_aggregate[5] = s[4]+s[5]+s[6];
-		score_aggregate[6] = s[5]+s[6]+s[7];
-		score_aggregate[7] = s[0]+s[6]+s[7];
+//		score_aggregate[0] = s[7]+s[0]+s[1];
+//		score_aggregate[1] = s[0]+s[1]+s[2];
+//		score_aggregate[2] = s[3]+s[1]+s[2];
+//		score_aggregate[3] = s[3]+s[4]+s[5];
+//		score_aggregate[4] = s[3]+s[4]+s[5];
+//		score_aggregate[5] = s[4]+s[5]+s[6];
+//		score_aggregate[6] = s[5]+s[6]+s[7];
+//		score_aggregate[7] = s[0]+s[6]+s[7];
 		
 		int min = 9999;
 		if (movable[0]==0 && score_aggregate[0]<min) min=score_aggregate[0];
@@ -1664,6 +1668,11 @@ public class ArchonRobot extends BaseRobot{
 			soldierDisrupterRatio = soldierDisrupterRatio
 					*(1-0.01*numenemy)
 					+0.01*radar.numEnemyScorchers;
+		int total = (tmem.curScorcherCount+tmem.curDisrupterCount+tmem.curSoldierCount);
+		if (total==0)
+			soldierDisrupterRatio = 0.3;
+		else
+			soldierDisrupterRatio = (tmem.curScorcherCount/total)*0.7;
 		dbg.setIndicatorString('y', 2, "current soldierDisrupterRatio:" +soldierDisrupterRatio+" scoutRatio:"+scoutRatio);
 	}
 	
