@@ -69,7 +69,6 @@ public class ArchonRobot extends BaseRobot{
 		// bind radio channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
-				BroadcastChannel.ARCHONS,
 				BroadcastChannel.EXPLORERS,
 				BroadcastChannel.EXTENDED_RADAR
 		});

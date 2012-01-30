@@ -1,9 +1,10 @@
 package ducks;
 
+/** Types of messages available for broadcasting */
 public enum BroadcastType {
 	
 	// ------- TEST CODE
-	/** blank */
+	/** blank. used to test broadcasting code */
 	NONE,
 	
 	// ------- SHARED EXPLORATION CODE
@@ -40,14 +41,20 @@ public enum BroadcastType {
 	// --------------------
 	;
 
+	/** 1 char message type header */
 	public final char header_c;
+	
+	/** 1 char message type header converted to string */
 	public final String header_s;
-	BroadcastType() {
+	
+	/** Decode a 1 char channel header back to an enum */
+	public static BroadcastType decode(char header) {
+		return BroadcastType.values()[header];
+	}
+	
+	private BroadcastType() {
 		header_c = (char)(this.ordinal());
 		header_s = String.valueOf(header_c);
 	}
 	
-	public static BroadcastType decode(char header) {
-		return BroadcastType.values()[header];
-	}
 }
