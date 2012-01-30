@@ -504,9 +504,9 @@ public class BroadcastSystem {
 		// log message to match observation
 		
 		// TODO: KILL ME FOR PERFORMANCE PLZ
-		if (br.myType == RobotType.ARCHON) {
-			br.mos.rememberMessage(m);
-		}
+//		if (br.myType == RobotType.ARCHON) {
+//			br.mos.rememberMessage(m);
+//		}
 		// if a scout, try to identify enemy team
 		if (br.myType == RobotType.SCOUT && br.mas.guessEnemyTeam() == -1 &&
 				Util.randDouble() < 0.01) {
