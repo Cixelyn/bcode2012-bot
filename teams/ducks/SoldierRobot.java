@@ -193,24 +193,26 @@ public class SoldierRobot extends BaseRobot {
 		}
 		
 		// Check if we need more flux
-		if(rc.getFlux() < 5) {
-			if(closestEnemyLocation==null || curLoc.distanceSquaredTo(closestEnemyLocation) > 10)
-				behavior = BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE;
-		} else if(behavior == BehaviorState.SWARM || behavior == BehaviorState.LOST ||
-				behavior == BehaviorState.LOOKING_TO_HIBERNATE || behavior == BehaviorState.SEEK) {
-			if(rc.getFlux() < 10) {
-				if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
-					// Too low flux, can't reach archon
-					if(curRound > roundLastWakenUp + 10)
-						behavior = BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE;
-				} else {
-					// Needs to get flux from archon
-					behavior = BehaviorState.REFUEL;
-					target = dc.getClosestArchon();
-					movingTarget = true;
+		if(behavior != BehaviorState.LOW_FLUX_HIBERNATE) {
+			if(rc.getFlux() < 5) {
+				if(closestEnemyLocation==null || curLoc.distanceSquaredTo(closestEnemyLocation) > 10)
+					behavior = BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE;
+			} else if(behavior == BehaviorState.SWARM || behavior == BehaviorState.LOST ||
+					behavior == BehaviorState.LOOKING_TO_HIBERNATE || behavior == BehaviorState.SEEK) {
+				if(rc.getFlux() < 10) {
+					if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
+						// Too low flux, can't reach archon
+						if(curRound > roundLastWakenUp + 10)
+							behavior = BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE;
+					} else {
+						// Needs to get flux from archon
+						behavior = BehaviorState.REFUEL;
+						target = dc.getClosestArchon();
+						movingTarget = true;
+					}
 				}
-			}
-		} 
+			} 
+		}
 		
 		// Attack an enemy if there is some unit in our attackable squares
 		tryToAttack();
@@ -409,6 +411,14 @@ public class SoldierRobot extends BaseRobot {
 				
 			// If we are too close to the target, back off
 			} else if(distToTarget <= tooClose) {
+				if(radar.numEnemyScorchers == radar.numEnemyRobots && radar.numEnemyScorchers>0) {
+					if(distToTarget <= 5) {
+						if(rc.canMove(dirToTarget))
+							return new MoveInfo(dirToTarget, false);
+						else
+							return new MoveInfo(dirToTarget);
+					}
+				}
 				lastRoundTooClose = curRound;
 				if(rc.canMove(curDir.opposite()))
 					return new MoveInfo(curDir.opposite(), true);

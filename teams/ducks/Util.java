@@ -53,7 +53,7 @@ public class Util {
 			strengthEstimate = ri.energon*0.8+10;
 			break;
 		case SCORCHER:
-			strengthEstimate = ri.energon*1.5+10;
+			strengthEstimate = ri.energon*1.7;
 			break;
 		case SCOUT:
 			strengthEstimate = 2;
