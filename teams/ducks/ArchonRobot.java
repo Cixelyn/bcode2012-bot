@@ -1663,16 +1663,16 @@ public class ArchonRobot extends BaseRobot{
 	
 	public void updateSoldierDisruptorRatio()
 	{
-		int numenemy = radar.numEnemyRobots-radar.numEnemyScouts-radar.numEnemyTowers-radar.numEnemyArchons;
-		if (numenemy>0)
-			soldierDisrupterRatio = soldierDisrupterRatio
-					*(1-0.01*numenemy)
-					+0.01*radar.numEnemyScorchers;
+//		int numenemy = radar.numEnemyRobots-radar.numEnemyScouts-radar.numEnemyTowers-radar.numEnemyArchons;
+//		if (numenemy>0)
+//			soldierDisrupterRatio = soldierDisrupterRatio
+//					*(1-0.01*numenemy)
+//					+0.01*radar.numEnemyScorchers;
 		int total = (tmem.curScorcherCount+tmem.curDisrupterCount+tmem.curSoldierCount);
 		if (total==0)
 			soldierDisrupterRatio = 0.3;
 		else
-			soldierDisrupterRatio = (tmem.curScorcherCount/total)*0.7;
+			soldierDisrupterRatio = (tmem.curScorcherCount/total)*0.4+0.1;
 		dbg.setIndicatorString('y', 2, "current soldierDisrupterRatio:" +soldierDisrupterRatio+" scoutRatio:"+scoutRatio);
 	}
 	
