@@ -57,7 +57,6 @@ public class DisrupterRobot extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.BUG);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
-				BroadcastChannel.DISRUPTERS,
 				BroadcastChannel.FIGHTERS,
 				BroadcastChannel.EXTENDED_RADAR,
 		});

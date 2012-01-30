@@ -57,7 +57,6 @@ public class SoldierRobot extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.BUG);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
-				BroadcastChannel.SOLDIERS,
 				BroadcastChannel.FIGHTERS,
 				BroadcastChannel.EXTENDED_RADAR,
 		});

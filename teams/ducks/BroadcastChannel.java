@@ -5,11 +5,16 @@ public enum BroadcastChannel {
 	ALL,
 	ARCHONS,
 	FIGHTERS,
-	SOLDIERS,
-	DISRUPTERS,
 	SCOUTS,
 	EXTENDED_RADAR,
-	EXPLORERS;
+	EXPLORERS,
+	
+	
+	// DONT USE THESE
+	DISRUPTERS,
+	
+	
+	;
 	
 	public final String chanHeader;
 	

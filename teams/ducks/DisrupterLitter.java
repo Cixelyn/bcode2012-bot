@@ -59,7 +59,6 @@ public class DisrupterLitter extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.BUG);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
-				BroadcastChannel.SOLDIERS,
 				BroadcastChannel.EXTENDED_RADAR,
 		});
 		fbs.setPoolMode();

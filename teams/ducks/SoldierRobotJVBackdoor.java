@@ -14,7 +14,6 @@ public class SoldierRobotJVBackdoor extends BaseRobot {
 		// set broadcast channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
-				BroadcastChannel.SOLDIERS
 		});
 		// set flux balance mode
 		fbs.setPoolMode();
