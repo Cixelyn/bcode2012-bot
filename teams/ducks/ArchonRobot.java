@@ -1880,6 +1880,12 @@ public class ArchonRobot extends BaseRobot{
 //			spawnDisrupterProb = 0.3;
 			spawnDisrupterProb = soldierDisrupterRatio;
 		}
+		
+		if (curRound<2000 && curRound>1000)
+		{
+			spawnScoutProb = scoutRatio*2;
+		}
+		
 	}
 	
 	private RobotType getNextUnitToSpawn() {
