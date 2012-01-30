@@ -6,6 +6,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
@@ -52,7 +53,7 @@ public class ArchonRobot extends BaseRobot{
 	
 	Direction lastFlee;
 	
-	static final int RETREAT_RADIUS = 6;
+	static final int RETREAT_RADIUS = 3;
 	static final int RETREAT_DISTANCE = 8;
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
@@ -78,7 +79,7 @@ public class ArchonRobot extends BaseRobot{
 		nav.setNavigationMode(NavigationMode.TANGENT_BUG);
 		
 		// init starting behaviors
-		strategy = StrategyState.ENDGAME_CAP;
+		strategy = StrategyState.DEFEND;
 		behavior = BehaviorState.SWARM;
 		
 		// init state variables
@@ -167,7 +168,10 @@ public class ArchonRobot extends BaseRobot{
 					radar.numEnemyRobots-radar.numEnemyArchons-radar.numEnemyTowers) {
 				stayTargetLockedUntilRound = curRound+TURNS_TO_RETREAT;
 				behavior = BehaviorState.RETREAT;
-				String ret = computeRetreatTarget();
+				String ret = "";
+//				ret = computeRetreatTarget();
+//				ret = computeRetreatTarget2();
+				ret = computeRetreatTarget3();
 				dbg.setIndicatorString('e', 1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else {
@@ -255,7 +259,7 @@ public class ArchonRobot extends BaseRobot{
 		
 		// Set debug string
 		if (behavior != BehaviorState.RETREAT)
-			dbg.setIndicatorString('h',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
+			dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
 		
 	}
 	
@@ -290,7 +294,8 @@ public class ArchonRobot extends BaseRobot{
 					if (rc.canMove(Constants.directions[d%8]))
 						return new MoveInfo(RobotType.SOLDIER, Constants.directions[d%8]);
 			}
-			return new MoveInfo(nav.navigateToDestination(), true);
+//			return new MoveInfo(nav.navigateToDestination(), true);
+			return new MoveInfo(nav.navigateGreedy(target), true);
 		}
 		
 		// If we have sufficient flux, make a soldier
@@ -625,6 +630,281 @@ public class ArchonRobot extends BaseRobot{
 			return null;
 		}
 		return null;
+	}
+	
+	private String computeRetreatTarget2()
+	{
+		lastPowerNodeGuess = null;
+//		7 0 1
+//		6   2
+//		5 4 3
+//		int[] closest_in_dir = er.getEnemiesInEachDirectionOnly();
+		int[] closest_in_dir = radar.closestInDir;
+		int[] num_in_dir = radar.numEnemyInDir;
+		int[] allies_in_dir = radar.allies_in_dir;
+		int[] wall_in_dir = new int[8];
+		
+//		now, deal with when we are close to map boundaries
+		if (mc.edgeXMax!=0)
+			wall_in_dir[2] = mc.cacheToWorldX(mc.edgeXMax) - curLoc.x;
+		else 
+			wall_in_dir[2] = 99;
+		
+		if (mc.edgeYMax!=0)
+			wall_in_dir[4] = mc.cacheToWorldY(mc.edgeYMax) - curLoc.y;
+		else 
+			wall_in_dir[4] = 99;
+		
+		if (mc.edgeXMin!=0)
+			wall_in_dir[6] = curLoc.x - mc.cacheToWorldX(mc.edgeXMin);
+		else 
+			wall_in_dir[6] = 99;
+		
+		if (mc.edgeYMin!=0)
+			wall_in_dir[0] = curLoc.y - mc.cacheToWorldY(mc.edgeYMin);
+		else 
+			wall_in_dir[0] = 99;
+		
+		wall_in_dir[1] = Math.min(wall_in_dir[0], wall_in_dir[2]);
+		wall_in_dir[3] = Math.min(wall_in_dir[2], wall_in_dir[4]);
+		wall_in_dir[5] = Math.min(wall_in_dir[4], wall_in_dir[6]);
+		wall_in_dir[7] = Math.min(wall_in_dir[6], wall_in_dir[0]);
+		
+//		TODO screw walls for now
+		
+		
+		targetDir = curLoc.directionTo(radar.getEnemySwarmCenter());
+		int dir = targetDir.ordinal();
+		if (dir<8)
+		{
+			// case 1: the enemy swarm is a clear direction away - note, there may still be some surround
+			if (radar.numAllyFighters > 0)
+			{
+				int d1;
+				int d2;
+				int d3;
+				d1 = dir+1;
+				while (allies_in_dir[d1%8]==0) d1++;
+				d2 = dir+7;
+				while (allies_in_dir[d2%8]==0) d2+=7;
+				d1 = d1%8;
+				d2 = d2%8;
+				d3 = (d1+d2)/2;
+				targetDir = Constants.directions[d3];
+				
+				if ((d1+8-dir)%8>(d3+8-dir)%8 || (d2+8-dir)%8<(d3+8-dir)%8)
+					targetDir = targetDir.opposite();
+				
+			} else
+			{
+				targetDir = targetDir.opposite();
+			}
+			
+			
+		} else
+		{
+			// case 2: the enemy swarm has a clear surround on us
+			targetDir = curLoc.directionTo(dc.getClosestArchon());
+		}
+		
+		
+		target = curLoc.add(targetDir,RETREAT_DISTANCE);
+		return ""+target;
+	}
+	
+	private String computeRetreatTarget3()
+	{
+		// alright, brute force method - find square which gets us the farthest from all enemies
+		
+		double bestdist = 0;
+		int bestdir = -1;
+		double curdist = 0;
+		int count = radar.numEnemyRobots-radar.numEnemyScouts-radar.numEnemyTowers;
+		RobotInfo ri;
+		double[] dists = new double[count];
+		int[] dirs = new int[count];
+		int xx = 0;
+		
+		int[] wall_in_dir = new int[8];
+		
+		if (mc.edgeXMax!=0)
+			wall_in_dir[2] = mc.cacheToWorldX(mc.edgeXMax) - curLoc.x;
+		else 
+			wall_in_dir[2] = 99;
+		
+		if (mc.edgeYMax!=0)
+			wall_in_dir[4] = mc.cacheToWorldY(mc.edgeYMax) - curLoc.y;
+		else 
+			wall_in_dir[4] = 99;
+		
+		if (mc.edgeXMin!=0)
+			wall_in_dir[6] = curLoc.x - mc.cacheToWorldX(mc.edgeXMin);
+		else 
+			wall_in_dir[6] = 99;
+		
+		if (mc.edgeYMin!=0)
+			wall_in_dir[0] = curLoc.y - mc.cacheToWorldY(mc.edgeYMin);
+		else 
+			wall_in_dir[0] = 99;
+		
+		wall_in_dir[1] = Math.min(wall_in_dir[0], wall_in_dir[2]);
+		wall_in_dir[3] = Math.min(wall_in_dir[2], wall_in_dir[4]);
+		wall_in_dir[5] = Math.min(wall_in_dir[4], wall_in_dir[6]);
+		wall_in_dir[7] = Math.min(wall_in_dir[6], wall_in_dir[0]);
+		
+		// first calculate the current distance
+		for (int x=0; x<radar.numEnemyRobots; x++)
+		{
+			ri = radar.enemyInfos[radar.enemyRobots[x]];
+			if (ri.type==RobotType.SCOUT || ri.type==RobotType.TOWER) continue;
+			dists[xx] = Math.sqrt(curLoc.distanceSquaredTo(ri.location));
+			dirs[xx] = curLoc.directionTo(ri.location).ordinal();
+			xx++;
+		}
+		
+		double dist = 0;
+		int cc = count;
+		
+		for (int x=0; x<count; x++)
+			dist += dists[x];
+		
+//		switch (wall_in_dir[0])
+//		{
+//		case 1: cc+=6; dist+=12; break;
+//		case 2: cc+=5; dist+=15; break;
+//		case 3: cc+=4; dist+=16; break;
+//		case 4: cc+=3; dist+=15; break;
+//		case 5: cc+=2; dist+=12; break;
+//		case 6: cc+=1; dist+=7; break;
+//		}
+//		switch (wall_in_dir[2])
+//		{
+//		case 1: cc+=6; dist+=12; break;
+//		case 2: cc+=5; dist+=15; break;
+//		case 3: cc+=4; dist+=16; break;
+//		case 4: cc+=3; dist+=15; break;
+//		case 5: cc+=2; dist+=12; break;
+//		case 6: cc+=1; dist+=7; break;
+//		}
+//		switch (wall_in_dir[4])
+//		{
+//		case 1: cc+=6; dist+=12; break;
+//		case 2: cc+=5; dist+=15; break;
+//		case 3: cc+=4; dist+=16; break;
+//		case 4: cc+=3; dist+=15; break;
+//		case 5: cc+=2; dist+=12; break;
+//		case 6: cc+=1; dist+=7; break;
+//		}
+//		switch (wall_in_dir[6])
+//		{
+//		case 1: cc+=6; dist+=12; break;
+//		case 2: cc+=5; dist+=15; break;
+//		case 3: cc+=4; dist+=16; break;
+//		case 4: cc+=3; dist+=15; break;
+//		case 5: cc+=2; dist+=12; break;
+//		case 6: cc+=1; dist+=7; break;
+//		}
+		
+		bestdist = curdist = dist/cc;
+		
+//		int w1,w2,w3,w4;
+		for (int x=0; x<8; x++)
+		{
+//			if (!rc.canMove(Constants.directions[x])) continue;
+			if (wall_in_dir[x]<3) continue;
+			dist = 0;
+			cc = count;
+			for (int y=0; y<count; y++)
+			{
+				switch ((x-dirs[y]+8)%8)
+				{
+				case 0: dist += dists[y]-1; break;
+				case 1: dist += dists[y]-0.5; break;
+				case 2: dist += dists[y]+0.1; break;
+				case 3: dist += dists[y]+0.6; break;
+				case 4: dist += dists[y]+1; break;
+				case 5: dist += dists[y]+0.6; break;
+				case 6: dist += dists[y]+0.1; break;
+				case 7: dist += dists[y]-0.5; break;
+				}
+			}
+			
+//			w1=wall_in_dir[0];
+//			w2=wall_in_dir[2];
+//			w3=wall_in_dir[4];
+//			w4=wall_in_dir[6];
+//			
+//			switch (x)
+//			{
+//			case 0: w1--; w3++; break;
+//			case 1: w1--; w3++; w2--; w4++; break;
+//			case 2: w2--; w4++; break;
+//			case 3: w3--; w1++; w2--; w4++; break;
+//			case 4: w3--; w1++; break;
+//			case 5: w3--; w1++; w4--; w2++; break;
+//			case 6: w4--; w2++; break;
+//			case 7: w1--; w3++; w4--; w2++; break;
+//			}
+//			
+//			switch (w1)
+//			{
+//			case 1: cc+=6; dist+=24; break;
+//			case 2: cc+=5; dist+=30; break;
+//			case 3: cc+=4; dist+=32; break;
+//			case 4: cc+=3; dist+=30; break;
+//			case 5: cc+=2; dist+=24; break;
+//			case 6: cc+=1; dist+=14; break;
+//			}
+//			switch (w2)
+//			{
+//			case 1: cc+=6; dist+=24; break;
+//			case 2: cc+=5; dist+=30; break;
+//			case 3: cc+=4; dist+=32; break;
+//			case 4: cc+=3; dist+=30; break;
+//			case 5: cc+=2; dist+=24; break;
+//			case 6: cc+=1; dist+=14; break;
+//			}
+//			switch (w3)
+//			{
+//			case 1: cc+=6; dist+=24; break;
+//			case 2: cc+=5; dist+=30; break;
+//			case 3: cc+=4; dist+=32; break;
+//			case 4: cc+=3; dist+=30; break;
+//			case 5: cc+=2; dist+=24; break;
+//			case 6: cc+=1; dist+=14; break;
+//			}
+//			switch (w4)
+//			{
+//			case 1: cc+=6; dist+=24; break;
+//			case 2: cc+=5; dist+=30; break;
+//			case 3: cc+=4; dist+=32; break;
+//			case 4: cc+=3; dist+=30; break;
+//			case 5: cc+=2; dist+=24; break;
+//			case 6: cc+=1; dist+=14; break;
+//			}
+			
+			
+			
+			dist = dist/cc;
+			if (dist>bestdist)
+			{
+				bestdist = dist;
+				bestdir = x;
+			}
+		}
+		
+		if (bestdir==-1)
+		{
+			// crap, nowhere to run, run to nearest archon
+			targetDir = curLoc.directionTo(dc.getClosestArchon());
+		} else
+		{
+			targetDir = Constants.directions[bestdir];
+		}
+		
+		target = curLoc.add(targetDir,RETREAT_DISTANCE);
+		
+		return "";
 	}
 	
 	private boolean isAdjacent(Direction d1, Direction d2)
