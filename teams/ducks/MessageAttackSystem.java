@@ -59,7 +59,7 @@ public class MessageAttackSystem {
 		// 016: Team 16: seems to always send 3 ints and a map location... 3rd
 		// i think 1st int is message type, 2nd int is round num, 3rd is a hash,
 		// and map loc is a target
-		if (m.ints != null && m.ints.length == 3 && m.ints[1] == br.curRound &&
+		if (m.ints != null && m.ints.length == 3 && isRoundNum(m.ints[1]) &&
 				(m.strings == null || m.strings.length == 0) &&
 				m.locations != null && m.locations.length == 1) {
 			enemyTeam = 16;
