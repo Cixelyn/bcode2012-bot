@@ -194,12 +194,15 @@ public class ArchonRobot extends BaseRobot{
 			} else {
 				behavior = curLoc.distanceSquaredTo(enemySpottedTarget) <= 256 ? 
 						BehaviorState.BATTLE : BehaviorState.SWARM;
-				target = enemySpottedTarget;
-				movingTarget = true;
+				if(strategy!=StrategyState.DEFEND) {
+					target = enemySpottedTarget;
+					movingTarget = true;
+				}
 				if(curLoc.distanceSquaredTo(enemySpottedTarget) <= 16) {
 					enemySpottedTarget = null;
 					enemySpottedRound = -55555;
 				}
+				
 			}
 			
 		// If we haven't seen anyone for a while, go back to swarm mode and reset target
@@ -209,8 +212,8 @@ public class ArchonRobot extends BaseRobot{
 		
 		// If we change to a new target, wake up hibernating allies
 		if(previousWakeupTarget == null ||
-				target.distanceSquaredTo(previousWakeupTarget) > 25 ||
-				behavior != BehaviorState.SWARM) {
+				target.distanceSquaredTo(previousWakeupTarget) > 25 || 
+				(!movingTarget && !target.equals(previousWakeupTarget))) {
 			roundStartWakeupMode = curRound;
 			previousWakeupTarget = target;
 		}
@@ -417,7 +420,7 @@ public class ArchonRobot extends BaseRobot{
 			enemyDist = enemySpottedTarget==null ? 55555 : 
 				curLoc.distanceSquaredTo(enemySpottedTarget);
 			if(enemyDist<=16) break;
-			if(curRound > enemySpottedRound+20 && shorts[0] > enemySpottedRound || 
+			if((curRound > enemySpottedRound+19 && shorts[0] > enemySpottedRound) || 
 					enemyDist > curLoc.distanceSquaredTo(newLoc)) {
 				enemySpottedRound = shorts[0];
 				enemySpottedTarget = newLoc;
