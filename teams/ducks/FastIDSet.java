@@ -73,18 +73,22 @@ public class FastIDSet {
 		int i;
 		String oldBlock;
 		String recentBlocks;
+	
+		// bring loop vars into local space
+		StringBuilder localRawBlockSet = rawBlockSet;
+		FastUShortSet localMergeSet = mergeSet;
 		
 		//grab the first block
-		int idx = rawBlockSet.indexOf(DELIMITER_S);
-		oldBlock = rawBlockSet.substring(0, idx);
-		recentBlocks =  rawBlockSet.substring(idx+1, rawBlockSet.length());
-		
+		int idx = localRawBlockSet.indexOf(DELIMITER_S);
+		oldBlock = localRawBlockSet.substring(0, idx);
+		recentBlocks =  localRawBlockSet.substring(idx+1, localRawBlockSet.length());
+	
+		char robotID;
 		for(i=oldBlock.length(); --i>=0;) {
-			
 			// if the robot doesn't exist in new messages
-			char robotID = oldBlock.charAt(i);
-			if(recentBlocks.indexOf(String.valueOf(robotID)) < 0) {
-				mergeSet.remove(robotID);
+			if(recentBlocks.indexOf(
+					String.valueOf((robotID = oldBlock.charAt(i)))) < 0) {
+				localMergeSet.remove(robotID);
 			}
 		}
 		
