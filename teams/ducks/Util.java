@@ -27,7 +27,7 @@ public class Util {
 	    return (m_z << 16) + m_w;
 	}
 
-	/** @return an integer between 0 and MAX_INT */
+	/** @return a random integer between {@link Integer#MIN_VALUE} and {@link Integer#MAX_VALUE}*/
 	public static int randInt()
 	{
 		return gen();
@@ -38,7 +38,11 @@ public class Util {
 	{
 		return (gen() * 2.32830644e-10 + 0.5);
 	}
+
 	
+	/**
+	 * Estimates enemy strength based on robot type, energon level, cooldown, and flux
+	 */
 	public static double getEnemyStrengthEstimate(RobotInfo ri) {
 		double strengthEstimate;
 		switch(ri.type) {
@@ -64,25 +68,23 @@ public class Util {
 			strengthEstimate *= 20/(10+ri.roundsUntilAttackIdle);
 		return strengthEstimate;
 	}
+	
+
+	/**
+	 * Estimate your own intrinsic value
+	 */
 	public static double getOwnStrengthEstimate(RobotController rc) {
-		double strengthEstimate;
 		switch(rc.getType()) {
 		case SOLDIER:
-			strengthEstimate = rc.getEnergon()+5;
-			break;
+			return rc.getEnergon()+5;
 		case DISRUPTER:
-			strengthEstimate = rc.getEnergon()*0.8+5;
-			break;
+			return rc.getEnergon()*0.8+5;
 		case SCORCHER:
-			strengthEstimate = rc.getEnergon()*1.5+5;
-			break;
+			return rc.getEnergon()*1.5+5;
 		case SCOUT:
-			strengthEstimate = 2;
-			break;
+			return 2;
 		default:
-			strengthEstimate = 0;
-			break;
+			return 0;
 		}
-		return strengthEstimate;
 	}
 }
