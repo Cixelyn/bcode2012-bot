@@ -170,7 +170,7 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		// if we're in battle mode, check behavior every turn
-		if (strategy == StrategyState.BATTLE) {
+		if (strategy == StrategyState.BATTLE && behavior!= BehaviorState.REPORT_TO_ARCHON) {
 			// if there are no enemy soldiers or disrupters around and an enemy
 			// archon or scorcher is in range, harass them...
 			if (radar.numEnemySoldiers + radar.numEnemyDisruptors == 0 &&
