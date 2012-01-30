@@ -1500,7 +1500,7 @@ public class ScoutRobot extends BaseRobot {
 	 */
 	private MapLocation getBestRegenSquareFastFull() {
 		long r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10;
-		r0 = r1 = r2 = r3 = r4 = r5 = r6 = r7 = r8 = r9 = r10 = 0;
+		r0 = r1 = r2 = r3 = r4 = r5 = r6 = r7 = r8 = r9 = r10 = 0x84210842108421L;
 		long p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
 		p0 = p1 = p2 = p3 = p4 = p5 = p6 = p7 = p8 = p9 = p10 = 0;
 		long  a1, a2, a3, a4, a5, a6, a7, a8, a9;
@@ -1524,36 +1524,55 @@ public class ScoutRobot extends BaseRobot {
 			int dy = ally.location.y - localCurLocY + 5;
 			
 			// set initial bits
-			if (ally.type==RobotType.ARCHON)
+			switch (ally.type)
+			{
+			case ARCHON:
 				switch (dy)
 				{
-				case 0: 	r0 |= (0x2L << (dx * 5)); break;
-				case 1: 	r1 |= (0x2L << (dx * 5)); break;
-				case 2: 	r2 |= (0x2L << (dx * 5)); break;
-				case 3: 	r3 |= (0x2L << (dx * 5)); break;
-				case 4: 	r4 |= (0x2L << (dx * 5)); break;
-				case 5: 	r5 |= (0x2L << (dx * 5)); break;
-				case 6: 	r6 |= (0x2L << (dx * 5)); break;
-				case 7: 	r7 |= (0x2L << (dx * 5)); break;
-				case 8: 	r8 |= (0x2L << (dx * 5)); break;
-				case 9: 	r9 |= (0x2L << (dx * 5)); break;
-				case 10: 	r10 |= (0x2L << (dx * 5)); break;
-				}
-			else
+				case 0: 	r0 += (0x2L << (dx * 5)); break;
+				case 1: 	r1 += (0x2L << (dx * 5)); break;
+				case 2: 	r2 += (0x2L << (dx * 5)); break;
+				case 3: 	r3 += (0x2L << (dx * 5)); break;
+				case 4: 	r4 += (0x2L << (dx * 5)); break;
+				case 5: 	r5 += (0x2L << (dx * 5)); break;
+				case 6: 	r6 += (0x2L << (dx * 5)); break;
+				case 7: 	r7 += (0x2L << (dx * 5)); break;
+				case 8: 	r8 += (0x2L << (dx * 5)); break;
+				case 9: 	r9 += (0x2L << (dx * 5)); break;
+				case 10: 	r10 += (0x2L << (dx * 5)); break;
+				} break;
+			case SCOUT:
 				switch (dy)
 				{
-				case 0: 	r0 |= (0x1L << (dx * 5)); break;
-				case 1: 	r1 |= (0x1L << (dx * 5)); break;
-				case 2: 	r2 |= (0x1L << (dx * 5)); break;
-				case 3: 	r3 |= (0x1L << (dx * 5)); break;
-				case 4: 	r4 |= (0x1L << (dx * 5)); break;
-				case 5: 	r5 |= (0x1L << (dx * 5)); break;
-				case 6: 	r6 |= (0x1L << (dx * 5)); break;
-				case 7: 	r7 |= (0x1L << (dx * 5)); break;
-				case 8: 	r8 |= (0x1L << (dx * 5)); break;
-				case 9: 	r9 |= (0x1L << (dx * 5)); break;
-				case 10: 	r10 |= (0x1L << (dx * 5)); break;
-				}
+				case 0: 	r0 -= (0x1L << (dx * 5)); break;
+				case 1: 	r1 -= (0x1L << (dx * 5)); break;
+				case 2: 	r2 -= (0x1L << (dx * 5)); break;
+				case 3: 	r3 -= (0x1L << (dx * 5)); break;
+				case 4: 	r4 -= (0x1L << (dx * 5)); break;
+				case 5: 	r5 -= (0x1L << (dx * 5)); break;
+				case 6: 	r6 -= (0x1L << (dx * 5)); break;
+				case 7: 	r7 -= (0x1L << (dx * 5)); break;
+				case 8: 	r8 -= (0x1L << (dx * 5)); break;
+				case 9: 	r9 -= (0x1L << (dx * 5)); break;
+				case 10: 	r10 -= (0x1L << (dx * 5)); break;
+				} break;
+			default:
+				switch (dy)
+				{
+				case 0: 	r0 += (0x1L << (dx * 5)); break;
+				case 1: 	r1 += (0x1L << (dx * 5)); break;
+				case 2: 	r2 += (0x1L << (dx * 5)); break;
+				case 3: 	r3 += (0x1L << (dx * 5)); break;
+				case 4: 	r4 += (0x1L << (dx * 5)); break;
+				case 5: 	r5 += (0x1L << (dx * 5)); break;
+				case 6: 	r6 += (0x1L << (dx * 5)); break;
+				case 7: 	r7 += (0x1L << (dx * 5)); break;
+				case 8: 	r8 += (0x1L << (dx * 5)); break;
+				case 9: 	r9 += (0x1L << (dx * 5)); break;
+				case 10: 	r10 += (0x1L << (dx * 5)); break;
+				} break;
+			}
+			
 		}
 		
 		p0 = (r0<<5)+r0+(r0>>5);
