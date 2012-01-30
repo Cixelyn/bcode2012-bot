@@ -745,6 +745,10 @@ public class ScoutRobot extends BaseRobot {
 		int closestEnemyArchonDist = Integer.MAX_VALUE;
 		int closestEnemyScorcherDist = Integer.MAX_VALUE;
 		for (RobotInfo enemy : radar.enemyInfos) {
+			// make sure non-null
+			if (enemy == null) {
+				continue;
+			}
 			// make sure it's an enemy
 			if (enemy.team == myTeam) {
 				continue;
