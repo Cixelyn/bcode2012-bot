@@ -72,7 +72,7 @@ public class DataCache {
 	 */
 	public boolean[] getMovableDirections() {
 		if (br.curRound > moveableDirectionsTime) {
-			for(int i=8; i>=0; --i) 
+			for(int i=8; --i>=0;) 
 				moveableDirections[i] = rc.canMove(Constants.directions[i]);
 			moveableDirectionsTime = br.curRound;
 		}
