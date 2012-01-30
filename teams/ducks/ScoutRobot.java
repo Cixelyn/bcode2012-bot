@@ -487,8 +487,8 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		//	keep away from allied scouts
-		if(behavior != BehaviorState.REPORT_TO_ARCHON && radar.closestAllyScoutDist < 16)
-			return new MoveInfo(curLoc.directionTo(radar.closestAllyScout.location).opposite(), false);
+//		if(behavior != BehaviorState.REPORT_TO_ARCHON && radar.closestAllyScoutDist < 16)
+//			return new MoveInfo(curLoc.directionTo(radar.closestAllyScout.location).opposite(), false);
 		
 		// Go to objective
 		return new MoveInfo(curLoc.directionTo(objective), false);

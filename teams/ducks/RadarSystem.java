@@ -429,7 +429,7 @@ public class RadarSystem {
 		case SCOUT:
 			flux = rinfo.flux;
 			
-			if(dist<closestAllyScoutDist) {
+			if(dist<closestAllyScoutDist && rinfo.flux>0.5) {
 				closestAllyScoutDist = dist;
 				closestAllyScout = rinfo;
 			}

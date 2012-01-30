@@ -290,7 +290,11 @@ public class ArchonRobot extends BaseRobot{
 					if (rc.canMove(Constants.directions[d%8]))
 						return new MoveInfo(RobotType.SOLDIER, Constants.directions[d%8]);
 			}
-			return new MoveInfo(nav.navigateToDestination(), true);
+			Direction d = nav.navigateToDestination();
+			if (d!=null)
+				return new MoveInfo(d, true);
+			else
+				new MoveInfo(nav.navigateGreedy(target), true);
 //			return new MoveInfo(nav.navigateGreedy(target), true);
 		}
 		
@@ -1639,11 +1643,11 @@ public class ArchonRobot extends BaseRobot{
 	
 	private RobotType getNextUnitToSpawn() {
 		if(behavior == BehaviorState.BATTLE)
-			return Util.randDouble() < 0.15 ? RobotType.SCOUT : RobotType.SOLDIER;
+			return Util.randDouble() < 0.07 ? RobotType.SCOUT : RobotType.SOLDIER;
 		if(curRound<1000)
 			return RobotType.SOLDIER;
 		if(curRound<2000) 
-			return Util.randDouble() < 0.1 ? RobotType.SCOUT : RobotType.SOLDIER;
+			return Util.randDouble() < 0.07 ? RobotType.SCOUT : RobotType.SOLDIER;
 		
 		return Util.randDouble() < 0.05 ? RobotType.SCOUT : (Util.randDouble() < 0.3 ? RobotType.DISRUPTER : RobotType.SOLDIER);
 	}
