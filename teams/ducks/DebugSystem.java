@@ -5,12 +5,10 @@ public class DebugSystem {
 	
 	private final BaseRobot br;
 	private char launch_owner;
-	private boolean encrypted;
 	
 	public DebugSystem(BaseRobot br) {
 		this.br = br;
 		this.launch_owner = 'e';
-		this.encrypted = encrypted;
 	}
 
 	public void setOwner(char owner) {

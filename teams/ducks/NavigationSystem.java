@@ -121,19 +121,24 @@ public class NavigationSystem {
 			return null; 
 		
 		Direction dir = Direction.NONE;
-		if(mode==NavigationMode.RANDOM) {
+		
+		switch(mode) {
+		case RANDOM:
 			dir = navigateRandomly(destination);
-		} else if(mode==NavigationMode.GREEDY) {
+			break;
+		case GREEDY:
 			if(movesOnSameTarget > 2 * expectedMovesToReachTarget) 
 				dir = navigateRandomly(destination);
 			else
 				dir = navigateGreedy(destination);
-		} else if(mode==NavigationMode.BUG) {
+			break;
+		case BUG:
 			dir = navigateBug();
 //			if(movesOnSameTarget % (3*expectedMovesToReachTarget) == 0) {
 //				normalBug.reset();
 //			}
-		} else if(mode==NavigationMode.TANGENT_BUG) {
+			break;
+		case TANGENT_BUG:
 			dir = navigateTangentBug();
 			if(movesOnSameTarget % expectedMovesToReachTarget == 0) {
 				int n = movesOnSameTarget / expectedMovesToReachTarget;
@@ -142,12 +147,12 @@ public class NavigationSystem {
 							TangentBug.DEFAULT_MIN_PREP_TURNS*n, 50), 0.4);
 				}
 			}
-		} else if(mode==NavigationMode.DSTAR) {
-			dir = navigateDStar();
-		} 
+			break;
+		}
 		
 		if(dir==null || dir==Direction.NONE || dir==Direction.OMNI) 
 			return null; 
+		
 		movesOnSameTarget++;
 		return dir;
 	}
@@ -327,9 +332,6 @@ public class NavigationSystem {
 				dir = dir.rotateRight();
 		}
 		return dir;
-	}
-	private Direction navigateDStar() {
-		throw new RuntimeException("DStar navigation not yet implemented!");
 	}
 	
 	/** Returns a direction at random from the eight standard directions. */
