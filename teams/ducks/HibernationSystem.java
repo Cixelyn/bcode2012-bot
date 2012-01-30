@@ -131,7 +131,7 @@ public class HibernationSystem {
 					continue;
 				
 				// only units low on flux ignore far away messages
-				if (localLowFluxMode && curLoc.distanceSquaredTo(BroadcastSystem.intToLoc(mints[2])) > 10)
+				if (localLowFluxMode && curLoc.distanceSquaredTo(BroadcastSystem.intToLoc(mints[2])) > 5)
 					continue;
 				
 				br.resetClock();
