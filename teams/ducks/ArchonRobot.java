@@ -59,7 +59,7 @@ public class ArchonRobot extends BaseRobot{
 	double soldierDisrupterRatio;
 	double scoutRatio;
 	
-	static final int RETREAT_RADIUS = 5;
+	static final int RETREAT_RADIUS = 6;
 	static final int RETREAT_RADIUS_CLOSE = 3;
 	static final int RETREAT_DISTANCE = 8;
 	static final int CHASE_COMPUTE_RADIUS = 7;
