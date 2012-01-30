@@ -170,6 +170,7 @@ public class FluxBalanceSystem {
 				if(ri.flux < lowerFluxThreshold) {
 					double upperFluxThreshold = (ri.energon < ri.type.maxEnergon/2 ? 
 							ri.energon/2 : ri.energon*2/3) + 5;
+					if(br.myType == RobotType.ARCHON) upperFluxThreshold+=10;
 					double x = Math.min(fluxToTransfer, upperFluxThreshold - ri.flux);
 					rc.transferFlux(ri.location, ri.type.level, x);
 					fluxToTransfer -= x;

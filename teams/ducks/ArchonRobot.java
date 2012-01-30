@@ -116,7 +116,7 @@ public class ArchonRobot extends BaseRobot{
 			if(curRound > 2500) {
 				if(adjNode==null)
 					strategy = StrategyState.EFFICIENT_CAP;
-				else
+				else if(myArchonID!=0)
 					strategy = StrategyState.ADJACENT_CAP;
 			}
 			break;
