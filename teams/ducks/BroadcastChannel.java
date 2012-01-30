@@ -9,11 +9,6 @@ public enum BroadcastChannel {
 	EXTENDED_RADAR,
 	EXPLORERS,
 	
-	
-	// DONT USE THESE
-	DISRUPTERS,
-	
-	
 	;
 	
 	public final String chanHeader;
