@@ -810,9 +810,7 @@ public class ScoutRobot extends BaseRobot {
 	}
 	
 	/**
-	 * Gets the square in the Scout's vision range that is adjacent to (or the
-	 * same square as) the most weakened units. ~2200 bytecodes
-	 * @return The MapLocation at distance <= 2 from the most damaged units
+	 * @deprecated
 	 */
 	private MapLocation getBestRegenSquare() {
 		long[] rows = new long[11];
@@ -874,7 +872,10 @@ public class ScoutRobot extends BaseRobot {
 			return null;
 		}
 	}
-	
+
+	/**
+	 * @deprecated
+	 */
 	private MapLocation getBestRegenSquareFast() {
 		long r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10;
 		r0 = r1 = r2 = r3 = r4 = r5 = r6 = r7 = r8 = r9 = r10 = 0;
@@ -1491,7 +1492,12 @@ public class ScoutRobot extends BaseRobot {
 			return null;
 		}
 	}
+
 	
+	/**
+	 * The true best regen square function that we want
+	 * @return
+	 */
 	private MapLocation getBestRegenSquareFastFull() {
 		long r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10;
 		r0 = r1 = r2 = r3 = r4 = r5 = r6 = r7 = r8 = r9 = r10 = 0;
@@ -1499,18 +1505,24 @@ public class ScoutRobot extends BaseRobot {
 		p0 = p1 = p2 = p3 = p4 = p5 = p6 = p7 = p8 = p9 = p10 = 0;
 		long  a1, a2, a3, a4, a5, a6, a7, a8, a9;
 		a1 = a2 = a3 = a4 = a5 = a6 = a7 = a8 = a9 = 0;
+	
+		
+		int localCurLocX = curLoc.x;
+		int localCurLocY = curLoc.y;
 		
 		// populate location of damaged allies
-		// TODO(jven): consider only non-regened allies? <- done
-		for (int idx = 0; idx < radar.numAllyRobots; idx++) {
+		for (int idx = radar.numAllyRobots; --idx>=0;) {
 			RobotInfo ally = radar.allyInfos[radar.allyRobots[idx]];
-			// ignore if he's not damaged
-			if (ally.energon >= ally.type.maxEnergon || ally.regen) {
+		
+			// ignore if he's not damaged or he's out of flux
+			if (ally.regen || ally.flux < 0.2 ||  ally.energon > (ally.type.maxEnergon - 0.2) ) {
 				continue;
 			}
+			
 			// get relative location of ally
-			int dx = ally.location.x - curLoc.x + 5;
-			int dy = ally.location.y - curLoc.y + 5;
+			int dx = ally.location.x - localCurLocX + 5;
+			int dy = ally.location.y - localCurLocY + 5;
+			
 			// set initial bits
 			switch (dy)
 			{
