@@ -19,10 +19,7 @@ public class MatchObservationSystem {
 	 * @param s The string to remember
 	 * @param shouldEncrypt Whether to encrypt the string or not.
 	 */
-	public void rememberString(String s, boolean shouldEncrypt) {
-		if (shouldEncrypt) {
-			s = Encryption.encryptString(s, br.curRound);
-		}
+	public void rememberString(String s) {
 		br.rc.addMatchObservation(s);
 	}
 	
@@ -31,9 +28,9 @@ public class MatchObservationSystem {
 	 * @param m The message to remember
 	 * @param shouldEncrypt Whether to encrypt the message or not.
 	 */
-	public void rememberMessage(Message m, boolean shouldEncrypt) {
+	public void rememberMessage(Message m) {
 		String s = serializeMessageToString(m);
-		rememberString(s, shouldEncrypt);
+		rememberString(s);
 	}
 	
 	private static String serializeMessageToString(Message m) {
@@ -118,9 +115,9 @@ public class MatchObservationSystem {
 		m.locations = new MapLocation[] {new MapLocation(22, 55)};
 		String s = serializeMessageToString(m);
 		System.out.println(s);
-		s = Encryption.encryptString(s, 1);
+//		s = Encryption.encryptString(s, 1);
 		System.out.println(s);
-		s = Encryption.decryptString(s, 1);
+//		s = Encryption.decryptString(s, 1);
 		System.out.println(s);
 		Message m2 = deserializeMessageFromString(s);
 		for (int a : m2.ints) System.out.println(a);
@@ -140,10 +137,10 @@ public class MatchObservationSystem {
 		
 		
 		// DON'T CHANGE ANYTHING BELOW
-		if (wasEncrypted) {
-			matchObservationString = Encryption.decryptString(
-					matchObservationString, roundNum);
-		}
+//		if (wasEncrypted) {
+//			matchObservationString = Encryption.decryptString(
+//					matchObservationString, roundNum);
+//		}
 		Message m = deserializeMessageFromString(matchObservationString);
 		for (int a : m.ints) System.out.println(a);
 		for (String b : m.strings) System.out.println(b);
