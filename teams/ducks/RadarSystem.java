@@ -178,17 +178,12 @@ public class RadarSystem {
 	}
 
 	private void addEnemy(RobotInfo rinfo) throws GameActionException {
-		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
-			return;
-		if(rinfo.type==RobotType.SCOUT && rinfo.location.distanceSquaredTo(br.curLoc)>5)
-			return;
 		
 		int pos = rinfo.robot.getID();
-		enemyInfos[pos] = rinfo;
-		enemyTimes[pos] = Clock.getRoundNum();
 
-		enemyRobots[numEnemyRobots++] = pos;
-
+		MapLocation enemyLoc = rinfo.location;
+		int dist = enemyLoc.distanceSquaredTo(br.curLoc);
+		
 		switch (rinfo.type) {
 		case ARCHON:
 			enemyArchons[numEnemyArchons++] = pos;
@@ -200,23 +195,28 @@ public class RadarSystem {
 			enemyScorchers[numEnemyScorchers++] = pos;
 			break;
 		case SCOUT:
-			enemyScouts[numEnemyScouts++] = pos;
+			if(dist > 5) 
+				return;
+			else
+				enemyScouts[numEnemyScouts++] = pos;
 			break;
 		case SOLDIER:
 			enemySoldiers[numEnemySoldiers++] = pos;
 			break;
 		case TOWER:
-			enemyTowers[numEnemyTowers++] = pos;
+			if(!br.dc.isTowerTargetable(rinfo))
+				return;
+			else
+				enemyTowers[numEnemyTowers++] = pos;
 			break;
 		}
 
-		// Distance Stats
-		MapLocation enemyLoc = rinfo.location;
+		enemyInfos[pos] = rinfo;
+		enemyTimes[pos] = Clock.getRoundNum();
+		enemyRobots[numEnemyRobots++] = pos;
 
 		centerEnemyX += enemyLoc.x;
 		centerEnemyY += enemyLoc.y;
-
-		int dist = enemyLoc.distanceSquaredTo(br.curLoc);
 		if (dist < closestEnemyDist) {
 			closestEnemy = rinfo;
 			closestEnemyDist = dist;
@@ -224,30 +224,12 @@ public class RadarSystem {
 	}
 	
 	private void addEnemyForScout(RobotInfo rinfo) throws GameActionException {
-		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
-			return;
-		if(rinfo.type==RobotType.SCOUT && rinfo.location.distanceSquaredTo(br.curLoc)>5)
-			return;
-		
+
 		int pos = rinfo.robot.getID();
-		enemyInfos[pos] = rinfo;
-		enemyTimes[pos] = Clock.getRoundNum();
-
-		enemyRobots[numEnemyRobots++] = pos;
 		
-		// Distance Stats
 		MapLocation eloc = rinfo.location;
-
-		centerEnemyX += eloc.x;
-		centerEnemyY += eloc.y;
-		
 		int dist = eloc.distanceSquaredTo(br.curLoc);
 		
-		if (dist < closestEnemyDist) {
-			closestEnemy = rinfo;
-			closestEnemyDist = dist;
-		}
-
 		switch (rinfo.type) {
 		case ARCHON:
 			enemyArchons[numEnemyArchons++] = pos;
@@ -258,13 +240,15 @@ public class RadarSystem {
 				closestEnemyWithFlux = rinfo;
 				closestEnemyWithFluxDist = dist;
 			}
-			
 			break;
 		case SCORCHER:
 			enemyScorchers[numEnemyScorchers++] = pos;
 			break;
 		case SCOUT:
-			enemyScouts[numEnemyScouts++] = pos;
+			if(dist > 5)
+				return;
+			else
+				enemyScouts[numEnemyScouts++] = pos;
 			break;
 		case SOLDIER:
 			enemySoldiers[numEnemySoldiers++] = pos;
@@ -274,8 +258,23 @@ public class RadarSystem {
 			}
 			break;
 		case TOWER:
-			enemyTowers[numEnemyTowers++] = pos;
+			if(!br.dc.isTowerTargetable(rinfo))
+				return;
+			else
+				enemyTowers[numEnemyTowers++] = pos;
 			break;
+		}
+		
+		enemyInfos[pos] = rinfo;
+		enemyTimes[pos] = Clock.getRoundNum();
+		enemyRobots[numEnemyRobots++] = pos;
+		
+		centerEnemyX += eloc.x;
+		centerEnemyY += eloc.y;
+		
+		if (dist < closestEnemyDist) {
+			closestEnemy = rinfo;
+			closestEnemyDist = dist;
 		}
 		
 		Direction dir = br.curLoc.directionTo(eloc);
@@ -291,16 +290,11 @@ public class RadarSystem {
 	}
 	
 	private void addEnemyForArchon(RobotInfo rinfo) throws GameActionException {
-		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
-			return;
-		if(rinfo.type==RobotType.SCOUT && rinfo.location.distanceSquaredTo(br.curLoc)>5)
-			return;
 		
 		int rid = rinfo.robot.getID();
-		enemyInfos[rid] = rinfo;
-		enemyTimes[rid] = Clock.getRoundNum();
-
-		enemyRobots[numEnemyRobots++] = rid;
+		
+		MapLocation eloc = rinfo.location;
+		int dist = eloc.distanceSquaredTo(br.curLoc);
 
 		switch (rinfo.type) {
 		case ARCHON:
@@ -313,27 +307,35 @@ public class RadarSystem {
 			enemyScorchers[numEnemyScorchers++] = rid;
 			break;
 		case SCOUT:
-			enemyScouts[numEnemyScouts++] = rid;
+			if(dist > 5)
+				return;
+			else
+				enemyScouts[numEnemyScouts++] = rid;
 			break;
 		case SOLDIER:
 			enemySoldiers[numEnemySoldiers++] = rid;
 			break;
 		case TOWER:
-			enemyTowers[numEnemyTowers++] = rid;
+			if(!br.dc.isTowerTargetable(rinfo))
+				return;
+			else
+				enemyTowers[numEnemyTowers++] = rid;
 			break;
 		}
+		
+		enemyInfos[rid] = rinfo;
+		enemyTimes[rid] = Clock.getRoundNum();
+
+		enemyRobots[numEnemyRobots++] = rid;
 		
 		// Remember the enemy type
 		br.tmem.countEnemy(rid, rinfo.type);
 		
-		// Distance Stats
-		MapLocation eloc = rinfo.location;
 		Direction dir = br.curLoc.directionTo(eloc);
 
 		centerEnemyX += eloc.x;
 		centerEnemyY += eloc.y;
 
-		int dist = eloc.distanceSquaredTo(br.curLoc);
 		if (dist < closestEnemyDist) {
 			closestEnemy = rinfo;
 			closestEnemyDist = dist;
@@ -364,14 +366,6 @@ public class RadarSystem {
 		allyInfos[pos] = rinfo;
 		allyTimes[pos] = Clock.getRoundNum();
 
-
-//		int dist = br.curLoc.distanceSquaredTo(rinfo.location);
-		
-//		if ((rinfo.energon < rinfo.type.maxEnergon - 0.2) && !rinfo.regen
-//				&& dist <= 5) {
-//			numAllyToRegenerate++;
-//		}
-
 		if (rinfo.location.distanceSquaredTo(br.curLoc) <= 2) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
@@ -384,21 +378,17 @@ public class RadarSystem {
 			alliesOnRight++;
 		if(ddir <= 1 || ddir == 7)
 			alliesInFront++;
-		
-//		if(rinfo.type==RobotType.SCOUT && dist<closestAllyScoutDist) {
-//			closestAllyScoutDist = dist;
-//			closestAllyScout = rinfo;
-//		}
-		
-//		// TODO(jven): this stuff should be linked with fbs
-//		if (rinfo.type != RobotType.ARCHON && rinfo.type != RobotType.SCOUT &&
-//				rinfo.flux < rinfo.energon / 3 &&
-//				dist < closestLowFluxAllyDist) {
-//			closestLowFluxAlly = rinfo;
-//			closestLowFluxAllyDist = dist;
-//		}
 	}
-	
+
+	/**
+	 * Similar to addAlly with some key differences: <br>
+	 *  - compute number of allys to regenerate in an area <br>
+	 *  - compute lowest flux ally <br>
+	 *  
+	 *  
+	 * @param rinfo
+	 * @throws GameActionException
+	 */
 	private void addAllyForScout(RobotInfo rinfo) throws GameActionException {
 		if (rinfo.type == RobotType.TOWER) {
 			checkAlliedTower(rinfo);
@@ -486,8 +476,6 @@ public class RadarSystem {
 		if (aloc.distanceSquaredTo(br.curLoc) <= 2) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
-		
-		
 		
 		switch (rinfo.type) {
 		case ARCHON:
@@ -665,22 +653,6 @@ public class RadarSystem {
 		return (lastscanround == br.curRound && !needToScanAllies);
 	}
 	
-//	/**
-//	 * Get the robot info for given enemy robot id.
-//	 */
-//	public RobotInfo getEnemyInfo(int robotid)
-//	{
-//		return enemyInfos[robotid];
-//	}
-//	
-//	/**
-//	 * Get the robot info for given allied robot id.
-//	 */
-//	public RobotInfo getAlliedInfo(int robotid)
-//	{
-//		return allyInfos[robotid];
-//	}
-
 	/**
 	 * Get the difference in strength between the two swarms
 	 */
@@ -696,7 +668,6 @@ public class RadarSystem {
 
 		return new MapLocation((int) (vecEnemyX * 7 / a) + br.curLoc.x,
 				(int) (vecEnemyY * 7 / a) + br.curLoc.y);
-
 	}
 	
 	/**
@@ -774,7 +745,6 @@ public class RadarSystem {
 					if(br.rc.senseConnected(pn)) {
 						br.gameEndDetected = true;
 						
-				
 						int estEndTime;
 						if(br.rc.senseOpponentConnected(pn)) {
 							// compute when I think the game will end
