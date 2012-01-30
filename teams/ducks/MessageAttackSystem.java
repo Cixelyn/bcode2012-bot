@@ -189,7 +189,7 @@ public class MessageAttackSystem {
 			case 16:
 				int[] data = messageData[br.curRound];
 				// if we don't have any message data for this round, return old message
-				if (data != null) {
+				if (data != null && data.length != 4) {
 					m = new Message();
 					m.ints = new int[] {data[0], br.curRound, data[1]};
 					m.locations = new MapLocation[] {new MapLocation(data[2], data[3])};
