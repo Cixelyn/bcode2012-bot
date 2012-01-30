@@ -92,15 +92,22 @@ public class ScoutRobot extends BaseRobot {
 	@Override
 	public void run() throws GameActionException {
 		
-		// scan every round in all conditions
-		radar.scan(true, true);
-		if(radar.closestEnemy != null) {
-			enemySpottedTarget = radar.closestEnemy.location;
-			enemySpottedRound = curRound;
-		} else {
-			enemySpottedTarget = null;
+		// scan every round in all conditions except support
+		if(strategy != StrategyState.SUPPORT || curRound%2==0) {
+			radar.scan(true, true);
+			if(radar.closestEnemy != null) {
+				enemySpottedTarget = radar.closestEnemy.location;
+				enemySpottedRound = curRound;
+			} else {
+				enemySpottedTarget = null;
+			}
 		}
-	
+		
+		// report enemy info in all conditions
+		if(curRound%5 == myID%5)
+			radar.broadcastEnemyInfo(false);
+		
+		
 		// Setup strategy transitions
 		if(!doneWithInitialScout && Clock.getRoundNum() < ROUNDS_TO_EXPLORE) 
 		{
@@ -116,10 +123,6 @@ public class ScoutRobot extends BaseRobot {
 		lastStrategy = strategy;
 		
 	
-		// report enemy info in all conditions
-//		MapLocation closestEnemyLocation = radar.closestEnemy==null ? null : radar.closestEnemy.location;
-		if(curRound%5 == myID%5)
-			radar.broadcastEnemyInfo(false);
 		
 		
 		// logic for initial explore
