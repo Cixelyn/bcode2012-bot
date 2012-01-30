@@ -48,7 +48,7 @@ public abstract class BaseRobot {
 	public boolean justRevived;
 	public boolean gameEndNow = false;
 	public boolean gameEndDetected = false;
-	public int gameEndTime = Integer.MAX_VALUE;
+	public int gameEndTime = GameConstants.MAX_ROUND_LIMIT - Constants.ENDGAME_CAP_MODE_BUFFER;
 	
 	// Internal Statistics
 	private int lastResetTime = 50;
