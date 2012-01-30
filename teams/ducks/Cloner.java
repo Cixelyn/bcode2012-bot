@@ -27,7 +27,8 @@ public class Cloner
 			e.printStackTrace();
 		}
 	}
-	
+
+	/** Clone the given serializable object */
 	public static Object clone(Serializable o) throws IOException, ClassNotFoundException {
 		oos.reset();
 		oos.writeObject(o);
