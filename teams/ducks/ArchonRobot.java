@@ -452,7 +452,7 @@ public class ArchonRobot extends BaseRobot{
 			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 			break;
 		default:
-			break;
+			super.processMessage(msgType, sb);
 		} 
 	}
 	
