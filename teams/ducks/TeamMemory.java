@@ -34,12 +34,6 @@ public class TeamMemory {
 	public int curDisrupterCount;
 	public int curScorcherCount;
 	
-	// previous counts
-	public int lastSoldierCount;
-	public int lastScoutCount;
-	public int lastDisrupterCount;
-	public int lastScorcherCount;
-	
 	// count metadata
 	public int timeCountWritten;
 	

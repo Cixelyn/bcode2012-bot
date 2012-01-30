@@ -14,7 +14,7 @@ public class ExtendedRadarSystem {
 	private final BaseRobot br;
 	public final MapLocation[] enemyLocationInfo;
 	public final int[] enemyUnitStrengthEstimate;
-	public final RobotType[] enemyTypeInfo;
+	public final int[] enemyMinDistToAlly;
 	private FastIDSet enemyKeySet;
 	public final MapLocation[] allyLocationInfo;
 	public final int[] allyUnitStrengthEstimate;
@@ -26,7 +26,7 @@ public class ExtendedRadarSystem {
 		this.br = br;
 		enemyLocationInfo = new MapLocation[BUFFER_SIZE];
 		enemyUnitStrengthEstimate = new int[BUFFER_SIZE];
-		enemyTypeInfo = new RobotType[BUFFER_SIZE];
+		enemyMinDistToAlly = new int[BUFFER_SIZE];
 		allyLocationInfo = new MapLocation[BUFFER_SIZE];
 		allyUnitStrengthEstimate = new int[BUFFER_SIZE];
 		allyTypeInfo = new RobotType[BUFFER_SIZE];
@@ -58,7 +58,9 @@ public class ExtendedRadarSystem {
 			int id = info[n];
 			enemyLocationInfo[id] = new MapLocation(info[n+1], info[n+2]);
 			enemyUnitStrengthEstimate[id] = info[n+3];
-			enemyTypeInfo[id] = robotTypes[info[n+4]];
+			if(!enemyKeySet.containsID(id) || enemyMinDistToAlly[id]>info[n+4]) 
+				enemyMinDistToAlly[id] = info[n+4];
+				
 			enemyKeySet.addID(id);
 		}
 	}
@@ -147,17 +149,20 @@ public class ExtendedRadarSystem {
 	
 	/** Returns the id of this closest enemy, or -1 if there are no enemies. */
 	public int getClosestEnemyID() {
-		int ret = -1;
+		int minDist = br.myType.attackRadiusMaxSquared;
+		int bestID = -1;
 		int bestDist = Integer.MAX_VALUE;
 		for(int i=enemyKeySet.size(); --i>=0;) {
 			int id = enemyKeySet.getID(i);
+			if(enemyMinDistToAlly[id]>minDist)
+				continue;
 			int dist = br.curLoc.distanceSquaredTo(enemyLocationInfo[id]);
 			if(dist<bestDist) {
-				ret = id;
+				bestID = id;
 				bestDist = dist;
 			}
 		}
-		return ret;
+		return bestID;
 	}
 	
 	/** Returns a direction to go that will most likely bring you to an enemy. */
@@ -222,7 +227,7 @@ public class ExtendedRadarSystem {
 		int size = enemyKeySet.size();
 		for(int i=0; i<size; i++) {
 			int id = enemyKeySet.getID(i);
-			ret+=" #"+id+", "+enemyTypeInfo[id].ordinal()+", <"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+
+			ret+=" #"+id+", "+enemyMinDistToAlly[id]+", <"+(enemyLocationInfo[id].x-br.curLoc.x)+","+(enemyLocationInfo[id].y-br.curLoc.y)+
 					">, "+enemyUnitStrengthEstimate[id]+"   ";
 		}
 		ret+="|||||   ";

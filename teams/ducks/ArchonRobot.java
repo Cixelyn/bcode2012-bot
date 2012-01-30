@@ -3,6 +3,7 @@ package ducks;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
 import battlecode.common.RobotController;
@@ -54,6 +55,10 @@ public class ArchonRobot extends BaseRobot{
 	RobotType nextUnitToMake;
 	
 	Direction lastFlee;
+	double spawnScoutProb;
+	double spawnDisrupterProb;
+	double soldierDisrupterRatio;
+	double scoutRatio;
 	
 	static final int RETREAT_RADIUS = 5;
 	static final int RETREAT_RADIUS_CLOSE = 3;
@@ -94,6 +99,7 @@ public class ArchonRobot extends BaseRobot{
 		nextRandomCapTarget = null;
 		nextUnitToMake = getNextUnitToSpawn();
 		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
+		initSpawnProbabilities();
 	}
 	
 	@Override
@@ -143,6 +149,8 @@ public class ArchonRobot extends BaseRobot{
 		boolean needToScanAllies = !rc.isMovementActive() || msm.justMoved();
 		boolean needToScanEnemies = !rc.isMovementActive() || msm.justMoved() || curRound%6==myArchonID;
 		radar.scan(needToScanAllies, needToScanEnemies);
+		if (needToScanEnemies) updateSoldierDisruptorRatio();
+		if (needToScanAllies) updateScoutProb();
 		
 		// Broadcast enemy info every 6 turns
 		if(curRound%6 == myArchonID)
@@ -358,6 +366,7 @@ public class ArchonRobot extends BaseRobot{
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
 		
+		case RUSH:
 		case ADJACENT_CAP:
 		case ENDGAME_CAP:
 		case EFFICIENT_CAP:
@@ -1641,14 +1650,76 @@ public class ArchonRobot extends BaseRobot{
 		return false;
 	}
 	
-	private RobotType getNextUnitToSpawn() {
-		if(behavior == BehaviorState.BATTLE)
-			return Util.randDouble() < 0.07 ? RobotType.SCOUT : RobotType.SOLDIER;
-		if(curRound<1000)
-			return RobotType.SOLDIER;
-		if(curRound<2000) 
-			return Util.randDouble() < 0.07 ? RobotType.SCOUT : RobotType.SOLDIER;
-		
-		return Util.randDouble() < 0.05 ? RobotType.SCOUT : (Util.randDouble() < 0.3 ? RobotType.DISRUPTER : RobotType.SOLDIER);
+	public void initSpawnProbabilities()
+	{
+		scoutRatio = spawnScoutProb = 0.07;
+		spawnDisrupterProb = 0.0;
+		soldierDisrupterRatio = 0.3;
 	}
+	
+	public void updateSoldierDisruptorRatio()
+	{
+		int numenemy = radar.numEnemyRobots-radar.numEnemyScouts-radar.numEnemyTowers-radar.numEnemyArchons;
+		if (numenemy>0)
+			soldierDisrupterRatio = soldierDisrupterRatio
+					*(1-0.01*numenemy)
+					+0.01*radar.numEnemyScorchers;
+		dbg.setIndicatorString('y', 2, "current soldierDisrupterRatio:" +soldierDisrupterRatio+" scoutRatio:"+scoutRatio);
+	}
+	
+	public void updateScoutProb()
+	{
+//		double numally = radar.numAllyFighters/5.0-radar.numAllyScouts;
+//		if (numally>0)
+//			scoutRatio = scoutRatio
+//					*(0.85)
+//					+0.008;
+//		else if (numally<0)
+//			scoutRatio = scoutRatio*0.95;
+		scoutRatio = 0.07-radar.numAllyScouts*0.03;
+		dbg.setIndicatorString('y', 2, "current soldierDisrupterRatio:" +soldierDisrupterRatio+" scoutRatio:"+scoutRatio+" ");
+	}
+	
+	public void updateSpawnProbabilitiesForRound()
+	{
+		if(behavior == BehaviorState.BATTLE)
+		{
+//			spawnScoutProb = 0.07;
+			spawnScoutProb = scoutRatio;
+			spawnDisrupterProb = 0.0;
+		} else if (curRound<1000)
+		{
+			spawnScoutProb = 0.0;
+			spawnDisrupterProb = 0.0;
+		} else if (curRound<2000)
+		{
+//			spawnScoutProb = 0.07;
+			spawnScoutProb = scoutRatio;
+			spawnDisrupterProb = 0.0;
+		} else
+		{
+//			spawnScoutProb = 0.05;
+			spawnScoutProb = scoutRatio*5/7;
+//			spawnDisrupterProb = 0.3;
+			spawnDisrupterProb = soldierDisrupterRatio;
+		}
+	}
+	
+	private RobotType getNextUnitToSpawn() {
+		updateSpawnProbabilitiesForRound();
+		if (Util.randDouble() < spawnScoutProb) return RobotType.SCOUT;
+		if (Util.randDouble() < spawnDisrupterProb) return RobotType.DISRUPTER;
+		return RobotType.SOLDIER;
+	}
+	
+//	private RobotType getNextUnitToSpawn() {
+//		if(behavior == BehaviorState.BATTLE)
+//			return Util.randDouble() < 0.07 ? RobotType.SCOUT : RobotType.SOLDIER;
+//		if(curRound<1000)
+//			return RobotType.SOLDIER;
+//		if(curRound<2000) 
+//			return Util.randDouble() < 0.07 ? RobotType.SCOUT : RobotType.SOLDIER;
+//		
+//		return Util.randDouble() < 0.05 ? RobotType.SCOUT : (Util.randDouble() < 0.3 ? RobotType.DISRUPTER : RobotType.SOLDIER);
+//	}
 }

@@ -42,6 +42,7 @@ public class RadarSystem {
 	public int alliesOnLeft;
 	public int alliesOnRight;
 	public int alliesInFront;
+	public int numAllyScouts;
 
 	public final RobotInfo[] enemyInfos = new RobotInfo[MAX_ROBOTS];
 	public final int[] enemyTimes = new int[MAX_ROBOTS];
@@ -162,6 +163,7 @@ public class RadarSystem {
 		numAllyRobots = 0;
 		numAllyFighters = 0;
 		numAllyToRegenerate = 0;
+		numAllyScouts = 0;
 		alliesOnLeft = 0;
 		alliesOnRight = 0;
 		alliesInFront = 0;
@@ -469,16 +471,17 @@ public class RadarSystem {
 
 		numAllyRobots++;
 
-		if (rinfo.energon != rinfo.type.maxEnergon) {
-			numAllyToRegenerate++;
-		}
+//		archon doesn't care about this
+//		if (rinfo.energon != rinfo.type.maxEnergon) {
+//			numAllyToRegenerate++;
+//		}
 
 		if (aloc.distanceSquaredTo(br.curLoc) <= 2) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
 		
 		switch (rinfo.type) {
-		case ARCHON:
+//		case ARCHON:
 		case SOLDIER:
 		case SCORCHER:
 		case DISRUPTER:
@@ -487,6 +490,10 @@ public class RadarSystem {
 			allies_in_dir[br.curLoc.directionTo(aloc).ordinal()]++;
 			centerAllyX += aloc.x;
 			centerAllyY += aloc.y;
+		} break;
+		case SCOUT:
+		{
+			numAllyScouts++;
 		} break;
 		}
 	}
@@ -713,7 +720,7 @@ public class RadarSystem {
 			shorts[c+1] = ri.location.x;
 			shorts[c+2] = ri.location.y;
 			shorts[c+3] = (int)Math.ceil(Util.getEnemyStrengthEstimate(ri));
-			shorts[c+4] = ri.type.ordinal();
+			shorts[c+4] = br.myType==RobotType.SCOUT ? 55555 : br.curLoc.distanceSquaredTo(ri.location);
 		}
 		if(br.myType==RobotType.SOLDIER || br.myType==RobotType.DISRUPTER || br.myType==RobotType.SCORCHER)
 			br.er.integrateEnemyInfo(shorts);
