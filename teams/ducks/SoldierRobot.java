@@ -107,9 +107,9 @@ public class SoldierRobot extends BaseRobot {
 		
 		int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 		movingTarget = true;
-		if((gotHitLastRound && (closestEnemyLocation==null || 
+		if(gotHitLastRound && (closestEnemyLocation==null || 
 				curLoc.distanceSquaredTo(closestEnemyLocation) > 20) || 
-				(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES && !checkedBehind))) {
+				(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES && !checkedBehind)) {
 			// Got hurt since last turn.. look behind you
 			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
 			checkedBehind = false;
@@ -336,6 +336,9 @@ public class SoldierRobot extends BaseRobot {
 		case ENEMY_KILL:
 			er.integrateEnemyKill(BroadcastSystem.decodeShort(sb));
 			break;
+		case MAP_EDGES:
+			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
+			break;
 		default:
 			super.processMessage(msgType, sb);
 		} 
@@ -343,7 +346,7 @@ public class SoldierRobot extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		if(rc.getFlux()<0.8) return null;
+		if(rc.getFlux()<0.7) return new MoveInfo(curDir.opposite());
 		
 		if(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES) {
 			// Just turn around once

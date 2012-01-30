@@ -57,7 +57,7 @@ public class DisrupterRobot extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.BUG);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
-				BroadcastChannel.SOLDIERS,
+				BroadcastChannel.DISRUPTERS,
 				BroadcastChannel.FIGHTERS,
 				BroadcastChannel.EXTENDED_RADAR,
 		});
@@ -107,9 +107,9 @@ public class DisrupterRobot extends BaseRobot {
 		
 		int distToClosestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
 		movingTarget = true;
-		if((gotHitLastRound && (closestEnemyLocation==null || 
+		if(gotHitLastRound && (closestEnemyLocation==null || 
 				curLoc.distanceSquaredTo(closestEnemyLocation) > 20) || 
-				(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES && !checkedBehind))) {
+				(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES && !checkedBehind)) {
 			// Got hurt since last turn.. look behind you
 			behavior = BehaviorState.LOOK_AROUND_FOR_ENEMIES;
 			checkedBehind = false;
@@ -192,24 +192,26 @@ public class DisrupterRobot extends BaseRobot {
 		}
 		
 		// Check if we need more flux
-		if(rc.getFlux() < 5) {
-			if(closestEnemyLocation==null || curLoc.distanceSquaredTo(closestEnemyLocation) > 10)
-				behavior = BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE;
-		} else if(behavior == BehaviorState.SWARM || behavior == BehaviorState.LOST ||
-				behavior == BehaviorState.LOOKING_TO_HIBERNATE || behavior == BehaviorState.SEEK) {
-			if(rc.getFlux() < 10) {
-				if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
-					// Too low flux, can't reach archon
-					if(curRound > roundLastWakenUp + 10)
-						behavior = BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE;
-				} else {
-					// Needs to get flux from archon
-					behavior = BehaviorState.REFUEL;
-					target = dc.getClosestArchon();
-					movingTarget = true;
+		if(behavior != BehaviorState.LOW_FLUX_HIBERNATE) {
+			if(rc.getFlux() < 5) {
+				if(closestEnemyLocation==null || curLoc.distanceSquaredTo(closestEnemyLocation) > 10)
+					behavior = BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE;
+			} else if(behavior == BehaviorState.SWARM || behavior == BehaviorState.LOST ||
+					behavior == BehaviorState.LOOKING_TO_HIBERNATE || behavior == BehaviorState.SEEK) {
+				if(rc.getFlux() < 10) {
+					if(rc.getFlux() < Math.sqrt(curLoc.distanceSquaredTo(dc.getClosestArchon()))) {
+						// Too low flux, can't reach archon
+						if(curRound > roundLastWakenUp + 10)
+							behavior = BehaviorState.LOOKING_TO_LOW_FLUX_HIBERNATE;
+					} else {
+						// Needs to get flux from archon
+						behavior = BehaviorState.REFUEL;
+						target = dc.getClosestArchon();
+						movingTarget = true;
+					}
 				}
-			}
-		} 
+			} 
+		}
 		
 		// Attack an enemy if there is some unit in our attackable squares
 		tryToAttack();
@@ -284,6 +286,12 @@ public class DisrupterRobot extends BaseRobot {
 		fluxLastTurn = rc.getFlux();
 	}
 	
+	/** Attack priority: <br>
+	 *   - hit units with less than 10 attack delay whenenver possible <br>
+	 *   - if all units have >10 attack delay, attack lower hp units first <br>
+	 *   - for units with less than 10 attack delay, prioritize scorchers, then disrupters, then soldiers, then scouts, then archons <br>
+	 *   - for units of the same type, prioritize closer units <br>
+	 */
 	private void tryToAttack() throws GameActionException {
 		if(!rc.isAttackActive()) {
 			RobotInfo bestInfo = null;
@@ -292,16 +300,46 @@ public class DisrupterRobot extends BaseRobot {
 				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
 				if(!rc.canAttackSquare(ri.location)) 
 					continue;
-				if((bestValue <= myType.attackPower && ri.energon <= myType.attackPower) ?
-						ri.energon > bestValue : ri.energon < bestValue) {
-					// Say a soldier does 6 damage. We prefer hitting units with less energon, but we also would rather hit a unit with 5 energon than a unit with 1 energon.
+				double value;
+				if(ri.roundsUntilAttackIdle>10) 
+					value = 10000+ri.energon;
+				else {
+					switch(ri.type){
+					case SCORCHER:
+						value = (ri.roundsUntilAttackIdle>10) ? 10000+ri.energon :
+							1000+curLoc.distanceSquaredTo(ri.location);
+						break;
+					case DISRUPTER:
+						value = (ri.roundsUntilAttackIdle>10) ? 10000+ri.energon :
+							2000+curLoc.distanceSquaredTo(ri.location);
+						break;
+					case SOLDIER:
+						value = (ri.roundsUntilAttackIdle>10) ? 10000+ri.energon :
+							3000+curLoc.distanceSquaredTo(ri.location);
+						break;
+					case SCOUT:
+						value = (ri.roundsUntilAttackIdle>10) ? 10000+ri.energon :
+							4000+curLoc.distanceSquaredTo(ri.location);
+						break;
+					case ARCHON:
+						value = 11000+curLoc.distanceSquaredTo(ri.location);
+						break;
+					case TOWER:
+						value = 12000+curLoc.distanceSquaredTo(ri.location);
+						break;
+					default:
+						value = 55555;
+						break;
+					}
+				}
+				if(value < bestValue) {
 					bestInfo = ri;
-					bestValue = ri.energon;
+					bestValue = value;
 				}
 			}
 			
 			if(bestInfo!=null) {
-				if(bestValue <= myType.attackPower) {
+				if(bestInfo.energon <= myType.attackPower) {
 					er.broadcastKill(bestInfo.robot.getID());
 				}
 				rc.attackSquare(bestInfo.location, bestInfo.type.level);
@@ -336,6 +374,9 @@ public class DisrupterRobot extends BaseRobot {
 		case ENEMY_KILL:
 			er.integrateEnemyKill(BroadcastSystem.decodeShort(sb));
 			break;
+		case MAP_EDGES:
+			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
+			break;
 		default:
 			super.processMessage(msgType, sb);
 		} 
@@ -343,7 +384,7 @@ public class DisrupterRobot extends BaseRobot {
 	
 	@Override
 	public MoveInfo computeNextMove() throws GameActionException {
-		if(rc.getFlux()<0.8) return null;
+		if(rc.getFlux()<1.5) return new MoveInfo(curDir.opposite());
 		
 		if(behavior == BehaviorState.LOOK_AROUND_FOR_ENEMIES) {
 			// Just turn around once
