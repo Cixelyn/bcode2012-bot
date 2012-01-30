@@ -172,7 +172,6 @@ public class ScoutRobot extends BaseRobot {
 			// archon or scorcher is in range, harass them...
 			if (radar.numEnemySoldiers + radar.numEnemyDisruptors == 0 &&
 					radar.numEnemyArchons + radar.numEnemyScorchers > 0) {
-				dbg.println('e', "Harassing");
 				behavior = BehaviorState.HARASS;
 				
 			// ... otherwise, help your friends!
