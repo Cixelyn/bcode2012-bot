@@ -37,6 +37,8 @@ public class ScoutRobot extends BaseRobot {
 		SENDING_ALLY_FLUX,
 		/** Stand on top of an archon. Follow it around. Do nothing else. */
 		PET,
+		/** Chase lone archons and scorchers. */
+		HARASS,
 		/** At swarm target, hibernate until attacked or messaged to wake up. */
 		HIBERNATE,
 		/** Low on flux, need another scout to come give it some flux. */
@@ -264,7 +266,17 @@ public class ScoutRobot extends BaseRobot {
 			}
 			break;
 		case BATTLE:
-			behavior = BehaviorState.SUPPORT_FRONT_LINES;
+			// if there are no enemy soldiers or disrupters around and an enemy
+			// archon or scorcher is in range, harass them...
+			if (radar.numEnemySoldiers + radar.numEnemyDisruptors == 0 &&
+					radar.numEnemyArchons + radar.numEnemyScorchers > 0) {
+				dbg.println('e', "Harassing");
+				behavior = BehaviorState.HARASS;
+				
+			// ... otherwise, help your friends!
+			} else {
+				behavior = BehaviorState.SUPPORT_FRONT_LINES;
+			}
 			break;
 		case SUPPORT:
 			if(helpAllyLocation != null)
@@ -366,8 +378,20 @@ public class ScoutRobot extends BaseRobot {
 		if(rc.getFlux() < 0.5) 
 			return null;
 	
-		// ALWAYS RETREAT FROM ENEMY if in range
-		if (radar.closestEnemyWithFlux != null)
+		// if in harass mode, chase the nearest enemy archon or scorcher...
+		if (behavior == BehaviorState.HARASS) {
+			RobotInfo enemyToHarass = getClosestEnemyArchonScorcher();
+			if (enemyToHarass == null) {
+				// we shouldn't get here if our state transitions are happening
+				// correctly!
+				return new MoveInfo(nav.navigateGreedy(dc.getClosestArchon()), false);
+			} else {
+				return new MoveInfo(nav.navigateGreedy(enemyToHarass.location));
+			}
+		}
+		
+		// ...otherwise, ALWAYS RETREAT FROM ENEMY if in range
+		else if (radar.closestEnemyWithFlux != null)
 		{
 			if (behavior == BehaviorState.LOOK_FOR_MAP_EDGE ||
 				behavior == BehaviorState.REPORT_TO_ARCHON)
@@ -707,5 +731,50 @@ public class ScoutRobot extends BaseRobot {
 				lowest = closest_in_dir[x];
 			}
 		return Constants.directions[lowesti];
+	}
+	
+	/**
+	 * Gets the closest enemy Archon or Scorcher to the Scout. Prioritizes archons
+	 * over scorchers. Returns null if none in range.
+	 * @return The RobotInfo of the closest Archon or Scorcher to the scout, null
+	 * if none in range.
+	 */
+	private RobotInfo getClosestEnemyArchonScorcher() {
+		RobotInfo closestEnemyArchon = null;
+		RobotInfo closestEnemyScorcher = null;
+		int closestEnemyArchonDist = Integer.MAX_VALUE;
+		int closestEnemyScorcherDist = Integer.MAX_VALUE;
+		for (RobotInfo enemy : radar.enemyInfos) {
+			// make sure it's an enemy
+			if (enemy.team == myTeam) {
+				continue;
+			}
+			// get distance
+			int distance = curLoc.distanceSquaredTo(enemy.location);
+			// check if it's an archon
+			if (enemy.type == RobotType.ARCHON &&
+					distance < closestEnemyArchonDist) {
+				closestEnemyArchon = enemy;
+				closestEnemyArchonDist = distance;
+			}
+			// check if it's a scorcher
+			if (enemy.type == RobotType.SCORCHER &&
+					distance < closestEnemyScorcherDist) {
+				closestEnemyScorcher = enemy;
+				closestEnemyScorcherDist = distance;
+			}
+		}
+		// return the closest enemy Archon if there is one...
+		if (closestEnemyArchon != null) {
+			return closestEnemyArchon;
+			
+		// ... or the closest enemy Scorcher if there isn't any Archons...
+		} else if (closestEnemyScorcher != null) {
+			return closestEnemyScorcher;
+			
+		// ... or null if there are none of either
+		} else {
+			return null;
+		}
 	}
 }
