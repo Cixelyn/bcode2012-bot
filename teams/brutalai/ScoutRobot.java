@@ -278,6 +278,7 @@ public class ScoutRobot extends BaseRobot {
 			
 	}
 	
+	@SuppressWarnings("unused")
 	private void petSupport()
 	{
 //		old logic
