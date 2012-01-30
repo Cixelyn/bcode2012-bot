@@ -124,17 +124,11 @@ public class TeamMemory {
 			totalScorchersSeen += (int) (archonReport & 0xFFFF);
 		}
 		
-		// calculate last value averages
-		lastSoldierCount = totalSoldiersSeen / 6;
-		lastScoutCount = totalScoutsSeen / 6;
-		lastDisrupterCount = totalDisruptersSeen / 6;
-		lastScorcherCount = totalScorchersSeen / 6;
-		
 		// seed our initial w/ scaling
-		curSoldierCount += (int)Math.ceil(lastSoldierCount / 5.0);
-		curScoutCount += (int)Math.ceil(lastScoutCount / 5.0);
-		curDisrupterCount += (int)Math.ceil(lastDisrupterCount / 5.0);
-		curScorcherCount += (int)Math.ceil(lastScorcherCount / 5.0);
+		curSoldierCount += (int)Math.ceil(totalSoldiersSeen / 30.0);
+		curScoutCount += (int)Math.ceil(totalScoutsSeen / 30.0);
+		curDisrupterCount += (int)Math.ceil(totalDisruptersSeen / 30.0);
+		curScorcherCount += (int)Math.ceil(totalScorchersSeen / 30.0);
 		
 		br.dbg.println('e',"Starting Counters - S:" + curSoldierCount + " R:" + curScorcherCount +
 				" C:"+curScoutCount + " D:" + curDisrupterCount);
