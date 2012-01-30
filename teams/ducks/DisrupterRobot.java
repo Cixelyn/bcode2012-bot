@@ -434,9 +434,8 @@ public class DisrupterRobot extends BaseRobot {
 			// Fighting an enemy, kite target
 			int strengthDifference = er.getStrengthDifference(target, 24);
 			boolean weHaveBiggerFront = strengthDifference > 6;
-			boolean targetIsRanged = radar.numEnemyDisruptors + radar.numEnemyScorchers > 0;
-			int tooClose = weHaveBiggerFront ? -1 : (targetIsRanged ? 10 : 5);
-			int tooFar = weHaveBiggerFront ? 4 : (targetIsRanged ? 26 : 26);
+			int tooClose = weHaveBiggerFront ? -1 : 10;
+			int tooFar = weHaveBiggerFront ? 4 : 25;
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
 			
@@ -445,21 +444,18 @@ public class DisrupterRobot extends BaseRobot {
 				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()), true);
 				
 			// If we aren't turned the right way, turn towards target
-			} else if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
+			} else if(distToTarget <= 16 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
 				return new MoveInfo(dirToTarget);
 				
 			// If we are too close to the target, back off
 			} else if(distToTarget <= tooClose) {
-				if(targetIsRanged) {
+				if(rc.canMove(curDir.opposite()))
+					return new MoveInfo(curDir.opposite(), true);
+				else 
 					return new MoveInfo(dirToTarget.opposite(), true);
-				} else {
-					if(rc.canMove(curDir.opposite()))
-						return new MoveInfo(curDir.opposite(), true);
-				}
-				
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
-				if(distToTarget <= 5) {
+				if(distToTarget <= 13) {
 					if(rc.canMove(dirToTarget))
 						return new MoveInfo(dirToTarget, false);
 					else if(rc.canMove(dirToTarget.rotateLeft()) && 
@@ -468,8 +464,10 @@ public class DisrupterRobot extends BaseRobot {
 					else if(rc.canMove(dirToTarget.rotateRight()) && 
 							isOptimalAdvancingDirection(dirToTarget.rotateRight(), target, dirToTarget))
 						return new MoveInfo(dirToTarget.rotateRight(), false);
-					else
+					else if(distToTarget <= 10)
 						return new MoveInfo(dirToTarget);
+					else 
+						return new MoveInfo(dirToTarget, false);
 				} else if(distToTarget >= 26) {
 					return new MoveInfo(nav.navigateToDestination(), false);
 				} else {
@@ -497,10 +495,12 @@ public class DisrupterRobot extends BaseRobot {
 		case -2:
 			if(dy==1) return dir==Direction.WEST || dir==Direction.SOUTH_WEST;
 			else if(dy==-1) return dir==Direction.WEST || dir==Direction.NORTH_WEST;
+			else if(dy==3) return dir==Direction.SOUTH || dir==Direction.SOUTH_WEST;
+			else if(dy==-3) return dir==Direction.NORTH || dir==Direction.NORTH_WEST;
 			break;
 		case -1:
-			if(dy==1) return dir==Direction.SOUTH || dir==Direction.SOUTH_WEST;
-			else if(dy==-1) return dir==Direction.NORTH || dir==Direction.NORTH_WEST;
+			if(dy==2) return dir==Direction.SOUTH || dir==Direction.SOUTH_WEST;
+			else if(dy==-2) return dir==Direction.NORTH || dir==Direction.NORTH_WEST;
 			break;
 		case 1:
 			if(dy==2) return dir==Direction.SOUTH || dir==Direction.SOUTH_EAST;
@@ -509,6 +509,16 @@ public class DisrupterRobot extends BaseRobot {
 		case 2:
 			if(dy==1) return dir==Direction.EAST || dir==Direction.SOUTH_EAST;
 			else if(dy==-1) return dir==Direction.EAST || dir==Direction.NORTH_EAST;
+			else if(dy==3) return dir==Direction.SOUTH || dir==Direction.SOUTH_EAST;
+			else if(dy==-3) return dir==Direction.NORTH || dir==Direction.NORTH_EAST;
+			break;
+		case -3:
+			if(dy==2) return dir==Direction.WEST || dir==Direction.SOUTH_WEST;
+			else if(dy==-2) return dir==Direction.WEST || dir==Direction.NORTH_WEST;
+			break;
+		case 3:
+			if(dy==2) return dir==Direction.EAST || dir==Direction.SOUTH_EAST;
+			else if(dy==-2) return dir==Direction.EAST || dir==Direction.NORTH_EAST;
 			break;
 		default:
 			break;
