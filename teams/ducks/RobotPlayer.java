@@ -10,8 +10,6 @@ public class RobotPlayer {
 		int rseed = myRC.getRobot().getID();
 		Util.randInit(rseed,rseed*Clock.getRoundNum());
 		
-		String owner = System.getProperty("bc.testing.strategy");
-		
 		try {
 			switch (myRC.getType()) {
 			case ARCHON:
@@ -37,13 +35,8 @@ public class RobotPlayer {
 			br.rc.addMatchObservation(e.toString());
 		}
 		
-		// Set people's indicator strings
-		if(owner.equals("haitao")) br.dbg.setOwner('h');
-		if(owner.equals("cory")) br.dbg.setOwner('c');
-		if(owner.equals("yp")) br.dbg.setOwner('y');
-		if(owner.equals("justin")) br.dbg.setOwner('j');
+		br.dbg.setOwner('y');
 		
-
 		//Main loop should never terminate
 		while (true) {
 			try {
