@@ -36,6 +36,7 @@ public class RadarSystem {
 
 	public int numAdjacentAllies;
 	public int numAllyRobots;
+	public int numAllyFighters;
 	public int numAllyToRegenerate;
 	public final RobotInfo[] adjacentAllies = new RobotInfo[MAX_ADJACENT];
 	public int alliesOnLeft;
@@ -75,6 +76,7 @@ public class RadarSystem {
 	
 //	yp's variables for archon retreat code
 	public int[] closestInDir;
+	public int[] numEnemyInDir;
 	final static int[] blank_closestInDir = new int[] {99,99,99,99,99,99,99,99,99,99};
 	public int[] allies_in_dir;
 	
@@ -108,6 +110,7 @@ public class RadarSystem {
 		needToScanAllies = true;
 		robots = null;
 		closestInDir = new int[10];
+		numEnemyInDir = new int[10];
 		switch (br.myType)
 		{
 		case SOLDIER:
@@ -146,6 +149,7 @@ public class RadarSystem {
 		centerEnemyY = 0;
 		
 		System.arraycopy(blank_closestInDir, 0, closestInDir, 0, 10);
+		numEnemyInDir = new int[10];
 	}
 
 	private void resetAllyStats() {
@@ -153,6 +157,7 @@ public class RadarSystem {
 		closestAllyScoutDist = Integer.MAX_VALUE;
 		numAdjacentAllies = 0;
 		numAllyRobots = 0;
+		numAllyFighters = 0;
 		numAllyToRegenerate = 0;
 		alliesOnLeft = 0;
 		alliesOnRight = 0;
@@ -330,6 +335,8 @@ public class RadarSystem {
 		{
 			if (closestInDir[dir.ordinal()] > dist)
 				closestInDir[dir.ordinal()] = dist;
+			numEnemyInDir[dir.ordinal()]++;
+			
 		} break;
 		}
 	}
@@ -474,6 +481,7 @@ public class RadarSystem {
 		case SCORCHER:
 		case DISRUPTER:
 		{
+			numAllyFighters++;
 			allies_in_dir[br.curLoc.directionTo(rinfo.location).ordinal()]++;
 		} break;
 		}
