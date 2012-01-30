@@ -36,8 +36,8 @@ public class FastUShortSet {
 	 * @param i - element to remove
 	 */
 	public void remove(int i) {
-		int idx = setContainer.indexOf(String.valueOf((char)i));
-		if(idx >= 0){
+		int idx;
+		if((idx = setContainer.indexOf(String.valueOf((char)i)))>= 0){
 			setContainer.deleteCharAt(idx);
 		}
 	}
@@ -61,6 +61,10 @@ public class FastUShortSet {
 		return setContainer.charAt(index);
 	}
 	
+	public boolean contains(int i) {
+		return setContainer.indexOf(String.valueOf((char)i)) >= 0;
+	}
+	
 	
 	public static void main(String[] args) {
 		FastUShortSet a = new FastUShortSet();
@@ -70,8 +74,8 @@ public class FastUShortSet {
 		a.add(83); //S
 		a.add(81); //Q
 		a.pop();
-		a.pop();
-		
+		a.remove(82);
 		System.out.println(a);
+		System.out.println(a.contains(81));
 	}
 }
