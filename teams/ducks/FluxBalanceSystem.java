@@ -158,6 +158,16 @@ public class FluxBalanceSystem {
 					fluxToTransfer -= x;
 				}
 			}
+			if(br.myType != RobotType.ARCHON && br.myType != RobotType.SCOUT) {
+				for (int n=0; n<radar.numAdjacentAllies && fluxToTransfer>0; n++) {
+					RobotInfo ri = radar.adjacentAllies[n];
+					if (ri.type != RobotType.SCOUT && ri.type != RobotType.ARCHON) {
+						double x = Math.min(fluxToTransfer, 5);
+						rc.transferFlux(ri.location, ri.type.level, x);
+						fluxToTransfer -= x;
+					}
+				}
+			}
 			
 		// Otherwise, give flux to those that need it
 		} else {
@@ -170,7 +180,6 @@ public class FluxBalanceSystem {
 				if(ri.flux < lowerFluxThreshold) {
 					double upperFluxThreshold = (ri.energon < ri.type.maxEnergon/2 ? 
 							ri.energon/2 : ri.energon*2/3) + 5;
-					if(br.myType == RobotType.ARCHON) upperFluxThreshold+=10;
 					double x = Math.min(fluxToTransfer, upperFluxThreshold - ri.flux);
 					rc.transferFlux(ri.location, ri.type.level, x);
 					fluxToTransfer -= x;

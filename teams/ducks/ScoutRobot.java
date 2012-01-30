@@ -96,8 +96,12 @@ public class ScoutRobot extends BaseRobot {
 		if(strategy != StrategyState.SUPPORT || curRound%2==0) {
 			radar.scan(true, true);
 			if(radar.closestEnemy != null) {
-				enemySpottedTarget = radar.closestEnemy.location;
-				enemySpottedRound = curRound;
+				if(radar.closestEnemy.type==RobotType.ARCHON || 
+						radar.closestEnemy.type==RobotType.TOWER || radar.closestEnemy.flux>0.15) {
+					enemySpottedTarget = radar.closestEnemy.location;
+					enemySpottedRound = curRound;
+				}
+				
 			} else {
 				enemySpottedTarget = null;
 			}
