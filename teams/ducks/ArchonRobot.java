@@ -1691,15 +1691,15 @@ public class ArchonRobot extends BaseRobot{
 	
 	public void updateSpawnProbabilitiesForRound()
 	{
-		if(behavior == BehaviorState.BATTLE)
-		{
-//			spawnScoutProb = 0.07;
-			spawnScoutProb = scoutRatio;
-			spawnDisrupterProb = 0.0;
-		} else if (curRound<1000)
+		if (curRound<1000)
 		{
 			spawnScoutProb = 0.0;
 			spawnDisrupterProb = 0.0;
+		} else if(behavior == BehaviorState.BATTLE)
+		{
+//			spawnScoutProb = 0.07;
+			spawnScoutProb = scoutRatio;
+			spawnDisrupterProb = soldierDisrupterRatio;
 		} else if (curRound<2000)
 		{
 //			spawnScoutProb = 0.07;
