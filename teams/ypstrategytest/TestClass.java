@@ -528,8 +528,8 @@ int t1,t2;
 //	t2 = Clock.getBytecodeNum();
 //	System.out.println("string writer used: "+(t2-t1));
 	
-//	public static void main(String[] args) {
-//		
+	public static void main(String[] args) {
+		
 //		randInit(1532,58);
 //		
 //		int count = 0;
@@ -540,8 +540,17 @@ int t1,t2;
 //		}
 //		
 //		System.out.println(count);
-//		
-//	}
+		
+		for (int y=-4; y<5; y++)
+			for (int x=-4; x<5; x++)
+			{
+				System.out.println("if ((damagedAllies=(int)((a"+(y+5)+">>"+((x+5)*5)+")&0x1fl))>maxDamagedAllies)");
+				System.out.println("{\n\tmaxDamagedAllies = damagedAllies;");
+				System.out.println("\tmaxX = "+x+";");
+				System.out.println("\tmaxY = "+y+";\n}");
+			}
+		
+	}
 
 	
 	static StrategyQueue sq;
