@@ -340,7 +340,11 @@ public class ScoutRobot extends BaseRobot {
 //		(code done in radar)
 		if (radar.lowestEnergonRatio < THRESHOLD_TO_HEAL_ALLIES)
 		{
-			objective = radar.lowestEnergonAllied.location;
+//			objective = radar.lowestEnergonAllied.location;
+			objective = getBestRegenSquare();
+			if (objective == null) {
+				objective = radar.lowestEnergonAllied.location;
+			}
 		} else if (radar.lowestFlux < THRESHOLD_TO_REFUEL_ALLIES)
 		{
 			objective = radar.lowestFluxAllied.location;
@@ -784,6 +788,58 @@ public class ScoutRobot extends BaseRobot {
 			return closestEnemyScorcher;
 			
 		// ... or null if there are none of either
+		} else {
+			return null;
+		}
+	}
+	
+	/**
+	 * Gets the square in the Scout's vision range that is adjacent to (or the
+	 * same square as) the most weakened units. ~2200 bytecodes
+	 * @return The MapLocation at distance <= 2 from the most damaged units
+	 */
+	private MapLocation getBestRegenSquare() {
+		long[] rows = new long[11];
+		long[] ans = new long[11];
+		// populate location of damaged allies
+		// TODO(jven): consider only non-regened allies?
+		for (int idx = 0; idx < radar.numAllyRobots; idx++) {
+			RobotInfo ally = radar.allyInfos[radar.allyRobots[idx]];
+			// ignore if he's not damaged
+			if (ally.energon >= ally.type.maxEnergon) {
+				continue;
+			}
+			// get relative location of ally
+			int dx = ally.location.x - curLoc.x + 5;
+			int dy = ally.location.y - curLoc.y + 5;
+			// set initial bits
+			rows[dy] += (0x1L << (50 - dx * 5));
+		}
+		// pre-shift lefts and rights
+		for (int y = 0; y < 11; y++) {
+			rows[y] += (rows[y] << 5) + (rows[y] >> 5);
+		}
+		// sum consecutive 3 rows
+		for (int y = 1; y < 10; y++) {
+			ans[y] = rows[y - 1] + rows[y] + rows[y + 1];
+		}
+		// get max
+		int maxX = 0;
+		int maxY = 0;
+		int maxDamagedAllies = 0;
+		for (int xf = 5; xf < 50; xf += 5) {
+			for (int y = 1; y < 10; y++) {
+				int damagedAllies = (int)((ans[y] >> (50 - xf)) % 32);
+				if (damagedAllies > 2)
+				if (damagedAllies > maxDamagedAllies) {
+					maxX = xf / 5 - 5;
+					maxY = y - 5;
+					maxDamagedAllies = damagedAllies;
+				}
+			}
+		}
+		if (maxDamagedAllies > 0) {
+			return curLoc.add(maxX, maxY);
 		} else {
 			return null;
 		}
