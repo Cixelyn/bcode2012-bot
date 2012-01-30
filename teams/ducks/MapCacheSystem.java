@@ -162,7 +162,6 @@ public class MapCacheSystem {
 		int x = xminGuess+xmaxGuess-POWER_CORE_POSITION;
 		int y = yminGuess+ymaxGuess-POWER_CORE_POSITION;
 		MapLocation guess = new MapLocation(cacheToWorldX(x), cacheToWorldY(y));
-		br.dbg.setIndicatorString('e', 0, guess+" "+getEnemyPowerCoreLocation());
 		if(!isSensed(guess))
 			return guess;
 		x = xminGuess+xmaxGuess-POWER_CORE_POSITION;
@@ -214,9 +213,23 @@ public class MapCacheSystem {
 	
 	public MapLocation getEndGamePowerNodeToCapture() {
 		MapLocation[] nodeLocs = br.dc.getCapturablePowerCores();
-		if(Util.randDouble()<0.5) {
-			int randomIndex = (Util.randInt()%nodeLocs.length+nodeLocs.length)%nodeLocs.length;
+		double rand = Util.randDouble();
+		if(br.myArchonID==0 || (br.myArchonID>=3 && rand<0.25)) {
+			int randomIndex = (int)(Util.randDouble()*nodeLocs.length);
 			return nodeLocs[randomIndex];
+		} else if(br.myArchonID==1 || (br.myArchonID>=3 && rand<0.5)) {
+			// Take power node farthest from enemy base
+			MapLocation enemyCore = guessEnemyPowerCoreLocation();
+			int farthestIndex = -1;
+			int farthestDist = -1;
+			for(int i=0; i<nodeLocs.length; i++) {
+				int dist = enemyCore.distanceSquaredTo(nodeLocs[i]);
+				if(dist > farthestDist) {
+					farthestIndex = i;
+					farthestDist = dist;
+				}
+			}
+			return nodeLocs[farthestIndex];
 		} else {
 			int closestIndex = -1;
 			int closestDist = Integer.MAX_VALUE;

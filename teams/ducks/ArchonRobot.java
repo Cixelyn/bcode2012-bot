@@ -114,8 +114,12 @@ public class ArchonRobot extends BaseRobot{
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if(curRound > 2500) 
-				strategy = StrategyState.ADJACENT_CAP;
+			if(curRound > 2500) {
+				if(adjNode==null)
+					strategy = StrategyState.EFFICIENT_CAP;
+				else
+					strategy = StrategyState.ADJACENT_CAP;
+			}
 			break;
 		case ADJACENT_CAP:
 			if(adjNode==null)
@@ -225,7 +229,9 @@ public class ArchonRobot extends BaseRobot{
 		nav.setDestination(target);
 		
 		// Set the flux balance mode
-		if(behavior == BehaviorState.SWARM && curRound > enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT)
+		if(behavior == BehaviorState.SWARM && 
+				strategy!=StrategyState.ENDGAME_CAP && 
+				curRound > enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT)
 			fbs.setBatteryMode();
 		else
 			fbs.setPoolMode();
