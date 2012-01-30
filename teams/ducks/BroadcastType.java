@@ -2,55 +2,44 @@ package ducks;
 
 public enum BroadcastType {
 	
-	// shared exploration
+	// ------- TEST CODE
+	/** blank */
+	NONE,
+	
+	// ------- SHARED EXPLORATION CODE
+	/** shared exploration powernodes */
 	POWERNODE_FRAGMENTS,
+	/** shared exploration map fragments */
 	MAP_FRAGMENTS,
+	/** shared exploration map edges */
 	MAP_EDGES,
 
-	// random shit
-	OWNERSHIP_CLAIM,
-	ENEMY_ARCHON_KILL,
-	
-	// scout wire system
-	WIRE_REQUEST,
-	WIRE_ACCEPT,
-	WIRE_CONFIRM,
-	WIRE_ABORT,
-
-	// jven
-	INITIAL_REPORT,
-	INITIAL_REPORT_ACK,
-	RALLY,
-	
-	// extended radar
+	// ------ EXTENDED RADAR
 	/** ushorts(15-bit), [sender_robot_ID, sender_loc.x, sender_loc.y, 
 	 * sender_energon (+10000 if sender info is included at all), sender_type, 
 	 * robot_ID_1, loc_1.x, loc_1.y, energon_1(rounded up), robot_type_1, 
-	 * robot_ID_2, loc_2.x, etc...] 
-	 */
+	 * robot_ID_2, loc_2.x, etc...] */
 	ENEMY_INFO,
 	/** ushort(15-bit), robot_ID_of_robot_that_I_killed */
 	ENEMY_KILL,
 	
-	// swarm code
-	ANNOUNCE_ENEMY,
-	// (temporary)
-	SWARM_DETAILS,
-	
+	// ------ SWARM MODE
 	/** ushorts(15-bit), [moving_target?1:0, target_loc.x, target_loc.y] */
 	SWARM_TARGET,
 	/** ushorts(15-bit), [round_spotted, enemy_loc.x, enemy_loc.y] */
 	ENEMY_SPOTTED,
 
+	// ------ HIBERNATION MODE
 	/** blank message. Sent by units with no flux */
 	LOW_FLUX_HELP,
 	
+	// ------ GAME END MODE
 	/** ushort, [gameEndTime] */
 	DETECTED_GAME_END,
 	
-	// ending semicolon
+	// --------------------
 	;
-	
+
 	public final char header_c;
 	public final String header_s;
 	BroadcastType() {
