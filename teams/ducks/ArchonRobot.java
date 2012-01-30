@@ -3,7 +3,6 @@ package ducks;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.PowerNode;
 import battlecode.common.RobotController;
@@ -111,7 +110,7 @@ public class ArchonRobot extends BaseRobot{
 			strategy = StrategyState.ENDGAME_CAP;
 		switch(strategy) {
 		case INITIAL_EXPLORE:
-			if(curRound > 150) 
+			if(curRound > 100) 
 				strategy = StrategyState.DEFEND;
 			break;
 		case RETURN_HOME:
@@ -119,7 +118,7 @@ public class ArchonRobot extends BaseRobot{
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if(curRound > 1500) {
+			if(curRound > 1000) {
 				if(adjNode==null)
 					strategy = StrategyState.EFFICIENT_CAP;
 				else if(myArchonID!=0)
@@ -163,8 +162,11 @@ public class ArchonRobot extends BaseRobot{
 		
 		// If there is a non-scout enemy in sensor range, set target as enemy swarm target
 		if(radar.closestEnemy != null && radar.numEnemyScouts < radar.numEnemyRobots) {
-			enemySpottedRound = curRound;
-			enemySpottedTarget = radar.closestEnemy.location;
+			if(radar.closestEnemy.type==RobotType.ARCHON || 
+					radar.closestEnemy.type==RobotType.TOWER || radar.closestEnemy.flux>0.15) {
+				enemySpottedRound = curRound;
+				enemySpottedTarget = radar.closestEnemy.location;
+			}
 			stayTargetLockedUntilRound = curRound + TURNS_TO_LOCK_ONTO_AN_ENEMY;
 			Direction enemySwarmDir = curLoc.directionTo(radar.getEnemySwarmTarget());
 			if (radar.getArmyDifference() < -2 || 
@@ -383,30 +385,32 @@ public class ArchonRobot extends BaseRobot{
 				return new MoveInfo(nav.navigateCompletelyRandomly(), true);
 			} 
 			
-			// If I'm the closest archon to my target...
-			MapLocation closestToTarget = null;
-			int minDist = Integer.MAX_VALUE;
-			for(MapLocation loc: dc.getAlliedArchons()) {
-				int dist = loc.distanceSquaredTo(target);
-				if(dist < minDist) {
-					closestToTarget = loc;
-					minDist = dist;
+			if(strategy != StrategyState.ENDGAME_CAP) {
+				// If I'm the closest archon to my target...
+				MapLocation closestToTarget = null;
+				int minDist = Integer.MAX_VALUE;
+				for(MapLocation loc: dc.getAlliedArchons()) {
+					int dist = loc.distanceSquaredTo(target);
+					if(dist < minDist) {
+						closestToTarget = loc;
+						minDist = dist;
+					}
 				}
-			}
-			if(curLoc.equals(closestToTarget)) {
-				// If there are no allies in front, slow down (maintain compact swarm)
-				if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && 
-						Util.randDouble()<0.8)
-					return null;
-				
-			// If I'm NOT the closest archon to my target...
-			} else {
-				// If I'm too close to an allied archon, disperse probabilistically
-				if(dc.getClosestArchon()!=null) {
-					int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
-					if(distToNearestArchon <= 25 && 
-							Util.randDouble() < 1.05-Math.sqrt(distToNearestArchon)/10) {
-						return new MoveInfo(getDirAwayFromAlliedArchons(32), false);
+				if(curLoc.equals(closestToTarget)) {
+					// If there are no allies in front, slow down (maintain compact swarm)
+					if(behavior == BehaviorState.SWARM && radar.alliesInFront==0 && 
+							Util.randDouble()<0.8)
+						return null;
+					
+				// If I'm NOT the closest archon to my target...
+				} else {
+					// If I'm too close to an allied archon, disperse probabilistically
+					if(dc.getClosestArchon()!=null) {
+						int distToNearestArchon = curLoc.distanceSquaredTo(dc.getClosestArchon());
+						if(distToNearestArchon <= 25 && 
+								Util.randDouble() < 1.05-Math.sqrt(distToNearestArchon)/10) {
+							return new MoveInfo(getDirAwayFromAlliedArchons(32), false);
+						}
 					}
 				}
 			}
