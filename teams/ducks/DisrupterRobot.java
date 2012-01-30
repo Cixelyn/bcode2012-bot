@@ -465,6 +465,8 @@ public class DisrupterRobot extends BaseRobot {
 					return new MoveInfo(dir, true);
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
+				if(distToTarget <= 10 && strengthDifference < 50)
+					return null;
 				if(distToTarget <= 13) {
 					if(rc.canMove(dirToTarget))
 						return new MoveInfo(dirToTarget, false);
