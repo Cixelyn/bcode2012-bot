@@ -759,17 +759,17 @@ public class RadarSystem {
 							estEndTime = 
 									(int)(250 / (GameConstants.TIME_LIMIT_DAMAGE / br.dc.getAlliedPowerNodes().length))
 									+ Clock.getRoundNum()
-									- 1000;
+									- Constants.ENDGAME_CAP_MODE_BUFFER;
 						} else {
 							estEndTime = 
 									(int)(curEnergon / (GameConstants.TIME_LIMIT_DAMAGE / br.dc.getAlliedPowerNodes().length))
 									+ Clock.getRoundNum()
-									- 1000;
+									- Constants.ENDGAME_CAP_MODE_BUFFER;
 						}
 						
 						if(estEndTime<br.gameEndTime) {
 							br.gameEndTime = estEndTime;
-							br.dbg.println('e', "GAME ENDS AT " + (br.gameEndTime + 1000) + " | OH SHIT MODE AT " + br.gameEndTime);
+							br.dbg.println('e', "GAME ENDS AT " + (br.gameEndTime + Constants.ENDGAME_CAP_MODE_BUFFER) + " | OH SHIT MODE AT " + br.gameEndTime);
 						}
 						
 					}
