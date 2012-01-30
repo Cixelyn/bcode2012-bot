@@ -58,7 +58,7 @@ public class ExtendedRadarSystem {
 			int id = info[n];
 			enemyLocationInfo[id] = new MapLocation(info[n+1], info[n+2]);
 			enemyUnitStrengthEstimate[id] = info[n+3];
-			if(!enemyKeySet.contains(id) || enemyMinDistToAlly[id]>info[n+4]) 
+			if(!enemyKeySet.containsID(id) || enemyMinDistToAlly[id]>info[n+4]) 
 				enemyMinDistToAlly[id] = info[n+4];
 				
 			enemyKeySet.addID(id);
@@ -149,17 +149,20 @@ public class ExtendedRadarSystem {
 	
 	/** Returns the id of this closest enemy, or -1 if there are no enemies. */
 	public int getClosestEnemyID() {
-		int ret = -1;
+		int minDist = br.myType.attackRadiusMaxSquared;
+		int bestID = -1;
 		int bestDist = Integer.MAX_VALUE;
 		for(int i=enemyKeySet.size(); --i>=0;) {
 			int id = enemyKeySet.getID(i);
+			if(enemyMinDistToAlly[id]>minDist)
+				continue;
 			int dist = br.curLoc.distanceSquaredTo(enemyLocationInfo[id]);
 			if(dist<bestDist) {
-				ret = id;
+				bestID = id;
 				bestDist = dist;
 			}
 		}
-		return ret;
+		return bestID;
 	}
 	
 	/** Returns a direction to go that will most likely bring you to an enemy. */
