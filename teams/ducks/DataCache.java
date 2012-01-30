@@ -2,6 +2,10 @@ package ducks;
 
 import battlecode.common.*;
 
+/** 
+ * This class caches various expensive function calls.
+ * eg: senseAlliedPowerNodes, senseAlliedArchons, etc.
+ */
 public class DataCache {
 	
 	private BaseRobot br;
@@ -24,22 +28,12 @@ public class DataCache {
 			new GameObject[Direction.values().length];
 	private int adjacentGameObjectsTime = -1;
 	
-	private Robot[] nearbyRobots;
-	private int nearbyRobotsTime = -1;
-	
 	private MapLocation[] capturablePowerCores;
 	private int capturablePowerCoresTime = -1;
 	
 	private PowerNode[] alliedPowerNodes;
 	private int alliedPowerNodesTime = -1;
 	
-	private RobotInfo closestEnemy;
-	private int closestEnemyTime = -1;
-	
-	private MapLocation closestCapturablePowerCore;
-	private int closestCapturablePowerCoreTime = -1;
-	
-
 	public DataCache(BaseRobot br) {
 		this.br = br;
 		this.rc = br.rc;
@@ -78,7 +72,7 @@ public class DataCache {
 	 */
 	public boolean[] getMovableDirections() {
 		if (br.curRound > moveableDirectionsTime) {
-			for(int i=0; i<8; i++) 
+			for(int i=8; i>=0; --i) 
 				moveableDirections[i] = rc.canMove(Constants.directions[i]);
 			moveableDirectionsTime = br.curRound;
 		}
@@ -119,17 +113,6 @@ public class DataCache {
 		}
 	}
 	
-	public Robot[] getNearbyRobots() {
-		if (br.curRound > nearbyRobotsTime) {
-			nearbyRobots = null;
-			nearbyRobotsTime = br.curRound;
-		}
-		if (nearbyRobots == null) {
-			nearbyRobots = rc.senseNearbyGameObjects(Robot.class);
-		}
-		return nearbyRobots;
-	}
-	
 	public MapLocation[] getCapturablePowerCores() {
 		if (br.curRound > capturablePowerCoresTime) {
 			capturablePowerCores = null;
@@ -152,50 +135,6 @@ public class DataCache {
 		return alliedPowerNodes;
 	}
 	
-	public RobotInfo getClosestEnemy() throws GameActionException {
-		if (br.curRound > closestEnemyTime) {
-			int closestDistance = Integer.MAX_VALUE;
-			closestEnemy = null;
-			// TODO(jven): prioritize archons?
-			for (Robot r : getNearbyRobots()) {
-				if (r.getTeam() != br.myTeam) {
-					RobotInfo rInfo = rc.senseRobotInfo(r);
-					// don't overkill
-					if (rInfo.energon <= 0) {
-						continue;
-					}
-					// don't shoot at towers you can't hurt
-					if (rInfo.type == RobotType.TOWER && !isTowerTargetable(rInfo)) {
-						continue;
-					}
-					int distance = br.curLoc.distanceSquaredTo(rInfo.location);
-					if (distance < closestDistance) {
-						closestDistance = distance;
-						closestEnemy = rInfo;
-					}
-				}
-			}
-			closestEnemyTime = br.curRound;
-		}
-		return closestEnemy;
-	}
-	
-	public MapLocation getClosestCapturablePowerCore()
-			throws GameActionException {
-		if (br.curRound > closestCapturablePowerCoreTime) {
-			int closestDistance = Integer.MAX_VALUE;
-			closestCapturablePowerCore = null;
-			for (MapLocation capturablePowerCore : getCapturablePowerCores()) {
-				int distance = br.curLoc.distanceSquaredTo(capturablePowerCore);
-				if (distance < closestDistance) {
-					closestDistance = distance;
-					closestCapturablePowerCore = capturablePowerCore;
-				}
-			}
-			closestCapturablePowerCoreTime = br.curRound;
-		}
-		return closestCapturablePowerCore;
-	}
 	
 	// TODO(jven): this doesn't belong here?
 	public boolean isTowerTargetable(RobotInfo tower) 
