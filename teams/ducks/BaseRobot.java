@@ -146,6 +146,7 @@ public abstract class BaseRobot {
 			try {
 				
 				// Main Run Call
+				dbg.setIndicatorString('e', 0, gameEndDetected+" "+gameEndTime);
 				run();
 				
 				// Call Movement State Machine
