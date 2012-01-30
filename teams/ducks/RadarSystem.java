@@ -179,6 +179,8 @@ public class RadarSystem {
 	private void addEnemy(RobotInfo rinfo) throws GameActionException {
 		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
 			return;
+		if(rinfo.type==RobotType.SCOUT && rinfo.location.distanceSquaredTo(br.curLoc)>5)
+			return;
 		
 		int pos = rinfo.robot.getID();
 		enemyInfos[pos] = rinfo;
@@ -222,6 +224,8 @@ public class RadarSystem {
 	
 	private void addEnemyForScout(RobotInfo rinfo) throws GameActionException {
 		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
+			return;
+		if(rinfo.type==RobotType.SCOUT && rinfo.location.distanceSquaredTo(br.curLoc)>5)
 			return;
 		
 		int pos = rinfo.robot.getID();
@@ -287,6 +291,8 @@ public class RadarSystem {
 	
 	private void addEnemyForArchon(RobotInfo rinfo) throws GameActionException {
 		if(rinfo.type==RobotType.TOWER && !br.dc.isTowerTargetable(rinfo))
+			return;
+		if(rinfo.type==RobotType.SCOUT && rinfo.location.distanceSquaredTo(br.curLoc)>5)
 			return;
 		
 		int rid = rinfo.robot.getID();
@@ -718,9 +724,9 @@ public class RadarSystem {
 	
 	/** Gets the enemy info from the radar into your own and nearby robots' extended radar. */
 	public void broadcastEnemyInfo(boolean sendOwnInfo) {
-		if(numEnemyRobots==numEnemyScouts) return;
-		
-		int[] shorts = new int[(numEnemyRobots-numEnemyScouts)*5+(sendOwnInfo?5:0)];
+		if(numEnemyRobots==0 && !sendOwnInfo)
+			return;
+		int[] shorts = new int[(numEnemyRobots)*5+(sendOwnInfo?5:0)];
 		if(sendOwnInfo) {
 			shorts[0] = br.myID;
 			shorts[1] = br.curLoc.x;
@@ -730,10 +736,6 @@ public class RadarSystem {
 		}
 		for(int i=0, c=sendOwnInfo?5:0; i<numEnemyRobots; i++, c+=5) {
 			RobotInfo ri = enemyInfos[enemyRobots[i]];
-			if(ri.type==RobotType.SCOUT) {
-				c-=5;
-				continue;
-			}
 			shorts[c] = ri.robot.getID();
 			shorts[c+1] = ri.location.x;
 			shorts[c+2] = ri.location.y;
