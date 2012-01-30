@@ -4,6 +4,7 @@ public enum BroadcastChannel {
 
 	ALL,
 	ARCHONS,
+	FIGHTERS,
 	SOLDIERS,
 	DISRUPTERS,
 	SCOUTS,
