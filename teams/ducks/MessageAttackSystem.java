@@ -73,10 +73,11 @@ public class MessageAttackSystem {
 		// 031: Yippee: another string user... 1 int 1 string, int is a hash...
 		// don't appear to explicitly use the current round, so we're trying a
 		// rebroadcast attack
+		// 086: Boxdrop: they use the same 1 int 1 string format
 		} else if (m.ints != null && m.ints.length == 1 &&
 				m.strings != null && m.strings.length == 1 &&
 				(m.locations == null || m.locations.length == 0)) {
-			enemyTeam = 31;
+			enemyTeam = 86;
 		
 		// 047: fun gamers: for testing purposes only...
 		} else if (m.ints != null && m.ints.length == 3 && isRoundNum(m.ints[2]) &&
@@ -151,7 +152,7 @@ public class MessageAttackSystem {
 				load016();
 				break;
 			case 29:
-			case 31:
+			case 86:
 			case 47:
 			case 53:
 			case 56:
@@ -201,8 +202,12 @@ public class MessageAttackSystem {
 				m = memorizedMessage;
 				m.ints[1] = br.curRound;
 				break;
-			case 31:
+			case 86:
 				m = memorizedMessage;
+				if (m.strings[0].length() > 3) {
+					m.strings[0] = "" + (char)(m.strings[0].charAt(0) - 1) + 
+							(char)(m.strings[0].charAt(1) + 31) + m.strings[0].substring(2);
+				}
 				break;
 			case 42:
 				m = new Message();
