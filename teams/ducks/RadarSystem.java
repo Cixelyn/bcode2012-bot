@@ -757,7 +757,7 @@ public class RadarSystem {
 		
 		int round = Clock.getRoundNum();
 		
-		if(!br.detectedGameEnd && round >= 1990) {
+		if(round >= 1995 && !br.gameEndNow) {
 			int id = rinfo.robot.getID();
 			double curEnergon = rinfo.energon;
 			double oldEnergon = allyTowerHealth[id];
@@ -771,8 +771,28 @@ public class RadarSystem {
 					// if we're connected
 					PowerNode pn = (PowerNode) br.rc.senseObjectAtLocation(rinfo.location, RobotLevel.POWER_NODE);
 					if(br.rc.senseConnected(pn)) {
-						br.detectedGameEnd = true;
-						br.dbg.println('e', "HOLY SHIT I DETECTED THAT GAME IS ENDING SOON!!!");
+						br.gameEndDetected = true;
+						
+				
+						int estEndTime;
+						if(br.rc.senseOpponentConnected(pn)) {
+							// compute when I think the game will end
+							estEndTime = 
+									(int)(250 / (GameConstants.TIME_LIMIT_DAMAGE / br.dc.getAlliedPowerNodes().length))
+									+ Clock.getRoundNum()
+									- 1000;
+						} else {
+							estEndTime = 
+									(int)(curEnergon / (GameConstants.TIME_LIMIT_DAMAGE / br.dc.getAlliedPowerNodes().length))
+									+ Clock.getRoundNum()
+									- 1000;
+						}
+						
+						if(estEndTime<br.gameEndTime) {
+							br.gameEndTime = estEndTime;
+							br.dbg.println('e', "GAME ENDS AT " + (br.gameEndTime + 1000) + " | OH SHIT MODE AT " + br.gameEndTime);
+						}
+						
 					}
 				}
 			}

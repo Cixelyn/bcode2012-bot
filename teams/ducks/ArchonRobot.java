@@ -102,7 +102,7 @@ public class ArchonRobot extends BaseRobot{
 		adjNode = getNextPowerNodeAdjacentToCore();
 		
 		// The new strategy transition
-		if(detectedGameEnd)
+		if(gameEndNow)
 			strategy = StrategyState.ENDGAME_CAP;
 		switch(strategy) {
 		case INITIAL_EXPLORE:

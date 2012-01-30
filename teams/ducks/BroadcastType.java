@@ -45,7 +45,10 @@ public enum BroadcastType {
 	/** blank message. Sent by units with no flux */
 	LOW_FLUX_HELP,
 	
-//	ending semicolon
+	/** ushort, [gameEndTime] */
+	DETECTED_GAME_END,
+	
+	// ending semicolon
 	;
 	
 	public final char header_c;
