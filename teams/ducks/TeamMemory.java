@@ -129,8 +129,9 @@ public class TeamMemory {
 		curScoutCount += (int)Math.ceil(totalScoutsSeen / 30.0);
 		curDisrupterCount += (int)Math.ceil(totalDisruptersSeen / 30.0);
 		curScorcherCount += (int)Math.ceil(totalScorchersSeen / 30.0);
-		
-		br.dbg.println('e',"Starting Counters - S:" + curSoldierCount + " R:" + curScorcherCount +
-				" C:"+curScoutCount + " D:" + curDisrupterCount);
+	
+		if(br.myArchonID == 0)
+			br.dbg.println('e',"Starting Counters - S:" + curSoldierCount + " R:" + curScorcherCount +
+					" C:"+curScoutCount + " D:" + curDisrupterCount);
 	}
 }
