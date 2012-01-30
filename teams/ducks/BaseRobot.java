@@ -48,7 +48,9 @@ public abstract class BaseRobot {
 	
 	// Robot Flags - toggle important behavior changes
 	public boolean justRevived;
-	public boolean detectedGameEnd = false;
+	public boolean gameEndNow = false;
+	public boolean gameEndDetected = false;
+	public int gameEndTime = Integer.MAX_VALUE;
 	
 	// Internal Statistics
 	private int lastResetTime = 50;
@@ -170,6 +172,7 @@ public abstract class BaseRobot {
 			if(checkClock())
 				dbg.println('e', "Very bad! useExcessBytecodes() ran over the bytecode limit. " +
 						"You must fix this so it only uses the available bytecodes and no more.");
+			
 			rc.yield();
 		}
 	}
@@ -184,7 +187,7 @@ public abstract class BaseRobot {
 		curLocInBack = curLoc.add(curDir.opposite());
 
 		justRevived = (lastResetTime < executeStartTime - 3);
-		if (curRound > GameConstants.MAX_ROUND_LIMIT) detectedGameEnd = true;
+		gameEndNow = curRound > gameEndTime;
 	}
 	
 	/**
@@ -192,7 +195,15 @@ public abstract class BaseRobot {
 	 * @param msgType
 	 * @param sb
 	 */
-	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {}
+	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
+		if(msgType == BroadcastType.DETECTED_GAME_END) {
+			int round;
+			if((round=BroadcastSystem.decodeShort(sb)) < gameEndTime) {
+				gameEndTime = round;
+			}
+			this.gameEndDetected = true;
+		}
+	}
 
 	/** @return The age of the robot in rounds */
 	public int getAge() { 
@@ -231,10 +242,19 @@ public abstract class BaseRobot {
 	 * @throws GameActionException 
 	 */
 	public void useExtraBytecodes() throws GameActionException {
+		
+		// Game Ending Detection Stuff
+		if(gameEndDetected && Clock.getRoundNum() == curRound && Clock.getBytecodesLeft() > 300) {
+			if(Clock.getRoundNum()%11 == myID%11)  //announce to allies
+				io.sendUShort(BroadcastChannel.ALL, BroadcastType.DETECTED_GAME_END, gameEndTime);
+		}
+	
+		// Message IO
 		if(Clock.getRoundNum()==curRound && Clock.getBytecodesLeft()>2000 &&
 				rc.getFlux() > 0.1) 
 			io.sendAll();
-		
+	
+		// Flux Management
 		if(Clock.getRoundNum()==curRound && (Clock.getBytecodesLeft()>4000 ||
 				(radar.hasScannedAllies() && Clock.getBytecodesLeft()>1500))) {
 			if(!rc.isMovementActive() || msm.justMoved())

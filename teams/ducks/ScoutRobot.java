@@ -379,8 +379,8 @@ public class ScoutRobot extends BaseRobot {
 		case POWERNODE_FRAGMENTS:
 			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 			break;
-//		default:
-//			super.processMessage(msgType, sb);
+		default:
+			super.processMessage(msgType, sb);
 		}
 	}
 	
