@@ -107,15 +107,15 @@ public class FluxBalanceSystem {
 	private void distributeScoutPool() throws GameActionException {
 		// TODO implement moving to low flux units and giving them flux
 		
-		double myUpperFluxThreshold = br.curEnergon < br.myMaxEnergon/2 ? 
-				br.curEnergon/2 : br.curEnergon*2/3;
+		double myUpperFluxThreshold = (br.curEnergon < br.myMaxEnergon/2 ? 
+				br.curEnergon/2 : br.curEnergon*2/3) + 5;
 			
 		distributeFluxBattle(rc.getFlux()-myUpperFluxThreshold);
 	}
 	
 	private void distributeUnitPool() throws GameActionException {
-		double myUpperFluxThreshold = br.curEnergon < br.myMaxEnergon/2 ? 
-				br.curEnergon/2 : br.curEnergon*2/3;
+		double myUpperFluxThreshold = (br.curEnergon < br.myMaxEnergon/2 ? 
+				br.curEnergon/2 : br.curEnergon*2/3) + 5;
 			
 		distributeFluxBattle(rc.getFlux()-myUpperFluxThreshold);
 	}
@@ -133,8 +133,8 @@ public class FluxBalanceSystem {
 			RobotInfo ri = radar.adjacentAllies[n];
 			if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON)
 				continue;
-			double lowerFluxThreshold = ri.energon < ri.type.maxEnergon/2 ? 
-					ri.energon/4 : ri.energon/3;
+			double lowerFluxThreshold = (ri.energon < ri.type.maxEnergon/2 ? 
+					ri.energon/4 : ri.energon/3) + 5;
 			if(ri.flux < lowerFluxThreshold)
 				amountBelowLowerThreshold += lowerFluxThreshold - ri.flux;
 		}
@@ -165,11 +165,11 @@ public class FluxBalanceSystem {
 				RobotInfo ri = radar.adjacentAllies[n];
 				if (ri.type == RobotType.TOWER || ri.type == RobotType.ARCHON)
 					continue;
-				double lowerFluxThreshold = ri.energon < ri.type.maxEnergon/2 ? 
-						ri.energon/4 : ri.energon/3;
+				double lowerFluxThreshold = (ri.energon < ri.type.maxEnergon/2 ? 
+						ri.energon/4 : ri.energon/3) + 5;
 				if(ri.flux < lowerFluxThreshold) {
-					double upperFluxThreshold = ri.energon < ri.type.maxEnergon/2 ? 
-							ri.energon/2 : ri.energon*2/3;
+					double upperFluxThreshold = (ri.energon < ri.type.maxEnergon/2 ? 
+							ri.energon/2 : ri.energon*2/3) + 5;
 					double x = Math.min(fluxToTransfer, upperFluxThreshold - ri.flux);
 					rc.transferFlux(ri.location, ri.type.level, x);
 					fluxToTransfer -= x;
