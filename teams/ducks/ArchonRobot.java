@@ -51,6 +51,7 @@ public class ArchonRobot extends BaseRobot{
 	MapLocation[] neighborsOfPowerCore;
 	MapLocation nextRandomCapTarget;
 	MapLocation adjNode;
+	RobotType nextUnitToMake;
 	
 	Direction lastFlee;
 	
@@ -68,7 +69,8 @@ public class ArchonRobot extends BaseRobot{
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
 				BroadcastChannel.ARCHONS,
-				BroadcastChannel.EXPLORERS
+				BroadcastChannel.EXPLORERS,
+				BroadcastChannel.EXTENDED_RADAR
 		});
 		
 		// read/write team memory
@@ -90,6 +92,7 @@ public class ArchonRobot extends BaseRobot{
 		lastPowerNodeGuess = null;
 		lastFlee = null;
 		nextRandomCapTarget = null;
+		nextUnitToMake = RobotType.SOLDIER;
 		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
 	}
 	
@@ -102,7 +105,7 @@ public class ArchonRobot extends BaseRobot{
 			strategy = StrategyState.ENDGAME_CAP;
 		switch(strategy) {
 		case INITIAL_EXPLORE:
-			if(curRound > 300) 
+			if(curRound > 150) 
 				strategy = StrategyState.DEFEND;
 			break;
 		case RETURN_HOME:
@@ -110,7 +113,7 @@ public class ArchonRobot extends BaseRobot{
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if(curRound > 800) 
+			if(curRound > 2500) 
 				strategy = StrategyState.ADJACENT_CAP;
 			break;
 		case ADJACENT_CAP:
@@ -279,31 +282,42 @@ public class ArchonRobot extends BaseRobot{
 			return new MoveInfo(nav.navigateGreedy(target), true);
 		}
 		
-		// If we have sufficient flux, make a soldier
-		int fluxToMakeSoldierAt;
+		// If we have sufficient flux, make our desired unit
+		int fluxToMakeUnitAt;
 		switch (behavior) {
-		case SWARM: fluxToMakeSoldierAt = 280; break;
-		case RETREAT: fluxToMakeSoldierAt = 130; break;
+		case SWARM: 
+			fluxToMakeUnitAt = 280; 
+			break;
+		case BATTLE: 
+			fluxToMakeUnitAt = ((int)nextUnitToMake.spawnCost)+15;
+			break;
 		default:
-			fluxToMakeSoldierAt = (strategy==StrategyState.EFFICIENT_CAP || 
-					strategy==StrategyState.ADJACENT_CAP || 
-					strategy==StrategyState.ENDGAME_CAP) ? 
-					225 : 150; 
+			fluxToMakeUnitAt = 55555;
 			break;
 		}
-		if(rc.getFlux() > fluxToMakeSoldierAt) {
-			if(Util.randDouble() < 0.1 && Clock.getRoundNum() > 1000 && 
-					rc.senseObjectAtLocation(curLocInFront, RobotLevel.IN_AIR)==null) {
-				return new MoveInfo(RobotType.SCOUT, curDir);
+		if(rc.getFlux() > fluxToMakeUnitAt) {
+			if(nextUnitToMake==RobotType.SCOUT) {
+				Direction dir = curDir;
+				while(dir!=curDir.rotateLeft()) {
+					if(rc.senseObjectAtLocation(curLoc.add(dir), RobotLevel.IN_AIR)==null) {
+						RobotType t = nextUnitToMake;
+						nextUnitToMake = getNextUnitToSpawn();
+						return new MoveInfo(t, dir);
+					}
+					dir = dir.rotateRight();
+				}
 			} else {
 				Direction dir = nav.wiggleToMovableDirection(curDir);
-				if(dir!=null)
-					return new MoveInfo(RobotType.SOLDIER, dir);
+				if(dir!=null) {
+					RobotType t = nextUnitToMake;
+					nextUnitToMake = getNextUnitToSpawn();
+					return new MoveInfo(t, dir);
+				}
 			}
 		}
 		
-		// If there's an enemy within 20 dist, and we've been weakened, run away
-		if(radar.closestEnemyDist <= 20 && curEnergon < 100) {
+		// If there's an enemy within 20 dist, and we've in battle or we've been weakened, run away
+		if(radar.closestEnemyDist <= 20 && (behavior==BehaviorState.BATTLE || curEnergon < 100)) {
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
 		
@@ -397,6 +411,12 @@ public class ArchonRobot extends BaseRobot{
 				enemySpottedTarget = new MapLocation(shorts[1], shorts[2]);
 			}
 			break;
+		case ENEMY_INFO:
+			if(curRound > enemySpottedRound) {
+				enemySpottedRound = curRound;
+				enemySpottedTarget = BroadcastSystem.decodeSenderLoc(sb);
+			}
+			break;
 		case MAP_EDGES:
 			ses.receiveMapEdges(BroadcastSystem.decodeUShorts(sb));
 			break;
@@ -407,7 +427,7 @@ public class ArchonRobot extends BaseRobot{
 			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 			break;
 		default:
-			super.processMessage(msgType, sb);
+			break;
 		} 
 	}
 	
@@ -1071,7 +1091,7 @@ public class ArchonRobot extends BaseRobot{
 		PowerNode[] nodes = dc.getAlliedPowerNodes();
 		for(int i=0; i<neighborsOfPowerCore.length; i++) {
 			MapLocation loc = neighborsOfPowerCore[i];
-			if(myHome.distanceSquaredTo(loc) > 400 || mc.isDeadEndPowerNode(loc))
+			if(mc.isDeadEndPowerNode(loc))
 				continue;
 			boolean flag = false;
 			for(int j=0; j<nodes.length; j++) {
@@ -1092,5 +1112,15 @@ public class ArchonRobot extends BaseRobot{
 			if(x.equals(loc))
 				return true;
 		return false;
+	}
+	
+	private RobotType getNextUnitToSpawn() {
+		if(curRound<1500)
+			return RobotType.SOLDIER;
+		if(curRound<2500) {
+			return Util.randDouble() < 0.1 ? RobotType.SCOUT : RobotType.SOLDIER;
+		}
+		
+		return Util.randDouble() < 0.05 ? RobotType.SCOUT : RobotType.SOLDIER;	
 	}
 }
