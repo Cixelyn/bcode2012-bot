@@ -366,6 +366,7 @@ public class ArchonRobot extends BaseRobot{
 				return new MoveInfo(nav.navigateToDestination(), false);
 			}
 		
+		case RUSH:
 		case ADJACENT_CAP:
 		case ENDGAME_CAP:
 		case EFFICIENT_CAP:

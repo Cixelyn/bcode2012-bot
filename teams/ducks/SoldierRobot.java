@@ -404,12 +404,7 @@ public class SoldierRobot extends BaseRobot {
 			int distToTarget = curLoc.distanceSquaredTo(target);
 			Direction dirToTarget = curLoc.directionTo(target);
 			
-			// If my energon is low, retreat to nearest archon
-			if(curEnergon <= 12) {
-				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()), true);
-				
-			// If we aren't turned the right way, turn towards target
-			} else if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
+			if(distToTarget <= 13 && (curDir.ordinal()-dirToTarget.ordinal()+9)%8 > 2) {
 				return new MoveInfo(dirToTarget);
 				
 			// If we are too close to the target, back off
@@ -427,11 +422,14 @@ public class SoldierRobot extends BaseRobot {
 				dir = opp.rotateLeft().rotateLeft();
 				if(isOptimalRetreatingDirection(dir, target) && rc.canMove(dir))
 					return new MoveInfo(dir, true);
-				dir = opp.rotateLeft().rotateRight();
+				dir = opp.rotateRight().rotateRight();
 				if(isOptimalRetreatingDirection(dir, target) && rc.canMove(dir))
 					return new MoveInfo(dir, true);
 				if(targetIsRanged)
 					return new MoveInfo(dirToTarget.opposite(), true);
+				
+			} else if(curEnergon <= 12) {
+				return new MoveInfo(curLoc.directionTo(dc.getClosestArchon()), true);
 				
 			// If we are too far from the target, advance
 			} else if(distToTarget >= tooFar) {
@@ -455,7 +453,7 @@ public class SoldierRobot extends BaseRobot {
 				}
 			}
 			
-		} else {
+		} else if(curLoc.distanceSquaredTo(target)>2) {
 			// Go towards target
 			return new MoveInfo(nav.navigateToDestination(), false);
 		}

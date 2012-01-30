@@ -720,7 +720,7 @@ public class RadarSystem {
 			shorts[c+1] = ri.location.x;
 			shorts[c+2] = ri.location.y;
 			shorts[c+3] = (int)Math.ceil(Util.getEnemyStrengthEstimate(ri));
-			shorts[c+4] = ri.type.ordinal()+10*br.curLoc.distanceSquaredTo(ri.location);
+			shorts[c+4] = br.myType==RobotType.SCOUT ? 55555 : br.curLoc.distanceSquaredTo(ri.location);
 		}
 		if(br.myType==RobotType.SOLDIER || br.myType==RobotType.DISRUPTER || br.myType==RobotType.SCORCHER)
 			br.er.integrateEnemyInfo(shorts);
