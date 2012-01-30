@@ -8,7 +8,6 @@ import battlecode.common.Message;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
-import battlecode.common.Team;
 
 public class ScoutRobot extends BaseRobot {
 	
