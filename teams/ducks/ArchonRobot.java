@@ -176,7 +176,8 @@ public class ArchonRobot extends BaseRobot{
 					resetTarget();
 				} else {
 					behavior = BehaviorState.BATTLE;
-					computeBattleTarget();
+					if(strategy != StrategyState.DEFEND)
+						computeBattleTarget();
 				}
 			}
 		
@@ -320,7 +321,7 @@ public class ArchonRobot extends BaseRobot{
 			}
 		}
 		
-		// If there's an enemy within 20 dist, and we've in battle or we've been weakened, run away
+		// If there's an enemy within 20 dist, and we're in battle or we've been weakened, run away
 		if(radar.closestEnemyDist <= 20 && (behavior==BehaviorState.BATTLE || curEnergon < 100)) {
 			return new MoveInfo(curLoc.directionTo(radar.getEnemySwarmCenter()).opposite(), true);
 		}
