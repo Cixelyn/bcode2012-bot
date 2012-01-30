@@ -18,7 +18,6 @@ public class RobotPlayer {
 			case ARCHON:
 				if(owner.equals("haitao")) br = new ArchonRobot(myRC);
 				else if(owner.equals("justin"))  br = new ArchonRobotJVBackdoor(myRC);
-				else if(owner.equals("cory")) br = new ArchonRobotCL(myRC);
 				else if(owner.equals("yp")) 
 				{
 //					br = new ArchonRobotYP_SwarmTest(myRC);
@@ -50,7 +49,6 @@ public class RobotPlayer {
 			case SOLDIER:
 				if(owner.equals("haitao")) br = new SoldierRobot(myRC);
 				else if(owner.equals("justin")) br = new SoldierRobotJVBackdoor(myRC);
-				else if(owner.equals("cory")) br = new SoldierRobotCL(myRC);
 				else if (owner.equals("yp"))
 				{
 //					br = new SoldierRobotYP(myRC);

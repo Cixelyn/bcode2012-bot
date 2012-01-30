@@ -43,7 +43,6 @@ public class SoldierRobotHT extends BaseRobot {
 		nav.setNavigationMode(NavigationMode.GREEDY);
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL, 
-				BroadcastChannel.SOLDIERS,
 				BroadcastChannel.EXTENDED_RADAR,
 		});
 		fbs.setPoolMode();

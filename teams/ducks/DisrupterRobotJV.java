@@ -17,7 +17,6 @@ public class DisrupterRobotJV extends BaseRobot {
 		// set broadcast channels
 		io.setChannels(new BroadcastChannel[] {
 				BroadcastChannel.ALL,
-				BroadcastChannel.DISRUPTERS
 		});
 		
 		// set navigation mode

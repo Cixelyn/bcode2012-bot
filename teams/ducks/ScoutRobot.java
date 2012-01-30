@@ -213,7 +213,7 @@ public class ScoutRobot extends BaseRobot {
 		if (!rc.isAttackActive() && radar.closestEnemyDist <= 5) {
 			RobotInfo bestInfo = null;
 			double bestValue = 0;
-			for(int n=0; n<radar.numEnemyRobots; n++) {
+			for(int n=radar.numEnemyRobots; --n>=0;) {
 				RobotInfo ri = radar.enemyInfos[radar.enemyRobots[n]];
 				if(!rc.canAttackSquare(ri.location)) 
 					continue;
