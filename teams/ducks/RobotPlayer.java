@@ -95,6 +95,7 @@ public class RobotPlayer {
 				}
 				break;
 			case DISRUPTER:
+				if (owner.equals("haitao")) br = new DisrupterRobot(myRC);
 				if (owner.equals("yp"))
 				{
 					

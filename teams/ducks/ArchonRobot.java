@@ -302,7 +302,8 @@ public class ArchonRobot extends BaseRobot{
 			if(nextUnitToMake==RobotType.SCOUT) {
 				Direction dir = curDir;
 				while(dir!=curDir.rotateLeft()) {
-					if(rc.senseObjectAtLocation(curLoc.add(dir), RobotLevel.IN_AIR)==null) {
+					if(rc.senseTerrainTile(curLoc.add(dir))!=TerrainTile.OFF_MAP && 
+							rc.senseObjectAtLocation(curLoc.add(dir), RobotLevel.IN_AIR)==null) {
 						RobotType t = nextUnitToMake;
 						nextUnitToMake = getNextUnitToSpawn();
 						return new MoveInfo(t, dir);
@@ -1593,6 +1594,6 @@ public class ArchonRobot extends BaseRobot{
 		if(curRound<2500) 
 			return Util.randDouble() < 0.1 ? RobotType.SCOUT : RobotType.SOLDIER;
 		
-		return Util.randDouble() < 0.05 ? RobotType.SCOUT : RobotType.SOLDIER;	
+		return Util.randDouble() < 0.05 ? RobotType.SCOUT : (Util.randDouble() < 0.5 ? RobotType.DISRUPTER : RobotType.SOLDIER);	
 	}
 }

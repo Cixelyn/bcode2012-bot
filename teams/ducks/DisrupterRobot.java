@@ -7,7 +7,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 
-public class SoldierRobot extends BaseRobot {
+public class DisrupterRobot extends BaseRobot {
 	private enum BehaviorState {
 		/** Want to hibernate, need to find a non-blocking place to do it. */
 		LOOKING_TO_HIBERNATE,
@@ -49,7 +49,7 @@ public class SoldierRobot extends BaseRobot {
 	boolean checkedBehind;
 	boolean movingTarget;
 	
-	public SoldierRobot(RobotController myRC) throws GameActionException {
+	public DisrupterRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
 		
 		lockAcquiredRound = -1;
