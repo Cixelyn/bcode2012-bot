@@ -55,7 +55,8 @@ public class ArchonRobot extends BaseRobot{
 	
 	Direction lastFlee;
 	
-	static final int RETREAT_RADIUS = 3;
+	static final int RETREAT_RADIUS = 5;
+	static final int RETREAT_RADIUS_CLOSE = 3;
 	static final int RETREAT_DISTANCE = 8;
 	static final int CHASE_COMPUTE_RADIUS = 7;
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
@@ -163,7 +164,9 @@ public class ArchonRobot extends BaseRobot{
 				String ret = "";
 //				ret = computeRetreatTarget();
 //				ret = computeRetreatTarget2();
-				ret = computeRetreatTarget3();
+//				ret = computeRetreatTarget3();
+				ret = computeRetreatTarget4();
+				projectTargetOntoMap();
 				dbg.setIndicatorString('e', 1, "Target= "+locationToVectorString(target)+
 						", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
@@ -184,12 +187,12 @@ public class ArchonRobot extends BaseRobot{
 			
 		// If someone else told us of a recent enemy spotting, go to that location
 		} else if(curRound < enemySpottedRound + Constants.ENEMY_SPOTTED_SIGNAL_TIMEOUT) {
-			if(strategy == StrategyState.DEFEND || 
-					strategy == StrategyState.RETURN_HOME || 
+			if(strategy == StrategyState.RETURN_HOME || 
 					strategy == StrategyState.ENDGAME_CAP) {
 				resetTarget();
 			} else {
-				behavior = BehaviorState.SWARM;
+				behavior = curLoc.distanceSquaredTo(enemySpottedTarget) <= 256 ? 
+						BehaviorState.BATTLE : BehaviorState.SWARM;
 				target = enemySpottedTarget;
 				movingTarget = true;
 				if(curLoc.distanceSquaredTo(enemySpottedTarget) <= 16) {
@@ -278,8 +281,8 @@ public class ArchonRobot extends BaseRobot{
 					if (rc.canMove(Constants.directions[d%8]))
 						return new MoveInfo(RobotType.SOLDIER, Constants.directions[d%8]);
 			}
-//			return new MoveInfo(nav.navigateToDestination(), true);
-			return new MoveInfo(nav.navigateGreedy(target), true);
+			return new MoveInfo(nav.navigateToDestination(), true);
+//			return new MoveInfo(nav.navigateGreedy(target), true);
 		}
 		
 		// If we have sufficient flux, make our desired unit
@@ -403,18 +406,30 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void processMessage(BroadcastType msgType, StringBuilder sb) throws GameActionException {
+		MapLocation newLoc;
+		int enemyDist;
 		switch(msgType) {
 		case ENEMY_SPOTTED:
 			int[] shorts = BroadcastSystem.decodeUShorts(sb);
-			if(shorts[0] > enemySpottedRound) {
+			newLoc = new MapLocation(shorts[1], shorts[2]);
+			enemyDist = enemySpottedTarget==null ? 55555 : 
+				curLoc.distanceSquaredTo(enemySpottedTarget);
+			if(enemyDist<=16) break;
+			if(curRound > enemySpottedRound+20 && shorts[0] > enemySpottedRound || 
+					enemyDist > curLoc.distanceSquaredTo(newLoc)) {
 				enemySpottedRound = shorts[0];
-				enemySpottedTarget = new MapLocation(shorts[1], shorts[2]);
+				enemySpottedTarget = newLoc;
 			}
 			break;
 		case ENEMY_INFO:
-			if(curRound > enemySpottedRound) {
+			newLoc = BroadcastSystem.decodeSenderLoc(sb);
+			enemyDist = enemySpottedTarget==null ? 55555 : 
+				curLoc.distanceSquaredTo(enemySpottedTarget);
+			if(enemyDist<=16) break;
+			if(curRound > enemySpottedRound+20 || 
+					enemyDist > curLoc.distanceSquaredTo(newLoc)) {
 				enemySpottedRound = curRound;
-				enemySpottedTarget = BroadcastSystem.decodeSenderLoc(sb);
+				enemySpottedTarget = newLoc;
 			}
 			break;
 		case MAP_EDGES:
@@ -635,6 +650,26 @@ public class ArchonRobot extends BaseRobot{
 			return dir;
 		}
 		
+//		if (radar.numAllyFighters>0)
+//		{
+//			int n = 0;
+//			int d = 0;
+//			for (int x=0; x<8; x++)
+//			{
+//				n += radar.allies_in_dir[x];
+//				d += x*radar.allies_in_dir[x];
+//			}
+//			d = d/n;
+//			newdir = Constants.directions[(d)%8];
+//			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+//			{
+//				lastFlee = targetDir = newdir;
+//				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+//			}
+//			return dir;
+//		}
+		
+		
 		dbg.println('y',"GONNTA GET GEE'D");
 		int lowest = closest_in_dir[0];
 		int lowesti = 0;
@@ -664,76 +699,202 @@ public class ArchonRobot extends BaseRobot{
 //		5 4 3
 //		int[] closest_in_dir = er.getEnemiesInEachDirectionOnly();
 		int[] closest_in_dir = radar.closestInDir;
-		int[] num_in_dir = radar.numEnemyInDir;
-		int[] allies_in_dir = radar.allies_in_dir;
 		int[] wall_in_dir = new int[8];
 		
 //		now, deal with when we are close to map boundaries
-		if (mc.edgeXMax!=0)
-			wall_in_dir[2] = mc.cacheToWorldX(mc.edgeXMax) - curLoc.x;
-		else 
-			wall_in_dir[2] = 99;
-		
-		if (mc.edgeYMax!=0)
-			wall_in_dir[4] = mc.cacheToWorldY(mc.edgeYMax) - curLoc.y;
-		else 
-			wall_in_dir[4] = 99;
-		
-		if (mc.edgeXMin!=0)
-			wall_in_dir[6] = curLoc.x - mc.cacheToWorldX(mc.edgeXMin);
-		else 
-			wall_in_dir[6] = 99;
-		
-		if (mc.edgeYMin!=0)
-			wall_in_dir[0] = curLoc.y - mc.cacheToWorldY(mc.edgeYMin);
-		else 
-			wall_in_dir[0] = 99;
-		
-		wall_in_dir[1] = Math.min(wall_in_dir[0], wall_in_dir[2]);
-		wall_in_dir[3] = Math.min(wall_in_dir[2], wall_in_dir[4]);
-		wall_in_dir[5] = Math.min(wall_in_dir[4], wall_in_dir[6]);
-		wall_in_dir[7] = Math.min(wall_in_dir[6], wall_in_dir[0]);
-		
-//		TODO screw walls for now
-		
-		
-		targetDir = curLoc.directionTo(radar.getEnemySwarmCenter());
-		int dir = targetDir.ordinal();
-		if (dir<8)
+		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS)
 		{
-			// case 1: the enemy swarm is a clear direction away - note, there may still be some surround
-			if (radar.numAllyFighters > 0)
+//			we are near the EAST edge
+			wall_in_dir[2] = 1;
+			if (mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS_CLOSE)
 			{
-				int d1;
-				int d2;
-				int d3;
-				d1 = dir+1;
-				while (allies_in_dir[d1%8]==0) d1++;
-				d2 = dir+7;
-				while (allies_in_dir[d2%8]==0) d2+=7;
-				d1 = d1%8;
-				d2 = d2%8;
-				d3 = (d1+d2)/2;
-				targetDir = Constants.directions[d3];
-				
-				if ((d1+8-dir)%8>(d3+8-dir)%8 || (d2+8-dir)%8<(d3+8-dir)%8)
-					targetDir = targetDir.opposite();
-				
-			} else
-			{
-				targetDir = targetDir.opposite();
+				wall_in_dir[1] = wall_in_dir[3] = 1;
 			}
-			
-			
-		} else
+		}
+		
+		if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS)
 		{
-			// case 2: the enemy swarm has a clear surround on us
-			targetDir = curLoc.directionTo(dc.getClosestArchon());
+//			we are near the WEST edge
+			wall_in_dir[6] = 1;
+			if (mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS_CLOSE)
+			{
+				wall_in_dir[7] = wall_in_dir[5] = 1;
+			}
+		}
+		
+		if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+		{
+//			we are near the SOUTH edge
+			wall_in_dir[4] = 1;
+			if (mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS_CLOSE)
+			{
+				wall_in_dir[3] = wall_in_dir[5] = 1;
+			}
+		}
+		
+		if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+		{
+//			we are near the NORTH edge
+			wall_in_dir[0] = 1;
+			if (mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS_CLOSE)
+			{
+				wall_in_dir[1] = wall_in_dir[7] = 1;
+			}
+		}
+		
+		wall_in_dir[curLoc.directionTo(radar.getEnemySwarmTarget()).ordinal()] = 1;
+		
+//		dbg.setIndicatorString('y', 2, ""	+wall_in_dir[0]+wall_in_dir[1]+wall_in_dir[2]+wall_in_dir[3]
+//											+wall_in_dir[4]+wall_in_dir[5]+wall_in_dir[6]+wall_in_dir[7]
+//											+" "+mc.edgeXMax+" "+mc.edgeXMin+" "+mc.edgeYMax+" "+mc.edgeYMin+" "+mc.cacheToWorldX(mc.edgeXMax));
+		
+//		if (lastFlee != null) wall_in_dir[lastFlee.opposite().ordinal()] = 1;
+		
+//		String dir =  "".concat(closest_in_dir[0]==99?(wall_in_dir[0]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[1]==99?(wall_in_dir[1]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[2]==99?(wall_in_dir[2]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[3]==99?(wall_in_dir[3]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[4]==99?(wall_in_dir[4]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[5]==99?(wall_in_dir[5]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[6]==99?(wall_in_dir[6]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[7]==99?(wall_in_dir[7]==0?"o":"x"):"x");
+		String dir =  "".concat((wall_in_dir[0]==0?"o":"x"))
+						.concat((wall_in_dir[1]==0?"o":"x"))
+						.concat((wall_in_dir[2]==0?"o":"x"))
+						.concat((wall_in_dir[3]==0?"o":"x"))
+						.concat((wall_in_dir[4]==0?"o":"x"))
+						.concat((wall_in_dir[5]==0?"o":"x"))
+						.concat((wall_in_dir[6]==0?"o":"x"))
+						.concat((wall_in_dir[7]==0?"o":"x"));
+		dir = dir.concat(dir);
+		int index;
+		
+		targetDir = curLoc.directionTo(target);
+		
+		Direction newdir;
+		index = dir.indexOf("ooooooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+3)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("oooooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+3)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("ooooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+2)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("oooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+2)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("ooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+1)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+//		index = dir.indexOf("oo");
+//		if (index>-1)
+//		{
+//			newdir = Constants.directions[(index+1)%8];
+//			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+//			{
+//				lastFlee = targetDir = newdir;
+//				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+//			}
+//			return dir;
+//		}
+//		
+//		index = dir.indexOf("o");
+//		if (index>-1)
+//		{
+//			newdir = Constants.directions[(index)%8];
+//			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+//			{
+//				lastFlee = targetDir = newdir;
+//				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+//			}
+//			return dir;
+//		}
+		
+		if (radar.numAllyFighters>0)
+		{
+			int n = 0;
+			int d = 0;
+			for (int x=0; x<8; x++)
+			{
+				n += radar.allies_in_dir[x];
+				d += x*radar.allies_in_dir[x];
+			}
+			d = d/n;
+			newdir = Constants.directions[(d)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
 		}
 		
 		
-		target = curLoc.add(targetDir,RETREAT_DISTANCE);
-		return ""+target;
+		dbg.println('y',"GONNTA GET GEE'D");
+		int lowest = closest_in_dir[0];
+		int lowesti = 0;
+		for (int x=1; x<8; x++)
+			if (closest_in_dir[x]<lowest)
+			{
+				lowesti = x;
+				lowest = closest_in_dir[x];
+			}
+//		target = radar.getEnemySwarmTarget();
+//		newdir = target.directionTo(curLoc);
+		newdir = Constants.directions[lowesti];
+		if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+		{
+			lastFlee = targetDir = newdir;
+			target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			return null;
+		}
+		return null;
 	}
 	
 	private String computeRetreatTarget3()
@@ -748,6 +909,7 @@ public class ArchonRobot extends BaseRobot{
 		double[] dists = new double[count];
 		int[] dirs = new int[count];
 		int xx = 0;
+		Direction newdir;
 		
 		int[] wall_in_dir = new int[8];
 		
@@ -920,15 +1082,285 @@ public class ArchonRobot extends BaseRobot{
 		if (bestdir==-1)
 		{
 			// crap, nowhere to run, run to nearest archon
-			targetDir = curLoc.directionTo(dc.getClosestArchon());
+			newdir = curLoc.directionTo(dc.getClosestArchon());
 		} else
 		{
-			targetDir = Constants.directions[bestdir];
+			newdir = Constants.directions[bestdir];
 		}
 		
-		target = curLoc.add(targetDir,RETREAT_DISTANCE);
+		
+		if (lastFlee==null || !isAdjacent(newdir,lastFlee) || curLoc.distanceSquaredTo(target) < 10)
+		{
+			lastFlee = targetDir = newdir;
+			target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			return null;
+		}
+		
+//		target = curLoc.add(targetDir,RETREAT_DISTANCE);
 		
 		return "";
+	}
+	
+	private String computeRetreatTarget4()
+	{
+		lastPowerNodeGuess = null;
+//		7 0 1
+//		6   2
+//		5 4 3
+//		int[] closest_in_dir = er.getEnemiesInEachDirectionOnly();
+		int[] closest_in_dir = radar.closestInDir;
+		int[] wall_in_dir = new int[8];
+		int[] s = new int[8];
+		int[] score_aggregate = new int[8];
+		int dd;
+		
+//		now, deal with when we are close to map boundaries
+		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS)
+		{
+//			we are near the EAST edge
+			wall_in_dir[2] = 1;
+			if (mc.cacheToWorldX(mc.edgeXMax) < curLoc.x+RETREAT_RADIUS_CLOSE)
+			{
+				wall_in_dir[1] = wall_in_dir[3] = 1;
+				wall_in_dir[2] = 2;
+			}
+		}
+		
+		if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS)
+		{
+//			we are near the WEST edge
+			wall_in_dir[6] = 1;
+			if (mc.cacheToWorldX(mc.edgeXMin) > curLoc.x-RETREAT_RADIUS_CLOSE)
+			{
+				wall_in_dir[7] = wall_in_dir[5] = 1;
+				wall_in_dir[6] = 2;
+			}
+		}
+		
+		if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS)
+		{
+//			we are near the SOUTH edge
+			wall_in_dir[4] = 1;
+			if (mc.cacheToWorldY(mc.edgeYMax) < curLoc.y+RETREAT_RADIUS_CLOSE)
+			{
+				wall_in_dir[3] = wall_in_dir[5] = 1;
+				wall_in_dir[4] = 2;
+			}
+		}
+		
+		if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS)
+		{
+//			we are near the NORTH edge
+			wall_in_dir[0] = 1;
+			if (mc.cacheToWorldY(mc.edgeYMin) > curLoc.y-RETREAT_RADIUS_CLOSE)
+			{
+				wall_in_dir[1] = wall_in_dir[7] = 1;
+				wall_in_dir[0] = 2;
+			}
+		}
+		
+//		dd = curLoc.directionTo(radar.getEnemySwarmTarget()).ordinal();
+//		if (dd<8)
+//			wall_in_dir[dd] = 1;
+//		
+//		System.arraycopy(wall_in_dir, 0, s, 0, 8);
+//		
+//		if (radar.numAllyFighters>0)
+//		{
+//			dd = curLoc.directionTo(radar.getAllySwarmCenter()).ordinal();
+//			if (dd<8)
+//				s[dd]--;
+//		}
+		s[0] = wall_in_dir[0] + radar.numEnemyInDir[0] - radar.allies_in_dir[0];
+		s[1] = wall_in_dir[1] + radar.numEnemyInDir[1] - radar.allies_in_dir[1];
+		s[2] = wall_in_dir[2] + radar.numEnemyInDir[2] - radar.allies_in_dir[2];
+		s[3] = wall_in_dir[3] + radar.numEnemyInDir[3] - radar.allies_in_dir[3];
+		s[4] = wall_in_dir[4] + radar.numEnemyInDir[4] - radar.allies_in_dir[4];
+		s[5] = wall_in_dir[5] + radar.numEnemyInDir[5] - radar.allies_in_dir[5];
+		s[6] = wall_in_dir[6] + radar.numEnemyInDir[6] - radar.allies_in_dir[6];
+		s[7] = wall_in_dir[7] + radar.numEnemyInDir[7] - radar.allies_in_dir[7];
+		
+		score_aggregate[0] = s[6]+s[7]+s[0]+s[1]+s[2];
+		score_aggregate[1] = s[3]+s[7]+s[0]+s[1]+s[2];
+		score_aggregate[2] = s[3]+s[4]+s[0]+s[1]+s[2];
+		score_aggregate[3] = s[3]+s[4]+s[5]+s[1]+s[2];
+		score_aggregate[4] = s[3]+s[4]+s[5]+s[6]+s[2];
+		score_aggregate[5] = s[3]+s[4]+s[5]+s[6]+s[7];
+		score_aggregate[6] = s[0]+s[4]+s[5]+s[6]+s[7];
+		score_aggregate[7] = s[0]+s[1]+s[5]+s[6]+s[7];
+		
+		int min = score_aggregate[0];
+		if (score_aggregate[1]<min) min=score_aggregate[1];
+		if (score_aggregate[2]<min) min=score_aggregate[2];
+		if (score_aggregate[3]<min) min=score_aggregate[3];
+		if (score_aggregate[4]<min) min=score_aggregate[4];
+		if (score_aggregate[5]<min) min=score_aggregate[5];
+		if (score_aggregate[6]<min) min=score_aggregate[6];
+		if (score_aggregate[7]<min) min=score_aggregate[7];
+		
+		
+		
+		
+//		dbg.setIndicatorString('y', 2, ""	+wall_in_dir[0]+wall_in_dir[1]+wall_in_dir[2]+wall_in_dir[3]
+//											+wall_in_dir[4]+wall_in_dir[5]+wall_in_dir[6]+wall_in_dir[7]
+//											+" "+mc.edgeXMax+" "+mc.edgeXMin+" "+mc.edgeYMax+" "+mc.edgeYMin+" "+mc.cacheToWorldX(mc.edgeXMax));
+		
+//		if (lastFlee != null) wall_in_dir[lastFlee.opposite().ordinal()] = 1;
+		
+//		String dir =  "".concat(closest_in_dir[0]==99?(wall_in_dir[0]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[1]==99?(wall_in_dir[1]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[2]==99?(wall_in_dir[2]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[3]==99?(wall_in_dir[3]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[4]==99?(wall_in_dir[4]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[5]==99?(wall_in_dir[5]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[6]==99?(wall_in_dir[6]==0?"o":"x"):"x")
+//						.concat(closest_in_dir[7]==99?(wall_in_dir[7]==0?"o":"x"):"x");
+//		String dir =  "".concat((wall_in_dir[0]==0?"o":"x"))
+//						.concat((wall_in_dir[1]==0?"o":"x"))
+//						.concat((wall_in_dir[2]==0?"o":"x"))
+//						.concat((wall_in_dir[3]==0?"o":"x"))
+//						.concat((wall_in_dir[4]==0?"o":"x"))
+//						.concat((wall_in_dir[5]==0?"o":"x"))
+//						.concat((wall_in_dir[6]==0?"o":"x"))
+//						.concat((wall_in_dir[7]==0?"o":"x"));
+		
+		String dir =  "".concat((score_aggregate[0]==min?"o":"x"))
+						.concat((score_aggregate[1]==min?"o":"x"))
+						.concat((score_aggregate[2]==min?"o":"x"))
+						.concat((score_aggregate[3]==min?"o":"x"))
+						.concat((score_aggregate[4]==min?"o":"x"))
+						.concat((score_aggregate[5]==min?"o":"x"))
+						.concat((score_aggregate[6]==min?"o":"x"))
+						.concat((score_aggregate[7]==min?"o":"x"));
+		dir = dir.concat(dir);
+		int index;
+		
+		targetDir = curLoc.directionTo(target);
+		
+		Direction newdir;
+		index = dir.indexOf("ooooooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+3)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("oooooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+3)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("ooooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+2)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("oooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+2)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("ooo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+1)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("oo");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index+1)%8];
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		index = dir.indexOf("o");
+		if (index>-1)
+		{
+			newdir = Constants.directions[(index)%8];
+			if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		if (radar.numAllyFighters>0)
+		{
+			int n = 0;
+			int d = 0;
+			for (int x=0; x<8; x++)
+			{
+				n += radar.allies_in_dir[x];
+				d += x*radar.allies_in_dir[x];
+			}
+			d = d/n;
+			newdir = Constants.directions[(d)%8];
+			if (lastFlee==null || !isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+			{
+				lastFlee = targetDir = newdir;
+				target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			}
+			return dir;
+		}
+		
+		
+		dbg.println('y',"GONNTA GET GEE'D");
+		int lowest = closest_in_dir[0];
+		int lowesti = 0;
+		for (int x=1; x<8; x++)
+			if (closest_in_dir[x]<lowest)
+			{
+				lowesti = x;
+				lowest = closest_in_dir[x];
+			}
+//		target = radar.getEnemySwarmTarget();
+//		newdir = target.directionTo(curLoc);
+		newdir = Constants.directions[lowesti];
+		if (!isAdjacent(newdir,targetDir) || curLoc.distanceSquaredTo(target) < 10)
+		{
+			lastFlee = targetDir = newdir;
+			target = curLoc.add(targetDir, RETREAT_DISTANCE);
+			return null;
+		}
+		return null;
 	}
 	
 	private boolean isAdjacent(Direction d1, Direction d2)
@@ -941,9 +1373,50 @@ public class ArchonRobot extends BaseRobot{
 		if (curLoc.distanceSquaredTo(target) < 10)
 		{
 			target = curLoc.add(targetDir, RETREAT_DISTANCE);
-			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
+//			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 		}
 		dbg.setIndicatorString('y',1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
+	}
+	
+	private void projectTargetOntoMap(Direction d)
+	{
+		
+	}
+	
+	private void projectTargetOntoMap()
+	{
+		while (mc.isWall(target))
+		{
+			target = target.add(target.directionTo(curLoc));
+		}
+//		
+//		int x = target.x;
+//		int y = target.y;
+////		now, deal with when we are close to map boundaries
+//		if (mc.edgeXMax!=0 && mc.cacheToWorldX(mc.edgeXMax) <= x)
+//		{
+////			we are near the EAST edge
+//			x = mc.cacheToWorldX(mc.edgeXMax)-1;
+//		}
+//		
+//		if (mc.edgeXMin!=0 && mc.cacheToWorldX(mc.edgeXMin) >= x)
+//		{
+////			we are near the WEST edge
+//			x = mc.cacheToWorldX(mc.edgeXMin)+1;
+//		}
+//		
+//		if (mc.edgeYMax!=0 && mc.cacheToWorldY(mc.edgeYMax) <= y)
+//		{
+////			we are near the SOUTH edge
+//			y = mc.cacheToWorldY(mc.edgeYMax)-1;
+//		}
+//		
+//		if (mc.edgeYMin!=0 && mc.cacheToWorldY(mc.edgeYMin) >= y)
+//		{
+////			we are near the NORTH edge
+//			y = mc.cacheToWorldY(mc.edgeYMin)+1;
+//		}
+//		target = new MapLocation(x, y);
 	}
 	
 	private void computeBattleTarget()
@@ -1117,9 +1590,8 @@ public class ArchonRobot extends BaseRobot{
 	private RobotType getNextUnitToSpawn() {
 		if(curRound<1500)
 			return RobotType.SOLDIER;
-		if(curRound<2500) {
+		if(curRound<2500) 
 			return Util.randDouble() < 0.1 ? RobotType.SCOUT : RobotType.SOLDIER;
-		}
 		
 		return Util.randDouble() < 0.05 ? RobotType.SCOUT : RobotType.SOLDIER;	
 	}
