@@ -101,6 +101,9 @@ public class ArchonRobot extends BaseRobot{
 		nextUnitToMake = getNextUnitToSpawn();
 		neighborsOfPowerCore = rc.sensePowerCore().neighbors();
 		initSpawnProbabilities();
+		
+		if (tmem.getEnemyTeam() != 0)
+			enemyTeam = tmem.getEnemyTeam();
 	}
 	
 	@Override
@@ -122,7 +125,7 @@ public class ArchonRobot extends BaseRobot{
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if(curRound > 1200) {
+			if(curRound > 1600) {
 				if(adjNode==null)
 					strategy = StrategyState.EFFICIENT_CAP;
 				else if(myArchonID!=0)
