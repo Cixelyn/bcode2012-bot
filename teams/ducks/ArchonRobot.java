@@ -59,6 +59,8 @@ public class ArchonRobot extends BaseRobot{
 	double soldierDisrupterRatio;
 	double scoutRatio;
 	
+	int enemyTeam = -1;
+	
 	static final int RETREAT_RADIUS = 6;
 	static final int RETREAT_RADIUS_CLOSE = 3;
 	static final int RETREAT_DISTANCE = 8;
@@ -469,6 +471,11 @@ public class ArchonRobot extends BaseRobot{
 		case POWERNODE_FRAGMENTS:
 			ses.receivePowerNodeFragment(BroadcastSystem.decodeInts(sb));
 			break;
+		case GUESS_ENEMY_TEAM:
+			if (enemyTeam == -1) {
+				enemyTeam = BroadcastSystem.decodeShort(sb);
+				dbg.println('e', "Scout told me we're playing vs team " + enemyTeam);
+			}
 		default:
 			super.processMessage(msgType, sb);
 		} 

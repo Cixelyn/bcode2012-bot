@@ -514,7 +514,7 @@ public class BroadcastSystem {
 //		}
 		// if a scout, try to identify enemy team
 		if (activateMAS && br.mas.guessEnemyTeam() == -1 &&
-				Util.randDouble() < 0.01) {
+				Util.randDouble() < 0.03) {
 			br.mas.detectEnemyTeam(m);
 		}
 	}

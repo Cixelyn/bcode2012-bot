@@ -14,6 +14,8 @@ public enum BroadcastType {
 	MAP_FRAGMENTS,
 	/** shared exploration map edges */
 	MAP_EDGES,
+	/** shared enemy team number */
+	GUESS_ENEMY_TEAM,
 
 	// ------ EXTENDED RADAR
 	/** ushorts(15-bit), [sender_robot_ID, sender_loc.x, sender_loc.y, 

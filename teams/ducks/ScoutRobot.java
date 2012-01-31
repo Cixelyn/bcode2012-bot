@@ -88,6 +88,8 @@ public class ScoutRobot extends BaseRobot {
 		lastRetreatDir = null;
 		// if we found out the enemy team in a previous round, recall it
 		if (tmem.getEnemyTeam() != 0) {
+			dbg.println('e', "Team memory says we're playing vs team " +
+					tmem.getEnemyTeam());
 			mas.assertEnemyTeam(tmem.getEnemyTeam());
 		}
 		resetBehavior();
@@ -242,6 +244,13 @@ public class ScoutRobot extends BaseRobot {
 		if (rc.getFlux() > REGENRATION_FLUX_THRESHOLD &&
 				((curEnergon < myMaxEnergon - 0.2) || radar.numAllyToRegenerate > 0)) {
 			rc.regenerate();
+		}
+		
+		// if we just found out the enemy team this round, broadcast the enemy team
+		if (tmem.getEnemyTeam() == 0 && mas.guessEnemyTeam() != -1 && curRound % 20
+				== (myID + 10) % 20) {
+			io.sendUShort(BroadcastChannel.EXPLORERS, BroadcastType.GUESS_ENEMY_TEAM,
+					mas.guessEnemyTeam());
 		}
 		
 		// perform message attack every few rounds if possible
@@ -526,10 +535,12 @@ public class ScoutRobot extends BaseRobot {
 		}
 		super.useExtraBytecodes();
 		
-		// If we have identified the enemy team, load past message data.
+		// If we have identified the enemy team, remember the team in memory and
+		// load past message data.
 		// This method call will occur at most once per Scout.
 		if (mas.guessEnemyTeam() != -1 && !mas.isLoaded() &&
 				Clock.getBytecodesLeft() > 5000) {
+			tmem.recordEnemyTeam(mas.guessEnemyTeam());
 			mos.rememberString("I think we are facing team " +
 				mas.guessEnemyTeam() + ".");
 			mas.load();
