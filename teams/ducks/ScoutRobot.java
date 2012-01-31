@@ -62,6 +62,7 @@ public class ScoutRobot extends BaseRobot {
 	Direction mapEdgeToSeek;
 	boolean doneWithInitialScout;
 	Direction lastRetreatDir;
+	boolean shouldCalcAlly;
 	
 	private final static int RETREAT_RADIUS = 3;
 	private final static int ROUNDS_TO_EXPLORE = 500;
@@ -86,6 +87,7 @@ public class ScoutRobot extends BaseRobot {
 		strategy = StrategyState.INITIAL_EXPLORE;
 		doneWithInitialScout = false;
 		lastRetreatDir = null;
+		shouldCalcAlly = false;
 		// if we found out the enemy team in a previous round, recall it
 		if (tmem.getEnemyTeam() != 0) {
 			dbg.println('e', "Team memory says we're playing vs team " +
@@ -97,7 +99,8 @@ public class ScoutRobot extends BaseRobot {
 
 	@Override
 	public void run() throws GameActionException {
-		
+
+		shouldCalcAlly = false;
 		// scan every round in all conditions except support
 		if(strategy != StrategyState.SUPPORT || curRound%2==0) {
 			radar.scan(true, true);
@@ -366,7 +369,8 @@ public class ScoutRobot extends BaseRobot {
 			if (gameEndNow)
 				objective = radar.lowestEnergonAllied.location;
 			else
-				objective = getBestRegenSquareFastFull();
+				shouldCalcAlly = true;
+//				objective = getBestRegenSquareFastFull();
 			if (objective == null) {
 				objective = radar.lowestEnergonAllied.location;
 			}
@@ -415,7 +419,10 @@ public class ScoutRobot extends BaseRobot {
 	public MoveInfo computeNextMove() throws GameActionException {
 		if(rc.getFlux() < 0.5) 
 			return null;
-	
+		
+		if (shouldCalcAlly)
+			objective = getBestRegenSquareFastFull();
+		
 		// if in harass mode, chase the nearest enemy archon or scorcher...
 		if (behavior == BehaviorState.HARASS) {
 			RobotInfo enemyToHarass = getClosestEnemyArchonScorcher();
@@ -1521,6 +1528,8 @@ public class ScoutRobot extends BaseRobot {
 		long  a1, a2, a3, a4, a5, a6, a7, a8, a9;
 		a1 = a2 = a3 = a4 = a5 = a6 = a7 = a8 = a9 = 0;
 	
+		
+		radar.scan(true, false);
 		
 		int localCurLocX = curLoc.x;
 		int localCurLocY = curLoc.y;
