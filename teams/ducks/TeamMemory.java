@@ -14,7 +14,7 @@ import battlecode.common.RobotType;
  * <li> 4 = enemies seen by archon 3
  * <li> 5 = enemies seen by archon 4
  * <li> 6 = enemies seen by archon 5
- * <li> 7 = UNUSED
+ * <li> 7 = the enemy team number
  * <li> 8 = UNUSED
  * <li> 9 = UNUSED
  * <li> 10 = UNUSED
@@ -127,5 +127,24 @@ public class TeamMemory {
 		if(br.myArchonID == 0)
 			br.dbg.println('e',"Starting Counters - S:" + curSoldierCount + " R:" + curScorcherCount +
 					" C:"+curScoutCount + " D:" + curDisrupterCount);
+	}
+	
+	/**
+	 * Record the enemy team number. Only has an affect if it hasn't been written
+	 * in a previous round.
+	 * @param teamNumber The enemy team number
+	 */
+	public void recordEnemyTeam(int teamNumber) {
+		if (mem[7] == 0) {
+			br.rc.setTeamMemory(7, teamNumber);
+		}
+	}
+	
+	/**
+	 * Get the enemy team number, 0 if we don't know.
+	 * @return The enemy team number, 0 if we don't know.
+	 */
+	public int getEnemyTeam() {
+		return (int)mem[7];
 	}
 }
