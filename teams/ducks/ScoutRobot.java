@@ -88,6 +88,10 @@ public class ScoutRobot extends BaseRobot {
 		doneWithInitialScout = false;
 		lastRetreatDir = null;
 		shouldCalcAlly = false;
+		// if we found out the enemy team in a previous round, recall it
+		if (tmem.getEnemyTeam() != 0) {
+			mas.assertEnemyTeam(tmem.getEnemyTeam());
+		}
 		resetBehavior();
 	}
 
