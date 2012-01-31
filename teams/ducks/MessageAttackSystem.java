@@ -89,7 +89,7 @@ public class MessageAttackSystem {
 			enemyTeam = 86;
 		
 		// 047: fun gamers: for testing purposes only...
-		} else if (m.ints != null && m.ints.length == 3 && isRoundNum(m.ints[2]) &&
+		} else if (m.ints != null && (m.ints.length == 2 || m.ints.length == 3) &&
 				m.strings != null && m.strings.length == 1 &&
 				(m.locations == null || m.locations.length == 0)) {
 			enemyTeam = 47;
