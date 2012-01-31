@@ -47,12 +47,12 @@ public class RadarSystem {
 	public final RobotInfo[] enemyInfos = new RobotInfo[MAX_ROBOTS];
 	public final int[] enemyTimes = new int[MAX_ROBOTS];
 	public final int[] enemyRobots = new int[MAX_ENEMY_ROBOTS];
-	public final int[] enemyArchons = new int[6];
-	public final int[] enemySoldiers = new int[MAX_ENEMY_ROBOTS];
-	public final int[] enemyScouts = new int[MAX_ENEMY_ROBOTS];
-	public final int[] enemyDisruptors = new int[MAX_ENEMY_ROBOTS];
-	public final int[] enemyScorchers = new int[MAX_ENEMY_ROBOTS];
-	public final int[] enemyTowers = new int[MAX_ENEMY_ROBOTS];
+//	public final int[] enemyArchons = new int[6];
+//	public final int[] enemySoldiers = new int[MAX_ENEMY_ROBOTS];
+//	public final int[] enemyScouts = new int[MAX_ENEMY_ROBOTS];
+//	public final int[] enemyDisruptors = new int[MAX_ENEMY_ROBOTS];
+//	public final int[] enemyScorchers = new int[MAX_ENEMY_ROBOTS];
+//	public final int[] enemyTowers = new int[MAX_ENEMY_ROBOTS];
 	public int numEnemyRobots;
 	public int numEnemyArchons;
 	public int numEnemySoldiers;
@@ -188,28 +188,28 @@ public class RadarSystem {
 		
 		switch (rinfo.type) {
 		case ARCHON:
-			enemyArchons[numEnemyArchons++] = pos;
+			numEnemyArchons++;
 			break;
 		case DISRUPTER:
-			enemyDisruptors[numEnemyDisruptors++] = pos;
+			numEnemyDisruptors++;
 			break;
 		case SCORCHER:
-			enemyScorchers[numEnemyScorchers++] = pos;
+			numEnemyScorchers++;
 			break;
 		case SCOUT:
 			if(dist > 5) 
 				return;
 			else
-				enemyScouts[numEnemyScouts++] = pos;
+				numEnemyScouts++;
 			break;
 		case SOLDIER:
-			enemySoldiers[numEnemySoldiers++] = pos;
+			numEnemySoldiers++;
 			break;
 		case TOWER:
 			if(!br.dc.isTowerTargetable(rinfo))
 				return;
 			else
-				enemyTowers[numEnemyTowers++] = pos;
+				numEnemyTowers++;
 			break;
 		}
 
@@ -301,28 +301,28 @@ public class RadarSystem {
 
 		switch (rinfo.type) {
 		case ARCHON:
-			enemyArchons[numEnemyArchons++] = rid;
+			numEnemyArchons++;
 			break;
 		case DISRUPTER:
-			enemyDisruptors[numEnemyDisruptors++] = rid;
+			numEnemyDisruptors++;
 			break;
 		case SCORCHER:
-			enemyScorchers[numEnemyScorchers++] = rid;
+			numEnemyScorchers++;
 			break;
 		case SCOUT:
 			if(dist > 5)
 				return;
 			else
-				enemyScouts[numEnemyScouts++] = rid;
+				numEnemyScouts++;
 			break;
 		case SOLDIER:
-			enemySoldiers[numEnemySoldiers++] = rid;
+			numEnemySoldiers++;
 			break;
 		case TOWER:
 			if(!br.dc.isTowerTargetable(rinfo))
 				return;
 			else
-				enemyTowers[numEnemyTowers++] = rid;
+				numEnemyTowers++;
 			break;
 		}
 		
