@@ -568,8 +568,8 @@ public class RadarSystem {
 							}
 						}
 					} catch (GameActionException e) {
-						br.rc.addMatchObservation(e.toString());
-						e.printStackTrace();
+//						br.rc.addMatchObservation(e.toString());
+//						e.printStackTrace();
 					}
 				}
 				break;
@@ -587,8 +587,8 @@ public class RadarSystem {
 							}
 						}
 					} catch (GameActionException e) {
-						br.rc.addMatchObservation(e.toString());
-						e.printStackTrace();
+//						br.rc.addMatchObservation(e.toString());
+//						e.printStackTrace();
 					}
 				}
 				break;
@@ -774,7 +774,7 @@ public class RadarSystem {
 						
 						if(estEndTime<br.gameEndTime) {
 							br.gameEndTime = estEndTime;
-							br.dbg.println('e', "GAME ENDS AT " + (br.gameEndTime + Constants.ENDGAME_CAP_MODE_BUFFER) + " | OH SHIT MODE AT " + br.gameEndTime);
+//							br.dbg.println('e', "GAME ENDS AT " + (br.gameEndTime + Constants.ENDGAME_CAP_MODE_BUFFER) + " | OH SHIT MODE AT " + br.gameEndTime);
 						}
 						
 					}

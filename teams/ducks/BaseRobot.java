@@ -23,7 +23,7 @@ public abstract class BaseRobot {
 	public final RadarSystem radar;
 	public final ExtendedRadarSystem er;
 	public final MovementStateMachine msm;
-	public final DebugSystem dbg;
+//	public final DebugSystem dbg;
 	public final MatchObservationSystem mos;
 	public final HibernationSystem hsys;
 	public final MessageAttackSystem mas;
@@ -98,7 +98,7 @@ public abstract class BaseRobot {
 		// DO NOT CHANGE THE ORDER OF THESE DECLARATIONS
 		// SOME CONTRUCTORS NEED OTHERS TO ALREADY BE DECLARED
 		// the boolean is whether to encrypt (222 bytecodes)
-		dbg = new DebugSystem(this);
+//		dbg = new DebugSystem(this);
 		mos = new MatchObservationSystem(this);
 		dc = new DataCache(this);
 		mc = new MapCacheSystem(this);
@@ -136,7 +136,8 @@ public abstract class BaseRobot {
 				else
 					io.receive();
 			} catch (Exception e) {
-				e.printStackTrace(); rc.addMatchObservation(e.toString()); }
+//				e.printStackTrace(); rc.addMatchObservation(e.toString()); 
+			}
 			
 			
 			try {
@@ -161,13 +162,13 @@ public abstract class BaseRobot {
 					useExtraBytecodes();
 				
 			} catch (Exception e) {
-				e.printStackTrace(); rc.addMatchObservation(e.toString());
+//				e.printStackTrace(); rc.addMatchObservation(e.toString());
 			}
 		
 			// End of Turn
-			if(checkClock())
-				dbg.println('e', "Very bad! useExcessBytecodes() ran over the bytecode limit. " +
-						"You must fix this so it only uses the available bytecodes and no more.");
+//			if(checkClock());
+//				dbg.println('e', "Very bad! useExcessBytecodes() ran over the bytecode limit. " +
+//						"You must fix this so it only uses the available bytecodes and no more.");
 			
 			rc.yield();
 		}
@@ -221,7 +222,7 @@ public abstract class BaseRobot {
         	return false;
         int currRound = Clock.getRoundNum();
         int byteCount = (GameConstants.BYTECODE_LIMIT-executeStartByte) + (currRound-executeStartTime-1) * GameConstants.BYTECODE_LIMIT + Clock.getBytecodeNum();
-        dbg.println('e', "Warning: Over Bytecode @"+executeStartTime+"-"+currRound +":"+ byteCount);
+//        dbg.println('e', "Warning: Over Bytecode @"+executeStartTime+"-"+currRound +":"+ byteCount);
         return true;
 	}
 	

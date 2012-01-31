@@ -244,7 +244,7 @@ public class SoldierRobot extends BaseRobot {
 			fbs.setPoolMode();
 		
 		// Set debug string
-		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(target)+", Behavior="+behavior);
+//		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(target)+", Behavior="+behavior);
 		
 		// Enter hibernation if desired
 		if(behavior == BehaviorState.HIBERNATE || behavior == BehaviorState.LOW_FLUX_HIBERNATE) {
@@ -278,8 +278,8 @@ public class SoldierRobot extends BaseRobot {
 			nav.setDestination(target);
 			
 			// Set debug string upon coming out of hibernation
-			dbg.setIndicatorString('e', 1, "Target=<"+(target.x-curLoc.x)+","+
-					(target.y-curLoc.y)+">, Behavior="+behavior);
+//			dbg.setIndicatorString('e', 1, "Target=<"+(target.x-curLoc.x)+","+
+//					(target.y-curLoc.y)+">, Behavior="+behavior);
 		}
 		
 		// Update end of turn variables

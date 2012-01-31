@@ -212,7 +212,7 @@ public class TangentBugTestUI extends JFrame{
 		py[i]+=d[1];
 		}
 		moveCount++;
-		System.out.println("\n-----------move " + moveCount+"------------");
+//		System.out.println("\n-----------move " + moveCount+"------------");
 		repaint();
 	}
 	

@@ -143,7 +143,7 @@ public class ExtendedRadarSystem {
 			diff += Util.getOwnStrengthEstimate(br.rc);
 		}
 		
-		br.dbg.setIndicatorString('h', 0, toString()+"|||||   energon difference: "+diff);
+//		br.dbg.setIndicatorString('h', 0, toString()+"|||||   energon difference: "+diff);
 		return diff;
 	}
 	

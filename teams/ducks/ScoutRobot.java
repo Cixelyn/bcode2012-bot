@@ -90,8 +90,8 @@ public class ScoutRobot extends BaseRobot {
 		shouldCalcAlly = false;
 		// if we found out the enemy team in a previous round, recall it
 		if (tmem.getEnemyTeam() != 0) {
-			dbg.println('e', "Team memory says we're playing vs team " +
-					tmem.getEnemyTeam());
+//			dbg.println('e', "Team memory says we're playing vs team " +
+//					tmem.getEnemyTeam());
 			mas.assertEnemyTeam(tmem.getEnemyTeam());
 		}
 		resetBehavior();
@@ -273,8 +273,8 @@ public class ScoutRobot extends BaseRobot {
 		}
 		
 		// indicator strings
-		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(objective)+
-				", Strat=" + strategy + ", Behavior="+behavior);
+//		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(objective)+
+//				", Strat=" + strategy + ", Behavior="+behavior);
 //		dbg.setIndicatorString('y', 2, "flux:"+radar.lowestFlux+" "+(radar.lowestFluxAllied!=null?radar.lowestFluxAllied.location:null)
 //				+" energon:"+radar.lowestEnergonRatio+" "+(radar.lowestEnergonAllied!=null?radar.lowestEnergonAllied.location:null));
 	}
@@ -548,8 +548,8 @@ public class ScoutRobot extends BaseRobot {
 		if (mas.guessEnemyTeam() != -1 && !mas.isLoaded() &&
 				Clock.getBytecodesLeft() > 5000) {
 			tmem.recordEnemyTeam(mas.guessEnemyTeam());
-			mos.rememberString("I think we are facing team " +
-				mas.guessEnemyTeam() + ".");
+//			mos.rememberString("I think we are facing team " +
+//				mas.guessEnemyTeam() + ".");
 			mas.load();
 		}
 	}
