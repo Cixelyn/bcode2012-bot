@@ -86,6 +86,10 @@ public class ScoutRobot extends BaseRobot {
 		strategy = StrategyState.INITIAL_EXPLORE;
 		doneWithInitialScout = false;
 		lastRetreatDir = null;
+		// if we found out the enemy team in a previous round, recall it
+		if (tmem.getEnemyTeam() != 0) {
+			mas.assertEnemyTeam(tmem.getEnemyTeam());
+		}
 		resetBehavior();
 	}
 
