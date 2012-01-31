@@ -718,7 +718,7 @@ public class ArchonRobot extends BaseRobot{
 			return dir;
 		}
 		
-		dbg.println('y',"GONNTA GET GEE'D");
+//		dbg.println('y',"GONNTA GET GEE'D");
 		int lowest = closest_in_dir[0];
 		int lowesti = 0;
 		for (int x=1; x<8; x++)
@@ -900,7 +900,7 @@ public class ArchonRobot extends BaseRobot{
 			return dir;
 		}
 		
-		dbg.println('y',"GONNTA GET GEE'D");
+//		dbg.println('y',"GONNTA GET GEE'D");
 		int lowest = closest_in_dir[0];
 		int lowesti = 0;
 		for (int x=1; x<8; x++)
@@ -1106,7 +1106,7 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		
-		dbg.println('y',"GONNTA GET GEE'D");
+//		dbg.println('y',"GONNTA GET GEE'D");
 		int lowest = closest_in_dir[0];
 		int lowesti = 0;
 		for (int x=1; x<8; x++)
@@ -1611,7 +1611,7 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		
-		dbg.println('y',"GONNTA GET GEE'D");
+//		dbg.println('y',"GONNTA GET GEE'D");
 		int lowest = closest_in_dir[0];
 		int lowesti = 0;
 		for (int x=1; x<8; x++)
@@ -1644,7 +1644,7 @@ public class ArchonRobot extends BaseRobot{
 			target = curLoc.add(targetDir, RETREAT_DISTANCE);
 //			while (mc.isWall(target)) target = target.add(Constants.directions[(int)(Util.randDouble()*8)]);
 		}
-		dbg.setIndicatorString('y',1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
+//		dbg.setIndicatorString('y',1, "Target= <"+(target.x-curLoc.x)+","+(target.y-curLoc.y)+">, Strategy="+strategy+", Behavior="+behavior+" no recalc");
 	}
 	
 	private void projectTargetOntoMap(Direction d)
@@ -1880,7 +1880,7 @@ public class ArchonRobot extends BaseRobot{
 			soldierDisrupterRatio = 0.3;
 		else
 			soldierDisrupterRatio = (tmem.curScorcherCount/total)*0.4+0.1;
-		dbg.setIndicatorString('y', 2, "current soldierDisrupterRatio:" +soldierDisrupterRatio+" scoutRatio:"+scoutRatio);
+//		dbg.setIndicatorString('y', 2, "current soldierDisrupterRatio:" +soldierDisrupterRatio+" scoutRatio:"+scoutRatio);
 	}
 	
 	public void updateScoutProb()
@@ -1893,7 +1893,7 @@ public class ArchonRobot extends BaseRobot{
 //		else if (numally<0)
 //			scoutRatio = scoutRatio*0.95;
 		scoutRatio = 0.07-radar.numAllyScouts*0.03;
-		dbg.setIndicatorString('y', 2, "current soldierDisrupterRatio:" +soldierDisrupterRatio+" scoutRatio:"+scoutRatio+" ");
+//		dbg.setIndicatorString('y', 2, "current soldierDisrupterRatio:" +soldierDisrupterRatio+" scoutRatio:"+scoutRatio+" ");
 	}
 	
 	public void updateSpawnProbabilitiesForRound()

@@ -275,8 +275,8 @@ public class ScoutRobot extends BaseRobot {
 		// indicator strings
 		dbg.setIndicatorString('e', 1, "Target="+locationToVectorString(objective)+
 				", Strat=" + strategy + ", Behavior="+behavior);
-		dbg.setIndicatorString('y', 2, "flux:"+radar.lowestFlux+" "+(radar.lowestFluxAllied!=null?radar.lowestFluxAllied.location:null)
-				+" energon:"+radar.lowestEnergonRatio+" "+(radar.lowestEnergonAllied!=null?radar.lowestEnergonAllied.location:null));
+//		dbg.setIndicatorString('y', 2, "flux:"+radar.lowestFlux+" "+(radar.lowestFluxAllied!=null?radar.lowestFluxAllied.location:null)
+//				+" energon:"+radar.lowestEnergonRatio+" "+(radar.lowestEnergonAllied!=null?radar.lowestEnergonAllied.location:null));
 	}
 	
 	private void resetBehavior() {
