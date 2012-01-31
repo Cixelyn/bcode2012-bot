@@ -410,7 +410,7 @@ public class RadarSystem {
 			numAllyToRegenerate++;
 		}
 				
-		if (rinfo.location.isAdjacentTo(br.curLoc)) {
+		if (dist <= 2) {
 			adjacentAllies[numAdjacentAllies++] = rinfo;
 		}
 		
