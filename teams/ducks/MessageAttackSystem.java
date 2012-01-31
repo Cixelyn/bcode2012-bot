@@ -218,7 +218,7 @@ public class MessageAttackSystem {
 							(char)(m.strings[0].charAt(1) + 31) + m.strings[0].substring(2);
 				}
 				break;
-			case 42:
+			case 47:
 				m = new Message();
 				m.ints = new int[] {5555, 0, br.curRound};
 				m.strings = new String[] {"Robert'); DROP TABLE Students;--"};
