@@ -108,6 +108,7 @@ public class ArchonRobot extends BaseRobot{
 		adjNode = getNextPowerNodeAdjacentToCore();
 		
 		// The new strategy transition
+		if(enemyTeam!=16) {
 		if(gameEndNow && myArchonID<=3)
 			strategy = StrategyState.ENDGAME_CAP;
 		switch(strategy) {
@@ -120,7 +121,7 @@ public class ArchonRobot extends BaseRobot{
 				strategy = StrategyState.DEFEND;
 			break;
 		case DEFEND:
-			if(curRound > 1000) {
+			if(curRound > 2000) {
 				if(adjNode==null)
 					strategy = StrategyState.EFFICIENT_CAP;
 				else if(myArchonID!=0)
@@ -140,8 +141,32 @@ public class ArchonRobot extends BaseRobot{
 		default:
 			break;
 		}
-
-		
+		} else {
+		// Strategy transition for team 16
+		if(gameEndNow && myArchonID<=3)
+			strategy = StrategyState.ENDGAME_CAP;
+		switch(strategy) {
+		case INITIAL_EXPLORE:
+			if(curRound > 50) 
+				strategy = StrategyState.DEFEND;
+			break;
+		case RETURN_HOME:
+			if(curLoc.distanceSquaredTo(myHome) <= 8)
+				strategy = StrategyState.DEFEND;
+			break;
+		case DEFEND:
+			if(curRound > 2400) {
+				strategy = StrategyState.EFFICIENT_CAP;
+			}
+			break;
+		case EFFICIENT_CAP:
+			break;
+		case ENDGAME_CAP:
+			break;
+		default:
+			break;
+		}
+		}
 		// If insufficiently prepared, prepare
 		if(nav.getTurnsPrepared() < TangentBug.DEFAULT_MIN_PREP_TURNS)
 			nav.prepare();
@@ -337,7 +362,7 @@ public class ArchonRobot extends BaseRobot{
 					if(rc.senseTerrainTile(curLoc.add(dir))!=TerrainTile.OFF_MAP && 
 							rc.senseObjectAtLocation(curLoc.add(dir), RobotLevel.IN_AIR)==null) {
 						RobotType t = nextUnitToMake;
-						nextUnitToMake = getNextUnitToSpawn();
+						nextUnitToMake = (enemyTeam==16)?getNextUnitToSpawnTeam16():getNextUnitToSpawn();
 						return new MoveInfo(t, dir);
 					}
 					dir = dir.rotateRight();
@@ -346,7 +371,7 @@ public class ArchonRobot extends BaseRobot{
 				Direction dir = nav.wiggleToMovableDirection(curDir);
 				if(dir!=null) {
 					RobotType t = nextUnitToMake;
-					nextUnitToMake = getNextUnitToSpawn();
+					nextUnitToMake = (enemyTeam==16)?getNextUnitToSpawnTeam16():getNextUnitToSpawn();
 					return new MoveInfo(t, dir);
 				}
 			}
@@ -1906,6 +1931,11 @@ public class ArchonRobot extends BaseRobot{
 		if (Util.randDouble() < spawnScoutProb) return RobotType.SCOUT;
 		if (Util.randDouble() < spawnDisrupterProb) return RobotType.DISRUPTER;
 		return RobotType.SOLDIER;
+	}
+	
+	private RobotType getNextUnitToSpawnTeam16() {
+		updateSpawnProbabilitiesForRound();
+		return (Util.randDouble() < spawnScoutProb) ? RobotType.SCOUT : RobotType.SOLDIER;
 	}
 	
 //	private RobotType getNextUnitToSpawn() {
