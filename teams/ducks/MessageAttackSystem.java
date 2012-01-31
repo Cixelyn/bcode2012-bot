@@ -39,12 +39,21 @@ public class MessageAttackSystem {
 	}
 	
 	/**
+	 * Assert the enemy team number. This should be called if we guessed the
+	 * enemy team in a previous round.
+	 * @param enemyTeam the enemy team number
+	 */
+	public void assertEnemyTeam(int enemyTeam) {
+		this.enemyTeam = enemyTeam;
+	}
+	
+	/**
 	 * Guess which team we are playing given one of their messages. Guess is
 	 * based on messages sent in past games.
 	 * @param m An enemy message.
 	 * @return True if we set a guess on the enemy team, False otherwise.
 	 */
-	public boolean detectTeam(Message m) {
+	public boolean detectEnemyTeam(Message m) {
 		
 		// return if we already made a guess
 		if (enemyTeam != -1) {
