@@ -268,6 +268,10 @@ public class RadarSystem {
 			}
 			break;
 		case TOWER:
+			if(!br.dc.isTowerTargetable(rinfo))
+				return;
+			else
+				numEnemyTowers++;
 			break;
 		}
 		
