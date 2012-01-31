@@ -266,6 +266,12 @@ public class ArchonRobot extends BaseRobot{
 			io.sendUShorts(BroadcastChannel.ALL, BroadcastType.ENEMY_SPOTTED, shorts);
 		}
 		
+		// Rebroadcast enemy team number
+		if (enemyTeam != -1 && curRound % 20 == (myArchonID * 3 + 10) % 20) {
+			io.sendUShort(BroadcastChannel.EXPLORERS, BroadcastType.GUESS_ENEMY_TEAM,
+					enemyTeam);
+		}
+		
 		// Set debug string
 		if (behavior != BehaviorState.RETREAT)
 			dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
