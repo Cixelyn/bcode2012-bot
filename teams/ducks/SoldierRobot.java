@@ -171,8 +171,8 @@ public class SoldierRobot extends BaseRobot {
 			target = archonSwarmTarget;
 			movingTarget = archonSwarmTargetIsMoving;
 			
-			if(closestSwarmTargetSenderDist <= 18 && 
-					curLoc.distanceSquaredTo(target) <= 26 && 
+			if(closestSwarmTargetSenderDist <= 36 && 
+					curLoc.distanceSquaredTo(target) <= 36 && 
 					curRound > roundLastWakenUp + 10) { 
 				// Close enough to swarm target, look for a place to hibernate
 				behavior = BehaviorState.LOOKING_TO_HIBERNATE;

@@ -68,6 +68,7 @@ public class ArchonRobot extends BaseRobot{
 	static final int TURNS_TO_LOCK_ONTO_AN_ENEMY = 30;
 	static final int TURNS_TO_RETREAT = 30;
 	MapLocation lastPowerNodeGuess;
+	int enemyTeam = 16;
 	
 	public ArchonRobot(RobotController myRC) throws GameActionException {
 		super(myRC);
@@ -105,6 +106,7 @@ public class ArchonRobot extends BaseRobot{
 	
 	@Override
 	public void run() throws GameActionException {
+		
 		adjNode = getNextPowerNodeAdjacentToCore();
 		
 		// The new strategy transition
