@@ -515,8 +515,7 @@ public class BroadcastSystem {
 		// if a scout, try to identify enemy team
 		if (activateMAS && br.mas.guessEnemyTeam() == -1 &&
 				Util.randDouble() < 0.01) {
-			// the boolean determines whether we encrypt or not
-			br.mas.detectTeam(m);
+			br.mas.detectEnemyTeam(m);
 		}
 	}
 	
