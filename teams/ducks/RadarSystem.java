@@ -607,8 +607,8 @@ public class RadarSystem {
 							}
 						}
 					} catch (GameActionException e) {
-						br.rc.addMatchObservation(e.toString());
-						e.printStackTrace();
+//						br.rc.addMatchObservation(e.toString());
+//						e.printStackTrace();
 					}
 				}
 				break;
