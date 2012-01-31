@@ -234,50 +234,51 @@ public class RadarSystem {
 		
 		switch (rinfo.type) {
 		case ARCHON:
-			enemyArchons[numEnemyArchons++] = pos;
+			numEnemyArchons++;
 			break;
 		case DISRUPTER:
-			enemyDisruptors[numEnemyDisruptors++] = pos;
+			numEnemyDisruptors++;
 			if (rinfo.flux >= 0.15 && dist <= closestEnemyWithFluxDist ) {
 				closestEnemyWithFlux = rinfo;
 				closestEnemyWithFluxDist = dist;
 			}
+			if (dist < closestEnemyDist) {
+				closestEnemy = rinfo;
+				closestEnemyDist = dist;
+			}
 			break;
 		case SCORCHER:
-			enemyScorchers[numEnemyScorchers++] = pos;
+			numEnemyScorchers++;
 			break;
 		case SCOUT:
 			if(dist > 5)
 				return;
 			else
-				enemyScouts[numEnemyScouts++] = pos;
+				numEnemyScouts++;
 			break;
 		case SOLDIER:
-			enemySoldiers[numEnemySoldiers++] = pos;
+			numEnemySoldiers++;
 			if (rinfo.flux >= 0.15 && dist < closestEnemyWithFluxDist ) {
 				closestEnemyWithFlux = rinfo;
 				closestEnemyWithFluxDist = dist;
 			}
+			if (dist < closestEnemyDist) {
+				closestEnemy = rinfo;
+				closestEnemyDist = dist;
+			}
 			break;
 		case TOWER:
-			if(!br.dc.isTowerTargetable(rinfo))
-				return;
-			else
-				enemyTowers[numEnemyTowers++] = pos;
 			break;
 		}
 		
 		enemyInfos[pos] = rinfo;
-		enemyTimes[pos] = Clock.getRoundNum();
+//		enemyTimes[pos] = Clock.getRoundNum();
 		enemyRobots[numEnemyRobots++] = pos;
 		
 		centerEnemyX += eloc.x;
 		centerEnemyY += eloc.y;
 		
-		if (dist < closestEnemyDist) {
-			closestEnemy = rinfo;
-			closestEnemyDist = dist;
-		}
+		
 		
 		Direction dir = br.curLoc.directionTo(eloc);
 		switch (rinfo.type) {
