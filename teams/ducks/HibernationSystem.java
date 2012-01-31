@@ -32,7 +32,7 @@ public class HibernationSystem {
 			lowFluxMode = true;
 			break;
 		default:
-			System.out.println("ERROR: INCORRECT HSYS MODE SET");
+//			System.out.println("ERROR: INCORRECT HSYS MODE SET");
 			break;
 		}
 		
@@ -109,8 +109,9 @@ public class HibernationSystem {
 					try{
 						rc.broadcast(helpMsg);
 					} catch(GameActionException e) {
-						br.dbg.println('e', "I ran out of flux and killed myself.");
-						rc.addMatchObservation(e.toString());
+//						br.dbg.println('e', "I ran out of flux and killed myself.");
+//						rc.addMatchObservation(e.toString());
+//						System.out.println();
 					}
 				}
 			}

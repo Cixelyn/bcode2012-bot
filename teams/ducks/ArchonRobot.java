@@ -209,8 +209,8 @@ public class ArchonRobot extends BaseRobot{
 //				ret = computeRetreatTarget3();
 				ret = computeRetreatTarget4();
 				projectTargetOntoMap();
-				dbg.setIndicatorString('e', 1, "Target= "+locationToVectorString(target)+
-						", Strategy="+strategy+", Behavior="+behavior+" "+ret);
+//				dbg.setIndicatorString('e', 1, "Target= "+locationToVectorString(target)+
+//						", Strategy="+strategy+", Behavior="+behavior+" "+ret);
 				
 			} else {
 				if(strategy == StrategyState.RETURN_HOME || 
@@ -299,8 +299,8 @@ public class ArchonRobot extends BaseRobot{
 		}
 		
 		// Set debug string
-		if (behavior != BehaviorState.RETREAT)
-			dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
+//		if (behavior != BehaviorState.RETREAT)
+//			dbg.setIndicatorString('e',1, "Target= "+locationToVectorString(target)+", Strategy="+strategy+", Behavior="+behavior);
 		
 	}
 	
@@ -506,7 +506,7 @@ public class ArchonRobot extends BaseRobot{
 		case GUESS_ENEMY_TEAM:
 			if (enemyTeam == -1) {
 				enemyTeam = BroadcastSystem.decodeShort(sb);
-				dbg.println('e', "Scout told me we're playing vs team " + enemyTeam);
+//				dbg.println('e', "Scout told me we're playing vs team " + enemyTeam);
 			}
 		default:
 			super.processMessage(msgType, sb);

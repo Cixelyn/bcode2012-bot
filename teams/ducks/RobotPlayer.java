@@ -30,21 +30,21 @@ public class RobotPlayer {
 				break;
 			}
 		} catch (Exception e) {
-			System.out.println("Robot constructor failed");
-			e.printStackTrace();
-			br.rc.addMatchObservation(e.toString());
+//			System.out.println("Robot constructor failed");
+//			e.printStackTrace();
+//			br.rc.addMatchObservation(e.toString());
 		}
 		
-		br.dbg.setOwner('y');
+//		br.dbg.setOwner('y');
 		
 		//Main loop should never terminate
 		while (true) {
 			try {
 				br.loop();
 			} catch (Exception e) {
-				System.out.println("Main loop terminated unexpectedly");
-				e.printStackTrace();
-				br.rc.addMatchObservation(e.toString());
+//				System.out.println("Main loop terminated unexpectedly");
+//				e.printStackTrace();
+//				br.rc.addMatchObservation(e.toString());
 			}
 		}
 	}

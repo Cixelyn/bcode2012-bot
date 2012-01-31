@@ -20,7 +20,7 @@ public class MatchObservationSystem {
 	 * @param shouldEncrypt Whether to encrypt the string or not.
 	 */
 	public void rememberString(String s) {
-		br.rc.addMatchObservation(s);
+//		br.rc.addMatchObservation(s);
 	}
 	
 	/**

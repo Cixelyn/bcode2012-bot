@@ -403,8 +403,8 @@ public class BroadcastSystem {
 			try {
 				br.rc.broadcast(m);
 			} catch (GameActionException e) {
-				System.out.println("Broadcasting threw an error. Maybe called more than once?");
-				e.printStackTrace();
+//				System.out.println("Broadcasting threw an error. Maybe called more than once?");
+//				e.printStackTrace();
 			}
 		
 			// wipe container
