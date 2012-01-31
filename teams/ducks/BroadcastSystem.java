@@ -368,7 +368,7 @@ public class BroadcastSystem {
 		try{
 			br.rc.broadcast(m);
 		} catch(Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 	
@@ -424,7 +424,7 @@ public class BroadcastSystem {
 			try {
 				br.rc.broadcast(m);
 			} catch (GameActionException e) {
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 		

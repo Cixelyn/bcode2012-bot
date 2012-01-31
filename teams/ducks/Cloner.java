@@ -24,7 +24,7 @@ public class Cloner
 			oos = new ObjectOutputStream(pos);
 			ois = new ObjectInputStream(pis);
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 
